@@ -1,0 +1,20 @@
+{
+  "name": "crossbow-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "crossbow-ctx": "^1.1.0",
+    "eazy-logger": "^2.1.2",
+    "meow": "^3.1.0"
+  },
+  "bin": "cli.js",
+  "devDependencies": {
+    "crossbow-sass": "^1.0.1"
+  }
+}
