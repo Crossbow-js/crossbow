@@ -1,11 +1,10 @@
 var cli = require("./cli");
 
 cli({input: ["run", "sass"]}, {
-    cwd: 'test/fixtures',
-    paths: {
+    config: {
         sass: {
-            input: 'scss/main.scss',
-            output: 'css/main.min.css'
+            input: 'test/fixtures/scss/main.scss',
+            output: 'test/fixtures/css/main.min.css'
         }
     }
 });
