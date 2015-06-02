@@ -50,6 +50,10 @@ function handleCli (cli, opts) {
             return require(path.resolve(opts.cwd, 'node_modules', 'crossbow-' + name)).tasks;
         }
 
+        if (opts.handoff) {
+            return prom.create(taskList)('', ctx(opts))
+        }
+
         prom.create(taskList)('', ctx(opts))
             .then(function () {
                 logger.info('{yellow:%s} complete', task);
@@ -66,3 +70,4 @@ function handleCli (cli, opts) {
 }
 
 module.exports = handleCli;
+module.exports.logger = logger;
