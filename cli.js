@@ -2,9 +2,7 @@
 var ctx     = require("crossbow-ctx");
 var meow    = require('meow');
 var path    = require('path');
-var objPath = require('object-path');
 var logger  = require('./lib/logger');
-var prom    = require('prom-seq');
 
 var cli = meow({
     help: [
@@ -18,54 +16,25 @@ if (!module.parent) {
 }
 
 function handleCli (cli, opts) {
-    opts     = opts     || {};
-    opts.cb  = opts.cb  || function () {};
-    opts.cwd = opts.cwd || process.cwd();
-    opts.pkg = opts.pkg || require(path.resolve(process.cwd(), "./package.json"));
-
-    var crossbow = objPath.get(opts, 'pkg.crossbow');
+    opts        = opts     || {};
+    opts.cb     = opts.cb  || function () {};
+    opts.cwd    = opts.cwd || process.cwd();
+    opts.pkg    = opts.pkg || require(path.resolve(process.cwd(), "./package.json"));
+    opts._ctx   = ctx(opts);
 
     if (cli.input[0] === 'run') {
 
-        var task   = cli.input[1];
-        var module, toRun, taskList;
+        require('./lib/command.run')(cli, opts);
+    }
 
-        if (!task) {
-            logger.error('Please provide a command for {magenta:Crossbow} to run');
+    if (cli.input[0] === 'watch') {
+
+        if (!opts.pkg.crossbow.watch) {
+            console.error('watch config not found');
             return;
         }
 
-        if (crossbow) {
-            var maybeTask = objPath.get(crossbow, ['tasks', task]);
-            if (maybeTask) {
-                taskList = maybeTask.run.map(gather);
-            }
-        }
-
-        if (!taskList) {
-            taskList = gather(task);
-        }
-
-        function gather (name) {
-            return require(path.resolve(opts.cwd, 'node_modules', 'crossbow-' + name)).tasks;
-        }
-
-        if (opts.handoff) {
-            return prom.create(taskList)('', ctx(opts))
-        }
-
-        prom.create(taskList)('', ctx(opts))
-            .then(function () {
-                logger.info('{yellow:%s} complete', task);
-                opts.cb(null);
-            })
-            .progress(function (report) {
-
-                logger[report.level](report.msg);
-            })
-            .catch(function (err) {
-                throw err;
-            }).done();
+        require('./lib/command.watch')(cli, opts);
     }
 }
 
