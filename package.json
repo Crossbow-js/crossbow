@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "crossbow-ctx": "^1.1.6",
+    "crossbow-ctx": "^1.1.8",
     "eazy-logger": "^2.1.2",
     "meow": "^3.1.0",
     "object-path": "^0.9.2",
@@ -19,6 +19,7 @@
     "crossbow": "cli.js"
   },
   "devDependencies": {
-    "crossbow-sass": "^1.0.1"
+    "crossbow-babel-browserify": "^1.0.2",
+    "crossbow-sass": "^1.1.3"
   }
 }
