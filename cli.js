@@ -28,6 +28,14 @@ function handleCli (cli, opts) {
         logger.setLevel(cli.flags.logLevel);
     }
 
+    if (cli.input[0] === 'copy') {
+        if (!opts.pkg.crossbow.copy) {
+            logger.error('copy config not found, tried: %s', maybePath);
+            return;
+        }
+        require('./lib/command.copy')(cli, opts);
+    }
+
     if (cli.input[0] === 'run') {
 
         require('./lib/command.run')(cli, opts);
