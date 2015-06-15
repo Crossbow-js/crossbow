@@ -16,11 +16,16 @@ if (!module.parent) {
 }
 
 function handleCli (cli, opts) {
+    var maybePath = path.resolve(process.cwd(), "./package.json");
     opts        = opts     || {};
     opts.cb     = opts.cb  || function () {};
     opts.cwd    = opts.cwd || process.cwd();
-    opts.pkg    = opts.pkg || require(path.resolve(process.cwd(), "./package.json"));
+    opts.pkg    = opts.pkg || require(maybePath);
     opts._ctx   = ctx(opts);
+
+    if (cli.flags.logLevel) {
+        logger.setLevel(cli.flags.logLevel);
+    }
 
     if (cli.input[0] === 'run') {
 
@@ -30,7 +35,7 @@ function handleCli (cli, opts) {
     if (cli.input[0] === 'watch') {
 
         if (!opts.pkg.crossbow.watch) {
-            console.error('watch config not found');
+            logger.error('watch config not found, tried: %s', maybePath);
             return;
         }
 
