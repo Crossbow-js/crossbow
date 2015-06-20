@@ -2,7 +2,75 @@ var assert = require('chai').assert;
 var watch  = require('../lib/command.watch');
 
 describe('Watch task', function () {
-    it('can gather tasks', function () {
+    it('can gather simple tasks', function () {
+        var tasks = watch.gatherTasks({
+           watch: {
+               tasks: {
+                   "**/*.js": "babel"
+               }
+           }
+        });
+
+        assert.equal(tasks.length, 1);
+        assert.equal(tasks[0].patterns[0], '**/*.js');
+        assert.equal(tasks[0].tasks[0],    'babel');
+
+    });
+    it('can gather nested simple tasks', function () {
+        var tasks = watch.gatherTasks({
+            watch: {
+                tasks: [
+                    {
+                        "**/*.js": "babel"
+                    }
+                ]
+            }
+        });
+
+        assert.equal(tasks.length, 1);
+        assert.equal(tasks[0].patterns[0], '**/*.js');
+        assert.equal(tasks[0].tasks[0],    'babel');
+
+    });
+    it('can select namespaced watchers', function () {
+        var tasks = watch.gatherTasks({
+            watch: {
+                "default": [
+                    {
+                        "**/*.js": "babel"
+                    }
+                ],
+                "someother": [
+                    {
+                        "app/**/*.js": "babel2"
+                    }
+                ]
+            }
+        }, 'someother');
+
+        assert.equal(tasks.length, 1);
+        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
+        assert.equal(tasks[0].tasks[0],    'babel2');
+    });
+    it('can select namespaced watchers (2)', function () {
+        var tasks = watch.gatherTasks({
+            watch: {
+                "someother": {
+                    tasks: [
+                        {
+                            "app/**/*.js": "babel2"
+                        }
+
+                    ]
+                }
+            }
+        }, 'someother');
+
+        assert.equal(tasks.length, 1);
+        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
+        assert.equal(tasks[0].tasks[0],    'babel2');
+    });
+    it('can gather tasks from multiple formats', function () {
         var tasks = watch.gatherTasks({
             config: {
                 crossbow: {
