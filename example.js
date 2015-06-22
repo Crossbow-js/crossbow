@@ -1,14 +1,23 @@
 var cli = require("./cli");
 var assert = require("assert");
 
-cli({input: ["run", "sass"]}, {
+cli({input: ["watch"]}, {
     pkg: {
         crossbow: {
+            watch:  {
+                'bs-config': {
+                    server: 'test/fixtures',
+                    open: false
+                },
+                'tasks':       {
+                    "test/fixtures/scss": ["sass"]
+                }
+            },
             config: {
                 sass: {
-                    input: 'test/fixtures/scss/main.scss',
+                    input:  'test/fixtures/scss/main.scss',
                     output: 'test/fixtures/css/main.min.css',
-                    root: 'test/fixtures/scss'
+                    root:   'test/fixtures/scss'
                 }
             }
         }

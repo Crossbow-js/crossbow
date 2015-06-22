@@ -1,9 +1,14 @@
 var assert = require('chai').assert;
 var watch  = require('../lib/command.watch');
+var cwd    = require('path').resolve('test/fixtures');
+var current = process.cwd();
+var gather = require('../lib/gather-tasks');
+var getBsConfig = require('../lib/browser-sync').getBsConfig;
 
 describe('Watch task', function () {
     it('can gather simple tasks', function () {
-        var tasks = watch.gatherTasks({
+
+        var tasks = gather({
            watch: {
                tasks: {
                    "**/*.js": "babel"
@@ -17,7 +22,7 @@ describe('Watch task', function () {
 
     });
     it('can gather nested simple tasks', function () {
-        var tasks = watch.gatherTasks({
+        var tasks = gather({
             watch: {
                 tasks: [
                     {
@@ -33,7 +38,7 @@ describe('Watch task', function () {
 
     });
     it('can select namespaced watchers', function () {
-        var tasks = watch.gatherTasks({
+        var tasks = gather({
             watch: {
                 "default": [
                     {
@@ -53,7 +58,7 @@ describe('Watch task', function () {
         assert.equal(tasks[0].tasks[0],    'babel2');
     });
     it('can select namespaced watchers (2)', function () {
-        var tasks = watch.gatherTasks({
+        var tasks = gather({
             watch: {
                 "someother": {
                     tasks: [
@@ -71,7 +76,7 @@ describe('Watch task', function () {
         assert.equal(tasks[0].tasks[0],    'babel2');
     });
     it('can gather tasks from multiple formats', function () {
-        var tasks = watch.gatherTasks({
+        var tasks = gather({
             config: {
                 crossbow: {
                     input: [
@@ -112,5 +117,31 @@ describe('Watch task', function () {
         assert.equal(tasks[1].patterns[0], 'src/**');
         assert.equal(tasks[1].patterns[1], 'docs/**');
         assert.equal(tasks[1].tasks[0],    'bs:reload');
+    });
+    it('can use given bs-config', function () {
+        var bsConfig = getBsConfig({
+            "watch": {
+                "bs-config": {
+                    server: "./app"
+                }
+            }
+        }, {cwd: cwd});
+        assert.equal(bsConfig.server, "./app");
+    });
+    it('can use given bs-config file', function () {
+        var bsConfig = getBsConfig({
+            "watch": {
+                "bs-config": "bs-config.js"
+            }
+        }, {cwd: cwd});
+        assert.equal(bsConfig.server, "./app/test");
+    });
+    it('can use default config if file not found', function () {
+        var bsConfig = getBsConfig({
+            "watch": {
+                "bs-config": "bs-config.js"
+            }
+        }, {cwd: current});
+        assert.equal(bsConfig.server, "./public");
     });
 });
