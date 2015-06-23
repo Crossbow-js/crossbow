@@ -5,8 +5,8 @@ var current     = process.cwd();
 var gather      = require('../lib/gather-tasks');
 var getBsConfig = require('../lib/utils').getBsConfig;
 
-describe('Watch task', function () {
-    it.only('can gather simple tasks', function () {
+describe('Gathering watch tasks', function () {
+    it('can gather simple tasks', function () {
 
         var tasks = gather({
            watch: {
@@ -67,7 +67,6 @@ describe('Watch task', function () {
                         {
                             "app/**/*.js": "babel2"
                         }
-
                     ]
                 }
             }
