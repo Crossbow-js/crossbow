@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var ctx     = require("crossbow-ctx");
+var ctx     = require("./lib/ctx");
 var meow    = require('meow');
 var path    = require('path');
 var logger  = require('./lib/logger');

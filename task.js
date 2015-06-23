@@ -1,6 +1,5 @@
 function processThis(deferred, previous, ctx) {
-    console.log(ctx.path.make('sass.input'));
-    deferred.resolve();
+    deferred.resolve({status: 'task 1 completed', ctx: ctx});
 }
 
 module.exports.tasks = [processThis];
