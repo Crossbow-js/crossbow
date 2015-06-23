@@ -10,7 +10,8 @@ cli({input: ["watch"]}, {
                     open: false
                 },
                 'tasks':       {
-                    "test/fixtures/scss": ["sass"]
+                    "test/fixtures/scss": ["sass"],
+                    "test/fixtures/js": ["task.js"]
                 }
             },
             config: {

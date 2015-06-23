@@ -20,7 +20,7 @@ function handleCli (cli, opts) {
     var maybePath = path.resolve(process.cwd(), "./package.json");
     opts          = opts      || {};
     cli.flags     = cli.flags || {};
-    opts.cb       = opts.cb   || utils.defaultCallback;
+    opts.cb       = opts.cb   || defaultCallback;
     opts.cwd      = opts.cwd  || process.cwd();
     opts.pkg      = opts.pkg  || require(maybePath);
     opts._ctx     = ctx(opts);
