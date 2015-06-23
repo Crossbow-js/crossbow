@@ -2,8 +2,14 @@ var assert      = require('chai').assert;
 var cli         = require('../');
 var resolve     = require('path').resolve;
 var watch       = require('../lib/command.watch');
+var sinon       = require('sinon');
 
 describe('Running watcher and tasks', function () {
+    beforeEach(function () {
+        if (process.env['TEST']) {
+            delete process.env['TEST'];
+        }
+    })
     it('can add watchers from individual tasks', function (done) {
         cli({input: ['watch', 'someother']}, {
             pkg: {
@@ -101,6 +107,60 @@ describe('Running watcher and tasks', function () {
                         out.bs.cleanup();
                         done();
                     }).done();
+            }
+        });
+    });
+    it('can call browser-sync api method with bs:<method> syntax', function (done) {
+        cli({input: ['watch']}, {
+            pkg: {
+                crossbow: {
+                    watch: {
+                        "bs-config": {
+                            logLevel: 'silent',
+                            open: false
+                        },
+                        tasks: {
+                            "app/**/*.js": ["test/fixtures/task.js", "bs:reload"]
+                        }
+                    }
+                }
+            },
+            cb: function (err, out) {
+                var spy = sinon.spy(out.bs.publicInstance, 'reload');
+                watch.runCommandAfterWatch.apply(out.bs.publicInstance, [
+                    out.tasks[0], out.opts, 'change', 'app/main.js', function () {
+                        sinon.assert.calledOnce(spy);
+                        out.bs.cleanup();
+                        done();
+                    }
+                ]);
+            }
+        });
+    });
+    it('can call browser-sync api method with bs:<method>:<args> syntax', function (done) {
+        cli({input: ['watch']}, {
+            pkg: {
+                crossbow: {
+                    watch: {
+                        "bs-config": {
+                            logLevel: 'silent',
+                            open: false
+                        },
+                        tasks: {
+                            "app/**/*.js": ["test/fixtures/task.js", "bs:reload:app.js"]
+                        }
+                    }
+                }
+            },
+            cb: function (err, out) {
+                var spy = sinon.spy(out.bs.publicInstance, 'reload');
+                watch.runCommandAfterWatch.apply(out.bs.publicInstance, [
+                    out.tasks[0], out.opts, 'change', 'app/main.js', function () {
+                        sinon.assert.calledWithExactly(spy, 'app.js');
+                        out.bs.cleanup();
+                        done();
+                    }
+                ]);
             }
         });
     });
