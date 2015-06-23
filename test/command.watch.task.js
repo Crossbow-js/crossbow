@@ -1,10 +1,7 @@
 var assert      = require('chai').assert;
 var cli         = require('../');
+var resolve     = require('path').resolve;
 var watch       = require('../lib/command.watch');
-var cwd         = require('path').resolve('test/fixtures');
-var current     = process.cwd();
-var gather      = require('../lib/gather-tasks');
-var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Running watcher and tasks', function () {
     it('can add watchers from individual tasks', function (done) {
@@ -82,6 +79,11 @@ describe('Running watcher and tasks', function () {
                                 "app/other/*.css": ["postcss"]
                             }
                         }
+                    },
+                    config: {
+                        sass: {
+                            input: 'test/fixtures/scss/main.scss'
+                        }
                     }
                 }
             },
@@ -89,15 +91,13 @@ describe('Running watcher and tasks', function () {
                 process.env['TEST'] = 'true';
                 watch.runCommandAfterWatch(out.tasks[0], out.opts, 'change', 'app/main.js')
                     .then(function (output) {
-
                         assert.equal(output.ctx.trigger.task.patterns[0],  'app/**/*.js');
                         assert.equal(output.ctx.trigger.task.tasks[0],     'test/fixtures/task.js');
                         assert.equal(output.ctx.trigger.type,  'watcher');
                         assert.equal(output.ctx.trigger.file,  'app/main.js');
                         assert.equal(output.ctx.trigger.event, 'change');
-
                         assert.equal(output.message, 'task 1 completed');
-
+                        assert.equal(resolve('test/fixtures/scss/main.scss'), output.ctx.path.make('sass.input'));
                         out.bs.cleanup();
                         done();
                     }).done();
