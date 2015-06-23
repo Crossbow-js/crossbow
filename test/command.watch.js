@@ -6,10 +6,11 @@ var gather      = require('../lib/gather-tasks');
 var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Watch task', function () {
-    it('can gather simple tasks', function () {
+    it.only('can gather simple tasks', function () {
 
         var tasks = gather({
            watch: {
+               before: ['js'],
                tasks: {
                    "**/*.js": "babel"
                }
@@ -61,6 +62,7 @@ describe('Watch task', function () {
         var tasks = gather({
             watch: {
                 "someother": {
+                    before: ['js'],
                     tasks: [
                         {
                             "app/**/*.js": "babel2"

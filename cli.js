@@ -3,6 +3,7 @@ var ctx     = require("crossbow-ctx");
 var meow    = require('meow');
 var path    = require('path');
 var logger  = require('./lib/logger');
+var defaultCallback  = require('./lib/utils').defaultCallback;
 
 var cli = meow({
     help: [
@@ -19,7 +20,7 @@ function handleCli (cli, opts) {
     var maybePath = path.resolve(process.cwd(), "./package.json");
     opts        = opts      || {};
     cli.flags   = cli.flags || {}
-    opts.cb     = opts.cb   || function () {};
+    opts.cb     = opts.cb   || utils.defaultCallback;
     opts.cwd    = opts.cwd  || process.cwd();
     opts.pkg    = opts.pkg  || require(maybePath);
     opts._ctx   = ctx(opts);
@@ -44,7 +45,7 @@ function handleCli (cli, opts) {
     if (cli.input[0] === 'watch') {
 
         if (!opts.pkg.crossbow.watch) {
-            logger.error('watch config not found, tried: %s', maybePath);
+            opts.cb(new Error('watch config not found in ' + maybePath));
             return;
         }
 
