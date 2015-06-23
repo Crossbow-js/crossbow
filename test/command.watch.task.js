@@ -63,7 +63,7 @@ describe('Running watcher and tasks', function () {
             }
         });
     });
-    it.skip('can add watchers fire a watch event', function (done) {
+    it('can add watchers fire a watch event', function (done) {
         cli({input: ['watch']}, {
             pkg: {
                 crossbow: {
@@ -74,7 +74,7 @@ describe('Running watcher and tasks', function () {
                         },
                         tasks: {
                             "other": {
-                                "app/**/*.js": ["task.js"],
+                                "app/**/*.js": ["test/fixtures/task.js"],
                                 "app/**/*.css": ["postcss"]
                             },
                             "default": {
@@ -89,8 +89,9 @@ describe('Running watcher and tasks', function () {
                 process.env['TEST'] = 'true';
                 watch.runCommandAfterWatch(out.tasks[0], out.opts, 'change', 'app/main.js')
                     .then(function (output) {
-                        //assert.equal(output.ctx.trigger.task.patterns[0],  'app/**/*.js');
-                        assert.equal(output.ctx.trigger.task.tasks[0],     'task.js');
+
+                        assert.equal(output.ctx.trigger.task.patterns[0],  'app/**/*.js');
+                        assert.equal(output.ctx.trigger.task.tasks[0],     'test/fixtures/task.js');
                         assert.equal(output.ctx.trigger.type,  'watcher');
                         assert.equal(output.ctx.trigger.file,  'app/main.js');
                         assert.equal(output.ctx.trigger.event, 'change');
