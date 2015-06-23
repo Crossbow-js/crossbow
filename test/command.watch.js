@@ -1,9 +1,9 @@
-var assert = require('chai').assert;
-var watch  = require('../lib/command.watch');
-var cwd    = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var gather = require('../lib/gather-tasks');
-var getBsConfig = require('../lib/browser-sync').getBsConfig;
+var assert      = require('chai').assert;
+var watch       = require('../lib/command.watch');
+var cwd         = require('path').resolve('test/fixtures');
+var current     = process.cwd();
+var gather      = require('../lib/gather-tasks');
+var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Watch task', function () {
     it('can gather simple tasks', function () {
@@ -73,7 +73,45 @@ describe('Watch task', function () {
 
         assert.equal(tasks.length, 1);
         assert.equal(tasks[0].patterns[0], 'app/**/*.js');
+
         assert.equal(tasks[0].tasks[0],    'babel2');
+    });
+    it('can select from multiple namespaced watchers', function () {
+        var tasks = gather({
+            watch: {
+                "someother": {
+                    tasks: [
+                        {
+                            "app/**/*.js": "babel1"
+                        }
+
+                    ]
+                },
+                'js': {
+                    tasks: [
+                        {
+                            "app/*.js": "babel2"
+                        }
+
+                    ]
+                },
+                'js2': {
+                    tasks: [
+                        {
+                            "app/*.js": "babel2"
+                        }
+
+                    ]
+                }
+            }
+        }, ['someother', 'js']);
+
+        assert.equal(tasks.length, 2);
+        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
+        assert.equal(tasks[1].patterns[0], 'app/*.js');
+
+        assert.equal(tasks[0].tasks[0],    'babel1');
+        assert.equal(tasks[1].tasks[0],    'babel2');
     });
     it('can gather tasks from multiple formats', function () {
         var tasks = gather({
