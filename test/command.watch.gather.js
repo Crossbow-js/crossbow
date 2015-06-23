@@ -20,7 +20,6 @@ describe('Gathering watch tasks', function () {
         assert.equal(tasks.length, 1);
         assert.equal(tasks[0].patterns[0], '**/*.js');
         assert.equal(tasks[0].tasks[0],    'babel');
-
     });
     it('can gather nested simple tasks', function () {
         var tasks = gather({

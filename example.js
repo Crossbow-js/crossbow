@@ -7,11 +7,13 @@ cli({input: ["watch"]}, {
             watch:  {
                 'bs-config': {
                     server: 'test/fixtures',
+                    logFileChanges: false,
                     open: false
                 },
-                'tasks':       {
-                    "test/fixtures/scss": ["sass"],
-                    "test/fixtures/js": ["task.js"]
+                'tasks': {
+                    "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
+                    "test/fixtures/js":     ["test/fixtures/task.js"],
+                    "test/fixtures/*.html": ["bs:reload"]
                 }
             },
             config: {
