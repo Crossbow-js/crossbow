@@ -57,7 +57,8 @@ describe('Running watcher and tasks', function () {
                         }
                     }
                 }
-            },
+
+        },
             cb: function (err, out) {
                 assert.equal(out.tasks.length, 4);
                 assert.equal(out.tasks[0].patterns[0], 'app/**/*.js');
@@ -161,6 +162,25 @@ describe('Running watcher and tasks', function () {
                         done();
                     }
                 ]);
+            }
+        });
+    });
+    it('can run browser-sync without any watch targets', function (done) {
+        cli({input: ['watch']}, {
+            pkg: {
+                crossbow: {
+                    watch: {
+                        "bs-config": {
+                            logLevel: 'silent',
+                            open: false
+                        }
+                    }
+                }
+            },
+            cb: function (err, out) {
+                assert.isFunction(out.bs.publicInstance.reload);
+                out.bs.cleanup();
+                done();
             }
         });
     });
