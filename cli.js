@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-var ctx     = require("./lib/ctx");
-var meow    = require('meow');
-var path    = require('path');
-var logger  = require('./lib/logger');
+var ctx              = require("./lib/ctx");
+var meow             = require('meow');
+var path             = require('path');
+var logger           = require('./lib/logger');
 var defaultCallback  = require('./lib/utils').defaultCallback;
-var retrieveConfig  = require('./lib/utils').retrieveConfig;
+var retrieveConfig   = require('./lib/utils').retrieveConfig;
 
 var cli = meow({
     help: [
@@ -60,5 +60,6 @@ function handleCli (cli, opts) {
     }
 }
 
-module.exports = handleCli;
+module.exports        = handleCli;
 module.exports.logger = logger;
+module.exports.ctx    = ctx;

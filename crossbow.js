@@ -1,10 +1,4 @@
 module.exports = {
-    tasks: {
-        build: [
-            "sass",
-            "babel-browserify"
-        ]
-    },
     watch:  {
         'bs-config': {
             server: 'test/fixtures',
@@ -13,7 +7,11 @@ module.exports = {
         },
         'tasks': {
             "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
-            "test/fixtures/js":     ["babel-browserify", "bs:reload"],
+            "test/fixtures/js/*.js": [
+                "eslint",
+                "babel-browserify",
+                "bs:reload"
+            ],
             "test/fixtures/*.html": ["bs:reload"]
         }
     },
@@ -25,8 +23,12 @@ module.exports = {
         },
         "babel-browserify": {
             input:  'test/fixtures/js/app.js',
-            output: 'test/fixtures/js/app.js',
-            root:   'test/fixtures/scss'
+            output: 'test/fixtures/js/dist/bundle.js',
+            root:   'test/fixtures/js'
+        },
+        "eslint": {
+            input: "test/fixtures/*.js",
+            options: "test/fixtures/.eslintrc"
         }
     },
     copy: {
