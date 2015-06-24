@@ -8,7 +8,7 @@ module.exports = {
         'tasks': {
             "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
             "test/fixtures/js/*.js": [
-                "eslint",
+                "/Users/shakyshane/crossbow/crossbow-eslint/index.js as eslint",
                 "babel-browserify",
                 "bs:reload"
             ],

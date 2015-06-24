@@ -72,7 +72,7 @@ describe('Running watcher and tasks', function () {
                     },
                     tasks: {
                         "other": {
-                            "app/**/*.js": ["test/fixtures/task.js"],
+                            "app/**/*.js": ["test/fixtures/task.js as eslint"],
                             "app/**/*.css": ["postcss"]
                         },
                         "default": {
@@ -84,6 +84,9 @@ describe('Running watcher and tasks', function () {
                 config: {
                     sass: {
                         input: 'test/fixtures/scss/main.scss'
+                    },
+                    eslint: {
+                        input: 'test/fixtures/js/**'
                     }
                 }
             },
@@ -92,7 +95,7 @@ describe('Running watcher and tasks', function () {
                 watch.runCommandAfterWatch(out.tasks[0], out.opts, 'change', 'app/main.js')
                     .then(function (output) {
                         assert.equal(output.ctx.trigger.task.patterns[0], 'app/**/*.js');
-                        assert.equal(output.ctx.trigger.task.tasks[0], 'test/fixtures/task.js');
+                        assert.equal(output.ctx.trigger.task.tasks[0], 'test/fixtures/task.js as eslint');
                         assert.equal(output.ctx.trigger.type, 'watcher');
                         assert.equal(output.ctx.trigger.file, 'app/main.js');
                         assert.equal(output.ctx.trigger.event, 'change');
