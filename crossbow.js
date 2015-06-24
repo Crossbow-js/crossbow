@@ -17,5 +17,13 @@ module.exports = {
             output: 'test/fixtures/css/main.min.css',
             root:   'test/fixtures/scss'
         }
+    },
+    copy: {
+        images: [
+            "test/fixtures/js/**:public/js",
+            {
+                "test/fixtures/css/**": "public/css"
+            }
+        ]
     }
 };

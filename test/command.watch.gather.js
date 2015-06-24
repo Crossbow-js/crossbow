@@ -2,7 +2,7 @@ var assert      = require('chai').assert;
 var watch       = require('../lib/command.watch');
 var cwd         = require('path').resolve('test/fixtures');
 var current     = process.cwd();
-var gather      = require('../lib/gather-tasks');
+var gather      = watch.gatherWatchTasks;
 var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Gathering watch tasks', function () {

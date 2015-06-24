@@ -21,12 +21,13 @@ function handleCli (cli, opts) {
 
     var maybePath = path.resolve(process.cwd(), "./package.json");
 
-    opts          = opts      || {};
-    cli.flags     = cli.flags || {};
-    opts.cb       = opts.cb   || defaultCallback;
-    opts.cwd      = opts.cwd  || process.cwd();
-    opts.crossbow = opts.crossbow  || retrieveConfig(opts, cli.flags);
-    opts._ctx     = ctx(opts);
+    opts          = opts          || {};
+    cli.flags     = cli.flags     || {};
+    opts.cb       = opts.cb       || defaultCallback;
+    opts.cwd      = opts.cwd      || process.cwd();
+    opts.crossbow = opts.crossbow || retrieveConfig(opts, cli.flags);
+
+    opts.ctx      = ctx(opts);
 
     if (cli.flags.logLevel) {
         logger.setLevel(cli.flags.logLevel);
