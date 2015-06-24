@@ -1,4 +1,11 @@
 module.exports = {
+    tasks: {
+        build: [
+            "copy:default",
+            "sass",
+            "test/fixtures/task.js"
+        ]
+    },
     watch:  {
         'bs-config': {
             server: 'test/fixtures',
@@ -19,11 +26,10 @@ module.exports = {
         }
     },
     copy: {
-        images: [
+        "default": [
             "test/fixtures/js/**:public/js",
-            {
-                "test/fixtures/css/**": "public/css"
-            }
+            "test/fixtures/css/**:public/css",
+            "test/fixtures/**.html:public"
         ]
     }
 };

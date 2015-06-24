@@ -45,7 +45,7 @@ function handleCli (cli, opts) {
 
         require('./lib/command.run')(cli, opts, {
             type: "command",
-            tasks: tasks
+            cli: cli
         });
     }
 
