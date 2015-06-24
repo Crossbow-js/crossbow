@@ -1,9 +1,8 @@
 module.exports = {
     tasks: {
         build: [
-            "copy:default",
             "sass",
-            "test/fixtures/task.js"
+            "babel-browserify"
         ]
     },
     watch:  {
@@ -14,7 +13,7 @@ module.exports = {
         },
         'tasks': {
             "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
-            "test/fixtures/js":     ["test/fixtures/task.js", "bs:reload"],
+            "test/fixtures/js":     ["babel-browserify", "bs:reload"],
             "test/fixtures/*.html": ["bs:reload"]
         }
     },
@@ -22,6 +21,11 @@ module.exports = {
         sass: {
             input:  'test/fixtures/scss/main.scss',
             output: 'test/fixtures/css/main.min.css',
+            root:   'test/fixtures/scss'
+        },
+        "babel-browserify": {
+            input:  'test/fixtures/js/app.js',
+            output: 'test/fixtures/js/app.js',
             root:   'test/fixtures/scss'
         }
     },
