@@ -1,1 +1,1 @@
-var shane = "Awwwww yissw";
+var shane = "";

@@ -4,6 +4,7 @@ var meow    = require('meow');
 var path    = require('path');
 var logger  = require('./lib/logger');
 var defaultCallback  = require('./lib/utils').defaultCallback;
+var retrieveConfig  = require('./lib/utils').retrieveConfig;
 
 var cli = meow({
     help: [
@@ -17,12 +18,14 @@ if (!module.parent) {
 }
 
 function handleCli (cli, opts) {
+
     var maybePath = path.resolve(process.cwd(), "./package.json");
+
     opts          = opts      || {};
     cli.flags     = cli.flags || {};
     opts.cb       = opts.cb   || defaultCallback;
     opts.cwd      = opts.cwd  || process.cwd();
-    opts.pkg      = opts.pkg  || require(maybePath);
+    opts.crossbow = opts.crossbow  || retrieveConfig(opts, cli.flags);
     opts._ctx     = ctx(opts);
 
     if (cli.flags.logLevel) {
@@ -30,7 +33,7 @@ function handleCli (cli, opts) {
     }
 
     if (cli.input[0] === 'copy') {
-        if (!opts.pkg.crossbow.copy) {
+        if (!opts.crossbow.copy) {
             logger.error('copy config not found, tried: %s', maybePath);
             return;
         }
@@ -39,12 +42,15 @@ function handleCli (cli, opts) {
 
     if (cli.input[0] === 'run') {
 
-        require('./lib/command.run')(cli, opts);
+        require('./lib/command.run')(cli, opts, {
+            type: "command",
+            tasks: tasks
+        });
     }
 
     if (cli.input[0] === 'watch') {
 
-        if (!opts.pkg.crossbow.watch) {
+        if (!opts.crossbow.watch) {
             opts.cb(new Error('watch config not found in ' + maybePath));
             return;
         }

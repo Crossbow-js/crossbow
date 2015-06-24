@@ -12,7 +12,7 @@ cli({input: ["watch"]}, {
                 },
                 'tasks': {
                     "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
-                    "test/fixtures/js":     ["test/fixtures/task.js"],
+                    "test/fixtures/js":     ["test/fixtures/task.js", "bs:reload"],
                     "test/fixtures/*.html": ["bs:reload"]
                 }
             },
