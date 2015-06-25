@@ -25,17 +25,11 @@ module.exports = {
             input:  'test/fixtures/js/app.js',
             output: 'test/fixtures/js/dist/bundle.js',
             root:   'test/fixtures/js'
-        },
-        "eslint": {
-            input: "test/fixtures/*.js",
-            options: "test/fixtures/.eslintrc"
         }
     },
     copy: {
         "default": [
-            "test/fixtures/js/**:public/js",
-            "test/fixtures/css/**:public/css",
-            "test/fixtures/**.html:public"
+            "test/fixtures/*/**:public"
         ]
     }
 };
