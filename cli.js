@@ -25,38 +25,57 @@ function handleCli (cli, opts) {
     cli.flags     = cli.flags     || {};
     opts.cb       = opts.cb       || defaultCallback;
     opts.cwd      = opts.cwd      || process.cwd();
-    opts.crossbow = opts.crossbow || retrieveConfig(opts, cli.flags);
 
-    opts.ctx      = ctx(opts);
-
-    if (cli.flags.logLevel) {
-        logger.setLevel(cli.flags.logLevel);
-    }
-
-    if (cli.input[0] === 'copy') {
-        if (!opts.crossbow.copy) {
-            logger.error('copy config not found, tried: %s', maybePath);
-            return;
-        }
-        require('./lib/command.copy')(cli, opts);
-    }
-
-    if (cli.input[0] === 'run') {
-
-        require('./lib/command.run')(cli, opts, {
-            type: "command",
-            cli: cli
+    if (opts.crossbow) {
+        processInput(cli, opts);
+    } else {
+        retrieveConfig(opts, cli.flags, function (err, config) {
+            if (err) {
+                throw err;
+            }
+            if (!config) {
+                throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
+                    ' with a path to a JS file');
+            }
+            opts.crossbow = config;
+            processInput(cli, opts);
         });
+
     }
 
-    if (cli.input[0] === 'watch') {
+    function processInput (cli, opts) {
 
-        if (!opts.crossbow.watch) {
-            opts.cb(new Error('watch config not found in ' + maybePath));
-            return;
+        opts.ctx = ctx(opts);
+
+        if (cli.flags.logLevel) {
+            logger.setLevel(cli.flags.logLevel);
         }
 
-        require('./lib/command.watch')(cli, opts);
+        if (cli.input[0] === 'copy') {
+            if (!opts.crossbow.copy) {
+                logger.error('copy config not found, tried: %s', maybePath);
+                return;
+            }
+            require('./lib/command.copy')(cli, opts);
+        }
+
+        if (cli.input[0] === 'run') {
+
+            require('./lib/command.run')(cli, opts, {
+                type: "command",
+                cli: cli
+            });
+        }
+
+        if (cli.input[0] === 'watch') {
+
+            if (!opts.crossbow.watch) {
+                opts.cb(new Error('watch config not found in ' + maybePath));
+                return;
+            }
+
+            require('./lib/command.watch')(cli, opts);
+        }
     }
 }
 
