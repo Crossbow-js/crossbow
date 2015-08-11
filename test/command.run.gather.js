@@ -7,10 +7,13 @@ var gather = require('../lib/command.copy').gatherCopyTasks;
 var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Gathering run tasks', function () {
-    it.only('can gather simple tasks', function () {
+    it.only('can gather simple tasks', function (done) {
 
         var cli = require("../cli");
-        cli({input: ["run", "sass:dev:prod", "icons:all"]}, {
+
+        cli({              // valid                            // valid
+            input: ["run", "sass:dev:prod", "icons:all", "js", "example.js"],
+        }, {
             crossbow: {
                 sass: {
                     default: {
@@ -23,6 +26,11 @@ describe('Gathering run tasks', function () {
                     }
                 }
             }
+        }, function (err, output) {
+            assert.equal(output.valid.length, 2);
+            assert.equal(output.valid[0].subTasks.length, 2);
+            assert.equal(output.valid[1].subTasks.length, 0);
+            done();
         })
     });
     //it('can gather nested simple tasks', function () {

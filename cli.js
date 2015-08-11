@@ -5,6 +5,7 @@ var path             = require('path');
 var logger           = require('./lib/logger');
 var defaultCallback  = require('./lib/utils').defaultCallback;
 var retrieveConfig   = require('./lib/utils').retrieveConfig;
+var Immutable   = require('immutable');
 
 var cli = meow({
     help: [
@@ -13,23 +14,31 @@ var cli = meow({
     ].join('\n')
 });
 
+var defaults = {
+    cwd: process.cwd()
+};
+
 if (!module.parent) {
     handleCli(cli);
 }
 
-function handleCli (cli, opts) {
+function handleCli (cli, input, cb) {
+
+    if (typeof input === 'function') {
+        cb = input;
+        input = {};
+    }
+
+    cli.flags = cli.flags || {};
 
     var maybePath = path.resolve(process.cwd(), "./package.json");
+    var config    = Immutable.fromJS(defaults).mergeDeep(cli.flags);
+    config        = config.set('cb', cb || defaultCallback);
 
-    opts          = opts          || {};
-    cli.flags     = cli.flags     || {};
-    opts.cb       = opts.cb       || defaultCallback;
-    opts.cwd      = opts.cwd      || process.cwd();
-
-    if (opts.crossbow) {
-        processInput(cli, opts);
+    if (input.crossbow) {
+        processInput(cli, input);
     } else {
-        retrieveConfig(opts, cli.flags, function (err, config) {
+        retrieveConfig(input, cli.flags, function (err, config) {
             if (err) {
                 throw err;
             }
@@ -37,44 +46,44 @@ function handleCli (cli, opts) {
                 throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
                     ' with a path to a JS file');
             }
-            opts.crossbow = config;
-            processInput(cli, opts);
+            input.crossbow = config;
+            processInput(cli, input);
         });
-
     }
 
-    function processInput (cli, opts) {
+    function processInput (cli, input) {
 
-        opts.ctx = ctx(opts);
+        input.ctx = ctx(input);
 
         if (cli.flags.logLevel) {
             logger.setLevel(cli.flags.logLevel);
         }
 
         if (cli.input[0] === 'copy') {
-            if (!opts.crossbow.copy) {
+            if (!input.crossbow.copy) {
                 logger.error('copy config not found, tried: %s', maybePath);
                 return;
             }
-            require('./lib/command.copy')(cli, opts);
+            require('./lib/command.copy')(cli, input);
         }
 
         if (cli.input[0] === 'run') {
 
-            require('./lib/command.run')(cli, opts, {
+            require('./lib/command.run')(cli, input, {
                 type: "command",
-                cli: cli
+                cli: cli,
+                config: config
             });
         }
 
         if (cli.input[0] === 'watch') {
 
-            if (!opts.crossbow.watch) {
-                opts.cb(new Error('watch config not found in ' + maybePath));
+            if (!input.crossbow.watch) {
+                input.cb(new Error('watch config not found in ' + maybePath));
                 return;
             }
 
-            require('./lib/command.watch')(cli, opts);
+            require('./lib/command.watch')(cli, input);
         }
     }
 }

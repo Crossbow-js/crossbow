@@ -1,110 +1,73 @@
 var prom    = require('prom-seq');
 var resolve = require('path').resolve;
-var exists  = require('fs').existsSync;
 var objPath = require('object-path');
 var logger  = require('./logger');
 var copy    = require('./command.copy');
+var fs      = require('fs');
 var Rx      = require('rx');
+var exists  = Rx.Observable.fromNodeCallback(fs.exists);
 var getPresentableTaskList = require('./utils').getPresentableTaskList;
 
-module.exports = function (cli, opts, trigger) {
+module.exports = function (cli, input, trigger) {
 
     var tasks    = cli.input.slice(1);
-    var taskList = [];
-    var crossbow = opts.crossbow || {};
+    var crossbow = input.crossbow || {};
+    var config   = trigger.config;
+    var cb       = config.get('cb');
 
     if (!tasks.length === 0) {
         logger.error('Please provide a command for {magenta:Crossbow} to run');
         return;
     }
 
-    if (!opts.ctx.trigger.type) {
-        opts.ctx.trigger = trigger;
+    if (!input.ctx.trigger.type) {
+        input.ctx.trigger = trigger;
     }
 
-    if (crossbow) {
+    var str = Rx.Observable.fromArray(tasks);
 
-        var str = Rx.Observable.fromArray(tasks);
+    var tasks = str
+        .map(x => x.split(':'))
+        .map(x => {
+            return {
+                taskName: x[0],
+                subTasks: x.slice(1),
+                modules: locateModule(x[0])
+            }
+        });
 
-        var subtasks = str
-            .filter(x => x.indexOf(':') > 1)
-            .map(x => x.split(':'))
-            .map(x => {
-                return {
-                    taskName: x[0],
-                    subTasks: x.slice(1)
-                }
-            })
-            //.filter(x => taskExists(x))
-            .toArray()
-            .subscribe(
-                x => console.log(x),
-                e => console.error(e),
-                s => console.log('DONE')
-            );
+    var validTasks = tasks
+        .filter(x => x.modules.length)
+        .toArray();
 
-        //taskList = flattenTaskList([], tasks);
-        //
-        //function flattenTaskList(original, arr) {
-        //    return arr.reduce(function (arr, task) {
-        //        var maybe = getFromTasks(task);
-        //        if (maybe) {
-        //            flattenTaskList(original, maybe);
-        //        } else {
-        //            arr.push(task);
-        //        }
-        //        return arr;
-        //    }, original);
-        //}
-    }
+    var invalidTasks = tasks
+        .filter(x => x.modules.length === 0)
+        .toArray();
 
-    //if (!taskList.length) {
-    //    taskList = tasks.map(gatherTasks);
-    //} else {
-    //    taskList = taskList.map(gatherTasks);
-    //}
-    //
-    //function getFromTasks (maybe) {
-    //    return objPath.get(crossbow, ['tasks', maybe])
-    //        || objPath.get(crossbow, maybe)
-    //}
-    //
-    //function gatherTasks(name) {
-    //
-    //    var taskList = [];
-    //    var copyTask = name.match(/^copy:(.+)/);
-    //    var alias    = name.split(" ");
-    //
-    //    if (alias.length === 3) {
-    //        name = alias[0];
-    //    }
-    //
-    //    if (copyTask) {
-    //        taskList = copy.makeCopyTask(copyTask[1], opts);
-    //    } else {
-    //        var possibles = [
-    //            resolve(opts.cwd, 'tasks', name + '.js'),
-    //            resolve(opts.cwd, 'tasks', name),
-    //            resolve(opts.cwd, name + '.js'),
-    //            resolve(opts.cwd, name),
-    //            resolve(opts.cwd, 'node_modules', 'crossbow-' + name)
-    //        ].some(function (filepath) {
-    //                if (exists(filepath)) {
-    //                    logger.debug('{ok: } task found for {cyan:%s} in {yellow:%s', name, filepath);
-    //                    taskList = require(filepath).tasks;
-    //                    return true;
-    //                }
-    //            });
-    //    }
-    //
-    //    if (!possibles && !taskList.length) {
-    //        opts.cb(new Error('task `'+name+'` not found - please check your config'));
-    //    }
-    //
-    //    return taskList;
-    //}
+    Rx.Observable
+        .zip(validTasks, invalidTasks, function (valid, invalid) {
+            return {valid, invalid};
+        })
+        .subscribe(
+            x => {
+                config.get('cb')(null, x)
+            },
+            e => {
+                throw e;
+            },
+            s => console.log("all done")
+        );
 
-    //console.log(taskList);
+        function locateModule (name) {
+            return [
+                resolve(input.cwd, 'tasks', name + '.js'),
+                resolve(input.cwd, 'tasks', name),
+                resolve(input.cwd, name + '.js'),
+                resolve(input.cwd, name),
+                resolve(input.cwd, 'node_modules', 'crossbow-' + name)
+            ].filter(x => fs.existsSync(x))
+        }
+
 
     //if (opts.handoff) {
     //    return prom.create(taskList)('', opts.ctx);
