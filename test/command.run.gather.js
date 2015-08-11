@@ -1,0 +1,59 @@
+var assert = require('chai').assert;
+var watch = require('../lib/command.watch');
+var cwd = require('path').resolve('test/fixtures');
+var current = process.cwd();
+var resolve = require('path').resolve;
+var gather = require('../lib/command.copy').gatherCopyTasks;
+var getBsConfig = require('../lib/utils').getBsConfig;
+
+describe('Gathering run tasks', function () {
+    it.only('can gather simple tasks', function () {
+
+        var cli = require("../cli");
+        cli({input: ["run", "sass:dev:prod", "icons:all"]}, {
+            crossbow: {
+                sass: {
+                    default: {
+                        input: "scss/scss/core.scss",
+                        output: "css/scss/core.css"
+                    },
+                    dev: {
+                        input: "scss/scss/core.scss",
+                        output: "css/scss/core.min.css"
+                    }
+                }
+            }
+        })
+    });
+    //it('can gather nested simple tasks', function () {
+    //    var tasks = gather({
+    //        copy: {
+    //            tasks: [
+    //                {
+    //                    "**/*.js": "babel"
+    //                }
+    //            ]
+    //        }
+    //    });
+    //
+    //    assert.equal(tasks.length, 1);
+    //    assert.equal(tasks[0].src[0], '**/*.js');
+    //    assert.equal(tasks[0].dest[0],    'babel');
+    //});
+    //it('can select namespaced copy tasks (2)', function () {
+    //    var tasks = gather({
+    //        copy: {
+    //            "someother": {
+    //                "app/**/*.js": "babel2"
+    //            },
+    //            "default": {
+    //                "app/**/*.css": "public/css"
+    //            },
+    //        }
+    //    }, 'someother');
+    //
+    //    assert.equal(tasks.length, 1);
+    //    assert.equal(tasks[0].src[0], 'app/**/*.js');
+    //    assert.equal(tasks[0].dest[0], 'babel2');
+    //});
+});

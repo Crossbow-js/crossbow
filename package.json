@@ -4,7 +4,9 @@
   "description": "",
   "main": "cli.js",
   "scripts": {
-    "test": "./cli.js run eslint --config crossbow.js"
+    "test": "./cli.js run eslint --config crossbow.js",
+    "es6": "babel src --out-dir lib --blacklist useStrict",
+    "es6-watch": "babel src --out-dir lib --blacklist useStrict --watch"
   },
   "author": "",
   "license": "ISC",
@@ -23,7 +25,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^5.2.0",
-    "babel": "^5.6.4",
+    "babel": "^5.8.21",
     "chai": "^3.0.0",
     "crossbow-babel-browserify": "^1.0.3",
     "crossbow-eslint": "^1.0.4",

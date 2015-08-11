@@ -18,7 +18,6 @@ describe('Gathering copy tasks', function () {
             }
         });
 
-        console.log(tasks);
         assert.equal(tasks.length, 2);
         assert.equal(tasks[0].src[0], 'js');
         assert.equal(tasks[0].dest[0], 'public/js');

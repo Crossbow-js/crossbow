@@ -1,15 +1,15 @@
-var prom = require('prom-seq');
+var prom    = require('prom-seq');
 var resolve = require('path').resolve;
-var exists = require('fs').existsSync;
+var exists  = require('fs').existsSync;
 var objPath = require('object-path');
-var logger = require('./logger');
-var copy = require('./command.copy');
-var Rx = require('rx');
+var logger  = require('./logger');
+var copy    = require('./command.copy');
+var Rx      = require('rx');
 var getPresentableTaskList = require('./utils').getPresentableTaskList;
 
 module.exports = function (cli, opts, trigger) {
 
-    var tasks = cli.input.slice(1);
+    var tasks    = cli.input.slice(1);
     var taskList = [];
     var crossbow = opts.crossbow || {};
 
@@ -26,24 +26,22 @@ module.exports = function (cli, opts, trigger) {
 
         var str = Rx.Observable.fromArray(tasks);
 
-        var subtasks = str.filter(function (x) {
-            return x.indexOf(':') > 1;
-        }).map(function (x) {
-            return x.split(':');
-        }).map(function (x) {
-            return {
-                taskName: x[0],
-                subTasks: x.slice(1)
-            };
-        })
-        //.filter(x => taskExists(x))
-        .toArray().subscribe(function (x) {
-            return console.log(x);
-        }, function (e) {
-            return console.error(e);
-        }, function (s) {
-            return console.log('DONE');
-        });
+        var subtasks = str
+            .filter(x => x.indexOf(':') > 1)
+            .map(x => x.split(':'))
+            .map(x => {
+                return {
+                    taskName: x[0],
+                    subTasks: x.slice(1)
+                }
+            })
+            //.filter(x => taskExists(x))
+            .toArray()
+            .subscribe(
+                x => console.log(x),
+                e => console.error(e),
+                s => console.log('DONE')
+            );
 
         //taskList = flattenTaskList([], tasks);
         //
