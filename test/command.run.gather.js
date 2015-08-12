@@ -28,7 +28,7 @@ describe.only('Gathering run tasks', function () {
             flags: {
                 config: 'crossbow-alt.js'
             }
-        }, function (err, output) {
+        }, {}, function (err, output) {
             assert.equal(output.valid.length, 1);
             assert.equal(output.valid[0].subTasks.length, 0);
             assert.equal(output.valid[0].tasks.length, 2);
@@ -43,7 +43,7 @@ describe.only('Gathering run tasks', function () {
             flags: {
                 config: 'examples/crossbow.yaml'
             }
-        }, function (err, output) {
+        }, {}, function (err, output) {
             assert.equal(output.valid.length, 1);
             done();
         })
@@ -54,7 +54,7 @@ describe.only('Gathering run tasks', function () {
             flags: {
                 config: 'crossbow.yaml'
             }
-        }, function (err, output) {
+        }, {}, function (err, output) {
             assert.equal(output.valid.length, 1);
             done();
         })

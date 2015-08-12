@@ -19,7 +19,7 @@ var defaults = {
 };
 
 if (!module.parent) {
-    handleCli(cli);
+    handleCli(cli, {});
 }
 
 function handleCli (cli, input, cb) {

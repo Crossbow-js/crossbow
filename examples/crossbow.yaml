@@ -1,2 +1,2 @@
 tasks:
-  js: ['cli.js', 'test/utils.js']
+  js: ['examples/tasks/simple.js']
