@@ -30,26 +30,14 @@ module.exports = function (cli, input, trigger) {
 
     var tasks = cliTasks
         .map(x => x.split(':'))
-        .map(x => flatTask(x));
-
-    var alias = cliTasks
-        .filter(x => {
-            return Object.keys(crossbow.tasks).indexOf(x) > -1;
-        })
-        .map(x => {
-            var task = flatTask([x]);
-            task.tasks = crossbow.tasks[x].map(flatTask);
-            return task;
-        })
-        .map(x => flatTask([x]))
-        .subscribe(x => console.log(x));
+        .map(x => flatTask(x))
 
     var validTasks = tasks
-        .filter(x => x.modules.length)
+        .filter(x => validateTask(x))
         .toArray();
 
     var invalidTasks = tasks
-        .filter(x => x.modules.length === 0)
+        .filter(x => !validateTask(x))
         .toArray();
 
     Rx.Observable
@@ -67,8 +55,9 @@ module.exports = function (cli, input, trigger) {
         );
 
     /**
+     * Create the flat task format
      * @param {Array} task
-     * @returns {{taskName: *, subTasks: *, modules: Array.<T>}}
+     * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array}}
      */
     function flatTask (task) {
         if (!Array.isArray(task)) {
@@ -77,8 +66,47 @@ module.exports = function (cli, input, trigger) {
         return {
             taskName: task[0],
             subTasks: task.slice(1),
-            modules: utils.locateModule(config.get('cwd'), task[0])
+            modules: utils.locateModule(config.get('cwd'), task[0]),
+            tasks: resolveTasks([], task[0])
         }
+    }
+
+    /**
+     *
+     * @param initial
+     * @param taskname
+     * @returns {*}
+     */
+    function resolveTasks (initial, taskname) {
+
+        var keys = Object.keys(crossbow.tasks);
+
+        if (keys.indexOf(taskname) > -1) {
+            return crossbow.tasks[taskname].map(function (item) {
+                var flat   = flatTask(item);
+                flat.tasks = resolveTasks(flat.tasks, item);
+                return flat;
+            });
+        }
+
+        return initial;
+    }
+
+    /**
+     * A task is valid if every child eventually resolves to
+     * having a module
+     * @param {Object} task
+     * @returns {*}
+     */
+    function validateTask(task) {
+        var valid = task.modules.length > 0 || task.tasks.length > 0;
+        if (valid && task.tasks.length) {
+            return task.tasks.every(validateTask);
+        }
+        if (valid && !task.tasks.length) {
+            return true;
+        }
+        return false;
     }
 
     //if (opts.handoff) {
