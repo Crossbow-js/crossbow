@@ -4,6 +4,7 @@ var resolve  = require('path').resolve;
 var basename  = require('path').basename;
 var logger   = require('./logger');
 var utils    = exports;
+var fs       = require('fs');
 var Rx       = require('rx');
 
 /**
@@ -163,4 +164,21 @@ utils.getPresentableTaskList = function (arr) {
         }
         return item;
     })
+};
+
+/**
+ * @param {String} cwd
+ * @param {String} name
+ * @returns {Array.<T>}
+ */
+utils.locateModule = function (cwd, name) {
+    return [
+        ['tasks', name + '.js'],
+        ['tasks', name],
+        [name + '.js'],
+        [name],
+        ['node_modules', 'crossbow-' + name]
+    ]
+    .map(x => resolve.apply(null, [cwd].concat(x)))
+    .filter(x => fs.existsSync(x));
 };

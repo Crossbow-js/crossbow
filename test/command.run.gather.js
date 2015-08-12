@@ -7,7 +7,7 @@ var gather = require('../lib/command.copy').gatherCopyTasks;
 var getBsConfig = require('../lib/utils').getBsConfig;
 
 describe('Gathering run tasks', function () {
-    it.only('can gather simple tasks', function (done) {
+    it('can gather simple tasks', function (done) {
 
         var cli = require("../cli");
 
@@ -30,6 +30,25 @@ describe('Gathering run tasks', function () {
             assert.equal(output.valid.length, 2);
             assert.equal(output.valid[0].subTasks.length, 2);
             assert.equal(output.valid[1].subTasks.length, 0);
+            done();
+        })
+    });
+    it.only('can gather when using an alias', function (done) {
+
+        var cli = require("../cli");
+
+        cli({
+            input: ["run", "css"]
+        }, {
+            crossbow: {
+                tasks: {
+                    css: ['sass', 'example.js']
+                }
+            }
+        }, function (err, output) {
+            //assert.equal(output.valid.length, 2);
+            //assert.equal(output.valid[0].taskName, 'sass');
+            //assert.equal(output.valid[1].taskName, 'example.js');
             done();
         })
     });

@@ -7,13 +7,15 @@ var fs      = require('fs');
 var Rx      = require('rx');
 var exists  = Rx.Observable.fromNodeCallback(fs.exists);
 var getPresentableTaskList = require('./utils').getPresentableTaskList;
+var utils = require('./utils');
 
 module.exports = function (cli, input, trigger) {
 
-    var tasks    = cli.input.slice(1);
-    var crossbow = input.crossbow || {};
-    var config   = trigger.config;
-    var cb       = config.get('cb');
+    var tasks      = cli.input.slice(1);
+    var crossbow   = input.crossbow || {};
+    crossbow.tasks = crossbow.tasks || {};
+    var config     = trigger.config;
+    var cb         = config.get('cb');
 
     if (!tasks.length === 0) {
         logger.error('Please provide a command for {magenta:Crossbow} to run');
@@ -24,17 +26,23 @@ module.exports = function (cli, input, trigger) {
         input.ctx.trigger = trigger;
     }
 
-    var str = Rx.Observable.fromArray(tasks);
+    var cliTasks = Rx.Observable.fromArray(tasks);
 
-    var tasks = str
+    var tasks = cliTasks
         .map(x => x.split(':'))
+        .map(x => flatTask(x));
+
+    var alias = cliTasks
+        .filter(x => {
+            return Object.keys(crossbow.tasks).indexOf(x) > -1;
+        })
         .map(x => {
-            return {
-                taskName: x[0],
-                subTasks: x.slice(1),
-                modules: locateModule(x[0])
-            }
-        });
+            var task = flatTask([x]);
+            task.tasks = crossbow.tasks[x].map(flatTask);
+            return task;
+        })
+        .map(x => flatTask([x]))
+        .subscribe(x => console.log(x));
 
     var validTasks = tasks
         .filter(x => x.modules.length)
@@ -55,19 +63,23 @@ module.exports = function (cli, input, trigger) {
             e => {
                 throw e;
             },
-            s => console.log("all done")
+            s => console.log("\nall done")
         );
 
-        function locateModule (name) {
-            return [
-                resolve(input.cwd, 'tasks', name + '.js'),
-                resolve(input.cwd, 'tasks', name),
-                resolve(input.cwd, name + '.js'),
-                resolve(input.cwd, name),
-                resolve(input.cwd, 'node_modules', 'crossbow-' + name)
-            ].filter(x => fs.existsSync(x))
+    /**
+     * @param {Array} task
+     * @returns {{taskName: *, subTasks: *, modules: Array.<T>}}
+     */
+    function flatTask (task) {
+        if (!Array.isArray(task)) {
+            task = [task];
         }
-
+        return {
+            taskName: task[0],
+            subTasks: task.slice(1),
+            modules: utils.locateModule(config.get('cwd'), task[0])
+        }
+    }
 
     //if (opts.handoff) {
     //    return prom.create(taskList)('', opts.ctx);
