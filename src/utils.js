@@ -102,54 +102,49 @@ utils.getBsConfig = function (crossbow, opts) {
     return bsConfig;
 };
 
-utils.retrieveConfig = function (opts, flags, done) {
-
-    var CONF  = 'crossbow.js';
-    var PKG   = 'package.json';
-
-    var files = [CONF, PKG];
-
-    if (flags.config) {
-        utils.lookupFiles(opts.cwd, [flags.config])
-            .toArray()
-            .subscribe(function (files) {
-                if (files.length) {
-                    done(null, require(files[0]));
-                } else {
-                    done();
-                }
-            }, done);
-    } else {
-        utils.lookupFiles(opts.cwd, files)
-            .reduce(function (all, file) {
-                all[basename(file)] = require(file);
-                return all;
-            }, {})
-            .subscribe(function (out) {
-                if (out[CONF]) {
-                    return done(null, out[CONF]);
-                }
-                if (out[PKG] && out[PKG].crossbow) {
-                    return done(null, out[PKG].crossbow);
-                }
-                done();
-            });
-    }
-};
-
 /**
- * @param cwd
- * @param input
+ * Try to auto-load configuration
+ * @param flags
+ * @param config
  * @returns {*}
  */
-utils.lookupFiles = function (cwd, input) {
-    var fs    = require('fs');
-    return Rx.Observable
-        .fromArray(input)
-        .map(function (file) {
-            return resolve(cwd, file);
-        })
-        .filter(fs.existsSync);
+utils.retrieveConfig = function (flags, config) {
+
+    var maybes = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
+    var cwd    = config.get('cwd');
+
+    if (flags.config) {
+        return filterFiles([flags.config]).map(x => require(x));
+    } else {
+        return getFiles(filterFiles(maybes));
+    }
+
+    /**
+     * Get a file
+     * @param input
+     * @returns {*}
+     */
+    function getFiles (input) {
+        return input
+            .map(x => {
+                if (x.match(/crossbow.(js|yml|yaml)$/)) {
+                    return require(x);
+                } else {
+                    var mod = require(x);
+                    if (mod.crossbow) {
+                        return mod.crossbow;
+                    }
+                }
+                return false;
+            })
+            .filter(x => x);
+    }
+
+    function filterFiles (input) {
+        return input
+            .map(x => resolve(cwd, x))
+            .filter(fs.existsSync);
+    }
 };
 
 /**

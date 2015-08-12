@@ -36,19 +36,16 @@ function handleCli (cli, input, cb) {
     config        = config.set('cb', cb || defaultCallback);
 
     if (input.crossbow) {
-        processInput(cli, input);
+        return processInput(cli, input);
     } else {
-        retrieveConfig(input, cli.flags, function (err, config) {
-            if (err) {
-                throw err;
-            }
-            if (!config) {
-                throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
-                    ' with a path to a JS file');
-            }
-            input.crossbow = config;
-            processInput(cli, input);
-        });
+        var fromFile = retrieveConfig(cli.flags, config);
+
+        if (fromFile.length) {
+            return processInput(cli, {crossbow: fromFile[0]});
+        } else {
+            throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
+                ' with a path to a JS file');
+        }
     }
 
     function processInput (cli, input) {
@@ -64,12 +61,12 @@ function handleCli (cli, input, cb) {
                 logger.error('copy config not found, tried: %s', maybePath);
                 return;
             }
-            require('./lib/command.copy')(cli, input);
+            return require('./lib/command.copy')(cli, input);
         }
 
         if (cli.input[0] === 'run') {
 
-            require('./lib/command.run')(cli, input, {
+            return require('./lib/command.run')(cli, input, {
                 type: "command",
                 cli: cli,
                 config: config
@@ -83,7 +80,7 @@ function handleCli (cli, input, cb) {
                 return;
             }
 
-            require('./lib/command.watch')(cli, input);
+            return require('./lib/command.watch')(cli, input);
         }
     }
 }

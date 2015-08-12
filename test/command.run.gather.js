@@ -12,6 +12,31 @@ function testCase (command, input, cb) {
 }
 
 describe.only('Gathering run tasks', function () {
+    it('can gather from external config file', function (done) {
+        testCase(["run", "js"], {}, function (err, output) {
+            assert.equal(output.valid.length, 1);
+            assert.equal(output.valid[0].subTasks.length, 0);
+            assert.equal(output.valid[0].tasks.length, 2);
+            assert.equal(output.valid[0].tasks[0].tasks.length, 0);
+            assert.equal(output.valid[0].tasks[1].tasks.length, 0);
+            done();
+        })
+    });
+    it('can gather from external config file via flag', function (done) {
+        cli({
+            input: ["run", "my-awesome-task"],
+            flags: {
+                config: 'crossbow-alt.js'
+            }
+        }, function (err, output) {
+            assert.equal(output.valid.length, 1);
+            assert.equal(output.valid[0].subTasks.length, 0);
+            assert.equal(output.valid[0].tasks.length, 2);
+            assert.equal(output.valid[0].tasks[0].tasks.length, 0);
+            assert.equal(output.valid[0].tasks[1].tasks.length, 0);
+            done();
+        })
+    });
     it('can gather simple tasks', function (done) {
         testCase(["run", "sass:dev:prod", "icons:all", "js", "example.js"], {
             crossbow: {
