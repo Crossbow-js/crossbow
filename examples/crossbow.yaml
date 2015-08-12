@@ -1,0 +1,2 @@
+tasks:
+  js: ['cli.js', 'test/utils.js']

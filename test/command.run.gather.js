@@ -37,6 +37,28 @@ describe.only('Gathering run tasks', function () {
             done();
         })
     });
+    it('can gather from external config file via flag', function (done) {
+        cli({
+            input: ["run", "js"],
+            flags: {
+                config: 'examples/crossbow.yaml'
+            }
+        }, function (err, output) {
+            assert.equal(output.valid.length, 1);
+            done();
+        })
+    });
+    it('can gather from default yaml file', function (done) {
+        cli({
+            input: ["run", "css"],
+            flags: {
+                config: 'crossbow.yaml'
+            }
+        }, function (err, output) {
+            assert.equal(output.valid.length, 1);
+            done();
+        })
+    });
     it('can gather simple tasks', function (done) {
         testCase(["run", "sass:dev:prod", "icons:all", "js", "example.js"], {
             crossbow: {

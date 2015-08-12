@@ -1,11 +1,13 @@
 var objPath  = require('object-path');
 var exists   = require('fs').existsSync;
 var resolve  = require('path').resolve;
+var extname  = require('path').extname;
 var basename  = require('path').basename;
 var logger   = require('./logger');
 var utils    = exports;
 var fs       = require('fs');
 var Rx       = require('rx');
+var yml = require('js-yaml');
 
 /**
  * @param {Error|TypeError} [err]
@@ -110,13 +112,27 @@ utils.getBsConfig = function (crossbow, opts) {
  */
 utils.retrieveConfig = function (flags, config) {
 
-    var maybes = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
-    var cwd    = config.get('cwd');
+    var validExts = ['.js', '.json', '.yaml', '.yml'];
+    var maybes    = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
+    var cwd       = config.get('cwd');
 
     if (flags.config) {
-        return filterFiles([flags.config]).map(x => require(x));
+        return filterFiles([flags.config]).map(importConfig);
     } else {
-        return getFiles(filterFiles(maybes));
+        var out = getFiles(filterFiles(maybes)[0]);
+        return out;
+
+    }
+
+    function importConfig (filepath) {
+        var ext = extname(filepath);
+        if (validExts.indexOf(ext) > -1) {
+            if (ext.match(/ya?ml$/)) {
+                return yml.safeLoad(fs.readFileSync(filepath))
+            }
+            return require(filepath);
+        }
+        return {};
     }
 
     /**
@@ -125,10 +141,15 @@ utils.retrieveConfig = function (flags, config) {
      * @returns {*}
      */
     function getFiles (input) {
-        return input
+        if (!Array.isArray(input)) {
+            input = [input];
+        }
+        var out = input
             .map(x => {
-                if (x.match(/crossbow.(js|yml|yaml)$/)) {
+                if (basename(x) === "crossbow.js") {
                     return require(x);
+                } else if (x.match(/yml|yaml$/)) {
+                    return yml.safeLoad(fs.readFileSync(x));
                 } else {
                     var mod = require(x);
                     if (mod.crossbow) {
@@ -138,6 +159,8 @@ utils.retrieveConfig = function (flags, config) {
                 return false;
             })
             .filter(x => x);
+
+        return out;
     }
 
     function filterFiles (input) {

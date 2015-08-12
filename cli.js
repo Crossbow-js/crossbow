@@ -39,7 +39,6 @@ function handleCli (cli, input, cb) {
         return processInput(cli, input);
     } else {
         var fromFile = retrieveConfig(cli.flags, config);
-
         if (fromFile.length) {
             return processInput(cli, {crossbow: fromFile[0]});
         } else {
