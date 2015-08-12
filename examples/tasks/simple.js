@@ -1,5 +1,6 @@
-function running (deferred, previous, ctx) {
-    console.log('Aww yeah');
+function simple (deferred, previous, ctx) {
+    deferred.notify({level: 'debug', msg: ['Simple done']});
+    deferred.resolve();
 }
 
-module.exports.tasks = running;
+module.exports.tasks = [simple];

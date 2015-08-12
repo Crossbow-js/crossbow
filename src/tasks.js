@@ -73,6 +73,28 @@ module.exports = function (input, config) {
                 valid:   taskList.filter(validateTask),
                 invalid: taskList.filter(x => !validateTask(x))
             };
+        },
+        createRunSequence: function (tasks) {
+
+            return flatten([], tasks);
+
+            function flatten (initial, items) {
+                 return items.reduce((all, item) => {
+                    if (item.modules.length) {
+                        return all.concat(getModules(item.modules));
+                    }
+                     if (item.tasks.length) {
+                         return flatten(all, item.tasks);
+                     }
+                    return all;
+                }, initial);
+            }
+
+            function getModules (item) {
+                return item.reduce(function (all, item) {
+                    return all.concat(require(item).tasks);
+                }, []);
+            }
         }
     }
 };

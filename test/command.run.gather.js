@@ -11,14 +11,38 @@ function testCase (command, input, cb) {
     cli({input: command}, input, cb);
 }
 
-describe.only('Gathering run tasks', function () {
+describe('Gathering run tasks', function () {
+    it('can combine files to form sequence', function (done) {
+        cli({
+            input: ["run", "examples/tasks/simple.js", "examples/tasks/complex.js"]
+        }, {}, function (err, output) {
+            assert.equal(output.sequence.length, 2);
+            assert.equal(output.sequence[0].name, 'simple');
+            assert.equal(output.sequence[1].name, 'complex');
+            done();
+        });
+    });
+    it.only('can combine files to form sequence from alias', function (done) {
+        cli({
+            input: ["run", "js"],
+            flags: {
+                config: "crossbow.yaml"
+            }
+        }, {}, function (err, output) {
+            assert.equal(output.sequence.length, 3);
+            assert.equal(output.sequence[0].name, 'simple');
+            assert.equal(output.sequence[1].name, 'simple2');
+            assert.equal(output.sequence[2].name, 'complex');
+            done();
+        });
+    });
     it('can gather from external config file', function (done) {
         testCase(["run", "js"], {}, function (err, output) {
-            assert.equal(output.valid.length, 1);
-            assert.equal(output.valid[0].subTasks.length, 0);
-            assert.equal(output.valid[0].tasks.length, 2);
-            assert.equal(output.valid[0].tasks[0].tasks.length, 0);
-            assert.equal(output.valid[0].tasks[1].tasks.length, 0);
+            assert.equal(output.tasks.valid.length, 1);
+            assert.equal(output.tasks.valid[0].subTasks.length, 0);
+            assert.equal(output.tasks.valid[0].tasks.length, 2);
+            assert.equal(output.tasks.valid[0].tasks[0].tasks.length, 0);
+            assert.equal(output.tasks.valid[0].tasks[1].tasks.length, 0);
             done();
         })
     });
@@ -29,11 +53,11 @@ describe.only('Gathering run tasks', function () {
                 config: 'crossbow-alt.js'
             }
         }, {}, function (err, output) {
-            assert.equal(output.valid.length, 1);
-            assert.equal(output.valid[0].subTasks.length, 0);
-            assert.equal(output.valid[0].tasks.length, 2);
-            assert.equal(output.valid[0].tasks[0].tasks.length, 0);
-            assert.equal(output.valid[0].tasks[1].tasks.length, 0);
+            assert.equal(output.tasks.valid.length, 1);
+            assert.equal(output.tasks.valid[0].subTasks.length, 0);
+            assert.equal(output.tasks.valid[0].tasks.length, 2);
+            assert.equal(output.tasks.valid[0].tasks[0].tasks.length, 0);
+            assert.equal(output.tasks.valid[0].tasks[1].tasks.length, 0);
             done();
         })
     });
@@ -44,7 +68,7 @@ describe.only('Gathering run tasks', function () {
                 config: 'examples/crossbow.yaml'
             }
         }, {}, function (err, output) {
-            assert.equal(output.valid.length, 1);
+            assert.equal(output.tasks.valid.length, 1);
             done();
         })
     });
@@ -55,7 +79,7 @@ describe.only('Gathering run tasks', function () {
                 config: 'crossbow.yaml'
             }
         }, {}, function (err, output) {
-            assert.equal(output.valid.length, 1);
+            assert.equal(output.tasks.valid.length, 1);
             done();
         })
     });
@@ -74,9 +98,9 @@ describe.only('Gathering run tasks', function () {
                 }
             }
         }, function (err, output) {
-            assert.equal(output.valid.length, 2);
-            assert.equal(output.valid[0].subTasks.length, 2);
-            assert.equal(output.valid[1].subTasks.length, 0);
+            assert.equal(output.tasks.valid.length, 2);
+            assert.equal(output.tasks.valid[0].subTasks.length, 2);
+            assert.equal(output.tasks.valid[1].subTasks.length, 0);
             done();
         })
     });
@@ -90,7 +114,7 @@ describe.only('Gathering run tasks', function () {
             }
         }, function (err, output) {
 
-            var first = output.valid[0];
+            var first = output.tasks.valid[0];
 
             assert.equal(first.taskName, 'css');
             assert.equal(first.modules.length, 0);
@@ -99,7 +123,6 @@ describe.only('Gathering run tasks', function () {
             assert.equal(first.tasks[2].tasks[0].taskName, 'cli.js');
             assert.equal(first.tasks[2].tasks[1].taskName, 'lib/ctx');
             assert.equal(first.tasks[2].tasks[1].modules.length, 1);
-            assert.equal(output.valid.length, 2);
             done();
         })
     });
@@ -112,8 +135,8 @@ describe.only('Gathering run tasks', function () {
                 }
             }
         }, function (err, output) {
-            assert.equal(output.valid.length, 1);
-            assert.equal(output.invalid.length, 1);
+            assert.equal(output.tasks.valid.length, 1);
+            assert.equal(output.tasks.invalid.length, 1);
             done();
         });
     });
