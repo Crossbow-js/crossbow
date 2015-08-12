@@ -1,6 +1,8 @@
-function complex (deferred, previous, ctx) {
-    deferred.notify({level: 'debug', msg: ['Complex', 'done']});
-    deferred.resolve();
+function complex (obs) {
+    setTimeout(function () {
+        obs.onNext();
+        obs.onCompleted();
+    }, 20)
 }
 
 module.exports.tasks = [complex];

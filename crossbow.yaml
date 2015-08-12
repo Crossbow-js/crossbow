@@ -1,4 +1,4 @@
 tasks:
-    css: ['sass', 'cli.js']
+    css: ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
     js: ['dummy']
     dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex.js']

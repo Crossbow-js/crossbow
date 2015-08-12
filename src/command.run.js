@@ -29,32 +29,68 @@ module.exports = function (cli, input, trigger) {
     var tasks        = taskResolver.gather(cliInput);
     var sequence     = taskResolver.createRunSequence(tasks.valid);
 
-    prom.create(sequence)('', input.ctx)
-        .then(function () {
+    var seq = sequence.reduce(function (all, seq) {
+        return all.concat(seq.fns.map(function (fn) {
+            return Rx.Observable.create(x => {
+                fn(x, seq.opts, input.ctx);
+            });
+        }));
+        return all;
+    }, []);
 
-            var topLevel = '{ok: } task {cyan:%s} completed';
-            var subLevel = '{gray:--> %s';
+    Rx.Observable
+        .from(seq)
+        .concatAll()
+        .toArray()
+        .subscribe(
+            x => cb(null, {tasks, runSequence: seq, sequence: sequence}),
+            e => cb(e),
+            s => console.log('\nDone')
+        );
 
-            logTasks(tasks.valid, topLevel);
+    //wrapArray([
+    //    wrapFn(sequence[0]),
+    //    wrapFn(sequence[1])
+    //])
+    //.forEach(
+    //    function (results) {
+    //        console.log(results);
+    //    },
+    //    function (err) {
+    //        console.log('Error: %s', err);
+    //    },
+    //    function () {
+    //        console.log('DonE');
+    //    }
+    //)
 
-            function logTasks(tasks, template) {
-                tasks.forEach(function (task) {
-                    logger.info(template, task.taskName);
-                    if (task.tasks.length) {
-                        logTasks(task.tasks, subLevel);
-                    }
-                });
-            }
-            cb(null, {tasks, sequence});
-        })
-        .progress(function (report) {
-            if (Array.isArray(report.msg)) {
-                logger[report.level].apply(logger, report.msg);
-            } else {
-                logger[report.level](report.msg);
-            }
-        })
-        .catch(function (err) {
-            throw err;
-        }).done();
+
+    //prom.create(sequence)('', input.ctx)
+    //    .then(function () {
+    //
+    //        var topLevel = '{ok: } task {cyan:%s} completed';
+    //        var subLevel = '{gray:--> %s';
+    //
+    //        logTasks(tasks.valid, topLevel);
+    //
+    //        function logTasks(tasks, template) {
+    //            tasks.forEach(function (task) {
+    //                logger.info(template, task.taskName);
+    //                if (task.tasks.length) {
+    //                    logTasks(task.tasks, subLevel);
+    //                }
+    //            });
+    //        }
+    //        cb(null, {tasks, sequence});
+    //    })
+    //    .progress(function (report) {
+    //        if (Array.isArray(report.msg)) {
+    //            logger[report.level].apply(logger, report.msg);
+    //        } else {
+    //            logger[report.level](report.msg);
+    //        }
+    //    })
+    //    .catch(function (err) {
+    //        throw err;
+    //    }).done();
 };

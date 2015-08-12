@@ -1,6 +1,6 @@
 module.exports = {
     tasks: {
-        "my-awesome-task": ['crossbow.js', 'example.js']
+        "my-awesome-task": ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
     },
     watch:  {
         'bs-config': {
