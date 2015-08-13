@@ -1,3 +1,12 @@
+watch:
+    bs-config:
+        server: "test/fixtures"
+        open: false
+    tasks:
+        default:
+            "test/fixtures/*.html": ["css:dev", "bs:reload"]
+        dev:
+            "test/fixtures/*.yaml": ["css"]
 tasks:
     css: ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
     js: ['dummy']

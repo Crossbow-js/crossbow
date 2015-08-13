@@ -18,7 +18,8 @@ var defaults = {
     cwd: process.cwd(),
     runMode: 'sequence',
     resumeOnError: false,
-    summary: 'short'
+    summary: 'short',
+    strict: true
 };
 
 if (!module.parent) {
@@ -74,7 +75,11 @@ function handleCli (cli, input, cb) {
                 return;
             }
 
-            return require('./lib/command.watch')(cli, input);
+            return require('./lib/command.watch')(cli, input, {
+                type: "command",
+                cli: cli,
+                config: config
+            });
         }
     }
 }

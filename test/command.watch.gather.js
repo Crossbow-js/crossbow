@@ -58,7 +58,7 @@ describe.only('Gathering watch tasks', function () {
                tasks: {
                    dev: [
                        {
-                           "*.js": ["css", "js"]
+                           "*.js": ["css", "js:dev"]
                        },
                        {
                            "*.css":  ["css", "js"],
@@ -71,9 +71,28 @@ describe.only('Gathering watch tasks', function () {
 
         assert.equal(tasks.dev.length, 3);
         assert.equal(tasks.dev[0].patterns[0], "*.js");
+        assert.equal(tasks.dev[0].tasks[0], "css");
+        assert.equal(tasks.dev[0].tasks[1], "js:dev");
         assert.equal(tasks.dev[1].patterns[0], "*.css");
         assert.equal(tasks.dev[2].patterns[0], "*.html");
+    });
+    it('can gather tasks in colon-separated format', function () {
 
+        var tasks = gather({
+           watch: {
+               before: ['js'],
+               tasks: {
+                   dev: {
+                       "*.js:*.html": "bs.reload('')"
+                   }
+               }
+           }
+        });
+
+        assert.equal(tasks.dev.length, 1);
+        assert.equal(tasks.dev[0].patterns.length, 2);
+        assert.equal(tasks.dev[0].patterns[0], "*.js");
+        assert.equal(tasks.dev[0].patterns[1], "*.html");
     });
 
     it('can use given bs-config', function () {

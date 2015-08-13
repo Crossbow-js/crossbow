@@ -8,58 +8,78 @@ var arrayify                = require('./utils').arrarify;
 var getPresentableTaskList  = require('./utils').getPresentableTaskList;
 var gatherTasks             = require('./gather-watch-tasks');
 
-module.exports = function (cli, opts) {
-
+module.exports = function (cli, opts, trigger) {
     var beforeTasks   = opts.crossbow.watch.before || [];
-
-    return runWatcher(cli, opts);
+    return runWatcher(cli, opts, trigger);
 };
-
-/**
- * @param crossbow
- * @param args
- */
-function gatherWatchTasks (crossbow, args) {
-    return gatherTasks(crossbow, 'watch', 'patterns', 'tasks', args);
-}
-
-module.exports.gatherWatchTasks = gatherWatchTasks;
 
 /**
  * @param cli
  * @param opts
  */
-function runWatcher (cli, opts) {
+function runWatcher (cli, opts, trigger) {
 
     var crossbow    = opts.crossbow;
-    var args        = cli.input.slice(1);
+    var cliInput    = cli.input.slice(1);
+    var tasks       = gatherTasks(crossbow, cliInput);
     var bsConfig    = getBsConfig(crossbow, opts);
     var watchConfig = {ignoreInitial: true};
-    var tasks       = gatherWatchTasks(crossbow.watch, args);
-    var bs          = require('browser-sync').create();
+    var config      = trigger.config;
 
-    bsConfig.files  = bsConfig.files || [];
-    bsConfig.logPrefix = function () {
-        return this.compile(logger.prefix);
-    };
-    bsConfig.logFileChanges = false;
+    if (!cliInput.length) {
+        if (tasks['default']) {
+            processInput([tasks['default']]);
+        } else {
+            throw new Error('No watch targets given and no `default` found');
+        }
+    } else {
 
-    bsConfig.files = bsConfig.files.concat(tasks.map(function (task, i) {
-        return {
-            options: task.options || watchConfig,
-            match: task.patterns,
-            fn: runCommandAfterWatch.bind(bs, task, opts)
+        var keys = Object.keys(tasks);
+
+        var matching = cliInput.filter(x => keys.indexOf(x) > -1);
+
+        if (matching.length !== cliInput.length && config.get('strict')) {
+            throw new Error('You tried to run the watch tasks `' + cliInput.join(', ') + '`' +
+                ' but only  `' + matching.join(' ') + '` were found in your config.');
+        }
+
+        var tsk = matching.reduce((all, item) => {
+            return all.concat(tasks[item]);
+        }, []);
+
+        processInput(tsk);
+    }
+
+    function processInput (tasks) {
+
+        var bs = require('browser-sync').create();
+
+        bsConfig.files  = bsConfig.files || [];
+
+        bsConfig.logPrefix = function () {
+            return this.compile(logger.prefix);
         };
-    }));
 
-    bs.init(bsConfig, function (err, bs) {
-        opts.cb(null, {
-            bsConfig: bsConfig,
-            tasks: tasks,
-            bs: bs,
-            opts: opts
+        bsConfig.logFileChanges = false;
+
+        bsConfig.files = bsConfig.files.concat(tasks.map(function (task, i) {
+            return {
+                options: task.options || watchConfig,
+                match: task.patterns,
+                fn: runCommandAfterWatch.bind(bs, task, opts)
+            };
+        }));
+
+        bs.init(bsConfig, function (err, bs) {
+            console.log('running');
+            //opts.cb(null, {
+            //    bsConfig: bsConfig,
+            //    tasks: tasks,
+            //    bs: bs,
+            //    opts: opts
+            //});
         });
-    });
+    }
 }
 
 /**
@@ -82,7 +102,7 @@ function runCommandAfterWatch (task, opts, event, file, cb) {
     var start = new Date().getTime();
     var validTasks = [];
 
-    var bsTasks    = task.tasks.filter(function (one) {
+    var bsTasks = task.tasks.filter(function (one) {
         var match  = one.match(/^bs:(.+)/);
         if (match) {
             return true;
@@ -100,67 +120,70 @@ function runCommandAfterWatch (task, opts, event, file, cb) {
     task.locked  = true;
     opts.handoff = true;
 
+    console.log(validTasks);
+    console.log(bsTasks);
+
     /**
      * Create the sequence of promises
      */
-    var promSeq = runCommand({input: ['run'].concat(validTasks)}, opts, {
-        type: 'watcher',
-        task: task,
-        event: event,
-        file: file,
-        opts: opts,
-        filepath: resolve(opts.cwd, file)
-    });
-
-    /**
-     * If in a testing env, just return the promises
-     */
-    if (process.env.TEST === 'true') {
-        return promSeq;
-    }
-
-    var presentableTasks = getPresentableTaskList(task.tasks);
-
-    /**
-     * Otherwise, start running the promises
-     * in sequence
-     */
-    promSeq
-        .then(function () {
-            logger.info('{yellow:%s} {cyan:::} %sms', presentableTasks.join(' -> '), new Date().getTime() - start);
-            if (bsTasks.length) {
-                bsTasks.forEach(function (task) {
-                    if (typeof bs[task.method] === 'function') {
-                        if (task.args.length) {
-                            bs[task.method].apply(bs, task.args);
-                        } else {
-                            bs[task.method].call(bs);
-                        }
-                    }
-                });
-            }
-            cb(null, bs);
-            setTimeout(function () {
-                task.locked = false;
-            }, 500);
-        })
-        .progress(function (obj) {
-            if (obj.level && obj.msg) {
-                logger[obj.level].apply(logger, arrayify(obj.msg));
-            }
-        })
-        .catch(function (err) {
-            setTimeout(function () {
-                task.locked = false;
-            }, 500);
-            if (!err.crossbow_silent) {
-                logger.error('{err: } Following error from {cyan:%s} task', presentableTasks.join(' -> '));
-                logger.error('{err: } %s', err.message);
-                console.log(err);
-            }
-
-            cb(err);
-        }).done();
+    //var promSeq = runCommand({input: ['run'].concat(validTasks)}, opts, {
+    //    type: 'watcher',
+    //    task: task,
+    //    event: event,
+    //    file: file,
+    //    opts: opts,
+    //    filepath: resolve(opts.cwd, file)
+    //});
+    //
+    ///**
+    // * If in a testing env, just return the promises
+    // */
+    //if (process.env.TEST === 'true') {
+    //    return promSeq;
+    //}
+    //
+    //var presentableTasks = getPresentableTaskList(task.tasks);
+    //
+    ///**
+    // * Otherwise, start running the promises
+    // * in sequence
+    // */
+    //promSeq
+    //    .then(function () {
+    //        logger.info('{yellow:%s} {cyan:::} %sms', presentableTasks.join(' -> '), new Date().getTime() - start);
+    //        if (bsTasks.length) {
+    //            bsTasks.forEach(function (task) {
+    //                if (typeof bs[task.method] === 'function') {
+    //                    if (task.args.length) {
+    //                        bs[task.method].apply(bs, task.args);
+    //                    } else {
+    //                        bs[task.method].call(bs);
+    //                    }
+    //                }
+    //            });
+    //        }
+    //        cb(null, bs);
+    //        setTimeout(function () {
+    //            task.locked = false;
+    //        }, 500);
+    //    })
+    //    .progress(function (obj) {
+    //        if (obj.level && obj.msg) {
+    //            logger[obj.level].apply(logger, arrayify(obj.msg));
+    //        }
+    //    })
+    //    .catch(function (err) {
+    //        setTimeout(function () {
+    //            task.locked = false;
+    //        }, 500);
+    //        if (!err.crossbow_silent) {
+    //            logger.error('{err: } Following error from {cyan:%s} task', presentableTasks.join(' -> '));
+    //            logger.error('{err: } %s', err.message);
+    //            console.log(err);
+    //        }
+    //
+    //        cb(err);
+    //    }).done();
 }
 
 module.exports.runCommandAfterWatch = runCommandAfterWatch;

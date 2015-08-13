@@ -45,7 +45,7 @@ var getTaskFormat = function (watchTask) {
 
     return Object.keys(watchTask).reduce((all, item) =>{
         return all.concat({
-            patterns: arrarify(item),
+            patterns: item.split(':'),
             tasks: arrarify(watchTask[item])
         });
     }, []);
@@ -68,18 +68,4 @@ module.exports = function (input) {
     }, {});
 
     return out;
-
-    //var watch = crossbow[key];
-    //var tasks = [];
-    //
-    //if (filters && filters.length) {
-    //    watch = filterTasks(watch, filters);
-    //}
-    //
-    //watch = stripBlacklisted(watch);
-    //
-    //console.log(watch.tasks.default[0]);
-    //console.log(watch.tasks.default[1]);
-
-
 };
