@@ -28,10 +28,11 @@ module.exports = function (cli, input, trigger) {
     var taskResolver = require('./tasks')(crossbow, config);
     var tasks        = taskResolver.gather(cliInput);
     var sequence     = taskResolver.createRunSequence(tasks.valid);
-
+    var success      = 0;
     var seq = sequence.reduce(function (all, seq) {
         return all.concat(seq.fns.map(function (fn) {
             return Rx.Observable.create(x => {
+                success += 1;
                 fn(x, seq.opts, input.ctx);
             });
         }));
@@ -62,7 +63,12 @@ module.exports = function (cli, input, trigger) {
                 x => {
                     console.log(x);
                 },
-                e => cb(e),
+                e => {
+                    var currentTask = sequence[success-1].task.taskName;
+                    logger.error('{red:ERROR in task {cyan:' +  currentTask);
+                    console.error(e.stack.split('\n').map(x => logger.compile('{gray:'+currentTask+' -- }' + x)).join('\n'));
+                    cb(e);
+                },
                 s => {
                     cb(null, {tasks, runSequence: seq, sequence: sequence});
                 }

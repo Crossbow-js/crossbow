@@ -16,7 +16,8 @@ var cli = meow({
 
 var defaults = {
     cwd: process.cwd(),
-    runMode: 'sequence'
+    runMode: 'sequence',
+    resumeOnError: false
 };
 
 if (!module.parent) {
