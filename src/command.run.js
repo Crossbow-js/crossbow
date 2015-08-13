@@ -9,8 +9,26 @@ var Rx      = require('rx');
 var exists  = Rx.Observable.fromNodeCallback(fs.exists);
 var utils   = require('./utils');
 
+/**
+ * Get a customised prefixed logger per task
+ * @param {String} name
+ * @param {Number} maxLength
+ * @returns {string}
+ */
+function getLogPrefix(name, maxLength) {
+    var diff = maxLength - name.length;
+    if (diff > 0) {
+        return new Array(diff + 1).join(' ') + name;
+    }
+    return name.slice(0, maxLength - 1) + '~';
+}
+
 var taskResolver;
 var tasks;
+
+function getTaskSequence () {
+
+}
 
 module.exports = function (cli, input, trigger) {
 
@@ -50,19 +68,6 @@ module.exports = function (cli, input, trigger) {
         }));
     }, []);
 
-    /**
-     * Get a customised prefixed logger per task
-     * @param {String} name
-     * @param {Number} maxLength
-     * @returns {string}
-     */
-    function getLogPrefix(name, maxLength) {
-        var diff = maxLength - name.length;
-        if (diff > 0) {
-            return new Array(diff + 1).join(' ') + name;
-        }
-        return name.slice(0, maxLength - 1) + '~';
-    }
 
     if (config.get('runMode') === 'sequence') {
         runInSequence(seq);
@@ -158,3 +163,5 @@ module.exports = function (cli, input, trigger) {
             );
     }
 };
+
+module.exports.getTaskSequence = getTaskSequence;
