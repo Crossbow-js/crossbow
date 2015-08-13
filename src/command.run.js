@@ -9,6 +9,9 @@ var Rx      = require('rx');
 var exists  = Rx.Observable.fromNodeCallback(fs.exists);
 var utils   = require('./utils');
 
+var taskResolver;
+var tasks;
+
 module.exports = function (cli, input, trigger) {
 
     var cliInput   = cli.input.slice(1);
@@ -26,10 +29,13 @@ module.exports = function (cli, input, trigger) {
         input.ctx.trigger = trigger;
     }
 
-    var taskResolver      = require('./tasks')(crossbow, config);
-    var tasks             = taskResolver.gather(cliInput);
-    var sequence          = taskResolver.createRunSequence(tasks.valid);
-    var success           = 0;
+    if (!taskResolver) {
+        taskResolver = require('./tasks')(crossbow, config);
+        tasks        = taskResolver.gather(cliInput);
+    }
+
+    var sequence     = taskResolver.createRunSequence(tasks.valid);
+    var success      = 0;
 
     var seq = sequence.reduce(function (all, seq) {
         return all.concat(seq.fns.map(function (fn) {
@@ -151,37 +157,4 @@ module.exports = function (cli, input, trigger) {
                 }
             );
     }
-
-
-
-
-
-    //prom.create(sequence)('', input.ctx)
-    //    .then(function () {
-    //
-    //        var topLevel = '{ok: } task {cyan:%s} completed';
-    //        var subLevel = '{gray:--> %s';
-    //
-    //        logTasks(tasks.valid, topLevel);
-    //
-    //        function logTasks(tasks, template) {
-    //            tasks.forEach(function (task) {
-    //                logger.info(template, task.taskName);
-    //                if (task.tasks.length) {
-    //                    logTasks(task.tasks, subLevel);
-    //                }
-    //            });
-    //        }
-    //        cb(null, {tasks, sequence});
-    //    })
-    //    .progress(function (report) {
-    //        if (Array.isArray(report.msg)) {
-    //            logger[report.level].apply(logger, report.msg);
-    //        } else {
-    //            logger[report.level](report.msg);
-    //        }
-    //    })
-    //    .catch(function (err) {
-    //        throw err;
-    //    }).done();
 };
