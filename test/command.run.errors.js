@@ -24,6 +24,7 @@ describe('Gathering run tasks', function () {
                 }
             }
         }, function (err, output) {
+            console.log(err);
             //assert.equal(output.sequence.length, 2);
             //assert.equal(output.sequence[0].fns.length, 1);
             //assert.equal(output.sequence[0].opts.name, "shane");

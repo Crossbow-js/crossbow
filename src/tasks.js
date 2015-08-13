@@ -1,5 +1,22 @@
 var utils = require('./utils');
+var basename = require('path').basename;
 var objPath = require('object-path');
+var Rx = require('rx');
+var logger = require('./logger');
+
+/**
+ * Get a customised prefixed logger per task
+ * @param {String} name
+ * @param {Number} maxLength
+ * @returns {string}
+ */
+function getLogPrefix(name, maxLength) {
+    var diff = maxLength - name.length;
+    if (diff > 0) {
+        return new Array(diff + 1).join(' ') + name;
+    }
+    return name.slice(0, maxLength - 1) + '~';
+}
 
 module.exports = function (input, config) {
 
@@ -58,7 +75,7 @@ module.exports = function (input, config) {
 
     var cache = {};
 
-    return {
+    var methods =  {
         /**
          * Resolve a given list of tasks (including alias)
          * @param {Array} tasks
@@ -122,6 +139,39 @@ module.exports = function (input, config) {
                     };
                 });
             }
+        },
+        /**
+         * Create a Rx Observable stream
+         * @param {Array} cliInput - task names such as 'js' or ['js','css']
+         * @returns {Observable}
+         */
+        getRunner: function (cliInput, ctx) {
+
+            var tasks    = methods.gather(cliInput);
+            var sequence = methods.createRunSequence(tasks.valid);
+
+            var seq = sequence.reduce(function (all, seq) {
+                return all.concat(seq.fns.map(function (fn) {
+                    return Rx.Observable.create(obs => {
+                        obs.log = logger.clone(x => {
+                            x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
+                            return x;
+                        });
+                        fn(obs, seq.opts, ctx);
+                    }).catch(e => {
+                        logger.error('{red:following ERROR from task {cyan:`%s`}', seq.task.taskName);
+                        return Rx.Observable.throw(e);
+                    });
+                }));
+            }, []);
+
+            return {
+                run: Rx.Observable.fromArray(seq).mergeAll(),
+                tasks: tasks,
+                sequence: sequence
+            }
         }
-    }
+    };
+
+    return methods;
 };
