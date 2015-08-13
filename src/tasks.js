@@ -56,6 +56,8 @@ module.exports = function (input, config) {
         return false;
     }
 
+    var cache = {};
+
     return {
         /**
          * Resolve a given list of tasks (including alias)
@@ -65,15 +67,22 @@ module.exports = function (input, config) {
          * @returns {{valid: *, invalid: *}}
          */
         gather: function (tasks) {
+            var hash = tasks.join('-');
+            if (cache[hash]) {
+                return cache[hash];
+            }
 
             var taskList = tasks
                 .map(x => x.split(':'))
                 .map(x => flatTask(x));
 
-            return {
+            var out = {
                 valid:   taskList.filter(validateTask),
                 invalid: taskList.filter(x => !validateTask(x))
             };
+
+            cache[hash] = out;
+            return out;
         },
         createRunSequence: function (tasks) {
 

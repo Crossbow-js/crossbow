@@ -84,23 +84,24 @@ module.exports = function (cli, input, trigger) {
 
         var runner = Rx.Observable
             .fromArray(items)
-            .concatAll();
+            .mergeAll();
 
         /**
          * Accept values sent through 'onNext'
          */
         runner
+            .catch(e => {
+                var currentTask = sequence[success-1].task.taskName;
+                logger.error('{red:ERROR in task {cyan:' +  currentTask);
+                cb(e);
+                return Rx.Observable.empty(); // continue through so this sequence does not stop
+            })
             .subscribe(
                 x => {
-                    // Handle
-                    //console.log(x);
-                    //console.log('here');
+                    logger.info('got a value', x)
                 },
                 e => {
-                    var currentTask = sequence[success-1].task.taskName;
-                    logger.error('{red:ERROR in task {cyan:' +  currentTask);
-                    //console.error(e.stack.split('\n').map(x => logger.compile('{gray:'+currentTask+' -- }' + x)).join('\n'));
-                    cb(e);
+                    console.log('err');
                 },
                 s => {
                     if (trigger.type === 'command') {

@@ -181,7 +181,7 @@ utils.getPresentableTaskList = function (arr) {
              return split[2];
         }
         return item;
-    })
+    });
 };
 
 /**

@@ -6,9 +6,9 @@ watch:
         default:
             "test/fixtures/*.html": ["css", "js", "bs:reload"]
         dev:
-            "test/fixtures/*.yaml": ["css"]
+            "test/fixtures/**/*.scss": ["css", "bs:reload"]
 tasks:
-    css: ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
+    css: ['sass']
     js: ['dummy']
     dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
 config:

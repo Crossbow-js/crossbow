@@ -5,7 +5,7 @@ var current     = process.cwd();
 var gather      = require('../lib/gather-watch-tasks');
 var getBsConfig = require('../lib/utils').getBsConfig;
 
-describe.only('Gathering watch tasks', function () {
+describe('Gathering watch tasks', function () {
     it('can gather default watch tasks', function () {
 
         var tasks = gather({
