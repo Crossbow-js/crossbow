@@ -1,5 +1,6 @@
 var prom    = require('prom-seq');
 var resolve = require('path').resolve;
+var basename= require('path').basename;
 var objPath = require('object-path');
 var logger  = require('./logger');
 var copy    = require('./command.copy');
@@ -25,18 +26,32 @@ module.exports = function (cli, input, trigger) {
         input.ctx.trigger = trigger;
     }
 
-    var taskResolver = require('./tasks')(crossbow, config);
-    var tasks        = taskResolver.gather(cliInput);
-    var sequence     = taskResolver.createRunSequence(tasks.valid);
-    var success      = 0;
+    var taskResolver      = require('./tasks')(crossbow, config);
+    var tasks             = taskResolver.gather(cliInput);
+    var sequence          = taskResolver.createRunSequence(tasks.valid);
+    var success           = 0;
+    var consoleNameLength = 13;
+
     var seq = sequence.reduce(function (all, seq) {
         return all.concat(seq.fns.map(function (fn) {
             return Rx.Observable.create(x => {
                 success += 1;
+                x.log = logger.clone(x => {
+                    x.prefix = '{gray: ' + getLog(basename(seq.task.taskName)) + ' :: ';
+                    return x;
+                });
                 fn(x, seq.opts, input.ctx);
             });
         }));
     }, []);
+
+    function getLog(name) {
+        var diff = consoleNameLength - name.length;
+        if (diff > 0) {
+            return new Array(diff + 1).join(' ') + name;
+        }
+        return name.slice(0, consoleNameLength - 1) + '~';
+    }
 
     if (config.get('runMode') === 'sequence') {
         runInSequence(seq);
@@ -61,6 +76,7 @@ module.exports = function (cli, input, trigger) {
         runner
             .subscribe(
                 x => {
+                    // Handle
                     console.log(x);
                 },
                 e => {

@@ -1,11 +1,7 @@
 function simple2 (obs) {
-    console.log('+ simple2 started');
+    obs.log.info('{blue:+} Running...');
     setTimeout(function () {
-        obs.onNext('  On Next from Simple 2');
-        obs.onNext('  On Next2 from Simple 2');
-        obs.onNext('  On Next3 from Simple 2');
-        obs.onNext('  On Next4 from Simple 2');
-        console.log('- simple2 END');
+        obs.log.info('{ok: } Completed');
         obs.onCompleted();
     }, 20);
 }

@@ -1,9 +1,7 @@
 function simple (obs) {
-    console.log('+ simple started');
+    obs.log.info('{blue:+} Running...');
     setTimeout(function () {
-        obs.onNext('  On Next from Simple');
-        obs.onNext('  On Next2 from Simple');
-        console.log('- simple END');
+        obs.log.info('{ok: } Completed');
         obs.onCompleted();
     }, 100);
 }
