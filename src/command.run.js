@@ -77,18 +77,52 @@ module.exports = function (cli, input, trigger) {
             .subscribe(
                 x => {
                     // Handle
-                    console.log(x);
+                    //console.log(x);
+                    //console.log('here');
                 },
                 e => {
                     var currentTask = sequence[success-1].task.taskName;
                     logger.error('{red:ERROR in task {cyan:' +  currentTask);
-                    console.error(e.stack.split('\n').map(x => logger.compile('{gray:'+currentTask+' -- }' + x)).join('\n'));
+                    //console.error(e.stack.split('\n').map(x => logger.compile('{gray:'+currentTask+' -- }' + x)).join('\n'));
                     cb(e);
                 },
                 s => {
+                    handleCompletion();
                     cb(null, {tasks, runSequence: seq, sequence: sequence});
                 }
             );
+    }
+
+    /**
+     * Logging for task completion
+     */
+    function handleCompletion() {
+        console.log('');
+        logger.info('{gray:--------------------------');
+        logger.info('{ok: } Completed without errors');
+        logger.info('{gray:--------------------------');
+
+        function logTask(tasks) {
+            tasks.forEach(function (task) {
+                logger.info('{gray:- %s', task.taskName);
+                if (task.tasks.length) {
+                    logTask(task.tasks);
+                }
+            });
+        }
+
+        var short = config.get('summary') === 'short';
+
+        tasks.valid.forEach(function (task) {
+            logger.info('{ok: } {cyan:%s', task.taskName);
+            if (short) {
+                return;
+            }
+
+            if (task.tasks.length) {
+                logTask(task.tasks);
+            }
+        });
     }
 
     /**
