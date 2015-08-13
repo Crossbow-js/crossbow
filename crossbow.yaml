@@ -2,3 +2,7 @@ tasks:
     css: ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
     js: ['dummy']
     dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex.js']
+config:
+    sass:
+        input: 'test/fixtures/scss/main.scss'
+        output: 'test/fixtures/css/main.css'

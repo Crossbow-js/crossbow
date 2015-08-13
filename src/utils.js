@@ -2,17 +2,17 @@ var objPath  = require('object-path');
 var exists   = require('fs').existsSync;
 var resolve  = require('path').resolve;
 var extname  = require('path').extname;
-var basename  = require('path').basename;
+var basename = require('path').basename;
 var logger   = require('./logger');
 var utils    = exports;
 var fs       = require('fs');
 var Rx       = require('rx');
-var yml = require('js-yaml');
+var yml      = require('js-yaml');
 
 /**
  * @param {Error|TypeError} [err]
  */
-utils.defaultCallback = function (err) {
+utils.defaultCallback = function (err, output) {
     if (err) {
         throw err;
     }

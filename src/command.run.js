@@ -35,35 +35,25 @@ module.exports = function (cli, input, trigger) {
                 fn(x, seq.opts, input.ctx);
             });
         }));
-        return all;
     }, []);
 
-    Rx.Observable
-        .from(seq)
-        .concatAll()
-        .toArray()
+    var runner = Rx.Observable
+        .fromArray(seq)
+        .concatAll();
+
+    /**
+     * Accept values sent through 'onNext'
+     */
+    runner
         .subscribe(
-            x => cb(null, {tasks, runSequence: seq, sequence: sequence}),
+            x => {
+                console.log(x);
+            },
             e => cb(e),
-            s => console.log('\nDone')
+            s => {
+                cb(null, {tasks, runSequence: seq, sequence: sequence});
+            }
         );
-
-    //wrapArray([
-    //    wrapFn(sequence[0]),
-    //    wrapFn(sequence[1])
-    //])
-    //.forEach(
-    //    function (results) {
-    //        console.log(results);
-    //    },
-    //    function (err) {
-    //        console.log('Error: %s', err);
-    //    },
-    //    function () {
-    //        console.log('DonE');
-    //    }
-    //)
-
 
     //prom.create(sequence)('', input.ctx)
     //    .then(function () {

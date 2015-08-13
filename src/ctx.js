@@ -55,16 +55,17 @@ module.exports = function (opts) {
              * Look up paths such as sass.root
              * @returns {*}
              */
-            make: function () {
-                var lookup = objPath.get(opts.crossbow, getLookup.apply(null, arguments));
-                if (!lookup) {
-                    lookup = objPath.get(opts.config, getLookup.apply(null, arguments));
-                }
-                if (!lookup) {
-                    var args = Array.prototype.slice.call(arguments);
-                    throw new TypeError('Could not find configuration item: ' + args.join('.') + ' Please check your config');
-                }
-                return resolve(opts.cwd, lookup);
+            make: function (path) {
+                return resolve(opts.cwd, path);
+                //var lookup = objPath.get(opts.crossbow, getLookup.apply(null, arguments));
+                //if (!lookup) {
+                //    lookup = objPath.get(opts.config, getLookup.apply(null, arguments));
+                //}
+                //if (!lookup) {
+                //    var args = Array.prototype.slice.call(arguments);
+                //    throw new TypeError('Could not find configuration item: ' + args.join('.') + ' Please check your config');
+                //}
+                //return resolve(opts.cwd, lookup);
             }
         },
         file: {
