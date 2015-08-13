@@ -5,7 +5,7 @@ var path             = require('path');
 var logger           = require('./lib/logger');
 var defaultCallback  = require('./lib/utils').defaultCallback;
 var retrieveConfig   = require('./lib/utils').retrieveConfig;
-var Immutable   = require('immutable');
+var Immutable        = require('immutable');
 
 var cli = meow({
     help: [
@@ -46,7 +46,7 @@ function handleCli (cli, input, cb) {
             return processInput(cli, {crossbow: fromFile[0]});
         } else {
             throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
-                ' with a path to a JS file');
+                ' with a path to a JS/YML file');
         }
     }
 
@@ -56,14 +56,6 @@ function handleCli (cli, input, cb) {
 
         if (cli.flags.logLevel) {
             logger.setLevel(cli.flags.logLevel);
-        }
-
-        if (cli.input[0] === 'copy') {
-            if (!input.crossbow.copy) {
-                logger.error('copy config not found, tried: %s', maybePath);
-                return;
-            }
-            return require('./lib/command.copy')(cli, input);
         }
 
         if (cli.input[0] === 'run') {

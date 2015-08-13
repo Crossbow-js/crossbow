@@ -2,160 +2,80 @@ var assert      = require('chai').assert;
 var watch       = require('../lib/command.watch');
 var cwd         = require('path').resolve('test/fixtures');
 var current     = process.cwd();
-var gather      = watch.gatherWatchTasks;
+var gather      = require('../lib/gather-watch-tasks');
 var getBsConfig = require('../lib/utils').getBsConfig;
 
-describe('Gathering watch tasks', function () {
-    it('can gather simple tasks', function () {
+describe.only('Gathering watch tasks', function () {
+    it('can gather default watch tasks', function () {
 
         var tasks = gather({
            watch: {
                before: ['js'],
                tasks: {
-                   "**/*.js": "babel"
+                   default: {
+                       "*.css": ["sass", "js"],
+                       "*.js": "js"
+                   }
                }
            }
         });
 
-        assert.equal(tasks.length, 1);
-        assert.equal(tasks[0].patterns[0], '**/*.js');
-        assert.equal(tasks[0].tasks[0],    'babel');
+        assert.equal(tasks.default.length, 2);
+        assert.equal(tasks.default[0].patterns.length, 1);
+        assert.equal(tasks.default[0].patterns[0], "*.css");
+        assert.equal(tasks.default[0].tasks[0], "sass");
+        assert.equal(tasks.default[0].tasks[1], "js");
+
     });
-    it('can gather nested simple tasks', function () {
+    it('can gather default + other tasks', function () {
+
         var tasks = gather({
-            watch: {
-                tasks: [
-                    {
-                        "**/*.js": "babel"
-                    }
-                ]
-            }
+           watch: {
+               before: ['js'],
+               tasks: {
+                   default: {
+                       "*.html": ["js"]
+                   },
+                   dev: {
+                       "*.css": ["sass", "js"],
+                       "*.js": "js"
+                   }
+               }
+           }
         });
 
-        assert.equal(tasks.length, 1);
-        assert.equal(tasks[0].patterns[0], '**/*.js');
-        assert.equal(tasks[0].tasks[0],    'babel');
-
+        assert.equal(tasks.dev.length, 2);
+        assert.equal(tasks.dev[0].patterns.length, 1);
+        assert.equal(tasks.dev[0].patterns[0], "*.css");
+        assert.equal(tasks.dev[0].tasks[0], "sass");
+        assert.equal(tasks.dev[0].tasks[1], "js");
     });
-    it('can select namespaced watchers', function () {
+    it('can gather tasks in array format', function () {
+
         var tasks = gather({
-            watch: {
-                "default": [
-                    {
-                        "**/*.js": "babel"
-                    }
-                ],
-                "someother": [
-                    {
-                        "app/**/*.js": "babel2"
-                    }
-                ]
-            }
-        }, 'someother');
-
-        assert.equal(tasks.length, 1);
-        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
-        assert.equal(tasks[0].tasks[0],    'babel2');
-    });
-    it('can select namespaced watchers (2)', function () {
-        var tasks = gather({
-            watch: {
-                "someother": {
-                    before: ['js'],
-                    tasks: [
-                        {
-                            "app/**/*.js": "babel2"
-                        }
-                    ]
-                }
-            }
-        }, 'someother');
-
-        assert.equal(tasks.length, 1);
-        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
-
-        assert.equal(tasks[0].tasks[0],    'babel2');
-    });
-    it('can select from multiple namespaced watchers', function () {
-        var tasks = gather({
-            watch: {
-                "someother": {
-                    tasks: [
-                        {
-                            "app/**/*.js": "babel1"
-                        }
-
-                    ]
-                },
-                'js': {
-                    tasks: [
-                        {
-                            "app/*.js": "babel2"
-                        }
-
-                    ]
-                },
-                'js2': {
-                    tasks: [
-                        {
-                            "app/*.js": "babel2"
-                        }
-
-                    ]
-                }
-            }
-        }, ['someother', 'js']);
-
-        assert.equal(tasks.length, 2);
-        assert.equal(tasks[0].patterns[0], 'app/**/*.js');
-        assert.equal(tasks[1].patterns[0], 'app/*.js');
-
-        assert.equal(tasks[0].tasks[0],    'babel1');
-        assert.equal(tasks[1].tasks[0],    'babel2');
-    });
-    it('can gather tasks from multiple formats', function () {
-        var tasks = gather({
-            config: {
-                crossbow: {
-                    input: [
-                        'src/**',
-                        'docs/**'
-                    ]
-                }
-            },
-            watch: {
-                "default": {
-                    "tasks": [
-                        {
-                            patterns: 'src/js/*.js',
-                            tasks: ['babel']
-                        },
-                        {
-                            "config:crossbow.input": "bs:reload",
-                            "src/js/*.js": [
-                                "babel-browserify",
-                                "bs:reload"
-                            ],
-                            "src/svg/*.svg": [
-                                "svg-icons",
-                                "bs:reload"
-                            ],
-                            "src/scss/*.scss": [
-                                "sass",
-                                "bs:reload:main.css"
-                            ]
-                        }
-                    ]
-                }
-            }
+           watch: {
+               before: ['js'],
+               tasks: {
+                   dev: [
+                       {
+                           "*.js": ["css", "js"]
+                       },
+                       {
+                           "*.css":  ["css", "js"],
+                           "*.html": ["html-min"]
+                       }
+                   ]
+               }
+           }
         });
 
-        assert.equal(tasks.length, 5);
-        assert.equal(tasks[0].patterns[0], 'src/js/*.js');
-        assert.equal(tasks[1].patterns[0], 'src/**');
-        assert.equal(tasks[1].patterns[1], 'docs/**');
-        assert.equal(tasks[1].tasks[0],    'bs:reload');
+        assert.equal(tasks.dev.length, 3);
+        assert.equal(tasks.dev[0].patterns[0], "*.js");
+        assert.equal(tasks.dev[1].patterns[0], "*.css");
+        assert.equal(tasks.dev[2].patterns[0], "*.html");
+
     });
+
     it('can use given bs-config', function () {
         var bsConfig = getBsConfig({
             "watch": {

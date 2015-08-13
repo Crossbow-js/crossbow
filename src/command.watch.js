@@ -12,23 +12,6 @@ module.exports = function (cli, opts) {
 
     var beforeTasks   = opts.crossbow.watch.before || [];
 
-    //if (beforeTasks.length) {
-    //    logger.info('running {cyan:%s} before watcher starts', beforeTasks);
-    //    opts._ctx.trigger = {
-    //        type:  'before',
-    //        tasks: beforeTasks
-    //    };
-    //    runCommand({input: ['run'].concat(beforeTasks)}, opts)
-    //        .then(function () {
-    //            logger.info('{ok: } {cyan:%s} completed', beforeTasks);
-    //            runWatcher(cli, opts);
-    //        }).catch(function (err) {
-    //            console.log(err.message);
-    //            console.log(err.stack);
-    //        }).done();
-    //} else {
-    //}
-
     return runWatcher(cli, opts);
 };
 
@@ -52,7 +35,7 @@ function runWatcher (cli, opts) {
     var args        = cli.input.slice(1);
     var bsConfig    = getBsConfig(crossbow, opts);
     var watchConfig = {ignoreInitial: true};
-    var tasks       = gatherWatchTasks(crossbow, args);
+    var tasks       = gatherWatchTasks(crossbow.watch, args);
     var bs          = require('browser-sync').create();
 
     bsConfig.files  = bsConfig.files || [];
