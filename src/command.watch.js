@@ -109,8 +109,8 @@ function runWatcher (cli, opts, trigger) {
             .map(x => x.split(":"))
             .map(x => {
                 return {
-                    method: x[0],
-                    args: x.slice(1)
+                    method: x[1],
+                    args: x.slice(2)
                 }
             });
 
@@ -134,6 +134,17 @@ function runWatcher (cli, opts, trigger) {
                 if (err) {
                     console.error(err);
                 } else {
+                    if (bsTasks.length) {
+                        bsTasks.forEach(function (task) {
+                            if (typeof bs[task.method] === 'function') {
+                                if (task.args.length) {
+                                    bs[task.method].apply(bs, task.args);
+                                } else {
+                                    bs[task.method].call(bs);
+                                }
+                            }
+                        });
+                    }
                     logger.info('{yellow:' + valid.join(' -> ') + '{cyan: ' + String(new Date().getTime() - start) + 'ms');
                     task.locked = false;
                 }
