@@ -2,7 +2,7 @@ function complex (obs) {
     setTimeout(function () {
         obs.log.info('All done, bro');
         obs.onCompleted();
-    }, 20)
+    }, 0)
 }
 
 module.exports.tasks = [complex];

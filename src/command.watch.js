@@ -71,7 +71,7 @@ function runWatcher (cli, opts, trigger) {
         }));
 
         bs.init(bsConfig, function (err, bs) {
-            console.log('running');
+            //console.log('running');
             //opts.cb(null, {
             //    bsConfig: bsConfig,
             //    tasks: tasks,
@@ -80,48 +80,68 @@ function runWatcher (cli, opts, trigger) {
             //});
         });
     }
+
+    /**
+     * @param task
+     * @param opts
+     * @param event
+     * @param file
+     * @returns {*}
+     */
+    function runCommandAfterWatch (task, opts, event, file, cb) {
+
+        var bs = this;
+
+        if (event !== 'change' || task.locked) {
+            return;
+        }
+
+        cb = cb || function () {
+            };
+
+        var start = new Date().getTime();
+        var crossbow = opts.crossbow;
+
+        var bstest = x => x.match(/^bs:(.+)/);
+
+        var bsTasks = task.tasks
+            .filter(bstest)
+            .map(x => x.split(":"))
+            .map(x => {
+                return {
+                    method: x[0],
+                    args: x.slice(1)
+                }
+            });
+
+        var valid = task.tasks.filter(x => !bstest(x));
+
+        task.locked = true;
+        opts.handoff = true;
+
+        runCommand({
+            input: ["run"].concat(valid)
+        }, opts, {
+            type: 'watcher',
+            task: task,
+            event: event,
+            file: file,
+            opts: opts,
+            filepath: resolve(opts.cwd, file),
+            type: 'watcher',
+            config: trigger.config.set('cb', function (err, output) {
+
+                if (err) {
+                    console.error(err);
+                } else {
+                    logger.info('{yellow:' + valid.join(' -> ') + '{cyan: ' + String(new Date().getTime() - start) + 'ms');
+                    task.locked = false;
+                }
+            })
+        });
+    }
 }
 
-/**
- * @param task
- * @param opts
- * @param event
- * @param file
- * @returns {*}
- */
-function runCommandAfterWatch (task, opts, event, file, cb) {
-
-    var bs = this;
-
-    if (event !== 'change' || task.locked) {
-        return;
-    }
-
-    cb = cb || function () {};
-
-    var start = new Date().getTime();
-    var validTasks = [];
-
-    var bsTasks = task.tasks.filter(function (one) {
-        var match  = one.match(/^bs:(.+)/);
-        if (match) {
-            return true;
-        }
-        // If not a BS task, push onto validTasks array
-        validTasks.push(one);
-    }).map(function (task) {
-        var segs = task.split(":").slice(1);
-        return {
-            method: segs[0],
-            args: segs.slice(1)
-        }
-    });
-
-    task.locked  = true;
-    opts.handoff = true;
-
-    console.log(validTasks);
-    console.log(bsTasks);
 
     /**
      * Create the sequence of promises
@@ -184,6 +204,6 @@ function runCommandAfterWatch (task, opts, event, file, cb) {
     //
     //        cb(err);
     //    }).done();
-}
+//}
 
-module.exports.runCommandAfterWatch = runCommandAfterWatch;
+//module.exports.runCommandAfterWatch = runCommandAfterWatch;

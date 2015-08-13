@@ -4,7 +4,7 @@ watch:
         open: false
     tasks:
         default:
-            "test/fixtures/*.html": ["css:dev", "bs:reload"]
+            "test/fixtures/*.html": ["css", "js", "bs:reload"]
         dev:
             "test/fixtures/*.yaml": ["css"]
 tasks:

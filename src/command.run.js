@@ -92,7 +92,9 @@ module.exports = function (cli, input, trigger) {
                     cb(e);
                 },
                 s => {
-                    handleCompletion();
+                    if (trigger.type === 'command') {
+                        handleCompletion();
+                    }
                     cb(null, {tasks, runSequence: seq, sequence: sequence});
                 }
             );
@@ -102,7 +104,6 @@ module.exports = function (cli, input, trigger) {
      * Logging for task completion
      */
     function handleCompletion() {
-        console.log('');
         logger.info('{gray:--------------------------');
         logger.info('{ok: } Completed without errors');
         logger.info('{gray:--------------------------');
