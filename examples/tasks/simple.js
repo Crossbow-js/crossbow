@@ -1,12 +1,11 @@
 function simple (obs) {
-    //deferred.notify({level: 'debug', msg: ['Simple done']});
-    //deferred.resolve();
     console.log('+ simple started');
     setTimeout(function () {
+        obs.onNext('  On Next from Simple');
+        obs.onNext('  On Next2 from Simple');
         console.log('- simple END');
-        obs.onNext('Aww yeah');
         obs.onCompleted();
-    }, 20);
+    }, 100);
 }
 
 module.exports.tasks = [simple];

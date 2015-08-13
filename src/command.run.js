@@ -37,23 +37,62 @@ module.exports = function (cli, input, trigger) {
         }));
     }, []);
 
-    var runner = Rx.Observable
-        .fromArray(seq)
-        .concatAll();
+    if (config.get('runMode') === 'sequence') {
+        runInSequence(seq);
+    } else {
+        runInParallel(seq);
+    }
 
     /**
-     * Accept values sent through 'onNext'
+     * Run each task only when the previous one
+     * was completed
+     * @param {Array} items - functions to call
      */
-    runner
-        .subscribe(
-            x => {
-                console.log(x);
-            },
-            e => cb(e),
-            s => {
-                cb(null, {tasks, runSequence: seq, sequence: sequence});
-            }
-        );
+    function runInSequence(items) {
+
+        var runner = Rx.Observable
+            .fromArray(items)
+            .concatAll();
+
+        /**
+         * Accept values sent through 'onNext'
+         */
+        runner
+            .subscribe(
+                x => {
+                    console.log(x);
+                },
+                e => cb(e),
+                s => {
+                    cb(null, {tasks, runSequence: seq, sequence: sequence});
+                }
+            );
+    }
+
+    /**
+     * Run each function as quickly as possible
+     * Don't wait for previous ones to complete
+     * @param {Array} items - functions to call
+     */
+    function runInParallel(items) {
+
+        Rx.Observable
+            .forkJoin
+            .apply(null, items)
+            .subscribe(
+                x => {
+                    console.log(x);
+                },
+                e => cb(e),
+                s => {
+                    cb(null, {tasks, runSequence: seq, sequence: sequence});
+                }
+            );
+    }
+
+
+
+
 
     //prom.create(sequence)('', input.ctx)
     //    .then(function () {
