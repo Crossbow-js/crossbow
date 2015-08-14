@@ -26,6 +26,11 @@ if (!module.parent) {
     handleCli(cli, {});
 }
 
+/**
+ * @param {{input: Array, flags: Object}} cli - raw input from meow
+ * @param {Object} input
+ * @param {Function} [cb]
+ */
 function handleCli (cli, input, cb) {
 
     if (typeof input === 'function') {
@@ -33,11 +38,9 @@ function handleCli (cli, input, cb) {
         input = {};
     }
 
-    cli.flags = cli.flags || {};
-
-    var maybePath = path.resolve(process.cwd(), "./package.json");
+    cb            = cb || defaultCallback;
+    cli.flags     = cli.flags || {};
     var config    = Immutable.fromJS(defaults).mergeDeep(cli.flags);
-    config        = config.set('cb', cb || defaultCallback);
 
     if (input.crossbow) {
         return processInput(cli, input);
@@ -51,27 +54,31 @@ function handleCli (cli, input, cb) {
         }
     }
 
+    /**
+     * Using either given input, or input resolved from a file,
+     * process the cli commands
+     * @param {{input: Array, flags: Object}} cli - raw input from meow
+     * @param {Object} input
+     * @returns {*}
+     */
     function processInput (cli, input) {
-
-        input.ctx = ctx(input);
 
         if (cli.flags.logLevel) {
             logger.setLevel(cli.flags.logLevel);
         }
 
         if (cli.input[0] === 'run') {
-
-            return require('./lib/command.run')(cli, input, {
-                type: "command",
-                cli: cli,
-                config: config
-            });
+            if (cli.input.length === 1) {
+                input.cb(new Error('You didn\'t provide a command for Crossbow to run'));
+                return;
+            }
+            return require('./lib/command.run')(cli, input, config, cb);
         }
 
         if (cli.input[0] === 'watch') {
 
             if (!input.crossbow.watch) {
-                input.cb(new Error('watch config not found in ' + maybePath));
+                input.cb(new Error('Watch config not found'));
                 return;
             }
 

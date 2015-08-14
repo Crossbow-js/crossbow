@@ -1,56 +1,58 @@
-var prom    = require('prom-seq');
-var resolve = require('path').resolve;
-var basename= require('path').basename;
-var objPath = require('object-path');
-var logger  = require('./logger');
-var copy    = require('./command.copy');
-var fs      = require('fs');
-var Rx      = require('rx');
-var exists  = Rx.Observable.fromNodeCallback(fs.exists);
-var utils   = require('./utils');
-
+var prom          = require('prom-seq');
+var resolve       = require('path').resolve;
+var basename      = require('path').basename;
+var objPath       = require('object-path');
+var logger        = require('./logger');
+var copy          = require('./command.copy');
+var fs            = require('fs');
+var Rx            = require('rx');
+var exists        = Rx.Observable.fromNodeCallback(fs.exists);
+var utils         = require('./utils');
+var createContext = require("./ctx");
 var taskResolver;
 var tasks;
 
-function getTaskSequence () {
-
-}
-
-module.exports = function (cli, input, trigger) {
+/**
+ * @param {{input: Array, flags: Object}} cli - raw input from meow
+ * @param {Object} input
+ * @param {Immutable.Map} config
+ * @param {Function} [cb]
+ */
+module.exports = function (cli, input, config, cb) {
 
     var cliInput   = cli.input.slice(1);
     var crossbow   = input.crossbow || {};
     crossbow.tasks = crossbow.tasks || {};
-    var config     = trigger.config;
-    var cb         = config.get('cb');
 
-    if (!cliInput.length) {
-        logger.error('Please provide a command for {magenta:Crossbow} to run');
-        return;
-    }
+    var ctx = createContext(input);
 
-    if (!input.ctx.trigger.type) {
-        input.ctx.trigger = trigger;
-    }
+    ctx.trigger = {
+        type: "command",
+        cli: cli,
+        input: input,
+        config: config
+    };
 
     taskResolver = require('./tasks')(crossbow, config);
+
     var runner = taskResolver
-        .getRunner(cliInput, input.ctx);
+        .getRunner(cliInput, ctx);
 
     runner
         .run
+        .catch(e => {
+            console.log('eR');
+            return Rx.Observable.throw(e);
+        })
         .subscribe(
             x => {
                 logger.info('got a value', x)
             },
             e => {
-                console.log(e);
-                console.log(e.stack);
+                console.log(e.stack.split('\n').slice(0, 2).join('\n'));
             },
             s => {
-                if (trigger.type === 'command') {
-                    handleCompletion(runner.tasks.valid);
-                }
+                handleCompletion(runner.tasks.valid);
                 cb(null, runner);
             }
     );
@@ -108,5 +110,3 @@ module.exports = function (cli, input, trigger) {
             );
     }
 };
-
-module.exports.getTaskSequence = getTaskSequence;
