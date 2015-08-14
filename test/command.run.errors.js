@@ -12,7 +12,7 @@ function testCase (command, input, cb) {
 }
 
 describe('Gathering run tasks', function () {
-    it.only('can recover from errors correctly', function (done) {
+    it.skip('can recover from errors correctly', function (done) {
         cli({
             input: ["run", "examples/tasks/error.js"]
         }, {

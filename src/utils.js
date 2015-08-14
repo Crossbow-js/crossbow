@@ -70,38 +70,37 @@ utils.getKey = function (key, obj) {
 
 /**
  * @param {Object} crossbow
- * @param {Object} opts
+ * @param {Object} input
  * @returns {{server: string}}
  */
-utils.getBsConfig = function (crossbow, opts) {
+utils.getBsConfig = function (crossbow, input, config) {
 
     var bsConfig = {
         server: './public'
     };
 
-    var confexists = [
-        crossbow.watch['bs-config'],
-        'bs-config.js'
-    ].some(function (file) {
-            if (!file) {
-                return;
-            }
-            if (typeof file === 'string') {
-                var filepath = resolve(opts.cwd, file);
-                if (exists(filepath)) {
-                    logger.debug('Using Browsersync config from {yellow:%', filepath);
-                    bsConfig = require(filepath);
-                    return true;
-                }
-            } else {
-                if (Object.keys(file).length) {
-                    bsConfig = file;
-                    return true;
-                }
-            }
-        });
+    var cwd = config.get('cwd');
 
-    return bsConfig;
+    if (input.watch && input.watch['bs-config']) {
+        return input.watch['bs-config'];
+    }
+
+    var match = [
+        'bs-config.js',
+        'bs-config.json',
+        'bs-config.yml',
+        'bs-config.yaml'
+    ]
+    .map(x => resolve(cwd, x))
+    .filter(x => fs.existsSync(x))
+    .map(x => {
+        if (x.match(/yml|yaml$/)) {
+            return yml.safeLoad(fs.readFileSync(x));
+        }
+        return require(x);
+    });
+
+    return match.length ? match[0] : bsConfig;
 };
 
 /**
@@ -190,6 +189,9 @@ utils.getPresentableTaskList = function (arr) {
  * @returns {Array.<T>}
  */
 utils.locateModule = function (cwd, name) {
+    if (name.indexOf(':') > -1) {
+        name = name.split(':')[0];
+    }
     return [
         ['tasks', name + '.js'],
         ['tasks', name],

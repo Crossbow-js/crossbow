@@ -26,9 +26,11 @@ module.exports = function (input, config) {
      * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array}}
      */
     function flatTask(task) {
+
         if (!Array.isArray(task)) {
-            task = [task];
+            task = task.split(':');
         }
+
         return {
             taskName: task[0],
             subTasks: task.slice(1),

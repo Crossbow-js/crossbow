@@ -24,6 +24,7 @@ module.exports = function (cli, input, config, cb) {
     var crossbow   = input.crossbow || {};
     crossbow.tasks = crossbow.tasks || {};
 
+
     var ctx = createContext(input);
 
     ctx.trigger = {
@@ -37,6 +38,7 @@ module.exports = function (cli, input, config, cb) {
 
     var runner = taskResolver
         .getRunner(cliInput, ctx);
+
 
     runner
         .run
@@ -58,9 +60,9 @@ module.exports = function (cli, input, config, cb) {
      * Logging for task completion
      */
     function handleCompletion(tasks) {
-        logger.info('{gray:--------------------------');
-        logger.info('{ok: } Completed without errors');
-        logger.info('{gray:--------------------------');
+        //logger.info('{gray:--------------------------');
+        //logger.info('{ok: } Completed without errors');
+        //logger.info('{gray:--------------------------');
 
         function logTask(tasks) {
             tasks.forEach(function (task) {

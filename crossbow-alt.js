@@ -9,13 +9,9 @@ module.exports = {
             open: false
         },
         'tasks': {
-            "test/fixtures/scss":   ["sass", "bs:reload:*.css"],
-            "test/fixtures/js/*.js": [
-                "/Users/shakyshane/crossbow/crossbow-eslint/index.js as eslint",
-                "babel-browserify",
-                "bs:reload"
-            ],
-            "test/fixtures/*.html": ["bs:reload"]
+            default: {
+                "*.css": ["js"]
+            }
         }
     },
     config: {

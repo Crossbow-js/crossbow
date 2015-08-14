@@ -11,7 +11,7 @@ function testCase (command, input, cb) {
     cli({input: command}, input, cb);
 }
 
-describe.only('Gathering run tasks', function () {
+describe('Gathering run tasks', function () {
     it('can combine files to form sequence', function (done) {
         cli({
             input: ["run", "examples/tasks/simple.js", "examples/tasks/simple2.js"]
@@ -143,6 +143,36 @@ describe.only('Gathering run tasks', function () {
             assert.equal(output.sequence[0].fns.length, 1);
             assert.equal(output.sequence[0].opts.input, 'scss/main.scss');
             assert.equal(output.sequence[0].opts.output, 'css/main.min.css');
+            done();
+        })
+    });
+    it('can gather tasks when multi give in alias', function (done) {
+
+        testCase(["run", "js"], {
+            crossbow: {
+                tasks: {
+                    js: ["examples/tasks/simple.js:dev", "examples/tasks/simple.js:shane:kittie"]
+                },
+                config: {
+                    "examples/tasks/simple.js": {
+                        default: {
+                            input: "scss/core.scss",
+                            output: "css/core.css"
+                        },
+                        dev: {
+                            input: "scss/main.scss",
+                            output: "css/main.min.css"
+                        }
+                    }
+                }
+            }
+        }, function (err, output) {
+            if (err) {
+                return done(err);
+            }
+            assert.equal(output.tasks.valid[0].tasks[0].subTasks[0], 'dev');
+            assert.equal(output.tasks.valid[0].tasks[1].subTasks[0], 'shane');
+            assert.equal(output.tasks.valid[0].tasks[1].subTasks[1], 'kittie');
             done();
         })
     });
