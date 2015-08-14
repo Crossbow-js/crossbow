@@ -69,7 +69,7 @@ function handleCli (cli, input, cb) {
 
         if (cli.input[0] === 'run') {
             if (cli.input.length === 1) {
-                input.cb(new Error('You didn\'t provide a command for Crossbow to run'));
+                cb(new Error('You didn\'t provide a command for Crossbow to run'));
                 return;
             }
             return require('./lib/command.run')(cli, input, config, cb);
@@ -82,11 +82,7 @@ function handleCli (cli, input, cb) {
                 return;
             }
 
-            return require('./lib/command.watch')(cli, input, {
-                type: "command",
-                cli: cli,
-                config: config
-            });
+            return require('./lib/command.watch')(cli, input, config, cb);
         }
     }
 }

@@ -40,13 +40,9 @@ module.exports = function (cli, input, config, cb) {
 
     runner
         .run
-        .catch(e => {
-            console.log('eR');
-            return Rx.Observable.throw(e);
-        })
         .subscribe(
             x => {
-                logger.info('got a value', x)
+                logger.info('got a value', x);
             },
             e => {
                 console.log(e.stack.split('\n').slice(0, 2).join('\n'));

@@ -1,6 +1,6 @@
 function simple (obs) {
     obs.log.info('{blue:+} Running...');
-    obs.onError(new Error('wewe'));
+    obs.error(new Error('wewe'));
     setTimeout(function () {
         obs.log.info('{ok: } Completed');
         obs.onCompleted();
