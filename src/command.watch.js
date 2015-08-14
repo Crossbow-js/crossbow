@@ -26,9 +26,9 @@ function runWatcher (cli, input, config, cb) {
     var crossbow    = input.crossbow;
     var cliInput    = cli.input.slice(1);
     var tasks       = gatherTasks(crossbow, cliInput);
-    var bsConfig    = getBsConfig(crossbow, input, config);
+    var bsConfig    = getBsConfig(crossbow, config);
     var ctx         = createContext(input);
-    var watcher     = watch(cli, tasks);
+    var watcher     = watch(cli, tasks, config);
     var watchTasks  = watcher.getTasks(cliInput);
     var bs          = require('./bs')(bsConfig, watchTasks, runCommandAfterWatch);
     taskResolver    = require('./tasks')(crossbow, config);

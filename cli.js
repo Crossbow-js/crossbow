@@ -10,7 +10,8 @@ var Immutable        = require('immutable');
 var cli = meow({
     help: [
         'Usage',
-        '  crossbow run <task>'
+        '  crossbow run <task>',
+        '  crossbow watch <task>'
     ].join('\n')
 });
 
@@ -36,6 +37,10 @@ function handleCli (cli, input, cb) {
     if (typeof input === 'function') {
         cb = input;
         input = {};
+    }
+
+    if (cli.input[0] !== 'run' && cli.input[0] !== 'watch') {
+        return console.log(cli.help);
     }
 
     cb            = cb || defaultCallback;
@@ -90,3 +95,35 @@ function handleCli (cli, input, cb) {
 module.exports        = handleCli;
 module.exports.logger = logger;
 module.exports.ctx    = ctx;
+
+/**
+ * @param input
+ * @param flags
+ * @param cb
+ */
+module.exports.run    = function (input, flags, cb) {
+    if (typeof flags === 'function') {
+        cb = flags;
+        flags = {};
+    }
+    handleCli({
+        input: ['run'].concat(input),
+        flags: flags
+    }, cb);
+};
+
+/**
+ * @param input
+ * @param flags
+ * @param cb
+ */
+module.exports.watch = function (input, flags, cb) {
+    if (typeof flags === 'function') {
+        cb = flags;
+        flags = {};
+    }
+    handleCli({
+        input: ['watch'].concat(input),
+        flags: flags
+    }, cb);
+};

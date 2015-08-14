@@ -1,8 +1,8 @@
 function complex (obs) {
     setTimeout(function () {
-        obs.onNext();
+        obs.onNext('as');
         obs.onCompleted();
-    }, 0)
+    }, 0);
 }
 
 module.exports.tasks = [complex];

@@ -70,10 +70,10 @@ utils.getKey = function (key, obj) {
 
 /**
  * @param {Object} crossbow
- * @param {Object} input
+ * @param {Object} config
  * @returns {{server: string}}
  */
-utils.getBsConfig = function (crossbow, input, config) {
+utils.getBsConfig = function (crossbow, config) {
 
     var bsConfig = {
         server: './public'
@@ -81,8 +81,8 @@ utils.getBsConfig = function (crossbow, input, config) {
 
     var cwd = config.get('cwd');
 
-    if (input.watch && input.watch['bs-config']) {
-        return input.watch['bs-config'];
+    if (crossbow.watch && crossbow.watch['bs-config']) {
+        return crossbow.watch['bs-config'];
     }
 
     var match = [

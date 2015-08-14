@@ -1,5 +1,4 @@
-
-var logger                  = require('./logger');
+var logger = require('./logger');
 
 module.exports = function (bsConfig, watchTasks, afterFn) {
 
@@ -31,19 +30,20 @@ module.exports = function (bsConfig, watchTasks, afterFn) {
 
     var methods = {
         runPublicMethods: function (bsTasks) {
-            if (bsTasks.length) {
-                bsTasks.forEach(function (task) {
-                    if (typeof bs[task.method] === 'function') {
-                        if (task.args.length) {
-                            bs[task.method].apply(bs, task.args);
-                        } else {
-                            bs[task.method].call(bs);
-                        }
-                    }
-                });
+            if (!bsTasks.length) {
+                return;
             }
+            bsTasks.forEach(function (task) {
+                if (typeof bs[task.method] === 'function') {
+                    if (task.args.length) {
+                        bs[task.method].apply(bs, task.args);
+                    } else {
+                        bs[task.method].call(bs);
+                    }
+                }
+            });
         }
-    }
+    };
 
     return methods;
 };
