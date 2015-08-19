@@ -176,7 +176,7 @@ describe('Gathering run tasks', function () {
             done();
         })
     });
-    it.only('can gather tasks from multiple aliass', function (done) {
+    it('can gather tasks from multiple aliass', function (done) {
 
         testCase(["run", "css"], {
             crossbow: {
@@ -208,7 +208,37 @@ describe('Gathering run tasks', function () {
             assert.equal(output.sequence[1].task.subTasks[1], 'kittie');
 
             done();
-        })
+        });
+    });
+    it.only('can gather handle no-tasks in config', function (done) {
+
+        testCase(["run", "examples/tasks/simple.js"], {
+            crossbow: {
+                config: {
+                    "examples/tasks/simple.js": {
+                        default: {
+                            input: "scss/core.scss",
+                            output: "css/core.css"
+                        },
+                        dev: {
+                            input: "scss/main.scss",
+                            output: "css/main.min.css"
+                        }
+                    }
+                }
+            }
+        }, function (err, output) {
+            if (err) {
+                return done(err);
+            }
+
+            //assert.equal(output.sequence[0].opts.input, 'scss/main.scss');
+            //assert.equal(output.sequence[0].opts.output, 'css/main.min.css');
+            //assert.equal(output.sequence[1].task.subTasks[0], 'shane');
+            //assert.equal(output.sequence[1].task.subTasks[1], 'kittie');
+
+            done();
+        });
     });
     it('can gather valid tasks when using an alias', function (done) {
         testCase(["run", "css", "js"], {
