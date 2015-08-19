@@ -75,6 +75,10 @@ utils.getKey = function (key, obj) {
  */
 utils.getBsConfig = function (crossbow, config) {
 
+    if (crossbow.watch.browserSync === false) {
+        return undefined;
+    }
+
     var bsConfig = {
         server: './public'
     };

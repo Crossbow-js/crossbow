@@ -1,0 +1,17 @@
+watch:
+    browserSync: false
+    tasks:
+        default:
+            "test/fixtures/*.html": ["css", "js", "bs:reload"]
+        dev:
+            "test/fixtures/**/*.scss": ["css", "bs:reload"]
+            "test/fixtures/*.html": ["bs:reload"]
+tasks:
+    css: ['sass']
+    js: ['dummy']
+    dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
+
+config:
+    sass:
+        input: 'test/fixtures/scss/main.scss'
+        output: 'test/fixtures/css/main.min.css'
