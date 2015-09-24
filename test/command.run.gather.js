@@ -267,6 +267,9 @@ describe.only('Gathering run tasks', function () {
                     "css": ['examples/tasks/simple.js:default', 'examples/tasks/simple.js:dev']
                 },
                 config: {
+                    $: {
+                        name: 'kittie'
+                    },
                     root: '/user',
                     public: '{root}/public',
                     nested: {
@@ -282,7 +285,8 @@ describe.only('Gathering run tasks', function () {
                             input: '{public}/css',
                             output: '{public}/dist/css',
                             random: '{nested.props}/js',
-                            joke: '{nested.arr.0.another}'
+                            joke: '{nested.arr.0.another}',
+                            animal: '{$.name}'
                         },
                         dev: {
                             input: '{root}/css',
@@ -297,6 +301,7 @@ describe.only('Gathering run tasks', function () {
             assert.equal(output.sequence[0].opts.output, '/user/public/dist/css');
             assert.equal(output.sequence[0].opts.random, 'no-problem/js');
             assert.equal(output.sequence[0].opts.joke,  'shane');
+            assert.equal(output.sequence[0].opts.animal,  'kittie');
 
             assert.equal(output.sequence[1].opts.output, '/user/dist/css');
             assert.equal(output.sequence[1].opts.output, '/user/dist/css');
