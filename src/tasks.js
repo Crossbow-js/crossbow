@@ -173,7 +173,7 @@ module.exports = function (input, config) {
             }, []);
 
             return {
-                run: Rx.Observable.from(seq).mergeAll(),
+                run: Rx.Observable.from(seq).concatAll(),
                 tasks: tasks,
                 sequence: sequence
             }
