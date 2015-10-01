@@ -4,14 +4,14 @@ watch:
         open: false
     tasks:
         default:
-            "test/fixtures/*.html": ["css", "js", "bs:reload"]
+            "test/fixtures/*.html": ["js", "bs:reload"]
         dev:
-            "test/fixtures/**/*.scss": ["css", "bs:reload:{file}"]
+            "test/fixtures/**/*.scss": ["css", "bs:reload:{sass.output}"]
             "test/fixtures/asses/**/*.css": ["bs:reload"]
 tasks:
     css: ['sass']
     js: ['dummy']
-    dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
+    dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
 config:
     $:
         root: test/fixtures

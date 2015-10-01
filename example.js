@@ -1,19 +1,17 @@
-var cb = require('./');
-cb({
-    input: ['run', 'sass'],
-    flags: {
-        config: 'crossbow.yaml',
-        logLevel: 'info'
-    }
-}, function (err, done) {
+var Rx      = require('rx');
+var sub     = new Rx.Subject();
+var counter = 0;
+setInterval(function () {
+    sub.onNext(counter += 1);
+}, 500);
 
-    if (err) {
-        return console.log(err.stack);
-    }
+var sub2     = new Rx.Subject();
+var counter2 = 0;
+setInterval(function () {
+    sub2.onNext(counter2 += 1);
+}, 100);
 
-    console.log(done.tasks);
-
-    if (done.tasks.invalid.length) {
-        console.log(done.tasks.invalid);
-    }
-});
+Rx.Observable
+    .merge(sub, sub2)
+    .do(x => console.log(x))
+    .subscribe();

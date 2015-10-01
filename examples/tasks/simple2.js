@@ -3,7 +3,7 @@ function simple2 (obs) {
     setTimeout(function () {
         //obs.log.info('{ok: } Completed');
         obs.onCompleted();
-    }, 2000);
+    }, 500);
 }
 
 module.exports.tasks = [simple2];

@@ -1,6 +1,6 @@
 function complex (obs) {
     setTimeout(function () {
-        obs.onNext('as');
+        obs.onNext('Some value');
         obs.onCompleted();
     }, 0);
 }

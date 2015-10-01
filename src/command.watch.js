@@ -3,6 +3,7 @@ var resolve                 = require('path').resolve;
 var runCommand              = require('./command.run.js');
 var cli                     = require('../');
 var logger                  = require('./logger');
+var utils                   = require('./utils');
 var getBsConfig             = require('./utils').getBsConfig;
 var arrayify                = require('./utils').arrarify;
 var getPresentableTaskList  = require('./utils').getPresentableTaskList;
@@ -36,10 +37,10 @@ function runWatcher (cli, input, config, cb) {
     var watchers     = watcher.getWatchers(watcherTasks);
     var tasksSubject = new Rx.Subject();
     var taskStream   = tasksSubject.publish().refCount();
-    var locked       = false;
     var bs;
-
-    var bsConfig = getBsConfig(crossbow, config);
+    var onSwitch     = new Rx.Subject();
+    var offSwitch    = new Rx.Subject();
+    var bsConfig     = getBsConfig(crossbow, config);
 
     if (bsConfig) {
         bsConfig.logFileChanges = false;
@@ -49,60 +50,67 @@ function runWatcher (cli, input, config, cb) {
                 return cb(err);
             }
         });
-        taskStream
-            .do(x => {
-                console.log(x);
-                x.tasks.bsTasks.forEach(function (task) {
-                    if (typeof bs[task.method] === 'function') {
-                        if (task.args.length) {
-                            bs[task.method].apply(bs, task.args);
-                        } else {
-                            bs[task.method].call(bs);
-                        }
-                    }
-                });
-            })
-            .subscribe();
     }
 
-    watchers
-        .takeWhile(x => !locked)
+    taskStream
+        .do(x => {
+            x.tasks.bsTasks.forEach(function (task) {
+                if (task.args.length) {
+                    task.args = utils.transformStrings(task.args, crossbow.config);
+                }
+                if (typeof bs[task.method] === 'function') {
+                    if (task.args.length) {
+                        bs[task.method].apply(bs, task.args);
+                    } else {
+                        bs[task.method].call(bs);
+                    }
+                }
+            });
+        })
+        .do(onSwitch.onNext.bind(onSwitch))
+        .subscribe();
+
+    var watcherStream = watchers
         .filter(x => x.event !== 'add')
         .map(x => {
             x.tasks = splitTasks(x.tasks);
             return x;
-        })
-        .do(x => locked = true)
+        });
+
+    var pauser = onSwitch.flatMapLatest(x => watcherStream.takeUntil(offSwitch))
+
+    pauser
+        .do(x => offSwitch.onNext(true))
         .do(runCommandAfterWatch)
         .subscribe();
 
-    taskResolver    = require('./tasks')(crossbow, config);
+    onSwitch.onNext(true);
 
-    ctx.trigger = {
-        type: "watcher",
-        cli: cli,
-        input: input,
-        config: config
-    };
+    taskResolver = require('./tasks')(crossbow, config);
+
 
     logger.debug('Running watcher with tasks', watcherTasks);
 
-    ///**
-    // * @param taskItem
-    // * @param event
-    // * @param file
-    // * @returns {*}
-    // */
+    /**
+     * @param taskItem
+     * @param event
+     * @param file
+     * @returns {*}
+     */
     function runCommandAfterWatch (event) {
+
+        ctx.trigger = {
+            type: "watcher",
+            event: event.event,
+            item: event.item,
+            tasks: event.tasks,
+            path: event.path
+        };
 
         var start  = new Date().getTime();
         var tasks  = event.tasks.valid;
-        locked = true;
 
-        input.handoff   = true;
-
-        ctx.trigger.file = event.file;
-        ctx.trigger.event = event;
+        input.handoff = true;
 
         var runner = taskResolver.getRunner(tasks, ctx);
         var errored = false;
@@ -141,7 +149,6 @@ function runWatcher (cli, input, config, cb) {
          * @param {Error} e
          */
         function handleIncomingError (e) {
-            locked = false;
             if (e.crossbowMessage) {
                 console.log(e.crossbowMessage);
             } else {
@@ -154,14 +161,8 @@ function runWatcher (cli, input, config, cb) {
          */
         function handleTaskCompleted () {
             if (errored) {
-                locked = false;
                 return;
             }
-
-
-            //if (tasks.bsTasks.length && bsConfig) {
-            //    bs.runPublicMethods(tasks.bsTasks);
-            //}
 
             logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
 
@@ -170,8 +171,6 @@ function runWatcher (cli, input, config, cb) {
             } else {
                 logger.info('{ok: } {yellow:' + tasks.bsTasks.map(x => 'Browsersync: ' + x.method).join('-'));
             }
-
-            locked = false;
 
             tasksSubject.onNext(event);
 

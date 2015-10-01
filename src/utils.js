@@ -8,6 +8,8 @@ var utils    = exports;
 var fs       = require('fs');
 var Rx       = require('rx');
 var yml      = require('js-yaml');
+var traverse = require('traverse');
+
 
 utils.padCrossbowError = function (msg) {
     return msg.split('\n').map(function (item) {
@@ -216,3 +218,38 @@ utils.locateModule = function (cwd, name) {
     .map(x => resolve.apply(null, [cwd].concat(x)))
     .filter(x => fs.existsSync(x));
 };
+
+/**
+ * Look at an object of any depth and perform string substitutions
+ * from things like {paths.root}
+ * @param {Object} item
+ * @param {Object} root
+ * @returns {Object}
+ */
+function transformStrings (item, root) {
+    return traverse(item).map(function () {
+        if (this.isLeaf) {
+            if (typeof this.node === 'string') {
+                this.update(replaceOne(this.node, root));
+            }
+            this.update(this.node);
+        }
+    });
+}
+
+/**
+ * @param {String} item - the string to replace
+ * @param {Object} root - Root object used for lookups
+ * @returns {*}
+ */
+function replaceOne (item, root) {
+    return item.replace(/\{(.+?)\}/g, function () {
+        var match = objPath.get(root, arguments[1].split('.'));
+        if (typeof match === 'string') {
+            return replaceOne(match, root);
+        }
+        return match;
+    });
+}
+
+utils.transformStrings = transformStrings;
