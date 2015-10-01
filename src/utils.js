@@ -9,15 +9,19 @@ var fs       = require('fs');
 var Rx       = require('rx');
 var yml      = require('js-yaml');
 
+utils.padCrossbowError = function (msg) {
+    return msg.split('\n').map(function (item) {
+        return '       ' + item;
+    }).join('\n')
+};
+
 /**maas
  * @param {Error|TypeError} [err]
  */
 utils.defaultCallback = function (err, output) {
     if (err) {
         if (err.crossbowMessage) {
-            console.log(err.crossbowMessage.split('\n').map(function (item) {
-                return '       ' + item;
-            }).join('\n'));
+            console.log(utils.padCrossbowError(err.crossbowMessage));
         } else {
             throw err;
         }

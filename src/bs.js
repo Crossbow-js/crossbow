@@ -55,6 +55,8 @@ module.exports = function (bsConfig, watchTasks, afterFn) {
     return methods;
 };
 
+module.exports.splitTasks = splitTasks;
+
 /**
  * split [css, bs:reload] into
  *  {bsTasks: [], valid: []}

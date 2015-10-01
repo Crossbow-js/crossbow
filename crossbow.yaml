@@ -7,7 +7,7 @@ watch:
             "test/fixtures/*.html": ["css", "js", "bs:reload"]
         dev:
             "test/fixtures/**/*.scss": ["css", "bs:reload"]
-            "test/fixtures/*.html": ["bs:reload"]
+            "test/fixtures/asses/**/*.css": ["bs:reload"]
 tasks:
     css: ['sass']
     js: ['dummy']

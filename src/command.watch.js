@@ -6,10 +6,13 @@ var logger                  = require('./logger');
 var getBsConfig             = require('./utils').getBsConfig;
 var arrayify                = require('./utils').arrarify;
 var getPresentableTaskList  = require('./utils').getPresentableTaskList;
+var padCrossbowError        = require('./utils').padCrossbowError;
 var gatherTasks             = require('./gather-watch-tasks');
 var Rx                      = require('rx');
 var createContext           = require("./ctx");
 var watch                   = require("./watch");
+var bs = require('./bs');
+var watcher                 = require("./file-watcher");
 var taskResolver;
 
 module.exports = function (cli, input, config, cb) {
@@ -23,14 +26,28 @@ module.exports = function (cli, input, config, cb) {
  */
 function runWatcher (cli, input, config, cb) {
 
-    var crossbow    = input.crossbow;
-    var cliInput    = cli.input.slice(1);
-    var tasks       = gatherTasks(crossbow, cliInput);
-    var bsConfig    = getBsConfig(crossbow, config);
-    var ctx         = createContext(input);
-    var watcher     = watch(cli, tasks, config);
-    var watchTasks  = watcher.getTasks(cliInput);
-    var bs          = require('./bs')(bsConfig, watchTasks, runCommandAfterWatch);
+    var crossbow     = input.crossbow;
+    var cliInput     = cli.input.slice(1);
+    var tasks        = gatherTasks(crossbow, cliInput);
+    var bsConfig     = getBsConfig(crossbow, config);
+    var ctx          = createContext(input);
+    var watcherTasks = watch(cli, tasks, config).getTasks(cliInput);
+    var watchers     = watcher.getWatchers(watcherTasks);
+    var pauser       = new Rx.Subject();
+    var locked       = false;
+
+    watchers
+        .takeWhile(x => !locked)
+        .filter(x => x.event !== 'add')
+        .map(x => {
+            x.tasks = bs.splitTasks(x.tasks);
+            return x;
+        })
+        .do(x => locked = true)
+        .do(runCommandAfterWatch)
+        .subscribe();
+
+    //console.log(watchTasks);
     taskResolver    = require('./tasks')(crossbow, config);
 
     ctx.trigger = {
@@ -40,30 +57,26 @@ function runWatcher (cli, input, config, cb) {
         config: config
     };
 
-    logger.debug('Running watcher with tasks', watchTasks);
+    logger.debug('Running watcher with tasks', watcherTasks);
 
-    /**
-     * @param taskItem
-     * @param event
-     * @param file
-     * @returns {*}
-     */
-    function runCommandAfterWatch (taskItem, tasks, event, file) {
-
-        var bs = this;
-
-        if (event !== 'change' || taskItem.locked) {
-            return;
-        }
+    ///**
+    // * @param taskItem
+    // * @param event
+    // * @param file
+    // * @returns {*}
+    // */
+    function runCommandAfterWatch (event) {
 
         var start  = new Date().getTime();
+        var tasks  = event.tasks.valid;
+        locked = true;
 
-        taskItem.locked = true;
         input.handoff   = true;
 
-        ctx.trigger.file = file;
+        ctx.trigger.file = event.file;
+        ctx.trigger.event = event;
 
-        var runner = taskResolver.getRunner(tasks.valid, ctx);
+        var runner = taskResolver.getRunner(tasks, ctx);
         var errored = false;
 
         /**
@@ -72,14 +85,20 @@ function runWatcher (cli, input, config, cb) {
          * We return an empty Observable to allow the task that caused
          * the error to 'complete', whilst not actually halting the stream
          */
-        function logIncomingErrors (e) {
-            if (!e.silent) {
-                console.log(e);
-                bs.notify(`<span style="color: red; display: block; text-align: left">Error from task ${e.task.taskName}</span><span style="text-align: left!important; display: block; width: 100%;">${e}</span>`, 5000);
-            }
+        function logIncomingErrors (err) {
+
             errored = true;
+
+            if (err.crossbowMessage) {
+                console.log(padCrossbowError(err.crossbowMessage));
+                //bs.notify(`<span style="color: red; display: block; text-align: left">Error from task ${e.task.taskName}</span><span style="text-align: left!important; display: block; width: 100%;">${e}</span>`, 5000);
+            } else {
+                console.log(err);
+            }
+
             return Rx.Observable.empty(); // continue through so this sequence does not stop
         }
+
 
         /**
          * If a task calls onNext, we'll receive that here
@@ -94,8 +113,12 @@ function runWatcher (cli, input, config, cb) {
          * @param {Error} e
          */
         function handleIncomingError (e) {
-            taskItem.locked = false;
-            console.log(e.stack);
+            locked = false;
+            if (e.crossbowMessage) {
+                console.log(e.crossbowMessage);
+            } else {
+                console.log(e.stack);
+            }
         }
 
         /**
@@ -103,13 +126,13 @@ function runWatcher (cli, input, config, cb) {
          */
         function handleTaskCompleted () {
             if (errored) {
-                taskItem.locked = false;
+                locked = false;
                 return;
             }
 
-            if (tasks.bsTasks.length && bsConfig) {
-                bs.runPublicMethods(tasks.bsTasks);
-            }
+            //if (tasks.bsTasks.length && bsConfig) {
+            //    bs.runPublicMethods(tasks.bsTasks);
+            //}
 
             logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
 
@@ -119,7 +142,7 @@ function runWatcher (cli, input, config, cb) {
                 logger.info('{ok: } {yellow:' + tasks.bsTasks.map(x => 'Browsersync: ' + x.method).join('-'));
             }
 
-            taskItem.locked = false;
+            locked = false;
             cb(null, runner);
         }
 
