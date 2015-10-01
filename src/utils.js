@@ -12,7 +12,7 @@ var yml      = require('js-yaml');
 utils.padCrossbowError = function (msg) {
     return msg.split('\n').map(function (item) {
         return '       ' + item;
-    }).join('\n')
+    }).join('\n');
 };
 
 /**maas
@@ -93,14 +93,6 @@ utils.getKey = function (key, obj) {
  */
 utils.getBsConfig = function (crossbow, config) {
 
-    if (crossbow.watch.browserSync === false) {
-        return undefined;
-    }
-
-    var bsConfig = {
-        server: './public'
-    };
-
     var cwd = config.get('cwd');
 
     if (crossbow.watch && crossbow.watch['bs-config']) {
@@ -122,7 +114,7 @@ utils.getBsConfig = function (crossbow, config) {
         return require(x);
     });
 
-    return match.length ? match[0] : bsConfig;
+    return match.length ? match[0] : undefined;
 };
 
 /**

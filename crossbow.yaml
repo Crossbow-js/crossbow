@@ -6,13 +6,15 @@ watch:
         default:
             "test/fixtures/*.html": ["css", "js", "bs:reload"]
         dev:
-            "test/fixtures/**/*.scss": ["css", "bs:reload"]
+            "test/fixtures/**/*.scss": ["css", "bs:reload:{file}"]
             "test/fixtures/asses/**/*.css": ["bs:reload"]
 tasks:
     css: ['sass']
     js: ['dummy']
     dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
 config:
+    $:
+        root: test/fixtures
     sass:
-        input: 'test/fixtures/scss/main.scss'
-        output: 'test/fixtures/css/main.min.css'
+        input: '{$.root}/scss/main.scss'
+        output: '{$.root}/css/main.min.css'

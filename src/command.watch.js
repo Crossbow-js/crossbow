@@ -7,16 +7,18 @@ var getBsConfig             = require('./utils').getBsConfig;
 var arrayify                = require('./utils').arrarify;
 var getPresentableTaskList  = require('./utils').getPresentableTaskList;
 var padCrossbowError        = require('./utils').padCrossbowError;
+var getBsConfig             = require('./utils').getBsConfig;
 var gatherTasks             = require('./gather-watch-tasks');
 var Rx                      = require('rx');
 var createContext           = require("./ctx");
 var watch                   = require("./watch");
-var bs = require('./bs');
+var splitTasks              = require('./bs').splitTasks;
+var objPath                 = require('object-path');
 var watcher                 = require("./file-watcher");
 var taskResolver;
 
 module.exports = function (cli, input, config, cb) {
-    var beforeTasks   = input.crossbow.watch.before || [];
+    var beforeTasks = input.crossbow.watch.before || [];
     return runWatcher(cli, input, config, cb);
 };
 
@@ -29,25 +31,51 @@ function runWatcher (cli, input, config, cb) {
     var crossbow     = input.crossbow;
     var cliInput     = cli.input.slice(1);
     var tasks        = gatherTasks(crossbow, cliInput);
-    var bsConfig     = getBsConfig(crossbow, config);
     var ctx          = createContext(input);
     var watcherTasks = watch(cli, tasks, config).getTasks(cliInput);
     var watchers     = watcher.getWatchers(watcherTasks);
-    var pauser       = new Rx.Subject();
+    var tasksSubject = new Rx.Subject();
+    var taskStream   = tasksSubject.publish().refCount();
     var locked       = false;
+    var bs;
+
+    var bsConfig = getBsConfig(crossbow, config);
+
+    if (bsConfig) {
+        bsConfig.logFileChanges = false;
+        bs = require('browser-sync').create('Crossbow');
+        bs.init(bsConfig, function (err, _bs) {
+            if (err) {
+                return cb(err);
+            }
+        });
+        taskStream
+            .do(x => {
+                console.log(x);
+                x.tasks.bsTasks.forEach(function (task) {
+                    if (typeof bs[task.method] === 'function') {
+                        if (task.args.length) {
+                            bs[task.method].apply(bs, task.args);
+                        } else {
+                            bs[task.method].call(bs);
+                        }
+                    }
+                });
+            })
+            .subscribe();
+    }
 
     watchers
         .takeWhile(x => !locked)
         .filter(x => x.event !== 'add')
         .map(x => {
-            x.tasks = bs.splitTasks(x.tasks);
+            x.tasks = splitTasks(x.tasks);
             return x;
         })
         .do(x => locked = true)
         .do(runCommandAfterWatch)
         .subscribe();
 
-    //console.log(watchTasks);
     taskResolver    = require('./tasks')(crossbow, config);
 
     ctx.trigger = {
@@ -130,6 +158,7 @@ function runWatcher (cli, input, config, cb) {
                 return;
             }
 
+
             //if (tasks.bsTasks.length && bsConfig) {
             //    bs.runPublicMethods(tasks.bsTasks);
             //}
@@ -143,10 +172,14 @@ function runWatcher (cli, input, config, cb) {
             }
 
             locked = false;
+
+            tasksSubject.onNext(event);
+
             cb(null, runner);
         }
 
-        runner.run
+        runner
+            .run
             .catch(logIncomingErrors)
             .subscribe(
                 handleValueReceived,
