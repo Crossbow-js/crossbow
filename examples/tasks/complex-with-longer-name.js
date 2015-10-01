@@ -1,8 +1,8 @@
 function complex (obs) {
+    obs.log.info('{blue:+} Running complex');
     setTimeout(function () {
-        obs.log.info('All done, bro');
         obs.onCompleted();
-    }, 0)
+    }, 1000);
 }
 
 module.exports.tasks = [complex];

@@ -2,7 +2,10 @@ var prefix = "{magenta:      crossbow }{gray:::} }";
 var logger  = require("eazy-logger").Logger({
     prefix: prefix,
     useLevelPrefixes: false,
-    logLevel: 'warn',
+    logLevel: 'info',
+    levels: {
+        fileInfo: 399
+    },
     custom: {
         "ok": function (out) {
             return this.compile('{green:✔}');

@@ -14,7 +14,13 @@ var yml      = require('js-yaml');
  */
 utils.defaultCallback = function (err, output) {
     if (err) {
-        throw err;
+        if (err.crossbowMessage) {
+            console.log(err.crossbowMessage.split('\n').map(function (item) {
+                return '       ' + item;
+            }).join('\n'));
+        } else {
+            throw err;
+        }
     }
 
     if (output && output.tasks.invalid.length) {
@@ -23,6 +29,7 @@ utils.defaultCallback = function (err, output) {
             logger.error('{gray:x} %s', invalid.taskName);
         });
     }
+
 };
 
 /**

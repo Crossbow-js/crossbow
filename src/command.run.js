@@ -3,7 +3,6 @@ var resolve       = require('path').resolve;
 var basename      = require('path').basename;
 var objPath       = require('object-path');
 var logger        = require('./logger');
-var copy          = require('./command.copy');
 var fs            = require('fs');
 var Rx            = require('rx');
 var exists        = Rx.Observable.fromNodeCallback(fs.exists);
@@ -45,7 +44,8 @@ module.exports = function (cli, input, config, cb) {
                 logger.debug('got a value', x);
             },
             e => {
-                console.log(e.stack.split('\n').slice(0, 2).join('\n'));
+                cb(e);
+                //console.log('DEBUGGING', e.stack.split('\n').slice(0, 2).join('\n'));
             },
             s => {
                 handleCompletion(runner.tasks.valid);

@@ -199,11 +199,14 @@ module.exports = function (input, config) {
                             x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
                             return x;
                         });
-                        fn(obs, seq.opts, ctx);
+                        obs.compile = logger.compile;
+                        obs.done    = obs.onCompleted.bind(obs);
+                        fn.call(obs, obs, seq.opts, ctx);
                     }).catch(e => {
-                        logger.error('{gray:-----------------------------' + new Array(seq.task.taskName.length).join('-'));
+                        var lineLength = new Array(seq.task.taskName.length).join('-');
+                        logger.error('{gray:-----------------------------' + lineLength);
                         logger.error('{red:following ERROR from task {cyan:`%s`}', seq.task.taskName);
-                        logger.error('{gray:-----------------------------' + new Array(seq.task.taskName.length).join('-'));
+                        logger.error('{gray:-----------------------------' + lineLength);
                         e.task = seq.task;
                         return Rx.Observable.throw(e);
                     });
