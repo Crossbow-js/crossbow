@@ -1,4 +1,16 @@
 var cb = require('./');
-cb.watch(['default'], {config: 'crossbow.yaml'}, function (err, output) {
-    console.log(output.tasks);
+cb({
+    input: ['run', 'css'],
+    //flags: {
+    //    config: 'crossbow.yaml'
+    //}
+}, function (err, done) {
+    if (err) {
+        return console.log(err.stack);
+    }
+
+
+    if (done.tasks.invalid.length) {
+        console.log(done.tasks.invalid);
+    }
 });

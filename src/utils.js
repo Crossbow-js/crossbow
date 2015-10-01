@@ -9,12 +9,19 @@ var fs       = require('fs');
 var Rx       = require('rx');
 var yml      = require('js-yaml');
 
-/**
+/**maas
  * @param {Error|TypeError} [err]
  */
 utils.defaultCallback = function (err, output) {
     if (err) {
         throw err;
+    }
+
+    if (output && output.tasks.invalid.length) {
+        logger.error('{red:Sorry, the following tasks could not be resolved:');
+        output.tasks.invalid.forEach(function (invalid) {
+            logger.error('{gray:x} %s', invalid.taskName);
+        });
     }
 };
 

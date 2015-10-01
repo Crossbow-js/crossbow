@@ -32,10 +32,5 @@ module.exports = {
             output: 'test/fixtures/js/dist/bundle.js',
             root:   'test/fixtures/js'
         }
-    },
-    copy: {
-        "default": [
-            "test/fixtures/*/**:public"
-        ]
     }
 };
