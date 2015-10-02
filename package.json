@@ -8,6 +8,10 @@
     "es6": "babel src --out-dir lib --blacklist useStrict",
     "es6w": "babel src --out-dir lib --blacklist useStrict --watch"
   },
+  "files": [
+    "lib",
+    "cli.js"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
