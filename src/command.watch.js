@@ -160,16 +160,16 @@ function runWatcher (cli, input, config, cb) {
          * The task completed, with possible errors
          */
         function handleTaskCompleted () {
-            if (errored) {
-                return;
-            }
+            if (!errored) {
+                logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
 
-            logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
-
-            if (runner.tasks.valid.length) {
-                logTasks(runner.tasks.valid, config.get('summary') === 'short');
-            } else {
-                logger.info('{ok: } {yellow:' + tasks.bsTasks.map(x => 'Browsersync: ' + x.method).join('-'));
+                if (runner.tasks.valid.length) {
+                    logTasks(runner.tasks.valid, config.get('summary') === 'short');
+                } else {
+                    logger.info('{ok: } {yellow:' + tasks.bsTasks.map(function (x) {
+                            return 'Browsersync: ' + x.method;
+                        }).join('-'));
+                }
             }
 
             tasksSubject.onNext(event);
