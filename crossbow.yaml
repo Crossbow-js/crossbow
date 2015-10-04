@@ -4,7 +4,7 @@ watch:
         open: false
     tasks:
         default:
-            "test/fixtures/*.html": ["js", "bs:reload"]
+            "test/fixtures": ["js", "bs:reload"]
         dev:
             "test/fixtures/**/*.scss": ["css", "bs:reload:{sass.output}"]
             "test/fixtures/asses/**/*.css": ["bs:reload"]

@@ -16,7 +16,9 @@ module.exports.getWatchers = getWatchers;
 function watcherAsObservable (item) {
     var obs = new Rx.Subject();
     var watcher = require('chokidar')
-        .watch(item.patterns)
+        .watch(item.patterns, {
+            ignoreInitial: true // todo: allow watch options in config
+        })
         .on('all', function (event, file) {
             obs.onNext({
                 event: event,

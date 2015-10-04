@@ -71,7 +71,7 @@ function runWatcher (cli, input, config, cb) {
         .subscribe();
 
     var watcherStream = watchers
-        .filter(x => x.event !== 'add')
+        .filter(x => x.event === 'change')
         .map(x => {
             x.tasks = splitTasks(x.tasks);
             return x;
