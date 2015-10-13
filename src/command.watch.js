@@ -42,8 +42,13 @@ function runWatcher (cli, input, config, cb) {
     var offSwitch    = new Rx.Subject();
     var bsConfig     = getBsConfig(crossbow, config);
 
+    logWatchInfo(watcherTasks);
+
     if (bsConfig) {
         bsConfig.logFileChanges = false;
+        bsConfig.logPrefix = function () {
+            return this.compile(logger.prefix);
+        };
         bs = require('browser-sync').create('Crossbow');
         bs.init(bsConfig, function (err, _bs) {
             if (err) {
@@ -112,6 +117,8 @@ function runWatcher (cli, input, config, cb) {
         var start  = new Date().getTime();
         var tasks  = event.tasks.valid;
 
+        logger.info('{gray:running ::} {yellow:' + tasks.join(' {gray:->} '));
+
         input.handoff = true;
 
         var runner = taskResolver.getRunner(tasks, ctx);
@@ -166,7 +173,9 @@ function runWatcher (cli, input, config, cb) {
                 logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
 
                 if (runner.tasks.valid.length) {
-                    logTasks(runner.tasks.valid, config.get('summary') === 'short');
+                    if (config.get('summary') !== 'short') {
+                        logTasks(runner.tasks.valid);
+                    }
                 } else {
                     logger.info('{ok: } {yellow:' + tasks.bsTasks.map(function (x) {
                             return 'Browsersync: ' + x.method;
@@ -199,11 +208,20 @@ function logSubTasks (tasks) {
     });
 }
 
-function logTasks (tasks, short) {
+function logTasks (tasks) {
     tasks.forEach(function (task) {
         logger.info('{ok: } {yellow:' + task.taskName);
-        if (task.tasks.length && !short) {
+        if (task.tasks.length) {
             logSubTasks(task.tasks);
         }
     });
+}
+
+function logWatchInfo(watcherTasks) {
+    watcherTasks.forEach(function (task, i) {
+        task.patterns.forEach(function (pattern) {
+            logger.info('{gray:watching ::} {yellow:%s}', pattern);
+        })
+    });
+    logger.info('{gray:-------- ::}');
 }

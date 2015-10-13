@@ -9,7 +9,7 @@ watch:
             "test/fixtures/**/*.scss": ["css", "bs:reload:{sass.output}"]
             "test/fixtures/asses/**/*.css": ["bs:reload"]
         prom:
-            "test/fixtures/**/*.html": ["prom", "stream", "observable", "bs:reload"]
+            "test/fixtures/**/*.html:test/fixtures/scss/**": ["prom", "stream", "observable", "bs:reload"]
 tasks:
     css: ['sass']
     js: ['dummy']
