@@ -73,6 +73,7 @@ function handleCli (cli, input, cb) {
         }
 
         if (cli.input[0] === 'run') {
+            //require('./lib/grunt-compat')();
             if (cli.input.length === 1) {
                 cb(new Error('You didn\'t provide a command for Crossbow to run'));
                 return;
