@@ -54,6 +54,9 @@ function runWatcher (cli, input, config, cb) {
 
     taskStream
         .do(x => {
+            if (!bs) {
+                return;
+            }
             x.tasks.bsTasks.forEach(function (task) {
                 if (task.args.length) {
                     task.args = utils.transformStrings(task.args, crossbow.config);
@@ -87,7 +90,6 @@ function runWatcher (cli, input, config, cb) {
     onSwitch.onNext(true);
 
     taskResolver = require('./tasks')(crossbow, config);
-
 
     logger.debug('Running watcher with tasks', watcherTasks);
 
@@ -141,7 +143,7 @@ function runWatcher (cli, input, config, cb) {
          * @param {*} x
          */
         function handleValueReceived (x) {
-            logger.info('got a value', x);
+            logger.debug('got a value', x);
         }
 
         /**

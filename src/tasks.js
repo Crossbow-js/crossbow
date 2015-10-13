@@ -185,7 +185,7 @@ module.exports = function (input, config) {
                                     obs.onCompleted(x);
                                 }, e => {
                                     obs.onError(e);
-                                })
+                                });
                         }
 
                         if (output && typeof output.pipe === 'function') {
