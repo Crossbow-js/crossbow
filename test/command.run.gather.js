@@ -33,7 +33,7 @@ describe.only('Gathering run tasks', function () {
         cli({
             input: ["run", "js"],
             flags: {
-                config: "crossbow.yaml"
+                config: "examples/crossbow.yaml"
             }
         }, {}, function (err, output) {
             assert.equal(output.sequence.length, 2);
@@ -43,7 +43,7 @@ describe.only('Gathering run tasks', function () {
         });
     });
     it('can gather from external config file', function (done) {
-        testCase(["run", "js"], {}, function (err, output) {
+        cli({input: ["run", "js"], flags: {config: "examples/crossbow.js"}}, {}, function (err, output) {
             if (err) {
                 return done(err);
             }
@@ -57,7 +57,7 @@ describe.only('Gathering run tasks', function () {
         cli({
             input: ["run", "my-awesome-task"],
             flags: {
-                config: 'crossbow-alt.js'
+                config: 'examples/crossbow-alt.js'
             }
         }, {}, function (err, output) {
             if (err) {
@@ -75,7 +75,7 @@ describe.only('Gathering run tasks', function () {
         cli({
             input: ["run", "js"],
             flags: {
-                config: 'crossbow.yaml'
+                config: 'examples/crossbow.yaml'
             }
         }, {}, function (err, output) {
             if (err) {
