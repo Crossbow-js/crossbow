@@ -77,7 +77,8 @@ function handleCli (cli, input, cb) {
                 cb(new Error('You didn\'t provide a command for Crossbow to run'));
                 return;
             }
-            return require('./lib/command.run')(cli, input, config, cb);
+            var run = require('./lib/command.run');
+            return run(cli, input, config, cb);
         }
 
         if (cli.input[0] === 'watch') {

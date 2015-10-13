@@ -161,13 +161,43 @@ module.exports = function (input, config) {
             var seq = sequence.reduce(function (all, seq) {
                 return all.concat(seq.fns.map(function (fn) {
                     return Rx.Observable.create(obs => {
+
                         obs.log = logger.clone(x => {
                             x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
                             return x;
                         });
+
                         obs.compile = logger.compile;
                         obs.done    = obs.onCompleted.bind(obs);
-                        fn.call(obs, obs, seq.opts, ctx);
+                        var output  = fn.call(obs, obs, seq.opts, ctx);
+
+                        if (output && typeof output.then === 'function') {
+                            Rx.Observable
+                                .fromPromise(output)
+                                .subscribe(x => {
+                                    obs.onCompleted(x);
+                                }, e => {
+                                    obs.onError(e);
+                                })
+                        }
+
+                        if (output && typeof output.pipe === 'function') {
+                            var closed = false;
+                            output
+                                .on('error', function (err) {
+                                    obs.onError(err);
+                                })
+                                .on('end', close)
+                                .on('finish', close)
+                                .on('close', close);
+
+                            function close () {
+                                if (!closed) {
+                                    obs.onCompleted();
+                                    closed = true;
+                                }
+                            }
+                        }
                     }).catch(e => {
                         var lineLength = new Array(seq.task.taskName.length).join('-');
                         logger.error('{gray:-----------------------------' + lineLength);

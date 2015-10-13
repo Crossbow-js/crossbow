@@ -45,7 +45,6 @@ module.exports = function (cli, input, config, cb) {
             },
             e => {
                 cb(e);
-                //console.log('DEBUGGING', e.stack.split('\n').slice(0, 2).join('\n'));
             },
             s => {
                 handleCompletion(runner.tasks.valid);

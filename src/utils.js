@@ -10,14 +10,13 @@ var Rx       = require('rx');
 var yml      = require('js-yaml');
 var traverse = require('traverse');
 
-
 utils.padCrossbowError = function (msg) {
     return msg.split('\n').map(function (item) {
         return '       ' + item;
     }).join('\n');
 };
 
-/**maas
+/**
  * @param {Error|TypeError} [err]
  */
 utils.defaultCallback = function (err, output) {
@@ -25,6 +24,7 @@ utils.defaultCallback = function (err, output) {
         if (err.crossbowMessage) {
             console.log(utils.padCrossbowError(err.crossbowMessage));
         } else {
+            console.log(err);
             throw err;
         }
     }
@@ -35,7 +35,6 @@ utils.defaultCallback = function (err, output) {
             logger.error('{gray:x} %s', invalid.taskName);
         });
     }
-
 };
 
 /**

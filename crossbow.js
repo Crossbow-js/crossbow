@@ -31,6 +31,14 @@ module.exports = {
             input:  'test/fixtures/js/app.js',
             output: 'test/fixtures/js/dist/bundle.js',
             root:   'test/fixtures/js'
+        },
+        "test/fixtures/tasks/promise.js": {
+            dev: {
+                name: "kiittie"
+            },
+            normal: {
+                name: "shane"
+            }
         }
     }
 };
