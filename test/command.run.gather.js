@@ -10,7 +10,7 @@ function testCase (command, input, cb) {
     cli({input: command}, input, cb);
 }
 
-describe.only('Gathering run tasks', function () {
+describe('Gathering run tasks', function () {
     it('can combine files to form sequence', function (done) {
         cli({
             input: ["run", "test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]

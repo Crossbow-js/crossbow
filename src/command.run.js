@@ -37,6 +37,8 @@ module.exports = function (cli, input, config, cb) {
     var runner = taskResolver
         .getRunner(cliInput, ctx);
 
+    //console.log(runner.tasks.valid[0].tasks);
+
     runner
         .run
         .subscribe(

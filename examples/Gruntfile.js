@@ -2,10 +2,20 @@ module.exports = function(grunt) {
 
     grunt.initConfig({
         jshint: {
-            files: ['examples/Gruntfile.js'],
-            options: {
-                globals: {
-                    jQuery: true
+            dev: {
+                files: {src: ['examples/Gruntfilse.js']},
+                options: {
+                    globals: {
+                        jQuery: true
+                    }
+                }
+            },
+            other: {
+                files: {src: ['examples/Gruntfile.js']},
+                options: {
+                    globals: {
+                        jQuery: true
+                    }
                 }
             }
         }
@@ -13,5 +23,6 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-contrib-jshint');
 
+    grunt.loadTasks('test/fixtures/grunt/');
     grunt.registerTask('default', ['jshint']);
 };

@@ -1,13 +1,37 @@
-#!/usr/bin/env node
+var path = require('path');
 
-// Everything looks good. Require local grunt and run it.
-var resolve = require('resolve');
+module.exports = function (input, config, item) {
+    return function (obs) {
 
-module.exports = function (tasks) {
-    var exec  = require('child_process').exec;
-    var grun  = require('path').resolve(__dirname, '../', 'node_modules', 'grunt-cli', 'bin', 'grunt');
-    var tasks = ['jshint', '--gruntfile', 'examples/Gruntfile.js', '--base', process.cwd()];
-    exec([grun].concat(tasks).join(' '), function (err, stdout) {
-        console.log(stdout);
-    });
-}
+        var grunt = require('grunt');
+
+        grunt.tasks(item.tasks, {
+            gruntfile: path.resolve(config.get('cwd'), input.gruntfile),
+            base: config.get('cwd'),
+            tasks: [],
+            npm: []
+        }, function (err, output) {
+            if (err) {
+                return obs.onError(err);
+            }
+            obs.onCompleted();
+        });
+    }
+
+    //var exec  = require('child_process').exec;
+    //var grun  = require('path').resolve(__dirname, '../', 'node_modules', 'grunt-cli', 'bin', 'grunt');
+    //var tasks = ['jshint:dev', '--gruntfile', 'examples/Gruntfile.js', '--base', process.cwd()];
+    //
+    //exec([grun].concat(tasks).join(' '), function (err, stdout) {
+    //    console.log(stdout);
+    //});
+};
+
+//module.exports
+
+//module.exports = function (tasks) {
+//    var exec  = require('child_process').exec;
+//    var grun  = require('path').resolve(__dirname, '../', 'node_modules', 'grunt-cli', 'bin', 'grunt');
+//    var tasks = ['jshint', '--gruntfile', 'examples/Gruntfile.js', '--base', process.cwd()];
+//    exec([grun].concat(tasks).join(' '), function (err, stdout) {
+//        console.log(stdout);

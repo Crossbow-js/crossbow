@@ -17,6 +17,7 @@ tasks:
     prom: ['test/fixtures/tasks/promise.js']
     stream: ['test/fixtures/tasks/stream.js']
     observable: ['test/fixtures/tasks/observable.js']
+    compat: ['$grunt jshint:dev']
 
 config:
     $:
@@ -24,3 +25,5 @@ config:
     sass:
         input: '{$.root}/scss/main.scss'
         output: '{$.root}/css/main.min.css'
+
+gruntfile: "examples/Gruntfile.js"

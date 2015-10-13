@@ -4,6 +4,20 @@ var objPath = require('object-path');
 var Rx = require('rx');
 var RxNode = require('rx-node');
 var logger = require('./logger');
+var gruntCompat = require('./grunt-compat');
+
+var compatAdaptors = {
+    "grunt": {
+        validate: () => {
+            try {
+                return require.resolve('grunt');
+            } catch (e) {
+                return false;
+            }
+        },
+        create: gruntCompat
+    }
+}
 
 /**
  * Get a customised prefixed logger per task
@@ -25,20 +39,30 @@ module.exports = function (input, config) {
 
     /**
      * Create the flat task format
-     * @param {Array} task
+     * @param {String} task
      * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array}}
      */
     function flatTask(task) {
 
-        if (!Array.isArray(task)) {
-            task = task.split(':');
+        if (task.match(/^\$grunt/)) {
+            var out = {
+                taskName: task.split(' ').slice(1),
+                subTasks: [],
+                modules: [],
+                tasks: [],
+                compat: 'grunt'
+            };
+            return out;
         }
 
+        var splitTask = task.split(':');
+
         return {
-            taskName: task[0],
-            subTasks: task.slice(1),
-            modules:  utils.locateModule(config.get('cwd'), task[0]),
-            tasks:    resolveTasks([], input.tasks, task[0])
+            taskName: splitTask[0],
+            subTasks: splitTask.slice(1),
+            modules:  utils.locateModule(config.get('cwd'), splitTask[0]),
+            tasks:    resolveTasks([], input.tasks, splitTask[0]),
+            compat:   undefined
         }
     }
 
@@ -63,7 +87,7 @@ module.exports = function (input, config) {
 
     /**
      * A task is valid if every child eventually resolves to
-     * having a module
+     * having a module or has a compat helper
      * @param {Object} task
      * @returns {Boolean}
      */
@@ -74,6 +98,12 @@ module.exports = function (input, config) {
         }
         if (valid && !task.tasks.length) {
             return true;
+        }
+        if (typeof task.compat === 'string') {
+            if (compatAdaptors[task.compat]) {
+                return compatAdaptors[task.compat].validate.call();
+            }
+            return false;
         }
         return false;
     }
@@ -95,7 +125,6 @@ module.exports = function (input, config) {
             }
 
             var taskList = tasks
-                .map(x => x.split(':'))
                 .map(x => flatTask(x));
 
             var out = {
@@ -112,6 +141,19 @@ module.exports = function (input, config) {
 
             function flatten (initial, items) {
                  return items.reduce((all, item) => {
+                    if (!item.modules.length && item.compat) {
+                        return all.concat({
+                            fns: [
+                                compatAdaptors[item.compat].create.apply(null, [
+                                    input,
+                                    config,
+                                    item
+                                ])
+                            ],
+                            opts: {},
+                            task: item
+                        })
+                    }
                     if (item.modules.length) {
                         return all.concat(getModules(item.modules, item));
                     }
