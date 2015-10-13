@@ -3,7 +3,6 @@ var watch    = require('../lib/command.watch');
 var cwd      = require('path').resolve('test/fixtures');
 var current  = process.cwd();
 var resolve  = require('path').resolve;
-var gather   = require('../lib/command.copy').gatherCopyTasks;
 var tasklist = require('../lib/utils').getPresentableTaskList;
 
 describe('Creating presentable task list', function () {

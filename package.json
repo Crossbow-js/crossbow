@@ -31,18 +31,18 @@
     "crossbow": "cli.js"
   },
   "devDependencies": {
-    "browser-sync": "^2.8.2",
     "autoprefixer": "^5.2.0",
-    "babel": "^5.8.21",
-    "chai": "^3.0.0",
+    "babel": "^5.8.23",
+    "browser-sync": "^2.9.11",
+    "chai": "^3.3.0",
     "crossbow-babel-browserify": "^1.0.3",
     "crossbow-eslint": "^1.0.4",
     "crossbow-sass": "^2.0.1",
     "cssnano": "^1.4.3",
-    "mocha": "^2.2.5",
+    "mocha": "^2.3.3",
     "normalize.css": "^3.0.3",
-    "postcss": "^4.1.13",
-    "postcss-import": "^6.0.0",
-    "sinon": "^1.15.3"
+    "postcss": "^4.1.16",
+    "postcss-import": "^6.2.0",
+    "sinon": "^1.17.1"
   }
 }

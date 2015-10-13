@@ -1,6 +1,6 @@
 module.exports = {
     tasks: {
-        "my-awesome-task": ['examples/tasks/simple.js', 'examples/tasks/simple2.js']
+        "my-awesome-task": ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
     },
     watch:  {
         'bs-config': {
@@ -25,10 +25,5 @@ module.exports = {
             output: 'test/fixtures/js/dist/bundle.js',
             root:   'test/fixtures/js'
         }
-    },
-    copy: {
-        "default": [
-            "test/fixtures/*/**:public"
-        ]
     }
 };

@@ -3,7 +3,6 @@ var watch = require('../lib/command.watch');
 var cwd = require('path').resolve('test/fixtures');
 var current = process.cwd();
 var resolve = require('path').resolve;
-var gather = require('../lib/command.copy').gatherCopyTasks;
 var getBsConfig = require('../lib/utils').getBsConfig;
 var cli = require("../cli");
 
@@ -14,11 +13,11 @@ function testCase (command, input, cb) {
 describe.only('Gathering run tasks', function () {
     it('can combine files to form sequence', function (done) {
         cli({
-            input: ["run", "examples/tasks/simple.js", "examples/tasks/simple2.js"]
+            input: ["run", "test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
         }, {
             crossbow: {
                 config: {
-                    "examples/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
                         "name": "shane"
                     }
                 }
@@ -37,10 +36,9 @@ describe.only('Gathering run tasks', function () {
                 config: "crossbow.yaml"
             }
         }, {}, function (err, output) {
-            assert.equal(output.sequence.length, 3);
+            assert.equal(output.sequence.length, 2);
             assert.equal(output.sequence[0].fns[0].name, 'simple');
             assert.equal(output.sequence[1].fns[0].name, 'simple2');
-            assert.equal(output.sequence[2].fns[0].name, 'complex');
             done();
         });
     });
@@ -49,6 +47,7 @@ describe.only('Gathering run tasks', function () {
             if (err) {
                 return done(err);
             }
+            //console.log(output.tasks);
             assert.equal(output.tasks.valid.length, 1);
             assert.equal(output.tasks.valid[0].subTasks.length, 0);
             done();
@@ -72,20 +71,9 @@ describe.only('Gathering run tasks', function () {
             done();
         })
     });
-    it('can gather from external config file via flag', function (done) {
+    it('can gather from default yaml file', function (done) {
         cli({
             input: ["run", "js"],
-            flags: {
-                config: 'examples/crossbow.yaml'
-            }
-        }, {}, function (err, output) {
-            assert.equal(output.tasks.valid.length, 1);
-            done();
-        })
-    });
-    it.skip('can gather from default yaml file', function (done) {
-        cli({
-            input: ["run", "css"],
             flags: {
                 config: 'crossbow.yaml'
             }
@@ -98,7 +86,7 @@ describe.only('Gathering run tasks', function () {
         })
     });
     it('can gather simple tasks', function (done) {
-        testCase(["run", "examples/tasks/simple.js:dev", "examples/tasks/simple2.js"], {
+        testCase(["run", "test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple2.js"], {
             crossbow: {
                 config: {
                     sass: {
@@ -106,7 +94,7 @@ describe.only('Gathering run tasks', function () {
                             input: "scss/scss/core.scss",
                             output: "css/scss/core.css"
                         },
-                        "examples/tasks/simple.js": {
+                        "test/fixtures/tasks/simple.js": {
                             input: "scss/scss/core.scss",
                             output: "css/scss/core.min.css"
                         }
@@ -121,10 +109,10 @@ describe.only('Gathering run tasks', function () {
         })
     });
     it('can gather opts for sub tasks', function (done) {
-        testCase(["run", "examples/tasks/simple.js:dev"], {
+        testCase(["run", "test/fixtures/tasks/simple.js:dev"], {
             crossbow: {
                 config: {
-                    "examples/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
                         default: {
                             input: "scss/core.scss",
                             output: "css/core.css"
@@ -151,10 +139,10 @@ describe.only('Gathering run tasks', function () {
         testCase(["run", "js"], {
             crossbow: {
                 tasks: {
-                    js: ["examples/tasks/simple.js:dev", "examples/tasks/simple.js:shane:kittie"]
+                    js: ["test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple.js:shane:kittie"]
                 },
                 config: {
-                    "examples/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
                         default: {
                             input: "scss/core.scss",
                             output: "css/core.css"
@@ -182,10 +170,10 @@ describe.only('Gathering run tasks', function () {
             crossbow: {
                 tasks: {
                     css: ["js"],
-                    js:  ["examples/tasks/simple.js:dev", "examples/tasks/simple.js:shane:kittie"]
+                    js:  ["test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple.js:shane:kittie"]
                 },
                 config: {
-                    "examples/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
                         default: {
                             input: "scss/core.scss",
                             output: "css/core.css"
@@ -212,10 +200,10 @@ describe.only('Gathering run tasks', function () {
     });
     it('can gather handle no-tasks in config', function (done) {
 
-        testCase(["run", "examples/tasks/simple.js"], {
+        testCase(["run", "test/fixtures/tasks/simple.js"], {
             crossbow: {
                 config: {
-                    "examples/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
                         default: {
                             input: "scss/core.scss",
                             output: "css/core.css"
@@ -243,8 +231,8 @@ describe.only('Gathering run tasks', function () {
         testCase(["run", "css", "js"], {
             crossbow: {
                 tasks: {
-                    css: ['examples/tasks/simple.js', 'examples/tasks/simple2.js'],
-                    js:  ['examples/tasks/simple.js']
+                    css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
+                    js:  ['test/fixtures/tasks/simple.js']
                 }
             }
         }, function (err, output) {
@@ -255,8 +243,8 @@ describe.only('Gathering run tasks', function () {
             assert.equal(first.modules.length, 0);
             assert.equal(first.tasks.length, 2);
             assert.equal(first.tasks[0].tasks.length, 0);
-            assert.equal(first.tasks[0].taskName, 'examples/tasks/simple.js');
-            assert.equal(first.tasks[1].taskName, 'examples/tasks/simple2.js');
+            assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+            assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
             done();
         })
     });
@@ -264,7 +252,7 @@ describe.only('Gathering run tasks', function () {
         testCase(["run", "css"], {
             crossbow: {
                 tasks: {
-                    "css": ['examples/tasks/simple.js:default', 'examples/tasks/simple.js:dev']
+                    "css": ['test/fixtures/tasks/simple.js:default', 'test/fixtures/tasks/simple.js:dev']
                 },
                 config: {
                     $: {
@@ -280,7 +268,7 @@ describe.only('Gathering run tasks', function () {
                             }
                         ]
                     },
-                    'examples/tasks/simple.js': {
+                    'test/fixtures/tasks/simple.js': {
                         default: {
                             input: '{public}/css',
                             output: '{public}/dist/css',

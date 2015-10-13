@@ -9,7 +9,7 @@ watch:
 tasks:
     css: ['sass']
     js: ['dummy']
-    dummy: ['examples/tasks/simple.js', 'examples/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
+    dummy: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js', 'examples/tasks/complex-with-longer-name.js']
 
 config:
     sass:

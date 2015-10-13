@@ -1,6 +1,6 @@
 module.exports = {
     tasks: {
-        js: ['examples/tasks/simple.js']
+        js: ['test/fixtures/tasks/simple.js']
     },
     watch:  {
         'bs-config': {
