@@ -2,6 +2,7 @@ var utils = require('./utils');
 var basename = require('path').basename;
 var objPath = require('object-path');
 var Rx = require('rx');
+var RxNode = require('rx-node');
 var logger = require('./logger');
 
 /**
@@ -171,8 +172,14 @@ module.exports = function (input, config) {
                         obs.done    = obs.onCompleted.bind(obs);
                         var output  = fn.call(obs, obs, seq.opts, ctx);
 
+                        if (output && typeof output.distinctUntilChanged === 'function') {
+                            return output.do(function (x) {
+                                obs.onNext(x);
+                            }).subscribe(x => {}, e => obs.onError(e), x => obs.onCompleted());
+                        }
+
                         if (output && typeof output.then === 'function') {
-                            Rx.Observable
+                            return Rx.Observable
                                 .fromPromise(output)
                                 .subscribe(x => {
                                     obs.onCompleted(x);
@@ -182,21 +189,14 @@ module.exports = function (input, config) {
                         }
 
                         if (output && typeof output.pipe === 'function') {
-                            var closed = false;
-                            output
-                                .on('error', function (err) {
+                            RxNode.fromStream(output, 'end')
+                                .subscribe(function (val) {
+                                    obs.onNext(val);
+                                }, function (err) {
                                     obs.onError(err);
-                                })
-                                .on('end', close)
-                                .on('finish', close)
-                                .on('close', close);
-
-                            function close () {
-                                if (!closed) {
+                                }, function () {
                                     obs.onCompleted();
-                                    closed = true;
-                                }
-                            }
+                                });
                         }
                     }).catch(e => {
                         var lineLength = new Array(seq.task.taskName.length).join('-');
