@@ -11,13 +11,13 @@ watch:
         prom:
             "test/fixtures/**/*.html:test/fixtures/scss/**": ["prom", "stream", "observable", "bs:reload"]
 tasks:
-    css: ['sass']
-    js: ['dummy']
-    dummy: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
-    prom: ['test/fixtures/tasks/promise.js']
-    stream: ['test/fixtures/tasks/stream.js']
+    css:        ['sass']
+    js:         ['dummy']
+    dummy:      ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
+    prom:       ['test/fixtures/tasks/promise.js']
+    stream:     ['test/fixtures/tasks/stream.js']
     observable: ['test/fixtures/tasks/observable.js']
-    compat: ['$grunt jshint:dev']
+    compat:     ['$grunt jshint:dev']
 
 config:
     $:

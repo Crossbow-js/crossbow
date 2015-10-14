@@ -17,21 +17,9 @@ var compatAdaptors = {
         },
         create: gruntCompat
     }
-}
+};
 
-/**
- * Get a customised prefixed logger per task
- * @param {String} name
- * @param {Number} maxLength
- * @returns {string}
- */
-function getLogPrefix(name, maxLength) {
-    var diff = maxLength - name.length;
-    if (diff > 0) {
-        return new Array(diff + 1).join(' ') + name;
-    }
-    return name.slice(0, maxLength - 1) + '~';
-}
+var adaptorKeys = Object.keys(compatAdaptors);
 
 module.exports = function (input, config) {
 
@@ -40,19 +28,34 @@ module.exports = function (input, config) {
     /**
      * Create the flat task format
      * @param {String} task
-     * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array}}
+     * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array, compat: String|undefined}}
      */
     function flatTask(task) {
 
-        if (task.match(/^\$grunt/)) {
-            var out = {
-                taskName: task.split(' ').slice(1),
-                subTasks: [],
-                modules: [],
-                tasks: [],
-                compat: 'grunt'
-            };
-            return out;
+        if (task.match(/^\$/)) {
+            var compat = adaptorKeys.filter(x => {
+                return task.match(new RegExp('\\$' + x));
+            })[0];
+
+            if (compat) {
+                return {
+                    taskName: task.split(' ').slice(1),
+                    subTasks: [],
+                    modules: [],
+                    tasks: [],
+                    compat: compat,
+                    valid: true
+                };
+            } else {
+                return {
+                    taskName: task,
+                    subTasks: [],
+                    modules: [],
+                    tasks: [],
+                    compat: undefined,
+                    valid: false
+                };
+            }
         }
 
         var splitTask = task.split(':');
@@ -62,7 +65,8 @@ module.exports = function (input, config) {
             subTasks: splitTask.slice(1),
             modules:  utils.locateModule(config.get('cwd'), splitTask[0]),
             tasks:    resolveTasks([], input.tasks, splitTask[0]),
-            compat:   undefined
+            compat:   undefined,
+            valid:    true
         }
     }
 
@@ -92,6 +96,13 @@ module.exports = function (input, config) {
      * @returns {Boolean}
      */
     function validateTask(task) {
+        /**
+         * Return early if a task has previously
+         * been marked as invalid
+         */
+        if (task.valid === false) {
+            return false;
+        }
         var valid = task.modules.length > 0 || task.tasks.length > 0;
         if (valid && task.tasks.length) {
             return task.tasks.every(validateTask);
@@ -261,3 +272,17 @@ module.exports = function (input, config) {
 
     return methods;
 };
+
+/**
+ * Get a customised prefixed logger per task
+ * @param {String} name
+ * @param {Number} maxLength
+ * @returns {string}
+ */
+function getLogPrefix(name, maxLength) {
+    var diff = maxLength - name.length;
+    if (diff > 0) {
+        return new Array(diff + 1).join(' ') + name;
+    }
+    return name.slice(0, maxLength - 1) + '~';
+}
