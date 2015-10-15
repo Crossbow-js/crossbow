@@ -15,40 +15,22 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
         return all.concat(seq.fns.map(function (fn) {
 
             return Rx.Observable.create(obs => {
+
                 obs.log = logger.clone(x => {
                     x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
                     return x;
                 });
 
                 obs.compile = logger.compile;
-                obs.done    = obs.onCompleted.bind(obs);
+                obs.done = done;
+                function done () {
+                    fn.completed = true;
+                    obs.onCompleted(obs);
+                }
                 var output  = fn.call(obs, obs, seq.opts, ctx);
 
-                if (output && typeof output.distinctUntilChanged === 'function') {
-                    return output.do(function (x) {
-                        obs.onNext(x);
-                    }).subscribe(x => {}, e => obs.onError(e), x => obs.onCompleted());
-                }
-
-                if (output && typeof output.then === 'function') {
-                    return Rx.Observable
-                        .fromPromise(output)
-                        .subscribe(x => {
-                            obs.onCompleted(x);
-                        }, e => {
-                            obs.onError(e);
-                        });
-                }
-
-                if (output && typeof output.pipe === 'function') {
-                    RxNode.fromStream(output, 'end')
-                        .subscribe(function (val) {
-                            obs.onNext(val);
-                        }, function (err) {
-                            obs.onError(err);
-                        }, function () {
-                            obs.onCompleted();
-                        });
+                if (output) {
+                    return require('./returns').handleReturnType(output, obs);
                 }
             }).catch(e => {
                 var lineLength = new Array(seq.task.taskName.length).join('-');

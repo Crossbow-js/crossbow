@@ -34,10 +34,20 @@ module.exports = function (cli, input, config, cb) {
 
     taskResolver = require('./tasks')(crossbow, config);
 
-    var runner = taskResolver
-        .getRunner(cliInput, ctx);
+    var runner = taskResolver.getRunner(cliInput, ctx);
 
-    //console.log(runner.tasks.valid[0].tasks);
+    if (config.get('handoff')) {
+        return runner;
+    } else {
+        if (runner.tasks.invalid.length) {
+            throw new TypeError([
+                'Invalid tasks:',
+                runner.tasks.invalid.map((x, i) => ' ' + String(i + 1) + ' ' + x.taskName).join('\n'),
+                '',
+                'Please check for typos/missign files etc'
+            ].join('\n'));
+        }
+    }
 
     runner
         .run
@@ -46,6 +56,7 @@ module.exports = function (cli, input, config, cb) {
                 logger.debug('got a value', x);
             },
             e => {
+                console.log(e);
                 cb(e);
             },
             s => {

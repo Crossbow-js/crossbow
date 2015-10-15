@@ -14,6 +14,7 @@ tasks:
     css:        ['sass']
     js:         ['dummy']
     dummy:      ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
+    all:        ['prom', 'stream', 'observable', 'compat', 'dummy']
     prom:       ['test/fixtures/tasks/promise.js']
     stream:     ['test/fixtures/tasks/stream.js']
     observable: ['test/fixtures/tasks/observable.js']

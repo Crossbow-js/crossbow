@@ -2,7 +2,6 @@ var utils = require('./utils');
 var basename = require('path').basename;
 var objPath = require('object-path');
 var Rx = require('rx');
-var RxNode = require('rx-node');
 var logger = require('./logger');
 var gruntCompat = require('./grunt-compat');
 var compat = require('./compat');
