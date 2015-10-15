@@ -5,88 +5,13 @@ var Rx = require('rx');
 var RxNode = require('rx-node');
 var logger = require('./logger');
 var gruntCompat = require('./grunt-compat');
+var merge = require('lodash.merge');
+var compat = require('./compat');
 var t = exports;
-var compatAdaptors = {
-    "grunt": {
-        validate: () => {
-            try {
-                return require.resolve('grunt');
-            } catch (e) {
-                return false;
-            }
-        },
-        create: gruntCompat
-    }
-};
 
-var adaptorKeys = Object.keys(compatAdaptors);
+var adaptorKeys = Object.keys(compat.compatAdaptors);
 
-t.flatTask     = flatTask;
-t.resolveTasks = resolveTasks;
-t.validateTask = validateTask;
-/**
- * Create the flat task format
- * @param {String} task
- * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array, compat: String|undefined, valid: Boolean}}
- */
-function flatTask(task) {
-
-    if (task.match(/^\$/)) {
-        var compat = adaptorKeys.filter(x => {
-            return task.match(new RegExp('\\$' + x));
-        })[0];
-
-        if (compat) {
-            return {
-                taskName: task.split(' ').slice(1),
-                subTasks: [],
-                modules: [],
-                tasks: [],
-                compat: compat,
-                valid: true
-            };
-        } else {
-            return {
-                taskName: task,
-                subTasks: [],
-                modules: [],
-                tasks: [],
-                compat: undefined,
-                valid: false
-            };
-        }
-    }
-
-    var splitTask = task.split(':');
-
-    return {
-        taskName: splitTask[0],
-        subTasks: splitTask.slice(1),
-        modules:  [],
-        tasks:    [],
-        compat:   undefined,
-        valid:    true
-    }
-}
-
-/**
- * @param {Array} initial
- * @param {Object} subject
- * @param {String} taskname
- * @returns {*}
- */
-function resolveTasks(initial, subject, taskname) {
-
-    if (Object.keys(subject).indexOf(taskname) > -1) {
-        return subject[taskname].map(function (item) {
-            var flat = flatTask(item);
-            flat.tasks = resolveTasks(flat.tasks, subject, item);
-            return flat;
-        });
-    }
-
-    return initial;
-}
+t.validateTask  = validateTask;
 
 /**
  * A task is valid if every child eventually resolves to
@@ -110,10 +35,120 @@ function validateTask(task) {
         return true;
     }
     if (typeof task.compat === 'string') {
-        if (compatAdaptors[task.compat]) {
-            return compatAdaptors[task.compat].validate.call();
+        if (compat.compatAdaptors[task.compat]) {
+            return compat.compatAdaptors[task.compat].validate.call();
         }
         return false;
     }
     return false;
 }
+
+function TaskResolver (input, config) {
+    this.config = config;
+    this.input = input;
+    this.cache = {};
+    return this;
+}
+
+function getCompat (task) {
+    return adaptorKeys.filter(x => {
+        return task.match(new RegExp('\\$' + x));
+    })[0];
+}
+
+var defaultTask = {
+    valid: false,
+    compat: undefined,
+    taskName: undefined,
+    subTasks: [],
+    modules: [],
+    tasks: []
+}
+
+function getTask(obj) {
+    return merge({}, defaultTask, obj);
+}
+
+/**
+ * Create the flat task format
+ * @param {String} task
+ * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array, compat: String|undefined}}
+ */
+function compatTask (task, compat) {
+
+    if (compat) {
+        return getTask({
+            taskName: task.split(' ').slice(1),
+            compat: compat,
+            valid: true
+        });
+    }
+
+    return getTask({
+        taskName: task
+    });
+}
+
+/**
+ * @param {Array} task
+ * @returns {Object}
+ */
+TaskResolver.prototype.flatTask = function (task) {
+
+    var splitTask = task.split(':');
+
+    if (task.match(/^\$/)) {
+        return compatTask(task, getCompat(task));
+    }
+
+    return getTask({
+        taskName: splitTask[0],
+        subTasks: splitTask.slice(1),
+        modules:  utils.locateModule(this.config.get('cwd'), splitTask[0]),
+        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0]),
+        compat:   undefined,
+        valid:    true
+    });
+}
+
+/**
+ * @param {Array} initial
+ * @param {Object} subject
+ * @param {String} taskname
+ * @returns {Array}
+ */
+TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname) {
+
+    if (Object.keys(subject).indexOf(taskname) > -1) {
+        return subject[taskname].map(item => {
+            var flat = this.flatTask(item);
+            flat.tasks = this.resolveTasks(flat.tasks, subject, item);
+            return flat;
+        });
+    }
+
+    return initial;
+}
+
+TaskResolver.prototype.gather = function (tasks) {
+
+    var hash = tasks.join('-');
+    if (this.cache[hash]) {
+        return cache[hash];
+    }
+
+    var taskList = tasks
+        .map(x => this.flatTask(x));
+
+    var out = {
+        valid:   taskList.filter(t.validateTask),
+        invalid: taskList.filter(x => !t.validateTask(x))
+    };
+
+    this.cache[hash] = out;
+    return out;
+}
+
+module.exports.create = function (input, config) {
+	return new TaskResolver(input, config);
+};
