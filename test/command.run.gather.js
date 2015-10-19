@@ -10,7 +10,27 @@ function testCase (command, input, cb) {
     cli({input: command}, input, cb);
 }
 
+function handoff (cmd, input, cb) {
+    return cli({
+        input: ['run'].concat(cmd),
+        flags: {
+            handoff: true
+        }
+    }, input, cb);
+}
 describe('Gathering run tasks', function () {
+    it('can handoff through --handoff', function () {
+    	var runner = handoff(["test/fixtures/tasks/simple.js"], {
+            crossbow: {}
+        });
+        assert.equal(runner.tasks.valid.length, 1);
+    });
+    it('can handle error after handing off', function () {
+        var runner = handoff(["test/fixtures/tasks/simplse.js"], {
+            crossbow: {}
+        });
+        assert.equal(runner.tasks.invalid.length, 1);
+    });
     it('can combine files to form sequence', function (done) {
         cli({
             input: ["run", "test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]

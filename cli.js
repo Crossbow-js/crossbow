@@ -15,14 +15,6 @@ var cli = meow({
     ].join('\n')
 });
 
-var defaults = {
-    cwd: process.cwd(),
-    runMode: 'sequence',
-    resumeOnError: false,
-    summary: 'short',
-    strict: true
-};
-
 if (!module.parent) {
     handleCli(cli, {});
 }
@@ -45,7 +37,7 @@ function handleCli (cli, input, cb) {
 
     cb            = cb || defaultCallback;
     cli.flags     = cli.flags || {};
-    var config    = Immutable.fromJS(defaults).mergeDeep(cli.flags);
+    var config    = require('./lib/config').merge(cli.flags);
 
     if (input.crossbow) {
         return processInput(cli, input);
@@ -115,6 +107,24 @@ module.exports.run    = function (input, flags, cb) {
         input: ['run'].concat(input),
         flags: flags
     }, cb);
+};
+
+/**
+ * @param input
+ * @param flags
+ * @param cb
+ */
+module.exports.handoff = function (tasks, input, flags, cb) {
+    input = input || {};
+    if (typeof flags === 'function') {
+        cb = flags;
+        flags = {};
+    }
+    flags.handoff = true;
+    handleCli({
+        input: ['run'].concat(tasks),
+        flags: flags
+    }, input, cb);
 };
 
 /**
