@@ -26,15 +26,14 @@ describe('Gathering run tasks', function () {
         runner.run.subscribe(function () {}, function (err) {
         	console.log(err);
         }, function () {
-            assert.equal(runner.sequence[0].fns[0].fn.length, 2);
-            assert.isTrue(runner.sequence[0].fns[0].completed);
-            assert.isNumber(runner.sequence[0].fns[0].startTime);
-            assert.isNumber(runner.sequence[0].fns[0].endTime);
-            assert.isNumber(runner.sequence[0].fns[0].duration);
-            assert.isTrue(runner.sequence[0].fns[0].duration > 0);
+            assert.equal(runner.sequence[0].seq.taskItems.length, 2);
+            assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].startTime);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].endTime);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].duration);
+            assert.isTrue(runner.sequence[0].seq.taskItems[0].duration > 0);
         	done();
         });
-        //assert.equal(runner.tasks.valid.length, 2);
     });
     it('can handoff through --handoff', function (done) {
     	var runner = handoff(["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"], {
@@ -44,14 +43,14 @@ describe('Gathering run tasks', function () {
         	console.log(err);
         }, function () {
 
-            assert.isTrue(runner.sequence[0].fns[0].completed);
-            assert.isNumber(runner.sequence[0].fns[0].startTime);
-            assert.isNumber(runner.sequence[0].fns[0].endTime);
-            assert.isNumber(runner.sequence[0].fns[0].duration);
-            assert.isTrue(runner.sequence[1].fns[0].completed);
-            assert.isNumber(runner.sequence[1].fns[0].startTime);
-            assert.isNumber(runner.sequence[1].fns[0].endTime);
-            assert.isNumber(runner.sequence[1].fns[0].duration);
+            assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].startTime);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].endTime);
+            assert.isNumber(runner.sequence[0].seq.taskItems[0].duration);
+            assert.isTrue(runner.sequence[1].seq.taskItems[0].completed);
+            assert.isNumber(runner.sequence[1].seq.taskItems[0].startTime);
+            assert.isNumber(runner.sequence[1].seq.taskItems[0].endTime);
+            assert.isNumber(runner.sequence[1].seq.taskItems[0].duration);
         	done();
         });
         assert.equal(runner.tasks.valid.length, 2);
@@ -75,7 +74,7 @@ describe('Gathering run tasks', function () {
             }
         }, function (err, output) {
             assert.equal(output.sequence.length, 2);
-            assert.equal(output.sequence[0].fns.length, 1);
+            assert.equal(output.sequence[0].seq.taskItems.length, 1);
             assert.equal(output.sequence[0].opts.name, "shane");
             done();
         });
@@ -88,17 +87,19 @@ describe('Gathering run tasks', function () {
             }
         }, {}, function (err, output) {
             assert.equal(output.sequence.length, 2);
-            assert.equal(output.sequence[0].fns[0].name, 'simple');
-            assert.equal(output.sequence[1].fns[0].name, 'simple2');
+            assert.equal(output.sequence[0].seq.taskItems[0].FUNCTION.name, 'simple');
+            assert.equal(output.sequence[1].seq.taskItems[0].FUNCTION.name, 'simple2');
             done();
         });
     });
     it('can gather from external config file', function (done) {
-        cli({input: ["run", "js"], flags: {config: "examples/crossbow.js"}}, {}, function (err, output) {
+        cli({
+            input: ["run", "js"],
+            flags: {config: "examples/crossbow.js"}
+        }, {}, function (err, output) {
             if (err) {
                 return done(err);
             }
-            //console.log(output.tasks);
             assert.equal(output.tasks.valid.length, 1);
             assert.equal(output.tasks.valid[0].subTasks.length, 0);
             done();
@@ -179,7 +180,7 @@ describe('Gathering run tasks', function () {
             if (err) {
                 return done(err);
             }
-            assert.equal(output.sequence[0].fns.length, 1);
+            assert.equal(output.sequence[0].seq.taskItems.length, 1);
             assert.equal(output.sequence[0].opts.input, 'scss/main.scss');
             assert.equal(output.sequence[0].opts.output, 'css/main.min.css');
             done();

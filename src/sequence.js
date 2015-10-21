@@ -31,20 +31,19 @@ module.exports = function (tasks, input, config) {
 /**
  * If the task resolves to a file on disk,
  * we pick out the 'tasks' property
- * @param {Array} all
  * @param {String} item
- * @returns {Array}
+ * @returns {Object}
  */
-function requireModule(all, item) {
+function requireModule(item) {
     var tasks = [].concat(require(item).tasks);
     var completed = false;
-    var taskMap = tasks.map(function (fn) {
+    var taskItems = tasks.map(function (fn) {
     	return {
             FUNCTION: fn,
             completed: false
         }
     })
-    return all.concat({taskMap, completed});
+    return {taskItems, completed};
 }
 
 /**
@@ -60,7 +59,7 @@ function loadModules (input, modules, item) {
     if (!item.subTasks.length) {
         let topLevelOpts = objPath.get(input, ['config', item.taskName], {});
         return {
-            fns: modules.reduce(requireModule, []),
+            seq: requireModule(modules[0]),
             opts: utils.transformStrings(topLevelOpts, config),
             task: item
         };
@@ -69,7 +68,7 @@ function loadModules (input, modules, item) {
     return item.subTasks.map(function (subTask) {
         let subTaskOptions = objPath.get(input, ['config', item.taskName, subTask], {});
         return {
-            fns: modules.reduce(requireModule, []),
+            seq: requireModule(modules[0]),
             opts: utils.transformStrings(subTaskOptions, config),
             task: item
         };
@@ -85,6 +84,7 @@ function loadModules (input, modules, item) {
  * @returns {{fns: *[], opts: {}, task: *}}
  */
 function compatSeq (item, input, config) {
+
     var args = [
         input,
         config,
@@ -92,7 +92,14 @@ function compatSeq (item, input, config) {
     ];
 
     return {
-        fns: [compat.compatAdaptors[item.compat].create.apply(null, args)],
+        seq: {
+            taskItems: [
+                {
+                    FUNCTION: compat.compatAdaptors[item.compat].create.apply(null, args),
+                    completed: false
+                }
+            ]
+        },
         opts: {},
         task: item
     }
