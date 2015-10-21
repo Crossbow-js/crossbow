@@ -19,7 +19,7 @@ describe('Gathering run tasks for grunt', function () {
                 gruntfile: "examples/Gruntfile.js"
             }
         }, function (err, out) {
-            assert.equal(out.tasks.valid[0].taskName[0], 'jshint');
+            assert.equal(out.tasks.valid[0].taskName, 'jshint');
             assert.equal(out.tasks.valid[0].compat, 'grunt');
             done();
         });
@@ -32,11 +32,27 @@ describe('Gathering run tasks for grunt', function () {
                 gruntfile: "examples/Gruntfile.js"
             }
         }, function (err, out) {
-            assert.equal(out.tasks.valid[0].taskName[0], 'jshint:dev');
-            assert.equal(out.tasks.valid[0].taskName[1], 'jshint:other');
+            assert.equal(out.tasks.valid[0].taskName, 'jshint:dev jshint:other');
             assert.equal(out.tasks.valid[0].compat, 'grunt');
             done();
         });
+    });
+    it('can use shell-compat to gather shell command', function (done) {
+        var runner = cli({
+            input: ["run", "$shell npm run es6"],
+            flags: {handoff: true}
+        }, {
+            crossbow: {}
+        });
+
+        runner.run.subscribe(function () {
+        }, function (err) {
+            console.log(err);
+        	//console.log('ERR');
+        }, function () {
+        	//console.log('done');
+            done();
+        })
     });
     it('can flag attempted compat flag that does not exist', function (done) {
         var runner = cli({

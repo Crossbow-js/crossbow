@@ -1,10 +1,11 @@
 var gruntCompat = require('./grunt-compat');
+var shellCompat = require('./shell-compat');
 
 var c = exports;
 
 c.compatAdaptors = {
     "grunt": {
-        validate: () => {
+        validate () {
             try {
                 return require.resolve('grunt');
             } catch (e) {
@@ -12,5 +13,9 @@ c.compatAdaptors = {
             }
         },
         create: gruntCompat
+    },
+    "shell": {
+        validate: () => true,
+        create: shellCompat
     }
 };

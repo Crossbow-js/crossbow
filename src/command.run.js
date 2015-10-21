@@ -44,7 +44,7 @@ module.exports = function (cli, input, config, cb) {
                 'Invalid tasks:',
                 runner.tasks.invalid.map((x, i) => ' ' + String(i + 1) + ' ' + x.taskName).join('\n'),
                 '',
-                'Please check for typos/missign files etc'
+                'Please check for typos/missing files etc'
             ].join('\n'));
         }
     }
@@ -83,7 +83,13 @@ module.exports = function (cli, input, config, cb) {
         var short = config.get('summary') === 'short';
 
         tasks.forEach(function (task) {
-            logger.info('{ok: } {cyan:%s', task.taskName);
+            var outname = task.taskName;
+            if (typeof task.compat === 'string') {
+                logger.info('{ok: } {cyan:($%s)} %s', task.compat, outname);
+            } else {
+                logger.info('{ok: } {cyan:%s', outname);
+            }
+
             if (short) {
                 return;
             }

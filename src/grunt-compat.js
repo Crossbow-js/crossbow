@@ -4,8 +4,7 @@ module.exports = function (input, config, item) {
     return function (obs) {
 
         var grunt = require('grunt');
-
-        grunt.tasks(item.tasks, {
+        grunt.tasks(item.rawInput.split(' '), {
             gruntfile: path.resolve(config.get('cwd'), input.gruntfile),
             base: config.get('cwd'),
             tasks: [],

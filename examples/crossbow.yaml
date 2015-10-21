@@ -19,6 +19,7 @@ tasks:
     stream:     ['test/fixtures/tasks/stream.js']
     observable: ['test/fixtures/tasks/observable.js']
     compat:     ['$grunt jshint:dev']
+    myscript:   ['$shell ls -a']
 
 config:
     $:

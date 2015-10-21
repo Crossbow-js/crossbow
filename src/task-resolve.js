@@ -78,7 +78,8 @@ function compatTask (task, compat) {
 
     if (compat) {
         return getTask({
-            taskName: task.split(' ').slice(1),
+            taskName: task.replace(/^\$(.+?) /, ''),
+            rawInput: task.replace(/^\$(.+?) /, ''),
             compat: compat,
             valid: true
         });
