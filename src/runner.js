@@ -12,37 +12,47 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
 
     var seq = sequence.reduce(function (all, seq) {
 
-        return all.concat(seq.fns.map(function (fn) {
+        return all.concat(seq.fns.reduce(function (all, item) {
 
-            return Rx.Observable.create(obs => {
+            return item.taskMap.map(function (item) {
 
-                obs.log = logger.clone(x => {
-                    x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
-                    return x;
+                return Rx.Observable.create(obs => {
+
+                    item.startTime = new Date().getTime();
+
+                    obs.log = logger.clone(x => {
+                        x.prefix = '{gray: ' + getLogPrefix(basename(seq.task.taskName), 13) + ' :: ';
+                        return x;
+                    });
+
+                    obs.compile = logger.compile;
+                    obs.done    = function () {
+                        obs.onCompleted(obs);
+                    };
+
+                    var output  = item.FUNCTION.call(obs, obs, seq.opts, ctx);
+
+                    if (output) {
+                        require('./returns').handleReturnType(output, obs);
+                    }
+                    return function () {
+                        item.completed = true;
+                        item.endTime = new Date().getTime();
+                        item.duration = item.endTime - item.startTime;
+                    }
+                }).catch(e => {
+                    var lineLength = new Array(seq.task.taskName.length).join('-');
+                    logger.error('{gray:-----------------------------' + lineLength);
+                    logger.error('{red:following ERROR from task {cyan:`%s`}', seq.task.taskName);
+                    logger.error('{gray:-----------------------------' + lineLength);
+                    e.task = seq.task;
+                    return Rx.Observable.throw(e);
                 });
-
-                obs.compile = logger.compile;
-                obs.done = done;
-                function done () {
-                    fn.completed = true;
-                    obs.onCompleted(obs);
-                }
-                var output  = fn.call(obs, obs, seq.opts, ctx);
-
-                if (output) {
-                    return require('./returns').handleReturnType(output, obs);
-                }
-            }).catch(e => {
-                var lineLength = new Array(seq.task.taskName.length).join('-');
-                logger.error('{gray:-----------------------------' + lineLength);
-                logger.error('{red:following ERROR from task {cyan:`%s`}', seq.task.taskName);
-                logger.error('{gray:-----------------------------' + lineLength);
-                e.task = seq.task;
-                return Rx.Observable.throw(e);
-            });
-        }));
+            })
+        }, []));
     }, []);
 
+    //console.log(seq);
     return {
         run: Rx.Observable.from(seq).concatAll(),
         tasks: tasks,

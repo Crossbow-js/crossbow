@@ -30,15 +30,16 @@ describe('Gathering run task with return types', function () {
     it('can handle node streams', function (done) {
         testCase(['stream.js'], function (err, runner) {
             assert.isTrue(runner.sequence[0].fns[0].completed);
-            assert.isTrue(runner.sequence[0].fns[1].completed);
+            assert.equal(runner.sequence[0].fns[0].fn.length, 2);
             done();
         });
     });
-    it('can handle promise', function (done) {
+    it.only('can handle promise', function (done) {
         testCase(['promise.js'], function (err, runner) {
-            assert.isTrue(runner.sequence[0].fns[0].completed);
-            assert.isTrue(runner.sequence[0].fns[1].completed);
-            assert.isTrue(runner.sequence[0].fns[2].completed);
+            assert.isTrue(runner.sequence[0].fns[0].taskMap[0].completed);
+            assert.isNumber(runner.sequence[0].fns[0].taskMap[0].duration);
+            assert.isTrue(runner.sequence[0].fns[0].taskMap[1].completed);
+            assert.isTrue(runner.sequence[0].fns[0].taskMap[2].completed);
             done();
         });
     });

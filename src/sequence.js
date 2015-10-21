@@ -36,7 +36,15 @@ module.exports = function (tasks, input, config) {
  * @returns {Array}
  */
 function requireModule(all, item) {
-    return all.concat(require(item).tasks);
+    var tasks = [].concat(require(item).tasks);
+    var completed = false;
+    var taskMap = tasks.map(function (fn) {
+    	return {
+            FUNCTION: fn,
+            completed: false
+        }
+    })
+    return all.concat({taskMap, completed});
 }
 
 /**

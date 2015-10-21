@@ -19,11 +19,42 @@ function handoff (cmd, input, cb) {
     }, input, cb);
 }
 describe('Gathering run tasks', function () {
-    it('can handoff through --handoff', function () {
-    	var runner = handoff(["test/fixtures/tasks/simple.js"], {
+    it('can handoff through --handoff with tasks that have multi steps', function (done) {
+    	var runner = handoff(["test/fixtures/tasks/stream.js"], {
             crossbow: {}
         });
-        assert.equal(runner.tasks.valid.length, 1);
+        runner.run.subscribe(function () {}, function (err) {
+        	console.log(err);
+        }, function () {
+            assert.equal(runner.sequence[0].fns[0].fn.length, 2);
+            assert.isTrue(runner.sequence[0].fns[0].completed);
+            assert.isNumber(runner.sequence[0].fns[0].startTime);
+            assert.isNumber(runner.sequence[0].fns[0].endTime);
+            assert.isNumber(runner.sequence[0].fns[0].duration);
+            assert.isTrue(runner.sequence[0].fns[0].duration > 0);
+        	done();
+        });
+        //assert.equal(runner.tasks.valid.length, 2);
+    });
+    it('can handoff through --handoff', function (done) {
+    	var runner = handoff(["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"], {
+            crossbow: {}
+        });
+        runner.run.subscribe(function () {}, function (err) {
+        	console.log(err);
+        }, function () {
+
+            assert.isTrue(runner.sequence[0].fns[0].completed);
+            assert.isNumber(runner.sequence[0].fns[0].startTime);
+            assert.isNumber(runner.sequence[0].fns[0].endTime);
+            assert.isNumber(runner.sequence[0].fns[0].duration);
+            assert.isTrue(runner.sequence[1].fns[0].completed);
+            assert.isNumber(runner.sequence[1].fns[0].startTime);
+            assert.isNumber(runner.sequence[1].fns[0].endTime);
+            assert.isNumber(runner.sequence[1].fns[0].duration);
+        	done();
+        });
+        assert.equal(runner.tasks.valid.length, 2);
     });
     it('can handle error after handing off', function () {
         var runner = handoff(["test/fixtures/tasks/simplse.js"], {
