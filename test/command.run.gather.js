@@ -61,7 +61,7 @@ describe('Gathering run tasks', function () {
         });
         assert.equal(runner.tasks.invalid.length, 1);
     });
-    it('can combine files to form sequence', function (done) {
+    it.only('can combine files to form sequence', function (done) {
         cli({
             input: ["run", "test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
         }, {

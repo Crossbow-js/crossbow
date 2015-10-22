@@ -60,7 +60,7 @@ module.exports = function (cli, input, config, cb) {
                 cb(e);
             },
             s => {
-                handleCompletion(runner.tasks.valid);
+                handleCompletion(runner.tasks.valid, runner.sequence);
                 cb(null, runner);
             }
     );
@@ -69,7 +69,7 @@ module.exports = function (cli, input, config, cb) {
     /**
      * Logging for task completion
      */
-    function handleCompletion(tasks) {
+    function handleCompletion(tasks, sequence) {
 
         function logTask(tasks) {
             tasks.forEach(function (task) {
@@ -82,22 +82,41 @@ module.exports = function (cli, input, config, cb) {
 
         var short = config.get('summary') === 'short';
 
-        tasks.forEach(function (task) {
-            var outname = task.taskName;
-            if (typeof task.compat === 'string') {
-                logger.info('{ok: } {cyan:($%s)} %s', task.compat, outname);
-            } else {
-                logger.info('{ok: } {cyan:%s', outname);
-            }
+        var totalTime = sequence.reduce(function (all, seq) {
+            return seq.seq.taskItems.reduce(function (all, task, i) {
+                return all + task.duration;
+                //logger.info('{gray: %s:} %sms ', i + 1, task.duration);
+            }, 0);
+        }, []);
+
+        var logTasks = sequence.reduce(function (all, seq) {
+
+            var output = [{
+                level: "info",
+                msgs: [
+                    ["{ok: } {cyan:%s}", seq.task.taskName]
+                ]
+            }];
 
             if (short) {
-                return;
+                return all.concat(output);
             }
 
-            if (task.tasks.length) {
-                logTask(task.tasks);
-            }
+            return all.concat(output.concat({
+                level: "info",
+                msgs: seq.seq.taskItems.map(function (task, i) {
+                    return ["{gray:%s:} %sms", i + 1, task.duration];
+                }, [])
+            }));
+        }, []);
+
+        logTasks.forEach(function (log) {
+            log.msgs.forEach(function (item) {
+                logger[log.level].apply(logger, item);
+            });
         });
+
+        var short = config.get('summary') === 'short';
     }
 
     /**
