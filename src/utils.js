@@ -24,7 +24,6 @@ utils.defaultCallback = function (err, output) {
         if (err.crossbowMessage) {
             console.log(utils.padCrossbowError(err.crossbowMessage));
         } else {
-            //console.log(err);
             throw err;
         }
     }

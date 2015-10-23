@@ -28,6 +28,24 @@ module.exports = function (tasks, input, config) {
     }
 }
 
+module.exports.groupByParent = function (sequence) {
+    return sequence.reduce(function (all, item) {
+        if (!all[item.task.parent]) {
+            all[item.task.parent] = [item];
+        } else {
+            all[item.task.parent].push(item);
+        }
+        return all;
+    }, {});
+}
+
+module.exports.getSeqTime = function (sequence) {
+    return sequence.reduce(function (all, seq) {
+        return all + seq.seq.taskItems.reduce(function (all, item) {
+                return all + item.duration;
+            }, 0);
+    }, 0);
+}
 /**
  * If the task resolves to a file on disk,
  * we pick out the 'tasks' property
