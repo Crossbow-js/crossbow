@@ -81,14 +81,20 @@ describe('Gathering run tasks', function () {
     });
     it('can combine files to form sequence from alias', function (done) {
         cli({
-            input: ["run", "js"],
-            flags: {
-                config: "examples/crossbow.yaml"
+            input: ["run", "js", "test/fixtures/tasks/stream.js"]
+        }, {
+            crossbow: {
+                tasks: {
+                    js: ["dummy"],
+                    dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
+                }
             }
-        }, {}, function (err, output) {
-            assert.equal(output.sequence.length, 2);
-            assert.equal(output.sequence[0].seq.taskItems[0].FUNCTION.name, 'simple');
-            assert.equal(output.sequence[1].seq.taskItems[0].FUNCTION.name, 'simple2');
+        }, function (err, output) {
+            assert.equal(output.sequence[0].via[0], 'js');
+            assert.equal(output.sequence[0].via[1], 'dummy');
+            assert.equal(output.sequence[1].via[0], 'js');
+            assert.equal(output.sequence[1].via[1], 'dummy');
+            assert.deepEqual(output.sequence[2].via, []);
             done();
         });
     });

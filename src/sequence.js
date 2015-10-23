@@ -10,18 +10,18 @@ var compat = require('./compat');
 
 module.exports = function (tasks, input, config) {
 
-    return flatten([], tasks);
+    return flatten([], tasks, []);
 
-    function flatten (initial, items) {
+    function flatten (initial, items, parents) {
         return items.reduce((all, item) => {
             if (!item.modules.length && item.compat) {
-                return all.concat(compatSeq(item, input, config))
+                return all.concat(compatSeq(item, input, config, parents))
             }
             if (item.modules.length) {
-                return all.concat(loadModules(input, item.modules, item));
+                return all.concat(loadModules(input, item.modules, item, parents));
             }
             if (item.tasks.length) {
-                return flatten(all, item.tasks);
+                return flatten(all, item.tasks, parents.concat(item.taskName));
             }
             return all;
         }, initial);
@@ -50,9 +50,10 @@ function requireModule(item) {
  * @param input
  * @param modules
  * @param item
+ * @param parentTaskName
  * @returns {*}
  */
-function loadModules (input, modules, item) {
+function loadModules (input, modules, item, parentTaskName) {
 
     let config = objPath.get(input, 'config', {});
 
@@ -61,7 +62,8 @@ function loadModules (input, modules, item) {
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(topLevelOpts, config),
-            task: item
+            task: item,
+            via: parentTaskName
         };
     }
 
@@ -70,7 +72,8 @@ function loadModules (input, modules, item) {
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(subTaskOptions, config),
-            task: item
+            task: item,
+            via: parentTaskName
         };
     });
 }
@@ -83,7 +86,7 @@ function loadModules (input, modules, item) {
  * @param config
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function compatSeq (item, input, config) {
+function compatSeq (item, input, config, parentTaskName) {
 
     var args = [
         input,
@@ -101,6 +104,7 @@ function compatSeq (item, input, config) {
             ]
         },
         opts: {},
-        task: item
+        task: item,
+        via: parentTaskName
     }
 }
