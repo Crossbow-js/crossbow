@@ -90,11 +90,11 @@ describe('Gathering run tasks', function () {
                 }
             }
         }, function (err, output) {
-            assert.equal(output.sequence[0].via[0], 'js');
-            assert.equal(output.sequence[0].via[1], 'dummy');
-            assert.equal(output.sequence[1].via[0], 'js');
-            assert.equal(output.sequence[1].via[1], 'dummy');
-            assert.deepEqual(output.sequence[2].via, []);
+            assert.equal(output.sequence[0].seq.taskItems.length, 1);
+            assert.equal(output.sequence[0].seq.taskItems[0].FUNCTION.name, 'simple');
+            assert.equal(output.sequence[1].seq.taskItems.length, 1);
+            assert.equal(output.sequence[1].seq.taskItems[0].FUNCTION.name, 'simple2');
+            assert.equal(output.sequence[2].seq.taskItems.length, 2);
             done();
         });
     });

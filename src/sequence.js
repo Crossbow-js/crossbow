@@ -10,18 +10,18 @@ var compat = require('./compat');
 
 module.exports = function (tasks, input, config) {
 
-    return flatten([], tasks, []);
+    return flatten([], tasks);
 
-    function flatten (initial, items, parents) {
+    function flatten (initial, items) {
         return items.reduce((all, item) => {
             if (!item.modules.length && item.compat) {
-                return all.concat(compatSeq(item, input, config, parents))
+                return all.concat(compatSeq(item, input, config))
             }
             if (item.modules.length) {
-                return all.concat(loadModules(input, item.modules, item, parents));
+                return all.concat(loadModules(input, item.modules, item));
             }
             if (item.tasks.length) {
-                return flatten(all, item.tasks, parents.concat(item.taskName));
+                return flatten(all, item.tasks);
             }
             return all;
         }, initial);
@@ -62,8 +62,7 @@ function loadModules (input, modules, item, parentTaskName) {
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(topLevelOpts, config),
-            task: item,
-            via: parentTaskName
+            task: item
         };
     }
 
@@ -72,8 +71,7 @@ function loadModules (input, modules, item, parentTaskName) {
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(subTaskOptions, config),
-            task: item,
-            via: parentTaskName
+            task: item
         };
     });
 }
@@ -104,7 +102,6 @@ function compatSeq (item, input, config, parentTaskName) {
             ]
         },
         opts: {},
-        task: item,
-        via: parentTaskName
+        task: item
     }
 }

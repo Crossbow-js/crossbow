@@ -94,7 +94,7 @@ function compatTask (task, compat) {
  * @param {Array} task
  * @returns {Object}
  */
-TaskResolver.prototype.flatTask = function (task) {
+TaskResolver.prototype.flatTask = function (task, parents) {
 
     var splitTask = task.split(':');
 
@@ -106,9 +106,10 @@ TaskResolver.prototype.flatTask = function (task) {
         taskName: splitTask[0],
         subTasks: splitTask.slice(1),
         modules:  utils.locateModule(this.config.get('cwd'), splitTask[0]),
-        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0]),
+        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0], parents),
         compat:   undefined,
-        valid:    true
+        valid:    true,
+        parents:  parents
     });
 }
 
@@ -118,12 +119,16 @@ TaskResolver.prototype.flatTask = function (task) {
  * @param {String} taskname
  * @returns {Array}
  */
-TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname) {
+TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname, parents) {
 
     if (Object.keys(subject).indexOf(taskname) > -1) {
+        if (parents.indexOf(taskname) > -1) {
+            throw new ReferenceError(`Infinite loop detected from task: \`${taskname}\`
+Parent Tasks: ${parents.join(', ')}`);
+        }
         return subject[taskname].map(item => {
-            var flat = this.flatTask(item);
-            flat.tasks = this.resolveTasks(flat.tasks, subject, item);
+            var flat = this.flatTask(item, parents.concat(taskname));
+            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parents.concat(taskname));
             return flat;
         });
     }
@@ -139,7 +144,7 @@ TaskResolver.prototype.gather = function (tasks) {
     }
 
     var taskList = tasks
-        .map(x => this.flatTask(x));
+        .map(x => this.flatTask(x, []));
 
     var out = {
         valid:   taskList.filter(t.validateTask),
