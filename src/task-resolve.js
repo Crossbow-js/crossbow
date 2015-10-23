@@ -62,7 +62,8 @@ var defaultTask = {
     taskName: undefined,
     subTasks: [],
     modules: [],
-    tasks: []
+    tasks: [],
+    parent: ''
 }
 
 function getTask(obj) {
@@ -74,14 +75,15 @@ function getTask(obj) {
  * @param {String} task
  * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array, compat: String|undefined}}
  */
-function compatTask (task, compat) {
+function compatTask (task, compat, parent) {
 
     if (compat) {
         return getTask({
             taskName: task.replace(/^\$(.+?) /, ''),
             rawInput: task.replace(/^\$(.+?) /, ''),
             compat: compat,
-            valid: true
+            valid: true,
+            parent: parent
         });
     }
 
@@ -94,22 +96,22 @@ function compatTask (task, compat) {
  * @param {Array} task
  * @returns {Object}
  */
-TaskResolver.prototype.flatTask = function (task, parents) {
+TaskResolver.prototype.flatTask = function (task, parent) {
 
     var splitTask = task.split(':');
 
     if (task.match(/^\$/)) {
-        return compatTask(task, getCompat(task));
+        return compatTask(task, getCompat(task), parent);
     }
 
     return getTask({
         taskName: splitTask[0],
         subTasks: splitTask.slice(1),
         modules:  utils.locateModule(this.config.get('cwd'), splitTask[0]),
-        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0], parents),
+        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0], parent),
         compat:   undefined,
         valid:    true,
-        parents:  parents
+        parent:   parent
     });
 }
 
@@ -119,16 +121,16 @@ TaskResolver.prototype.flatTask = function (task, parents) {
  * @param {String} taskname
  * @returns {Array}
  */
-TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname, parents) {
+TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname, parent) {
 
     if (Object.keys(subject).indexOf(taskname) > -1) {
-        if (parents.indexOf(taskname) > -1) {
+        if (parent.indexOf(taskname) > -1) {
             throw new ReferenceError(`Infinite loop detected from task: \`${taskname}\`
-Parent Tasks: ${parents.join(', ')}`);
+Parent Tasks: ${parent.join(', ')}`);
         }
         return subject[taskname].map(item => {
-            var flat = this.flatTask(item, parents.concat(taskname));
-            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parents.concat(taskname));
+            var flat = this.flatTask(item, parent + '.' + taskname);
+            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parent + '.' + taskname);
             return flat;
         });
     }

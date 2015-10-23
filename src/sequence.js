@@ -84,7 +84,7 @@ function loadModules (input, modules, item, parentTaskName) {
  * @param config
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function compatSeq (item, input, config, parentTaskName) {
+function compatSeq (item, input, config, parent) {
 
     var args = [
         input,
@@ -102,6 +102,7 @@ function compatSeq (item, input, config, parentTaskName) {
             ]
         },
         opts: {},
-        task: item
+        task: item,
+        parent
     }
 }

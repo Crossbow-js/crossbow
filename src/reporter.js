@@ -9,51 +9,41 @@ module.exports = function (runner, config) {
  */
 function handleCompletion(tasks, sequence, config) {
 
-    function logTask(tasks) {
-        tasks.forEach(function (task) {
-            logger.info('{gray:- %s', task.taskName);
-            if (task.tasks.length) {
-                logTask(task.tasks);
+    var summary = config.get('summary');
+
+    var aliased = sequence.reduce(function (all, item) {
+    	if (!all[item.task.parent]) {
+            all[item.task.parent] = [item];
+        } else {
+            all[item.task.parent].push(item);
+        }
+        return all;
+    }, {});
+
+    if (summary === 'long' || summary === 'verbose') {
+        Object.keys(aliased).forEach(function (key) {
+            var item = aliased[key];
+            var path = key.split('.').slice(1);
+            var time = getSeqTime(item);
+            logger.info("{ok: } {cyan:%s {green:%sms}", path.join(' -> '), time);
+            if (summary === 'verbose') {
+                item.forEach(function (item) {
+                    logger.info("{gray:- }{cyan:%s", item.task.taskName);
+                	item.seq.taskItems.forEach(function (item, i) {
+                        logger.info("{gray:- }%s {green:%sms}", i + 1, item.duration);
+                	});
+                });
             }
         });
     }
 
-    var short = config.get('summary') === 'short';
+    logger.info('{ok: } Completed without errors {green:(%sms total)', getSeqTime(sequence));
+}
 
-    var totalTime = sequence.reduce(function (all, seq) {
-        //console.log(seq);
-        return seq.seq.taskItems.reduce(function (all, task, i) {
-            return all + task.duration;
-            //logger.info('{gray: %s:} %sms ', i + 1, task.duration);
+function getSeqTime(seq) {
+    return seq.reduce(function (all, seq) {
+        return all + seq.seq.taskItems.reduce(function (all, item) {
+            return all + item.duration;
         }, 0);
-    }, []);
-
-    var logTasks = sequence.reduce(function (all, seq) {
-
-        var output = [{
-            level: "info",
-            msgs: [
-                ["{ok: } {cyan:%s}", seq.task.taskName]
-            ]
-        }];
-
-        if (short) {
-            return all.concat(output);
-        }
-
-        return all.concat(output.concat({
-            level: "info",
-            msgs: seq.seq.taskItems.map(function (task, i) {
-                return ["{gray:%s:} %sms", i + 1, task.duration];
-            }, [])
-        }));
-    }, []);
-
-    //logTasks.forEach(function (log) {
-    //    log.msgs.forEach(function (item) {
-    //        logger[log.level].apply(logger, item);
-    //    });
-    //});
-
-    var short = config.get('summary') === 'short';
+    }, 0);
 }

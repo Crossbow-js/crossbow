@@ -12,9 +12,9 @@ watch:
             "test/fixtures/**/*.html:test/fixtures/scss/**": ["prom", "stream", "observable", "bs:reload"]
 tasks:
     css:        ['sass']
-    js:         ['dummy']
+    js:         ['all', 'myscript']
     dummy:      ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
-    all:        ['prom', 'stream', 'observable', 'compat', 'dummy']
+    all:        ['observable', 'prom', 'stream', 'compat', 'dummy']
     prom:       ['test/fixtures/tasks/promise.js']
     stream:     ['test/fixtures/tasks/stream.js']
     observable: ['test/fixtures/tasks/observable.js']
