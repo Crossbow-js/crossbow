@@ -142,7 +142,7 @@ TaskResolver.prototype.gather = function (tasks) {
 
     var hash = tasks.join('-');
     if (this.cache[hash]) {
-        return cache[hash];
+        return this.cache[hash];
     }
 
     var taskList = tasks

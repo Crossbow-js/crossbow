@@ -174,7 +174,7 @@ function runWatcher (cli, input, config, cb) {
 
                 if (runner.tasks.valid.length) {
                     if (config.get('summary') !== 'short') {
-                        logTasks(runner.tasks.valid);
+                        logTasks(runner.tasks.valid, config.get('summary'));
                     }
                 } else {
                     logger.info('{ok: } {yellow:' + tasks.bsTasks.map(function (x) {
@@ -208,10 +208,10 @@ function logSubTasks (tasks) {
     });
 }
 
-function logTasks (tasks) {
+function logTasks (tasks, summary) {
     tasks.forEach(function (task) {
         logger.info('{ok: } {yellow:' + task.taskName);
-        if (task.tasks.length) {
+        if (task.tasks.length && summary === 'verbose') {
             logSubTasks(task.tasks);
         }
     });
