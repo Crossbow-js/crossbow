@@ -41,7 +41,14 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
             }).catch(e => {
                 var lineLength = new Array(seqItem.task.taskName.length).join('-');
                 logger.error('{gray:-----------------------------' + lineLength);
-                logger.error('{red:following ERROR from task {cyan:`%s`}', seqItem.task.taskName);
+                var taskname = seqItem.task.taskName;
+
+                if (seqItem.task.compat) {
+                    taskname = `($${seqItem.task.compat}) ${taskname}`;
+                }
+
+                logger.error('{red:following ERROR from task {cyan:`%s`}', taskname);
+
                 logger.error('{gray:-----------------------------' + lineLength);
                 e.task = seqItem.task;
                 return Rx.Observable.throw(e);

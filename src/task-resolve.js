@@ -19,7 +19,7 @@ t.validateTask  = validateTask;
  * @param {Object} task
  * @returns {Boolean}
  */
-function validateTask(task) {
+function validateTask(task, input, config) {
     /**
      * Return early if a task has previously
      * been marked as invalid
@@ -29,14 +29,16 @@ function validateTask(task) {
     }
     var valid = task.modules.length > 0 || task.tasks.length > 0;
     if (valid && task.tasks.length) {
-        return task.tasks.every(validateTask);
+        return task.tasks.every(function (t) {
+            return validateTask(t, input, config);
+        });
     }
     if (valid && !task.tasks.length) {
         return true;
     }
     if (typeof task.compat === 'string') {
         if (compat.compatAdaptors[task.compat]) {
-            return compat.compatAdaptors[task.compat].validate.call();
+            return compat.compatAdaptors[task.compat].validate.call(null, input, config, task);
         }
         return false;
     }
@@ -149,8 +151,8 @@ TaskResolver.prototype.gather = function (tasks) {
         .map(x => this.flatTask(x, []));
 
     var out = {
-        valid:   taskList.filter(t.validateTask),
-        invalid: taskList.filter(x => !t.validateTask(x))
+        valid:   taskList.filter(x => t.validateTask(x, this.input, this.config)),
+        invalid: taskList.filter(x => !t.validateTask(x, this.input, this.config))
     };
 
     this.cache[hash] = out;

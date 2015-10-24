@@ -30,6 +30,16 @@ module.exports = function (tasks, input, config) {
 
 module.exports.groupByParent = function (sequence) {
     return sequence.reduce(function (all, item) {
+        if (item.task.compat) {
+            if (!item.task.parent.length) {
+                all['($' + item.task.compat + ')'] = [item];
+                return all;
+            } else {
+                all[item.task.parent + ' ($' + item.task.compat + ')'] = [item];
+                return all;
+            }
+
+        }
         if (!item.task.parent.length) {
             all[item.task.taskName] = [item];
             return all;

@@ -18,12 +18,18 @@ function handleCompletion(tasks, sequence, config) {
             var item = grouped[key];
             var path = key.split(' ').filter(x => x.length);
             var displayPath = path.join(' -> ');
+
             var time = require('./sequence').getSeqTime(item);
-            logger.info("{ok: } {cyan:%s {green:%sms}", path.join(' -> '), time);
+            logger.info("{ok: } {cyan:%s {green:%sms}", displayPath, time);
+
             if (summary === 'verbose') {
                 item.forEach(function (item) {
+                    var displayName = item.task.taskName;
+                    if (item.task.compat) {
+                        displayName = `($${item.task.compat}) ${item.task.rawInput}`;
+                    }
                     if (item.task.taskName !== displayPath) {
-                        logger.info("{gray:-- }{cyan:%s", item.task.taskName);
+                        logger.info("{gray:-- }{cyan:%s", displayName);
                     }
                 	item.seq.taskItems.forEach(function (item, i) {
                         logger.info("{gray:-- }%s {green:%sms}", i + 1, item.duration);
