@@ -129,8 +129,8 @@ TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, ta
 Parent Tasks: ${parent.join(', ')}`);
         }
         return subject[taskname].map(item => {
-            var flat = this.flatTask(item, parent + '.' + taskname);
-            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parent + '.' + taskname);
+            var flat = this.flatTask(item, parent + ' ' + taskname);
+            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parent + ' ' + taskname);
             return flat;
         });
     }

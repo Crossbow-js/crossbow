@@ -16,14 +16,17 @@ function handleCompletion(tasks, sequence, config) {
     if (summary === 'long' || summary === 'verbose') {
         Object.keys(grouped).forEach(function (key) {
             var item = grouped[key];
-            var path = key.split('.').slice(1);
+            var path = key.split(' ').filter(x => x.length);
+            var displayPath = path.join(' -> ');
             var time = require('./sequence').getSeqTime(item);
             logger.info("{ok: } {cyan:%s {green:%sms}", path.join(' -> '), time);
             if (summary === 'verbose') {
                 item.forEach(function (item) {
-                    logger.info("{gray:- }{cyan:%s", item.task.taskName);
+                    if (item.task.taskName !== displayPath) {
+                        logger.info("{gray:-- }{cyan:%s", item.task.taskName);
+                    }
                 	item.seq.taskItems.forEach(function (item, i) {
-                        logger.info("{gray:- }%s {green:%sms}", i + 1, item.duration);
+                        logger.info("{gray:-- }%s {green:%sms}", i + 1, item.duration);
                 	});
                 });
             }

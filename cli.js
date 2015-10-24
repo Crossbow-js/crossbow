@@ -46,8 +46,13 @@ function handleCli (cli, input, cb) {
         if (fromFile.length) {
             return processInput(cli, {crossbow: fromFile[0]});
         } else {
-            throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
-                ' with a path to a JS/YML file');
+            if (config.get('strict')) {
+                throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +
+                    ' with a path to a JS/YML file');
+            }
+
+            logger.info('{red:x warning} No configuration provided, you may get unexpected results');
+            return processInput(cli, {crossbow: {config:{}, tasks:{}}});
         }
     }
 
@@ -66,7 +71,6 @@ function handleCli (cli, input, cb) {
 
         if (cli.input[0] === 'run') {
 
-            //require('./lib/grunt-compat')();
             if (cli.input.length === 1) {
                 cb(new Error('You didn\'t provide a command for Crossbow to run'));
                 return;

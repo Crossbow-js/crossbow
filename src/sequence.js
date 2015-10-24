@@ -30,6 +30,10 @@ module.exports = function (tasks, input, config) {
 
 module.exports.groupByParent = function (sequence) {
     return sequence.reduce(function (all, item) {
+        if (!item.task.parent.length) {
+            all[item.task.taskName] = [item];
+            return all;
+        }
         if (!all[item.task.parent]) {
             all[item.task.parent] = [item];
         } else {
@@ -68,10 +72,9 @@ function requireModule(item) {
  * @param input
  * @param modules
  * @param item
- * @param parentTaskName
  * @returns {*}
  */
-function loadModules (input, modules, item, parentTaskName) {
+function loadModules (input, modules, item) {
 
     let config = objPath.get(input, 'config', {});
 

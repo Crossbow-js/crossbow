@@ -40,7 +40,7 @@ module.exports = function (cli, input, config, cb) {
         return runner;
     } else {
         if (runner.tasks.invalid.length) {
-            throw new TypeError([
+            throw new ReferenceError([
                 'Invalid tasks:',
                 runner.tasks.invalid.map((x, i) => ' ' + String(i + 1) + ' ' + x.taskName).join('\n'),
                 '',
