@@ -28,6 +28,7 @@ function handleCompletion(tasks, sequence, config) {
                     if (item.task.compat) {
                         displayName = `($${item.task.compat}) ${item.task.rawInput}`;
                     }
+                    logger.info('{cyan:%s}', item.task.modules[0]);
                     if (item.task.taskName !== displayPath) {
                         logger.info("{gray:-- }{cyan:%s", displayName);
                     }
