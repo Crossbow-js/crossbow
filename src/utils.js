@@ -154,10 +154,8 @@ utils.retrieveConfig = function (flags, config) {
      * @returns {*}
      */
     function getFiles (input) {
-        if (!Array.isArray(input)) {
-            input = [input];
-        }
-        var out = input
+        var out = []
+            .concat(input)
             .map(x => {
                 if (basename(x) === "crossbow.js") {
                     return require(x);
@@ -241,7 +239,7 @@ function transformStrings (item, root) {
  * @returns {*}
  */
 function replaceOne (item, root) {
-    return item.replace(/\{(.+?)\}/g, function () {
+    return item.replace(/\{\{(.+?)\}\}/g, function () {
         var match = objPath.get(root, arguments[1].split('.'));
         if (typeof match === 'string') {
             return replaceOne(match, root);
@@ -251,3 +249,17 @@ function replaceOne (item, root) {
 }
 
 utils.transformStrings = transformStrings;
+
+utils.types = {
+    'obj':    '[object Object]',
+    'string': '[object String]',
+    'array':  '[object Array]'
+};
+
+utils.testType = function (com, val) {
+    return Object.prototype.toString.call(val) === com;
+};
+
+utils.plainObj = function (val) {
+    return utils.testType(utils.types['obj'], val);
+};

@@ -10,6 +10,10 @@ watch:
             "test/fixtures/asses/**/*.css": ["bs:reload"]
         prom:
             "test/fixtures/**/*.html:test/fixtures/scss/**": ["prom", "stream", "observable", "bs:reload"]
+
+aliases:
+    simple: 'test/fixtures/tasks/simple.js'
+
 tasks:
     css:        ['sass']
     js:         ['all', 'myscript']
@@ -26,8 +30,14 @@ tasks:
 config:
     $:
         root: test/fixtures
+
     sass:
         input: '{$.root}/scss/main.scss'
         output: '{$.root}/css/main.min.css'
+
+    simple:
+        dev:
+            input: '{$.root}/scss/main.scss'
+            output: '{$.root}/css/main.min.css'
 
 gruntfile: "examples/Gruntfile.js"

@@ -27,6 +27,7 @@ function validateTask(task, input, config) {
     if (task.valid === false) {
         return false;
     }
+
     var valid = task.modules.length > 0 || task.tasks.length > 0;
     if (valid && task.tasks.length) {
         return task.tasks.every(function (t) {
@@ -65,8 +66,9 @@ var defaultTask = {
     subTasks: [],
     modules: [],
     tasks: [],
-    parent: ''
-}
+    parent: '',
+    alias: undefined
+};
 
 function getTask(obj) {
     return merge({}, defaultTask, obj);
@@ -106,16 +108,35 @@ TaskResolver.prototype.flatTask = function (task, parent) {
         return compatTask(task, getCompat(task), parent);
     }
 
+    var taskName = splitTask[0];
+    var mod = utils.locateModule(this.config.get('cwd'), taskName);
+    var alias = undefined;
+
+    if (!mod.length) {
+        if (utils.plainObj(this.input.aliases)) {
+            var matches = Object.keys(this.input.aliases).filter((key) => {
+                return key === taskName;
+            });
+            if (matches.length) {
+                var aliasName = this.input.aliases[matches[0]];
+                mod = utils.locateModule(this.config.get('cwd'), aliasName);
+                alias = taskName;
+                taskName = aliasName
+            }
+        }
+    }
+
     return getTask({
-        taskName: splitTask[0],
+        taskName: taskName,
         subTasks: splitTask.slice(1),
-        modules:  utils.locateModule(this.config.get('cwd'), splitTask[0]),
-        tasks:    this.resolveTasks([], this.input.tasks, splitTask[0], parent),
+        modules:  mod,
+        tasks:    this.resolveTasks([], this.input.tasks, taskName, parent),
         compat:   undefined,
         valid:    true,
-        parent:   parent
+        parent:   parent,
+        alias:    alias
     });
-}
+};
 
 /**
  * @param {Array} initial

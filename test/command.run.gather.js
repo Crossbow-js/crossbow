@@ -18,6 +18,7 @@ function handoff (cmd, input, cb) {
         }
     }, input, cb);
 }
+
 describe('Gathering run tasks', function () {
     it('can handoff through --handoff with tasks that have multi steps', function (done) {
     	var runner = handoff(["test/fixtures/tasks/stream.js"], {
@@ -317,7 +318,7 @@ describe('Gathering run tasks', function () {
                         name: 'kittie'
                     },
                     root: '/user',
-                    public: '{root}/public',
+                    public: '{{root}}/public',
                     nested: {
                         props: 'no-problem',
                         arr: [
@@ -328,15 +329,15 @@ describe('Gathering run tasks', function () {
                     },
                     'test/fixtures/tasks/simple.js': {
                         default: {
-                            input: '{public}/css',
-                            output: '{public}/dist/css',
-                            random: '{nested.props}/js',
-                            joke: '{nested.arr.0.another}',
-                            animal: '{$.name}'
+                            input: '{{public}}/css',
+                            output: '{{public}}/dist/css',
+                            random: '{{nested.props}}/js',
+                            joke: '{{nested.arr.0.another}}',
+                            animal: '{{$.name}}'
                         },
                         dev: {
-                            input: '{root}/css',
-                            output: '{root}/dist/css'
+                            input: '{{root}}/css',
+                            output: '{{root}}/dist/css'
                         }
                     }
                 }

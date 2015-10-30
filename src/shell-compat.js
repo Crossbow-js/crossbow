@@ -13,7 +13,9 @@ function cmd(cmd, cwd, obs) {
         if (error !== null) {
             return obs.onError(error);
         } else {
-            obs.log.info(stdout);
+            obs.log.info('-- stdout start --');
+            obs.log.info('\n' + stdout);
+            obs.log.info('-- stdout end --');
         }
         obs.onCompleted();
     });

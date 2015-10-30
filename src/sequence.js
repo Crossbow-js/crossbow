@@ -87,9 +87,15 @@ function requireModule(item) {
 function loadModules (input, modules, item) {
 
     let config = objPath.get(input, 'config', {});
+    let lookup = item.taskName;
+
+    if (item.alias) {
+        lookup = item.alias;
+    }
 
     if (!item.subTasks.length) {
-        let topLevelOpts = objPath.get(input, ['config', item.taskName], {});
+        let topLevelOpts = objPath.get(input, ['config', lookup], {});
+
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(topLevelOpts, config),
@@ -98,7 +104,7 @@ function loadModules (input, modules, item) {
     }
 
     return item.subTasks.map(function (subTask) {
-        let subTaskOptions = objPath.get(input, ['config', item.taskName, subTask], {});
+        let subTaskOptions = objPath.get(input, ['config', lookup, subTask], {});
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(subTaskOptions, config),

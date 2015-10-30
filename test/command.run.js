@@ -9,7 +9,7 @@ var Rx = require('rx');
 
 function testCase (file, cb) {
     var runner = cli({
-        input: ["run"].concat(file.map(x => "test/fixtures/tasks/" + x)),
+        input: ["run"].concat(file.map(function(x) { return "test/fixtures/tasks/" + x } )),
         flags: {
             handoff: true
         }
