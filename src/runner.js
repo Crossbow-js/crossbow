@@ -39,17 +39,19 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
                     item.duration = item.endTime - item.startTime;
                 }
             }).catch(e => {
-                var lineLength = new Array(seqItem.task.taskName.length).join('-');
-                logger.error('{gray:-----------------------------' + lineLength);
-                var taskname = seqItem.task.taskName;
 
-                if (seqItem.task.compat) {
-                    taskname = `($${seqItem.task.compat}) ${taskname}`;
+                if (!e._cbDisplayed) {
+                    var lineLength = new Array(seqItem.task.taskName.length).join('-');
+                    logger.error('{gray:-----------------------------' + lineLength);
+                    var taskname = seqItem.task.taskName;
+
+                    if (seqItem.task.compat) {
+                        taskname = `($${seqItem.task.compat}) ${taskname}`;
+                    }
+                    logger.error('{red:following ERROR from task {cyan:`%s`}', taskname);
+                    logger.error('{gray:-----------------------------' + lineLength);
                 }
 
-                logger.error('{red:following ERROR from task {cyan:`%s`}', taskname);
-
-                logger.error('{gray:-----------------------------' + lineLength);
                 e.task = seqItem.task;
                 return Rx.Observable.throw(e);
             });

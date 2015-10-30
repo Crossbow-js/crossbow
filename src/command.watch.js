@@ -85,7 +85,7 @@ function runWatcher (cli, input, config, cb) {
             return x;
         });
 
-    var pauser = onSwitch.flatMapLatest(x => watcherStream.takeUntil(offSwitch))
+    var pauser = onSwitch.flatMapLatest(x => watcherStream.takeUntil(offSwitch));
 
     pauser
         .do(x => offSwitch.onNext(true))
@@ -122,6 +122,7 @@ function runWatcher (cli, input, config, cb) {
         input.handoff = true;
 
         var runner = taskResolver.getRunner(tasks, ctx);
+
         var errored = false;
 
         /**
@@ -138,7 +139,9 @@ function runWatcher (cli, input, config, cb) {
                 console.log(padCrossbowError(err.crossbowMessage));
                 //bs.notify(`<span style="color: red; display: block; text-align: left">Error from task ${e.task.taskName}</span><span style="text-align: left!important; display: block; width: 100%;">${e}</span>`, 5000);
             } else {
-                console.log(err);
+                if (!err._cbDisplayed) {
+                    console.log(err);
+                }
             }
 
             return Rx.Observable.empty(); // continue through so this sequence does not stop
@@ -170,17 +173,7 @@ function runWatcher (cli, input, config, cb) {
          */
         function handleTaskCompleted () {
             if (!errored) {
-                logger.info('{ok: } Completed in {cyan:' + String(new Date().getTime() - start) + 'ms');
-
-                if (runner.tasks.valid.length) {
-                    if (config.get('summary') !== 'short') {
-                        logTasks(runner.tasks.valid, config.get('summary'));
-                    }
-                } else {
-                    logger.info('{ok: } {yellow:' + tasks.bsTasks.map(function (x) {
-                            return 'Browsersync: ' + x.method;
-                        }).join('-'));
-                }
+                require('./reporter')(runner, config);
             }
 
             tasksSubject.onNext(event);
@@ -197,24 +190,6 @@ function runWatcher (cli, input, config, cb) {
                 handleTaskCompleted
             );
     }
-}
-
-function logSubTasks (tasks) {
-    tasks.forEach(function (task) {
-        logger.info('{gray:- ' + task.taskName);
-        if (task.tasks.length) {
-            logSubTasks(task.tasks);
-        }
-    });
-}
-
-function logTasks (tasks, summary) {
-    tasks.forEach(function (task) {
-        logger.info('{ok: } {yellow:' + task.taskName);
-        if (task.tasks.length && summary === 'verbose') {
-            logSubTasks(task.tasks);
-        }
-    });
 }
 
 function logWatchInfo(watcherTasks) {

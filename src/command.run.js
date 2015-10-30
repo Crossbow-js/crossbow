@@ -56,6 +56,9 @@ module.exports = function (cli, input, config, cb) {
                 logger.debug('got a value', x);
             },
             e => {
+                if (e._cbDisplayed) {
+                    return cb(e);
+                }
                 if (e.stack) {
                     console.log(e.stack);
                 } else {

@@ -2,6 +2,9 @@ module.exports = {
     tasks: {
         js: ['test/fixtures/tasks/simple.js']
     },
+    aliases: {
+        'simple': 'test/fixtures/tasks/promise.js'
+    },
     watch:  {
         'bs-config': {
             server: 'test/fixtures',
@@ -10,9 +13,8 @@ module.exports = {
         },
         'tasks': {
             default: {
-
+                "test/fixtures/scss":   ["sass", 'simple', "bs:reload:*.css"],
             }
-            //"test/fixtures/scss":   ["sass", "bs:reload:*.css"],
             //"test/fixtures/js/*.js": [
             //    "/Users/shakyshane/crossbow/crossbow-eslint/index.js as eslint",
             //    "babel-browserify",
