@@ -1,6 +1,7 @@
 var arrarifyObj = require('./utils').arrarifyObj;
 var arrarify    = require('./utils').arrarify;
 var getKey      = require('./utils').getKey;
+var blacklist = ['options', 'bs-config', 'before'];
 
 /**
  * @param {Object} watch
@@ -29,7 +30,6 @@ function filterTasks (watch, filters, predicate) {
 }
 
 function stripBlacklisted (item) {
-    var blacklist = ['options', 'bs-config', 'before'];
     return filterTasks(item, blacklist, function (arr, key) {
         return arr.indexOf(key) === -1;
     });
@@ -43,12 +43,17 @@ var getTaskFormat = function (watchTask) {
         }, []);
     }
 
-    return Object.keys(watchTask).reduce((all, item) =>{
-        return all.concat({
-            patterns: item.split(':'),
-            tasks: arrarify(watchTask[item])
-        });
-    }, []);
+    return Object.keys(watchTask).reduce((all, item) => {
+        if (blacklist.indexOf(item) > -1) {
+            all.before = all.before.concat(watchTask[item]);
+        } else {
+            all.items = all.items.concat({
+                patterns: item.split(':'),
+                tasks: arrarify(watchTask[item])
+            });
+        }
+        return all;
+    }, {before: [], items: []});
 };
 
 /**

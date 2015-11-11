@@ -33,68 +33,72 @@ function runWatcher (cli, input, config, cb) {
     var cliInput     = cli.input.slice(1);
     var tasks        = gatherTasks(crossbow, cliInput);
     var ctx          = createContext(input);
-    var watcherTasks = watch(cli, tasks, config).getTasks(cliInput);
-    var watchers     = watcher.getWatchers(watcherTasks);
-    var tasksSubject = new Rx.Subject();
-    var taskStream   = tasksSubject.publish().refCount();
-    var bs;
-    var onSwitch     = new Rx.Subject();
-    var offSwitch    = new Rx.Subject();
-    var bsConfig     = getBsConfig(crossbow, config);
 
-    logWatchInfo(watcherTasks);
+    /**
+     * Hydrate
+     * @type {Rx.ReplaySubject<T>}
+     */
+    ctx.tasksCompleted$ = new Rx.ReplaySubject();
+    ctx.utils           = utils;
 
-    if (bsConfig) {
-        bsConfig.logFileChanges = false;
-        bsConfig.logPrefix = function () {
-            return this.compile(logger.prefix);
-        };
-        bs = require('browser-sync').create('Crossbow');
-        bs.init(bsConfig, function (err, _bs) {
-            if (err) {
-                return cb(err);
-            }
-        });
-    }
+    var watcherTasks    = watch(cli, tasks, config).getTasks(cliInput);
+    var watchers        = watcher.getWatchers(watcherTasks);
 
-    taskStream
-        .do(x => {
-            if (!bs) {
-                return;
-            }
-            x.tasks.bsTasks.forEach(function (task) {
-                if (task.args.length) {
-                    task.args = utils.transformStrings(task.args, crossbow.config);
-                }
-                if (typeof bs[task.method] === 'function') {
-                    if (task.args.length) {
-                        bs[task.method].apply(bs, task.args);
-                    } else {
-                        bs[task.method].call(bs);
-                    }
-                }
-            });
-        })
+    var tasksSubject    = new Rx.Subject();
+    var tasksCompleted$ = tasksSubject.publish().refCount();
+    var onSwitch        = new Rx.Subject();
+    var offSwitch       = new Rx.Subject();
+    var bsConfig        = getBsConfig(crossbow, config);
+
+    /**
+     * Run Browsersync if user provided bs-config
+     */
+    require('./bs')(bsConfig, tasksCompleted$, crossbow);
+
+    /**
+     * On tasksCompleted$ - re-enable the watchers
+     * and pump a value into ctx.events
+     */
+    tasksCompleted$
         .do(onSwitch.onNext.bind(onSwitch))
-        .subscribe();
+        .subscribe(ctx.tasksCompleted$); // pump completed tasks into events stream
 
+    /**
+     * File watchers
+     */
+    var eventWhitelist = ['change', 'add'];
     var watcherStream = watchers
-        .filter(x => x.event === 'change')
+        .filter(x => eventWhitelist.indexOf(x.event) > -1)
         .map(x => {
             x.tasks = splitTasks(x.tasks);
             return x;
         });
 
-    var pauser = onSwitch.flatMapLatest(x => watcherStream.takeUntil(offSwitch));
+    var pauser = onSwitch
+        .flatMapLatest(x => watcherStream.takeUntil(offSwitch));
 
     pauser
         .do(x => offSwitch.onNext(true))
         .do(runCommandAfterWatch)
         .subscribe();
 
-    onSwitch.onNext(true);
-
+    /**
+     * Create task resolver.
+     */
     taskResolver = require('./tasks')(crossbow, config);
+
+    /**
+     * Run & complete and 'before' tasks
+     */
+    require('./tasks-before')(taskResolver, tasks, ctx)
+        .subscribe(function () {
+
+        }, function (err) {
+            console.error(err);
+        }, function () {
+            logWatchInfo(watcherTasks);
+            onSwitch.onNext(true);
+        });
 
     logger.debug('Running watcher with tasks', watcherTasks);
 

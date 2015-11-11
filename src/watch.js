@@ -6,8 +6,8 @@ module.exports = function (cli, tasks, config) {
 
             if (!cliInput.length) {
 
-                if (tasks['default']) {
-                    return tasks['default'];
+                if (tasks['default'].items) {
+                    return tasks['default'].items;
                 }
 
                 throw new Error('No watch targets given and no `default` found');
@@ -22,7 +22,7 @@ module.exports = function (cli, tasks, config) {
             }
 
             return matching.reduce((all, item) => {
-                return all.concat(tasks[item]);
+                return all.concat(tasks[item].items);
             }, []);
         }
     };

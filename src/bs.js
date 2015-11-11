@@ -1,58 +1,45 @@
 var logger = require('./logger');
 
-module.exports = function (bsConfig, watchTasks, afterFn) {
+module.exports = function (bsConfig, taskStream$, crossbow) {
 
-    var bs          = require('browser-sync').create();
-    var watchConfig = {ignoreInitial: true};
+    var bs;
 
     if (!bsConfig) {
-        watchTasks.forEach(function (task, i) {
-            bs.watch(task.patterns, task.options || watchConfig, afterFn.bind(bs, task, splitTasks(task.tasks)));
-        });
-        return {}
+        return;
     }
 
-    bsConfig.files  = bsConfig.files || [];
-
+    bsConfig.logFileChanges = false;
     bsConfig.logPrefix = function () {
         return this.compile(logger.prefix);
     };
-
-    bsConfig.logFileChanges = false;
-
-    bsConfig.files = bsConfig.files.concat(watchTasks.map(function (task, i) {
-
-        return {
-            options: task.options || watchConfig,
-            match: task.patterns,
-            fn: afterFn.bind(bs, task, splitTasks(task.tasks))
-        };
-    }));
-
-    bs.init(bsConfig, function (err, bs) {
+    bs = require(bsConfig.bs || 'browser-sync').create('Crossbow');
+    bs.init(bsConfig, function (err, _bs) {
         if (err) {
-            throw err;
+            return cb(err);
         }
     });
 
-    var methods = {
-        runPublicMethods: function (bsTasks) {
-            if (!bsTasks.length) {
-                return;
-            }
-            bsTasks.forEach(function (task) {
-                if (typeof bs[task.method] === 'function') {
-                    if (task.args.length) {
-                        bs[task.method].apply(bs, task.args);
-                    } else {
-                        bs[task.method].call(bs);
-                    }
-                }
-            });
+    /**
+     * Handle any after-task Browsersync tasks
+     */
+    taskStream$.do(x => {
+        if (!bs) {
+            return;
         }
-    };
+        x.tasks.bsTasks.forEach(function (task) {
+            if (task.args.length) {
+                task.args = utils.transformStrings(task.args, crossbow.config);
+            }
+            if (typeof bs[task.method] === 'function') {
+                if (task.args.length) {
+                    bs[task.method].apply(bs, task.args);
+                } else {
+                    bs[task.method].call(bs);
+                }
+            }
+        });
+    }).subscribe();
 
-    return methods;
 };
 
 module.exports.splitTasks = splitTasks;
