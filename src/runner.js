@@ -24,19 +24,22 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
                 });
 
                 obs.compile = logger.compile;
+
                 obs.done = function () {
-                    obs.onCompleted(obs);
+                    obs.onCompleted();
                 };
 
-                var output = item.FUNCTION.call(obs, obs, seqItem.opts, ctx);
+                process.nextTick(function () {
+                    var output = item.FUNCTION.call(null, obs, seqItem.opts, ctx);
+                    if (output) {
+                        require('./returns').handleReturnType(output, obs);
+                    }
+                });
 
-                if (output) {
-                    require('./returns').handleReturnType(output, obs);
-                }
                 return function () {
                     item.completed = true;
-                    item.endTime = new Date().getTime();
-                    item.duration = item.endTime - item.startTime;
+                    item.endTime   = new Date().getTime();
+                    item.duration  = item.endTime - item.startTime;
                 }
             }).catch(e => {
 
@@ -54,7 +57,7 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
 
                 e.task = seqItem.task;
                 return Rx.Observable.throw(e);
-            });
+            }).share();
         }));
     }, []);
 

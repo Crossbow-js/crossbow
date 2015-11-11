@@ -40,7 +40,7 @@ function handleNodeStream(output, obs) {
         }, function (err) {
             obs.onError(err);
         }, function () {
-            obs.done();
+            obs.onCompleted();
         });
 }
 
@@ -48,7 +48,7 @@ function handlePromise(output, obs) {
     return Rx.Observable
         .fromPromise(output)
         .subscribe(x => {
-            obs.done(x);
+            obs.onCompleted();
         }, e => {
             obs.onError(e);
         });
@@ -57,5 +57,7 @@ function handlePromise(output, obs) {
 function handleObs (output, obs) {
     return output.do(function (x) {
         obs.onNext(x);
-    }).subscribe(x => {}, e => obs.onError(e), x => obs.done());
+    }).subscribe(x => {}, e => obs.onError(e), x => {
+        obs.onCompleted();
+    });
 }

@@ -28,38 +28,43 @@ module.exports = function (tasks, input, config) {
     }
 }
 
+/**
+ * @param sequence
+ * @returns {*}
+ */
 module.exports.groupByParent = function (sequence) {
     return sequence.reduce(function (all, item) {
+        var name = item.task.taskName;
+        if (item.subTaskName) {
+            name = [name, item.subTaskName].join(':');
+        }
         if (item.task.compat) {
-            if (!item.task.parent.length) {
-                all['($' + item.task.compat + ')'] = [item];
-                return all;
-            } else {
-                all[item.task.parent + ' ($' + item.task.compat + ')'] = [item];
-                return all;
-            }
+            name = '($' + item.task.compat + ') ' + item.task.rawInput;
+        }
 
-        }
-        if (!item.task.parent.length) {
-            all[item.task.taskName] = [item];
-            return all;
-        }
-        if (!all[item.task.parent]) {
-            all[item.task.parent] = [item];
-        } else {
-            all[item.task.parent].push(item);
-        }
-        return all;
-    }, {});
-}
+        return all.concat({
+            name: name,
+            seq: item.seq,
+            task: item.task
+        });
+    }, []);
+};
 
-module.exports.getSeqTime = function (sequence) {
-    return sequence.reduce(function (all, seq) {
-        return all + seq.seq.taskItems.reduce(function (all, item) {
-                return all + item.duration;
-            }, 0);
+function getSeqTime (item) {
+    return item.seq.taskItems.reduce(function (all, item) {
+        return all + item.duration;
     }, 0);
 }
+
+function getSeqTimeMany (arr) {
+    return arr.reduce(function (all, item) {
+        return all + getSeqTime(item);
+    }, 0);
+}
+
+module.exports.getSeqTime = getSeqTime;
+module.exports.getSeqTimeMany = getSeqTimeMany;
+
 /**
  * If the task resolves to a file on disk,
  * we pick out the 'tasks' property
@@ -74,7 +79,7 @@ function requireModule(item) {
             FUNCTION: fn,
             completed: false
         }
-    })
+    });
     return {taskItems, completed};
 }
 
@@ -108,7 +113,8 @@ function loadModules (input, modules, item) {
         return {
             seq: requireModule(modules[0]),
             opts: utils.transformStrings(subTaskOptions, config),
-            task: item
+            task: item,
+            subTaskName: subTask
         };
     });
 }

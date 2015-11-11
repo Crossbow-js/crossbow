@@ -5,6 +5,7 @@ var current = process.cwd();
 var resolve = require('path').resolve;
 var getBsConfig = require('../lib/utils').getBsConfig;
 var cli = require("../cli");
+var seq = require("../lib/sequence");
 var Rx = require('rx');
 
 function testCase (file, cb) {
@@ -88,6 +89,41 @@ describe('Gathering run task with return types', function () {
             }
         );
     });
+    it('can group tasks for reporting', function (done) {
+        var runner = cli({
+            input: ["run",
+                "test/fixtures/tasks/simple.js",
+                "test/fixtures/tasks/stream.js",
+                "test/fixtures/tasks/simple.js:dev2",
+                "test/fixtures/tasks/simple.js:dev1:dev2"
+            ],
+            flags: {
+                handoff: true
+            }
+        }, {
+            crossbow: {
+                config: {
+
+                }
+            }
+        });
+
+        runner.run
+            .subscribe(function () {},
+            function (err) { console.log(err); },
+            function () {
+                var grouped = seq.groupByParent(runner.sequence);
+                assert.equal(grouped.length, 5);
+                assert.equal(grouped[0].name, "test/fixtures/tasks/simple.js");
+                assert.equal(grouped[1].name, "test/fixtures/tasks/stream.js");
+                assert.equal(grouped[2].name, "test/fixtures/tasks/simple.js:dev2");
+                assert.equal(grouped[3].name, "test/fixtures/tasks/simple.js:dev1");
+                assert.equal(grouped[4].name, "test/fixtures/tasks/simple.js:dev2");
+                done();
+            }
+        );
+    });
+
     it('can handle observable', function (done) {
         testCase(['observable.js'], function (err, runner) {
             assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);

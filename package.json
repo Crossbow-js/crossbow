@@ -6,7 +6,8 @@
   "scripts": {
     "test": "./cli.js run eslint --config crossbow.js",
     "es6": "babel src --out-dir lib --blacklist useStrict",
-    "es6w": "babel src --out-dir lib --blacklist useStrict --watch"
+    "es6w": "babel src --out-dir lib --blacklist useStrict --watch",
+    "prepublish": "npm run es6"
   },
   "files": [
     "lib",
