@@ -1,39 +1,5 @@
-var arrarifyObj = require('./utils').arrarifyObj;
 var arrarify    = require('./utils').arrarify;
-var getKey      = require('./utils').getKey;
 var blacklist = ['options', 'bs-config', 'before'];
-
-/**
- * @param {Object} watch
- * @param {Array} filters
- * @returns {*}
- */
-function filterTasks (watch, filters, predicate) {
-
-    filters = arrarify(filters);
-    predicate = predicate || function (arr, key) { return arr.indexOf(key) > -1 };
-
-    var keys = Object.keys(watch);
-
-    if (!keys.length) {
-        throw new TypeError('Could not locate individual properties: ' + filters);
-    }
-
-    var out = keys.reduce(function (obj, key) {
-        if (predicate(filters, key)) {
-            obj[key] = watch[key];
-        }
-        return obj;
-    }, {});
-
-    return out;
-}
-
-function stripBlacklisted (item) {
-    return filterTasks(item, blacklist, function (arr, key) {
-        return arr.indexOf(key) === -1;
-    });
-}
 
 var getTaskFormat = function (watchTask) {
 
@@ -58,9 +24,8 @@ var getTaskFormat = function (watchTask) {
 
 /**
  * Gather tasks and flatten config
- * @param {Object} crossbow
- * @param {String|Array} filters
  * @returns {Array}
+ * @param input
  */
 module.exports = function (input) {
 

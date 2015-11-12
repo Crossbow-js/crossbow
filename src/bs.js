@@ -1,4 +1,5 @@
 var logger = require('./logger');
+var utils = require('./utils');
 
 module.exports = function (bsConfig, taskStream$, crossbow) {
 
@@ -13,9 +14,9 @@ module.exports = function (bsConfig, taskStream$, crossbow) {
         return this.compile(logger.prefix);
     };
     bs = require(bsConfig.bs || 'browser-sync').create('Crossbow');
-    bs.init(bsConfig, function (err, _bs) {
+    bs.init(bsConfig, function (err) {
         if (err) {
-            return cb(err);
+            throw err;
         }
     });
 

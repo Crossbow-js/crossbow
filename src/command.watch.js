@@ -1,25 +1,16 @@
-var exists                  = require('fs').existsSync;
-var resolve                 = require('path').resolve;
-var runCommand              = require('./command.run.js');
-var cli                     = require('../');
 var logger                  = require('./logger');
 var utils                   = require('./utils');
 var getBsConfig             = require('./utils').getBsConfig;
-var arrayify                = require('./utils').arrarify;
-var getPresentableTaskList  = require('./utils').getPresentableTaskList;
 var padCrossbowError        = require('./utils').padCrossbowError;
-var getBsConfig             = require('./utils').getBsConfig;
 var gatherTasks             = require('./gather-watch-tasks');
 var Rx                      = require('rx');
-var createContext           = require("./ctx");
-var watch                   = require("./watch");
+var createContext           = require('./ctx');
+var watch                   = require('./watch');
 var splitTasks              = require('./bs').splitTasks;
-var objPath                 = require('object-path');
-var watcher                 = require("./file-watcher");
+var watcher                 = require('./file-watcher');
 var taskResolver;
 
 module.exports = function (cli, input, config, cb) {
-    var beforeTasks = input.crossbow.watch.before || [];
     return runWatcher(cli, input, config, cb);
 };
 
@@ -75,10 +66,10 @@ function runWatcher (cli, input, config, cb) {
         });
 
     var pauser = onSwitch
-        .flatMapLatest(x => watcherStream.takeUntil(offSwitch));
+        .flatMapLatest(() => watcherStream.takeUntil(offSwitch));
 
     pauser
-        .do(x => offSwitch.onNext(true))
+        .do(() => offSwitch.onNext(true))
         .do(runCommandAfterWatch)
         .subscribe();
 
@@ -111,14 +102,13 @@ function runWatcher (cli, input, config, cb) {
     function runCommandAfterWatch (event) {
 
         ctx.trigger = {
-            type: "watcher",
+            type: 'watcher',
             event: event.event,
             item: event.item,
             tasks: event.tasks,
             path: event.path
         };
 
-        var start  = new Date().getTime();
         var tasks  = event.tasks.valid;
 
         logger.info('{gray:running ::} {yellow:' + tasks.join(' {gray:->} '));
@@ -141,7 +131,6 @@ function runWatcher (cli, input, config, cb) {
 
             if (err.crossbowMessage) {
                 console.log(padCrossbowError(err.crossbowMessage));
-                //bs.notify(`<span style="color: red; display: block; text-align: left">Error from task ${e.task.taskName}</span><span style="text-align: left!important; display: block; width: 100%;">${e}</span>`, 5000);
             } else {
                 if (!err._cbDisplayed) {
                     console.log(err);
@@ -197,10 +186,10 @@ function runWatcher (cli, input, config, cb) {
 }
 
 function logWatchInfo(watcherTasks) {
-    watcherTasks.forEach(function (task, i) {
+    watcherTasks.forEach(function (task) {
         task.patterns.forEach(function (pattern) {
             logger.info('{gray:watching ::} {yellow:%s}', pattern);
-        })
+        });
     });
     logger.info('{gray:-------- ::}');
 }

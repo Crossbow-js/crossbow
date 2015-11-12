@@ -1,15 +1,14 @@
-var path = require('path');
 var exec = require('child_process').exec;
 
 module.exports = function (input, config, item) {
 
     return function (obs) {
         cmd(item.rawInput, config.get('cwd'), obs);
-    }
+    };
 };
 
 function cmd(cmd, cwd, obs) {
-    return exec(cmd, {cwd: cwd}, function (error, stdout, stderr) {
+    return exec(cmd, {cwd: cwd}, function (error, stdout) {
         if (error !== null) {
             return obs.onError(error);
         } else {
@@ -19,6 +18,6 @@ function cmd(cmd, cwd, obs) {
         }
         obs.onCompleted();
     });
-};
+}
 
 module.exports.cmd = cmd;

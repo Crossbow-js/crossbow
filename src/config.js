@@ -7,5 +7,5 @@ var defaults = {
 };
 
 module.exports.merge = function (opts) {
-	return require('immutable').fromJS(defaults).mergeDeep(opts);
-}
+    return require('immutable').fromJS(defaults).mergeDeep(opts);
+};

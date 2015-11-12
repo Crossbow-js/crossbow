@@ -3,7 +3,7 @@ var RxNode = require('rx-node');
 var Rx = require('rx');
 
 r.types = {
-    "observable": {
+    observable: {
         predicate (input) {
             return typeof input.distinctUntilChanged === 'function';
         },
@@ -21,7 +21,7 @@ r.types = {
         },
         handle: handleNodeStream
     }
-}
+};
 
 r.handleReturnType = function (output, obs) {
     var match = Object.keys(r.types).filter(x => {
@@ -31,7 +31,7 @@ r.handleReturnType = function (output, obs) {
     if (match && typeof r.types[match].handle === 'function') {
         return r.types[match].handle.apply(null, [output, obs]);
     }
-}
+};
 
 function handleNodeStream(output, obs) {
     return RxNode.fromStream(output, 'end')
@@ -47,7 +47,7 @@ function handleNodeStream(output, obs) {
 function handlePromise(output, obs) {
     return Rx.Observable
         .fromPromise(output)
-        .subscribe(x => {
+        .subscribe(() => {
             obs.onCompleted();
         }, e => {
             obs.onError(e);
@@ -57,7 +57,7 @@ function handlePromise(output, obs) {
 function handleObs (output, obs) {
     return output.do(function (x) {
         obs.onNext(x);
-    }).subscribe(x => {}, e => obs.onError(e), x => {
+    }).subscribe(() => {}, e => obs.onError(e), () => {
         obs.onCompleted();
     });
 }

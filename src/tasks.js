@@ -1,10 +1,3 @@
-var utils = require('./utils');
-var basename = require('path').basename;
-var objPath = require('object-path');
-var Rx = require('rx');
-var logger = require('./logger');
-var gruntCompat = require('./grunt-compat');
-var compat = require('./compat');
 var t = require('./task-resolve');
 
 module.exports = function (input, config) {
@@ -13,7 +6,7 @@ module.exports = function (input, config) {
 
     var taskResolver = new t.create(input, config);
 
-    var methods =  {
+    var methods = {
         /**
          * Resolve a given list of tasks (including alias)
          * @param {Array} tasks
@@ -32,7 +25,7 @@ module.exports = function (input, config) {
          */
         getRunner: function (cliInput, ctx) {
 
-            var tasks    = methods.gather(cliInput);
+            var tasks = methods.gather(cliInput);
             var sequence = methods.createRunSequence(tasks.valid);
 
             return require('./runner')(cliInput, ctx, tasks, sequence);

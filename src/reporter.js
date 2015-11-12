@@ -19,7 +19,7 @@ function handleCompletion(tasks, sequence, config) {
 
             var time = require('./sequence').getSeqTime(item);
 
-            logger.info("{ok: } {cyan:%s {green:%sms}", item.name, time);
+            logger.info('{ok: } {cyan:%s {green:%sms}', item.name, time);
 
             if (summary === 'verbose') {
                 if (item.task.modules.length) {
@@ -29,7 +29,7 @@ function handleCompletion(tasks, sequence, config) {
                     return;
                 }
                 item.seq.taskItems.forEach(function (_item, i) {
-                    logger.info("{gray:-- }%s {green:%sms}", i + 1, _item.duration);
+                    logger.info('{gray:-- }%s {green:%sms}', i + 1, _item.duration);
                 });
             }
         });

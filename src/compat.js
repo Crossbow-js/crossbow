@@ -1,11 +1,11 @@
 var gruntCompat = require('./grunt-compat');
 var shellCompat = require('./shell-compat');
-var npmCompat   = require('./npm-compat');
+var npmCompat = require('./npm-compat');
 
 var c = exports;
 
 c.compatAdaptors = {
-    "grunt": {
+    'grunt': {
         validate () {
             try {
                 return require.resolve('grunt');
@@ -15,12 +15,12 @@ c.compatAdaptors = {
         },
         create: gruntCompat
     },
-    "shell": {
+    'shell': {
         validate: () => true,
         create: shellCompat
     },
-    "npm": {
-        validate: (input, config, item) => {
+    'npm': {
+        validate: (input, config) => {
             var readPkgUp = require('read-pkg-up');
             var pkg = readPkgUp.sync({cwd: config.get('cwd')}).pkg;
             return pkg.name && pkg.scripts;

@@ -1,21 +1,15 @@
 var utils = require('./utils');
-var basename = require('path').basename;
 var objPath = require('object-path');
-var Rx = require('rx');
-var RxNode = require('rx-node');
-var logger = require('./logger');
-var gruntCompat = require('./grunt-compat');
-var t = require('./task-resolve');
 var compat = require('./compat');
 
 module.exports = function (tasks, input, config) {
 
     return flatten([], tasks);
 
-    function flatten (initial, items) {
+    function flatten(initial, items) {
         return items.reduce((all, item) => {
             if (!item.modules.length && item.compat) {
-                return all.concat(compatSeq(item, input, config))
+                return all.concat(compatSeq(item, input, config));
             }
             if (item.modules.length) {
                 return all.concat(loadModules(input, item.modules, item));
@@ -26,7 +20,7 @@ module.exports = function (tasks, input, config) {
             return all;
         }, initial);
     }
-}
+};
 
 /**
  * @param sequence
@@ -50,13 +44,13 @@ module.exports.groupByParent = function (sequence) {
     }, []);
 };
 
-function getSeqTime (item) {
+function getSeqTime(item) {
     return item.seq.taskItems.reduce(function (all, item) {
         return all + item.duration;
     }, 0);
 }
 
-function getSeqTimeMany (arr) {
+function getSeqTimeMany(arr) {
     return arr.reduce(function (all, item) {
         return all + getSeqTime(item);
     }, 0);
@@ -75,10 +69,10 @@ function requireModule(item) {
     var tasks = [].concat(require(item).tasks);
     var completed = false;
     var taskItems = tasks.map(function (fn) {
-    	return {
+        return {
             FUNCTION: fn,
             completed: false
-        }
+        };
     });
     return {taskItems, completed};
 }
@@ -89,7 +83,7 @@ function requireModule(item) {
  * @param item
  * @returns {*}
  */
-function loadModules (input, modules, item) {
+function loadModules(input, modules, item) {
 
     let config = objPath.get(input, 'config', {});
     let lookup = item.taskName;
@@ -127,7 +121,7 @@ function loadModules (input, modules, item) {
  * @param config
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function compatSeq (item, input, config, parent) {
+function compatSeq(item, input, config, parent) {
 
     var args = [
         input,
@@ -147,5 +141,5 @@ function compatSeq (item, input, config, parent) {
         opts: {},
         task: item,
         parent
-    }
+    };
 }

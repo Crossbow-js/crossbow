@@ -1,13 +1,11 @@
-var objPath  = require('object-path');
-var exists   = require('fs').existsSync;
-var resolve  = require('path').resolve;
-var extname  = require('path').extname;
+var objPath = require('object-path');
+var resolve = require('path').resolve;
+var extname = require('path').extname;
 var basename = require('path').basename;
-var logger   = require('./logger');
-var utils    = exports;
-var fs       = require('fs');
-var Rx       = require('rx');
-var yml      = require('js-yaml');
+var logger = require('./logger');
+var utils = exports;
+var fs = require('fs');
+var yml = require('js-yaml');
 var traverse = require('traverse');
 
 utils.padCrossbowError = function (msg) {
@@ -107,14 +105,14 @@ utils.getBsConfig = function (crossbow, config) {
         'bs-config.yml',
         'bs-config.yaml'
     ]
-    .map(x => resolve(cwd, x))
-    .filter(x => fs.existsSync(x))
-    .map(x => {
-        if (x.match(/yml|yaml$/)) {
-            return yml.safeLoad(fs.readFileSync(x));
-        }
-        return require(x);
-    });
+        .map(x => resolve(cwd, x))
+        .filter(x => fs.existsSync(x))
+        .map(x => {
+            if (x.match(/yml|yaml$/)) {
+                return yml.safeLoad(fs.readFileSync(x));
+            }
+            return require(x);
+        });
 
     return match.length ? match[0] : undefined;
 };
@@ -128,8 +126,8 @@ utils.getBsConfig = function (crossbow, config) {
 utils.retrieveConfig = function (flags, config) {
 
     var validExts = ['.js', '.json', '.yaml', '.yml'];
-    var maybes    = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
-    var cwd       = config.get('cwd');
+    var maybes = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
+    var cwd = config.get('cwd');
 
     if (flags.config) {
         return filterFiles([flags.config]).map(importConfig);
@@ -139,11 +137,11 @@ utils.retrieveConfig = function (flags, config) {
 
     }
 
-    function importConfig (filepath) {
+    function importConfig(filepath) {
         var ext = extname(filepath);
         if (validExts.indexOf(ext) > -1) {
             if (ext.match(/ya?ml$/)) {
-                return yml.safeLoad(fs.readFileSync(filepath))
+                return yml.safeLoad(fs.readFileSync(filepath));
             }
             return require(filepath);
         }
@@ -155,11 +153,11 @@ utils.retrieveConfig = function (flags, config) {
      * @param input
      * @returns {*}
      */
-    function getFiles (input) {
+    function getFiles(input) {
         var out = []
             .concat(input)
             .map(x => {
-                if (basename(x) === "crossbow.js") {
+                if (basename(x) === 'crossbow.js') {
                     return require(x);
                 } else if (x.match(/yml|yaml$/)) {
                     return yml.safeLoad(fs.readFileSync(x));
@@ -176,7 +174,7 @@ utils.retrieveConfig = function (flags, config) {
         return out;
     }
 
-    function filterFiles (input) {
+    function filterFiles(input) {
         return input
             .map(x => resolve(cwd, x))
             .filter(fs.existsSync);
@@ -191,7 +189,7 @@ utils.getPresentableTaskList = function (arr) {
     return arr.map(function (item) {
         var split = item.split(' ');
         if (split.length === 3 && split[1] === 'as') {
-             return split[2];
+            return split[2];
         }
         return item;
     });
@@ -213,8 +211,8 @@ utils.locateModule = function (cwd, name) {
         [name],
         ['node_modules', 'crossbow-' + name]
     ]
-    .map(x => resolve.apply(null, [cwd].concat(x)))
-    .filter(x => fs.existsSync(x));
+        .map(x => resolve.apply(null, [cwd].concat(x)))
+        .filter(x => fs.existsSync(x));
 };
 
 /**
@@ -224,7 +222,7 @@ utils.locateModule = function (cwd, name) {
  * @param {Object} root
  * @returns {Object}
  */
-function transformStrings (item, root) {
+function transformStrings(item, root) {
     return traverse(item).map(function () {
         if (this.isLeaf) {
             if (typeof this.node === 'string') {
@@ -240,7 +238,7 @@ function transformStrings (item, root) {
  * @param {Object} root - Root object used for lookups
  * @returns {*}
  */
-function replaceOne (item, root) {
+function replaceOne(item, root) {
     return item.replace(/\{\{(.+?)\}\}/g, function () {
         var match = objPath.get(root, arguments[1].split('.'));
         if (typeof match === 'string') {
@@ -253,9 +251,9 @@ function replaceOne (item, root) {
 utils.transformStrings = transformStrings;
 
 utils.types = {
-    'obj':    '[object Object]',
+    'obj': '[object Object]',
     'string': '[object String]',
-    'array':  '[object Array]'
+    'array': '[object Array]'
 };
 
 utils.testType = function (com, val) {

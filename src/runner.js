@@ -1,12 +1,6 @@
-var utils = require('./utils');
 var basename = require('path').basename;
-var objPath = require('object-path');
 var Rx = require('rx');
-var RxNode = require('rx-node');
 var logger = require('./logger');
-var gruntCompat = require('./grunt-compat');
-var compat = require('./compat');
-var t = require('./task-resolve');
 
 module.exports = function (cliInput, ctx, tasks, sequence) {
 
@@ -40,7 +34,7 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
                     item.completed = true;
                     item.endTime   = new Date().getTime();
                     item.duration  = item.endTime - item.startTime;
-                }
+                };
             }).catch(e => {
 
                 if (!e._cbDisplayed) {
@@ -66,8 +60,8 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
         run: Rx.Observable.from(seq).concatAll(),
         tasks: tasks,
         sequence: sequence
-    }
-}
+    };
+};
 
 /**
  * Get a customised prefixed logger per task

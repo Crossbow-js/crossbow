@@ -1,17 +1,11 @@
 var utils = require('./utils');
-var basename = require('path').basename;
-var objPath = require('object-path');
-var Rx = require('rx');
-var RxNode = require('rx-node');
-var logger = require('./logger');
-var gruntCompat = require('./grunt-compat');
 var merge = require('lodash.merge');
 var compat = require('./compat');
 var t = exports;
 
 var adaptorKeys = Object.keys(compat.compatAdaptors);
 
-t.validateTask  = validateTask;
+t.validateTask = validateTask;
 
 /**
  * A task is valid if every child eventually resolves to
@@ -46,14 +40,14 @@ function validateTask(task, input, config) {
     return false;
 }
 
-function TaskResolver (input, config) {
+function TaskResolver(input, config) {
     this.config = config;
     this.input = input;
     this.cache = {};
     return this;
 }
 
-function getCompat (task) {
+function getCompat(task) {
     return adaptorKeys.filter(x => {
         return task.match(new RegExp('\\$' + x));
     })[0];
@@ -79,7 +73,7 @@ function getTask(obj) {
  * @param {String} task
  * @returns {{taskName: string, subTasks: Array, modules: Array, tasks: Array, compat: String|undefined}}
  */
-function compatTask (task, compat, parent) {
+function compatTask(task, compat, parent) {
 
     if (compat) {
         return getTask({
@@ -121,7 +115,7 @@ TaskResolver.prototype.flatTask = function (task, parent) {
                 var aliasName = this.input.aliases[matches[0]];
                 mod = utils.locateModule(this.config.get('cwd'), aliasName);
                 alias = taskName;
-                taskName = aliasName
+                taskName = aliasName;
             }
         }
     }
@@ -129,12 +123,12 @@ TaskResolver.prototype.flatTask = function (task, parent) {
     return getTask({
         taskName: taskName,
         subTasks: splitTask.slice(1),
-        modules:  mod,
-        tasks:    this.resolveTasks([], this.input.tasks, taskName, parent),
-        compat:   undefined,
-        valid:    true,
-        parent:   parent,
-        alias:    alias
+        modules: mod,
+        tasks: this.resolveTasks([], this.input.tasks, taskName, parent),
+        compat: undefined,
+        valid: true,
+        parent: parent,
+        alias: alias
     });
 };
 
@@ -159,7 +153,7 @@ Parent Tasks: ${parent.join(', ')}`);
     }
 
     return initial;
-}
+};
 
 TaskResolver.prototype.gather = function (tasks) {
 
@@ -172,14 +166,14 @@ TaskResolver.prototype.gather = function (tasks) {
         .map(x => this.flatTask(x, []));
 
     var out = {
-        valid:   taskList.filter(x => t.validateTask(x, this.input, this.config)),
+        valid: taskList.filter(x => t.validateTask(x, this.input, this.config)),
         invalid: taskList.filter(x => !t.validateTask(x, this.input, this.config))
     };
 
     this.cache[hash] = out;
     return out;
-}
+};
 
 module.exports.create = function (input, config) {
-	return new TaskResolver(input, config);
+    return new TaskResolver(input, config);
 };
