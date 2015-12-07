@@ -1,5 +1,6 @@
 var gruntCompat = require('./grunt-compat');
 var shellCompat = require('./shell-compat');
+var bgShellCompat = require('./bgShell-compat');
 var npmCompat = require('./npm-compat');
 
 var c = exports;
@@ -26,5 +27,9 @@ c.compatAdaptors = {
             return pkg.name && pkg.scripts;
         },
         create: npmCompat
+    },
+    'bgShell': {
+        validate: () => true,
+        create: bgShellCompat
     }
 };

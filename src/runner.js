@@ -13,7 +13,11 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
                 item.startTime = new Date().getTime();
 
                 obs.log = logger.clone(x => {
-                    x.prefix = '{gray: ' + getLogPrefix(basename(seqItem.task.taskName), 13) + ' :: ';
+                    var base = basename(seqItem.task.taskName);
+                    if (seqItem.task.compat) {
+                        base = '$' + seqItem.task.compat;
+                    }
+                    x.prefix = '{gray: ' + getLogPrefix(base, 13) + ' :: ';
                     return x;
                 });
 

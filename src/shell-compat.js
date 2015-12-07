@@ -1,9 +1,11 @@
-var exec = require('child_process').exec;
+const exec  = require('child_process').exec;
+const utils = require('./utils');
 
 module.exports = function (input, config, item) {
 
     return function (obs) {
-        cmd(item.rawInput, config.get('cwd'), obs);
+        const stringInput = utils.transformStrings(item.rawInput, input.config);
+        cmd(stringInput, config.get('cwd'), obs);
     };
 };
 

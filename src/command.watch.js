@@ -111,7 +111,9 @@ function runWatcher (cli, input, config, cb) {
 
         var tasks  = event.tasks.valid;
 
-        logger.info('{gray:running ::} {yellow:' + tasks.join(' {gray:->} '));
+        if (tasks.length) {
+            logger.info('{gray:running ::} {yellow:' + tasks.join(' {gray:->} '));
+        }
 
         input.handoff = true;
 
