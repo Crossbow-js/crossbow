@@ -111,8 +111,8 @@ function runWatcher (cli, input, config, cb) {
 
         var tasks  = event.tasks.valid;
 
-        if (tasks.length) {
-            logger.info('{gray:running ::} {yellow:' + tasks.join(' {gray:->} '));
+        if (event.tasks.valid.length) {
+            logger.info('{gray:running ::} {yellow:' + event.tasks.valid.join(' {gray:->} '));
         }
 
         input.handoff = true;
@@ -168,7 +168,9 @@ function runWatcher (cli, input, config, cb) {
          */
         function handleTaskCompleted () {
             if (!errored) {
-                require('./reporter')(runner, config);
+                if (event.tasks.valid.length) {
+                    require('./reporter')(runner, config);
+                }
             }
 
             tasksSubject.onNext(event);
