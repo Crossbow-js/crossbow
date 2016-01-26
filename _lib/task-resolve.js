@@ -1,4 +1,10 @@
 var utils = require('./utils');
+var basename = require('path').basename;
+var objPath = require('object-path');
+var Rx = require('rx');
+var RxNode = require('rx-node');
+var logger = require('./logger');
+var gruntCompat = require('./grunt-compat');
 var merge = require('lodash.merge');
 var compat = require('./compat');
 var t = exports;
@@ -13,7 +19,7 @@ t.validateTask = validateTask;
  * @param {Object} task
  * @returns {Boolean}
  */
-function validateTask(task, input, config) {
+function validateTask(task) {
     /**
      * Return early if a task has previously
      * been marked as invalid
@@ -21,19 +27,16 @@ function validateTask(task, input, config) {
     if (task.valid === false) {
         return false;
     }
-
     var valid = task.modules.length > 0 || task.tasks.length > 0;
     if (valid && task.tasks.length) {
-        return task.tasks.every(function (t) {
-            return validateTask(t, input, config);
-        });
+        return task.tasks.every(validateTask);
     }
     if (valid && !task.tasks.length) {
         return true;
     }
     if (typeof task.compat === 'string') {
         if (compat.compatAdaptors[task.compat]) {
-            return compat.compatAdaptors[task.compat].validate.call(null, input, config, task);
+            return compat.compatAdaptors[task.compat].validate.call();
         }
         return false;
     }
@@ -48,7 +51,7 @@ function TaskResolver(input, config) {
 }
 
 function getCompat(task) {
-    return adaptorKeys.filter(x => {
+    return adaptorKeys.filter(function (x) {
         return task.match(new RegExp('\\$' + x));
     })[0];
 }
@@ -60,8 +63,7 @@ var defaultTask = {
     subTasks: [],
     modules: [],
     tasks: [],
-    parent: '',
-    alias: undefined
+    parent: ''
 };
 
 function getTask(obj) {
@@ -102,49 +104,33 @@ TaskResolver.prototype.flatTask = function (task, parent) {
         return compatTask(task, getCompat(task), parent);
     }
 
-    var taskName = splitTask[0];
-    var mod = utils.locateModule(this.config.get('cwd'), taskName);
-    var alias = undefined;
-
-    if (!mod.length) {
-        if (utils.plainObj(this.input.aliases)) {
-            var matches = Object.keys(this.input.aliases).filter((key) => {
-                return key === taskName;
-            });
-            if (matches.length) {
-                var aliasName = this.input.aliases[matches[0]];
-                mod = utils.locateModule(this.config.get('cwd'), aliasName);
-                alias = taskName;
-                taskName = aliasName;
-            }
-        }
-    }
-
     return getTask({
-        taskName: taskName,
+        taskName: splitTask[0],
         subTasks: splitTask.slice(1),
-        modules: mod,
-        tasks: this.resolveTasks([], this.input.tasks, taskName, parent),
+        modules: utils.locateModule(this.config.get('cwd'), splitTask[0]),
+        tasks: this.resolveTasks([], this.input.tasks, splitTask[0], parent),
         compat: undefined,
         valid: true,
-        parent: parent,
-        alias: alias
+        parent: parent
     });
 };
 
+/**
+ * @param {Array} initial
+ * @param {Object} subject
+ * @param {String} taskname
+ * @returns {Array}
+ */
 TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname, parent) {
+    var _this = this;
 
     if (Object.keys(subject).indexOf(taskname) > -1) {
         if (parent.indexOf(taskname) > -1) {
-            throw new ReferenceError(`Infinite loop detected from task: \`${taskname}\`
-Parent Tasks: ${parent.join(', ')}`);
+            throw new ReferenceError('Infinite loop detected from task: `' + taskname + '`\nParent Tasks: ' + parent.join(', '));
         }
-        if (typeof subject[taskname] === 'string') {
-            subject[taskname] = [subject[taskname]];
-        }
-        return subject[taskname].map(item => {
-            var flat = this.flatTask(item, parent + ' ' + taskname);
-            flat.tasks = this.resolveTasks(flat.tasks, subject, item, parent + ' ' + taskname);
+        return subject[taskname].map(function (item) {
+            var flat = _this.flatTask(item, parent + '.' + taskname);
+            flat.tasks = _this.resolveTasks(flat.tasks, subject, item, parent + '.' + taskname);
             return flat;
         });
     }
@@ -153,18 +139,22 @@ Parent Tasks: ${parent.join(', ')}`);
 };
 
 TaskResolver.prototype.gather = function (tasks) {
+    var _this2 = this;
 
     var hash = tasks.join('-');
     if (this.cache[hash]) {
         return this.cache[hash];
     }
 
-    var taskList = tasks
-        .map(x => this.flatTask(x, []));
+    var taskList = tasks.map(function (x) {
+        return _this2.flatTask(x, []);
+    });
 
     var out = {
-        valid: taskList.filter(x => t.validateTask(x, this.input, this.config)),
-        invalid: taskList.filter(x => !t.validateTask(x, this.input, this.config))
+        valid: taskList.filter(t.validateTask),
+        invalid: taskList.filter(function (x) {
+            return !t.validateTask(x);
+        })
     };
 
     this.cache[hash] = out;

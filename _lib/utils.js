@@ -1,10 +1,12 @@
 var objPath = require('object-path');
+var exists = require('fs').existsSync;
 var resolve = require('path').resolve;
 var extname = require('path').extname;
 var basename = require('path').basename;
 var logger = require('./logger');
 var utils = exports;
 var fs = require('fs');
+var Rx = require('rx');
 var yml = require('js-yaml');
 var traverse = require('traverse');
 
@@ -22,9 +24,7 @@ utils.defaultCallback = function (err, output) {
         if (err.crossbowMessage) {
             console.log(utils.padCrossbowError(err.crossbowMessage));
         } else {
-            if (!err._cbDisplayed) {
-                throw err;
-            }
+            throw err;
         }
     }
 
@@ -99,20 +99,16 @@ utils.getBsConfig = function (crossbow, config) {
         return crossbow.watch['bs-config'];
     }
 
-    var match = [
-        'bs-config.js',
-        'bs-config.json',
-        'bs-config.yml',
-        'bs-config.yaml'
-    ]
-        .map(x => resolve(cwd, x))
-        .filter(x => fs.existsSync(x))
-        .map(x => {
-            if (x.match(/yml|yaml$/)) {
-                return yml.safeLoad(fs.readFileSync(x));
-            }
-            return require(x);
-        });
+    var match = ['bs-config.js', 'bs-config.json', 'bs-config.yml', 'bs-config.yaml'].map(function (x) {
+        return resolve(cwd, x);
+    }).filter(function (x) {
+        return fs.existsSync(x);
+    }).map(function (x) {
+        if (x.match(/yml|yaml$/)) {
+            return yml.safeLoad(fs.readFileSync(x));
+        }
+        return require(x);
+    });
 
     return match.length ? match[0] : undefined;
 };
@@ -134,7 +130,6 @@ utils.retrieveConfig = function (flags, config) {
     } else {
         var out = getFiles(filterFiles(maybes)[0]);
         return out;
-
     }
 
     function importConfig(filepath) {
@@ -154,30 +149,32 @@ utils.retrieveConfig = function (flags, config) {
      * @returns {*}
      */
     function getFiles(input) {
-        var out = []
-            .concat(input)
-            .map(x => {
-                if (basename(x) === 'crossbow.js') {
-                    return require(x);
-                } else if (x.match(/yml|yaml$/)) {
-                    return yml.safeLoad(fs.readFileSync(x));
-                } else {
-                    var mod = require(x);
-                    if (mod.crossbow) {
-                        return mod.crossbow;
-                    }
+        if (!Array.isArray(input)) {
+            input = [input];
+        }
+        var out = input.map(function (x) {
+            if (basename(x) === "crossbow.js") {
+                return require(x);
+            } else if (x.match(/yml|yaml$/)) {
+                return yml.safeLoad(fs.readFileSync(x));
+            } else {
+                var mod = require(x);
+                if (mod.crossbow) {
+                    return mod.crossbow;
                 }
-                return false;
-            })
-            .filter(x => x);
+            }
+            return false;
+        }).filter(function (x) {
+            return x;
+        });
 
         return out;
     }
 
     function filterFiles(input) {
-        return input
-            .map(x => resolve(cwd, x))
-            .filter(fs.existsSync);
+        return input.map(function (x) {
+            return resolve(cwd, x);
+        }).filter(fs.existsSync);
     }
 };
 
@@ -204,15 +201,11 @@ utils.locateModule = function (cwd, name) {
     if (name.indexOf(':') > -1) {
         name = name.split(':')[0];
     }
-    return [
-        ['tasks', name + '.js'],
-        ['tasks', name],
-        [name + '.js'],
-        [name],
-        ['node_modules', 'crossbow-' + name]
-    ]
-        .map(x => resolve.apply(null, [cwd].concat(x)))
-        .filter(x => fs.existsSync(x));
+    return [['tasks', name + '.js'], ['tasks', name], [name + '.js'], [name], ['node_modules', 'crossbow-' + name]].map(function (x) {
+        return resolve.apply(null, [cwd].concat(x));
+    }).filter(function (x) {
+        return fs.existsSync(x);
+    });
 };
 
 /**
@@ -239,7 +232,7 @@ function transformStrings(item, root) {
  * @returns {*}
  */
 function replaceOne(item, root) {
-    return item.replace(/\{\{(.+?)\}\}/g, function () {
+    return item.replace(/\{(.+?)\}/g, function () {
         var match = objPath.get(root, arguments[1].split('.'));
         if (typeof match === 'string') {
             return replaceOne(match, root);
@@ -249,17 +242,3 @@ function replaceOne(item, root) {
 }
 
 utils.transformStrings = transformStrings;
-
-utils.types = {
-    'obj': '[object Object]',
-    'string': '[object String]',
-    'array': '[object Array]'
-};
-
-utils.testType = function (com, val) {
-    return Object.prototype.toString.call(val) === com;
-};
-
-utils.plainObj = function (val) {
-    return utils.testType(utils.types['obj'], val);
-};

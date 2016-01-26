@@ -1,3 +1,10 @@
+var utils = require('./utils');
+var basename = require('path').basename;
+var objPath = require('object-path');
+var Rx = require('rx');
+var logger = require('./logger');
+var gruntCompat = require('./grunt-compat');
+var compat = require('./compat');
 var t = require('./task-resolve');
 
 module.exports = function (input, config) {
@@ -15,7 +22,7 @@ module.exports = function (input, config) {
          * @returns {{valid: *, invalid: *}}
          */
         gather: taskResolver.gather.bind(taskResolver),
-        createRunSequence: function (tasks) {
+        createRunSequence: function createRunSequence(tasks) {
             return require('./sequence')(tasks, input, config);
         },
         /**
@@ -23,7 +30,7 @@ module.exports = function (input, config) {
          * @param {Array} cliInput - task names such as 'js' or ['js','css']
          * @returns {Observable}
          */
-        getRunner: function (cliInput, ctx) {
+        getRunner: function getRunner(cliInput, ctx) {
 
             var tasks = methods.gather(cliInput);
             var sequence = methods.createRunSequence(tasks.valid);
