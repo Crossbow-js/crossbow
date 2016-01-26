@@ -28,14 +28,12 @@ describe('Gathering run tasks', function () {
                 }
             }
         });
-        runner.run.subscribe(function () {}, function (err) {
-        	console.log(err);
-        }, function () {
-            assert.equal(runner.sequence[0].seq.taskItems.length, 1);
-            assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'ls');
-            assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
-        	done();
-        });
+
+        assert.equal(runner.sequence[0].seq.taskItems.length, 1);
+        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'ls');
+        assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
+
+        done();
     });
     it('can handoff through --handoff with tasks that have multi steps', function (done) {
     	var runner = handoff(["test/fixtures/tasks/stream.js"], {

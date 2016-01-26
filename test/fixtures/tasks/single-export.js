@@ -1,3 +1,3 @@
 module.exports = function (obs, opts, ctx) {
-    console.log('HERE', opts);
+    obs.log.info('HERE', opts);
 };
