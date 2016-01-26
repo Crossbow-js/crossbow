@@ -11,6 +11,7 @@ module.exports = function (tasks, input, config) {
             if (!item.modules.length && item.compat) {
                 return all.concat(compatSeq(item, input, config));
             }
+
             if (item.modules.length) {
                 return all.concat(loadModules(input, item.modules, item));
             }
@@ -97,6 +98,7 @@ function requireModule(item) {
     const tasks = getTaskFunctions(require(item), item, []);
 
     var completed = false;
+
     var taskItems = tasks.map(function (fn) {
         return {
             FUNCTION: fn,
@@ -117,6 +119,7 @@ function loadModules(input, modules, item) {
     let config = objPath.get(input, 'config', {});
     let lookup = item.taskName;
 
+
     if (item.alias) {
         lookup = item.alias;
     }
@@ -129,6 +132,22 @@ function loadModules(input, modules, item) {
             opts: utils.transformStrings(topLevelOpts, config),
             task: item
         };
+    }
+
+
+    if (item.subTasks[0] === '*') {
+        let subTaskOptions = objPath.get(input, ['config', lookup], {});
+        let keys = Object.keys(subTaskOptions);
+        if (keys.length) {
+            return keys.reduce((all, subTask) => {
+                return all.concat({
+                    seq: requireModule(modules[0]),
+                    opts: utils.transformStrings(subTaskOptions[subTask], config),
+                    task: item,
+                    subTaskName: subTask
+                });
+            }, []);
+        }
     }
 
     return item.subTasks.map(function (subTask) {

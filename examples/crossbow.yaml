@@ -32,6 +32,10 @@ config:
         input: '{$.root}/scss/main.scss'
         output: '{$.root}/css/main.min.css'
 
+    test/fixtures/tasks/single-export.js:
+        site: 'Site config'
+        dev: 'Dev Config'
+
     'test/fixtures/tasks/simple.js':
         dev1:
             input: '{$.root}/scss/main.scss'
