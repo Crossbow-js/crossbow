@@ -7,14 +7,21 @@ describe('Running functions in parallel', function () {
         this.timeout(5000);
         const now = new Date().getTime();
         var runner = cli({
-            input: ['run', 'test/fixtures/tasks/parallel1.js', 'test/fixtures/tasks/parallel2.js'],
-            flags: {handoff: true}
+            input: [
+                'run',
+                'test/fixtures/tasks/parallel1.js',
+                'test/fixtures/tasks/parallel2.js'
+            ],
+            flags: {
+                handoff: true
+            }
         }, {
             crossbow: {}
         });
 
         runner
             .parallel()
+            .toArray()
             .subscribe(
                 x => {
                 },
