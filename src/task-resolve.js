@@ -132,18 +132,15 @@ TaskResolver.prototype.flatTask = function (task, parent) {
     });
 };
 
-/**
- * @param {Array} initial
- * @param {Object} subject
- * @param {String} taskname
- * @returns {Array}
- */
 TaskResolver.prototype.resolveTasks = function resolveTasks(initial, subject, taskname, parent) {
 
     if (Object.keys(subject).indexOf(taskname) > -1) {
         if (parent.indexOf(taskname) > -1) {
             throw new ReferenceError(`Infinite loop detected from task: \`${taskname}\`
 Parent Tasks: ${parent.join(', ')}`);
+        }
+        if (typeof subject[taskname] === 'string') {
+            subject[taskname] = [subject[taskname]];
         }
         return subject[taskname].map(item => {
             var flat = this.flatTask(item, parent + ' ' + taskname);

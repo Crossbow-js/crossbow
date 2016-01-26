@@ -29,8 +29,10 @@ module.exports = function (cliInput, ctx, tasks, sequence) {
 
                 process.nextTick(function () {
                     var output = item.FUNCTION.call(null, obs, seqItem.opts, ctx);
-                    if (output) {
+                    if (output !== undefined) {
                         require('./returns').handleReturnType(output, obs);
+                    } else {
+                        obs.onCompleted();
                     }
                 });
 

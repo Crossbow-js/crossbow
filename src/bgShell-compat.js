@@ -1,5 +1,6 @@
-const spawn = require('child_process').spawn;
+const npm = require('./npm-compat');
 const utils = require('./utils');
+
 const children = [];
 
 module.exports = function (input, config, item) {
@@ -7,14 +8,15 @@ module.exports = function (input, config, item) {
     return function (obs) {
 
         const stringInput = utils.transformStrings(item.rawInput, input.config);
-        const segs        = stringInput.split(' ').map(x => x.trim()).filter(x => x.length);
+        const env         = require('./npm-compat').getEnv(process.env, config);
+        const cmd         = ['-c'].concat(stringInput);
 
         obs.log.info('Running {yellow:%s}', stringInput);
 
-        const child = spawn(segs[0], segs.slice(1), {
-            cwd: process.cwd,
-            env: process.env,
-            stdio: ['pipe', process.stdout, process.stderr]
+        const child = npm.runCommand(cmd, {
+            cwd: config.get('cwd'),
+            env: env,
+            stdio: [0, 1, 2]
         });
 
         obs.done();

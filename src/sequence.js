@@ -60,13 +60,42 @@ module.exports.getSeqTime = getSeqTime;
 module.exports.getSeqTimeMany = getSeqTimeMany;
 
 /**
+ * Accept first an array of tasks as an export,
+ * then look if a single function was exported and
+ * use that instead
+ * @param {Object} item
+ * @param {String} name
+ * @param {Array} previous
+ * @returns {Array}
+ */
+function getTaskFunctions(item, name, previous) {
+
+    if (typeof item === 'function') {
+        return previous.concat(item);
+    }
+
+    const moduleTasks = item.tasks;
+
+    if (Array.isArray(moduleTasks)) {
+        return previous.concat(moduleTasks);
+    }
+
+    return previous.concat(() => {
+        console.error('Module %s did not have a tasks array or function export', name);
+    });
+}
+
+/**
  * If the task resolves to a file on disk,
- * we pick out the 'tasks' property
+ * we pick out either the 'tasks' property
+ * or the function export
  * @param {String} item
  * @returns {Object}
  */
 function requireModule(item) {
-    var tasks = [].concat(require(item).tasks);
+
+    const tasks = getTaskFunctions(require(item), item, []);
+
     var completed = false;
     var taskItems = tasks.map(function (fn) {
         return {
