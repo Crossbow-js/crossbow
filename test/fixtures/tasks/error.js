@@ -5,4 +5,4 @@ function simple (obs) {
     }, 100);
 }
 
-module.exports.tasks = [simple];
+module.exports = simple;
