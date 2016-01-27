@@ -1,5 +1,5 @@
-var logger = require('../logger');
-var seq    = require('../sequence');
+var logger = require('../lib/logger');
+var seq    = require('../lib/sequence');
 
 module.exports = function (runner, config, time) {
     handleCompletion(runner.tasks.valid, runner.sequence, config, time);
