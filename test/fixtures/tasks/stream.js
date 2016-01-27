@@ -19,15 +19,5 @@ module.exports.tasks = [
                     cb();
                 }, 50)
             }));
-    },
-    //function (obs) {
-    //    gulp.src('test/fixtures/js/*.js')
-    //        .pipe(through2.obj(function (file, enc, cb) {
-    //            obs.log.info('Stream task 3 - error');
-    //            this.emit('error', new Error("sd"));
-    //            cb();
-    //        })).on('error', function (err) {
-    //            obs.onError(err);
-    //        });
-    //},
-]
+    }
+];
