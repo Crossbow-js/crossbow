@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-var ctx              = require("./lib/ctx");
-var meow             = require('meow');
-var path             = require('path');
-var logger           = require('./lib/logger');
-var defaultCallback  = require('./lib/utils').defaultCallback;
-var retrieveConfig   = require('./lib/utils').retrieveConfig;
-var Immutable        = require('immutable');
+const ctx              = require("./lib/ctx");
+const meow             = require('meow');
+const path             = require('path');
+const logger           = require('./lib/logger');
+const defaultCallback  = require('./lib/utils').defaultCallback;
+const retrieveConfig   = require('./lib/utils').retrieveConfig;
+const Immutable        = require('immutable');
 
 var cli = meow({
     help: [

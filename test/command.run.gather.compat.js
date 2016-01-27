@@ -1,14 +1,6 @@
-var assert = require('chai').assert;
-var watch = require('../lib/command.watch');
-var cwd = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var resolve = require('path').resolve;
-var getBsConfig = require('../lib/utils').getBsConfig;
-var cli = require("../cli");
-
-function testCase (command, input, cb) {
-    cli({input: command}, input, cb);
-}
+const assert = require('chai').assert;
+const watch  = require('../lib/command.watch');
+const cli    = require("../cli");
 
 describe('Gathering run tasks for grunt', function () {
     it('can use grunt-compat to gather single Grunt tasks', function (done) {
@@ -45,14 +37,10 @@ describe('Gathering run tasks for grunt', function () {
             crossbow: {}
         });
 
-        runner.run.subscribe(function () {
-        }, function (err) {
-            console.log(err);
-        	//console.log('ERR');
-        }, function () {
-        	//console.log('done');
-            done();
-        })
+        assert.equal(runner.sequence[0].task.compat, 'shell');
+        assert.equal(runner.sequence[0].task.rawInput, 'npm run es6');
+
+        done();
     });
     it('can flag attempted compat flag that does not exist', function (done) {
         var runner = cli({
