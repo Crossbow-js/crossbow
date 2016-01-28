@@ -1,9 +1,5 @@
 var assert = require('chai').assert;
 var watch = require('../lib/command.watch');
-var cwd = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var resolve = require('path').resolve;
-var getBsConfig = require('../lib/utils').getBsConfig;
 var cli = require("../cli");
 
 function testCase (command, input, cb) {
