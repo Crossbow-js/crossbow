@@ -5,29 +5,69 @@ var gatherTasks = require('../lib/gather-watch-tasks');
 const yml = require('js-yaml');
 
 describe('Resolving watch tasks', function () {
-    it.only('can resolve default tasks when none given', function () {
-        var watchTasks = resolve({
-                input: ['watch'],
-                flags: {handoff: true}
-            },
-            gatherTasks({
-                watch: {
-                    before: ['js'],
-                    tasks: {
-                        default: {
-                            "*.css": ["sass", "js"],
-                            "*.js": "js"
-                        }
+    it('can resolve all watchers when no names given', function () {
+        const gatheredTasks = gatherTasks({
+            watch: {
+                before: ['js'],
+                tasks: {
+                    default: {
+                        "*.css": ["sass", "js"],
+                        "*.js":  ["js"]
+                    },
+                    dev: {
+                        "*.html": "html-min"
                     }
                 }
-            }));
+            }
+        });
 
-        console.log(watchTasks);
+        const watchTasks = resolve([], gatheredTasks);
+        assert.isObject(watchTasks.default);
+        assert.isArray(watchTasks.default.watchers);
+        assert.isObject(watchTasks.dev);
+        assert.isArray(watchTasks.dev.watchers);
+    });
+    it('can resolve a single watcher when a name is given', function () {
+        const gatheredTasks = gatherTasks({
+            watch: {
+                before: ['js'],
+                tasks: {
+                    default: {
+                        "*.css": ["sass", "js"],
+                        "*.js":  ["js"]
+                    },
+                    dev: {
+                        "*.html": "html-min"
+                    }
+                }
+            }
+        });
 
-        //assert.equal(tasks.default.watchers.length, 2);
-        //assert.equal(tasks.default.watchers[0].patterns.length, 1);
-        //assert.equal(tasks.default.watchers[0].patterns[0], "*.css");
-        //assert.equal(tasks.default.watchers[0].tasks[0], "sass");
-        //assert.equal(tasks.default.watchers[0].tasks[1], "js");
+        const watchTasks = resolve(['dev'], gatheredTasks);
+        assert.isUndefined(watchTasks.default);
+        assert.isObject(watchTasks.dev);
+        assert.isArray(watchTasks.dev.watchers);
+    });
+    it('can resolve multiple watchers when multiple given', function () {
+        const gatheredTasks = gatherTasks({
+            watch: {
+                before: ['js'],
+                tasks: {
+                    default: {
+                        "*.css": ["sass", "js"],
+                        "*.js":  ["js"]
+                    },
+                    dev: {
+                        "*.html": "html-min"
+                    }
+                }
+            }
+        });
+
+        const watchTasks = resolve(['dev', 'default'], gatheredTasks);
+        assert.isObject(watchTasks.default);
+        assert.isArray(watchTasks.default.watchers);
+        assert.isObject(watchTasks.dev);
+        assert.isArray(watchTasks.dev.watchers);
     });
 });
