@@ -30,6 +30,7 @@ describe('Gathering watch tasks', function () {
                },
                tasks: {
                    default: {
+                       before: ['$npm webpack'],
                        watchers: [
                            {
                                patterns: ["*.css"],
@@ -95,6 +96,28 @@ watch:
 
         assert.equal(tasks.dev.watchers.length, 1);
         assert.equal(tasks.dev.before.length, 0);
+        assert.equal(tasks.dev.watchers[0].patterns.length, 2);
+        assert.equal(tasks.dev.watchers[0].patterns[0], "*.js");
+        assert.equal(tasks.dev.watchers[0].patterns[1], "*.html");
+    });
+    it('can gather tasks in a mix of short/longhand', function () {
+
+        var tasks = gather({
+           watch: {
+               before: ['js'],
+               tasks: {
+                   dev: {
+                       before: ['js', '$npm watchify'],
+                       watchers: {
+                            "*.js:*.html": "bs.reload('')"
+                       }
+                   }
+               }
+           }
+        });
+
+        assert.equal(tasks.dev.watchers.length, 1);
+        assert.equal(tasks.dev.before.length, 2);
         assert.equal(tasks.dev.watchers[0].patterns.length, 2);
         assert.equal(tasks.dev.watchers[0].patterns[0], "*.js");
         assert.equal(tasks.dev.watchers[0].patterns[1], "*.html");
