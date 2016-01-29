@@ -1,43 +1,34 @@
 //var assert = require('chai').assert;
-//var watch = require('../lib/command.watch');
-//var cwd = require('path').resolve('test/fixtures');
-//var current = process.cwd();
-//var gather = require('../lib/gather-watch-tasks');
-//var getBsConfig = require('../lib/utils').getBsConfig;
+//var watch  = require('../lib/command.watch');
+//var cli    = require('../');
 //
-//describe('Adding watchers based on config', function () {
-//    it('can gather simple tasks', function (done) {
-//        watch({input: ['watch', 'default', 'other']}, {
+//describe('Gathering watch tasks', function () {
+//    it('can gather tasks in shorthand format', function (done) {
+//        const runner = cli({
+//            input: ['watch'],
+//            flags: {
+//                handoff: true
+//            }
+//        }, {
 //            crossbow: {
 //                watch: {
-//                    "bs-config": {
-//                        logLevel: 'silent',
-//                        open: false
-//                    },
-//                    "default": {
-//                        "**/*.css": ['build'],
-//                        "**/*.js": ['babel']
-//                    },
-//                    "other": [
-//                        {
-//                            patterns: ["*.html", "app/*.html"],
-//                            tasks: ['build', 'deploy']
-//                        },
-//                        {
-//                            "**": 'babel'
+//                    tasks: {
+//                        default: {
+//                            "*.css": ["sass", "js"],
+//                            "*.js": "js"
 //                        }
-//                    ]
+//                    }
 //                }
-//            },
-//            cb: function (err, out) {
-//                assert.equal(out.tasks.length, 4);
-//                assert.equal(out.tasks[0].patterns[0], '**/*.css');
-//                assert.equal(out.tasks[1].patterns[0], '**/*.js');
-//                assert.deepEqual(out.tasks[2].patterns, ["*.html", "app/*.html"]);
-//                assert.deepEqual(out.tasks[3].patterns, ['**']);
-//                out.bs.cleanup();
-//                done();
 //            }
 //        });
+//
+//        console.log(runner);
+//
+//        done();
+//        //assert.equal(tasks.default.watchers.length, 2);
+//        //assert.equal(tasks.default.watchers[0].patterns.length, 1);
+//        //assert.equal(tasks.default.watchers[0].patterns[0], "*.css");
+//        //assert.equal(tasks.default.watchers[0].tasks[0], "sass");
+//        //assert.equal(tasks.default.watchers[0].tasks[1], "js");
 //    });
 //});

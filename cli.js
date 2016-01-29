@@ -76,9 +76,8 @@ function handleCli (cli, input, cb) {
                 return;
             }
 
-            var run = require('./lib/command.run');
-
-            return run(cli, input, config, cb);
+            const run = require('./lib/command.run');
+            return run(cli, input, config, cb);1
         }
 
         if (cli.input[0] === 'watch') {
@@ -88,7 +87,8 @@ function handleCli (cli, input, cb) {
                 return;
             }
 
-            return require('./lib/command.watch')(cli, input, config, cb);
+            const watch = require('./lib/command.watch');
+            return watch(cli, input, config, cb);
         }
     }
 }
