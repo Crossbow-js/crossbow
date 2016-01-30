@@ -1,9 +1,7 @@
 const assert      = require('chai').assert;
-
 const watch       = require('../lib/command.watch');
 const resolve     = require('../lib/resolve-watch-tasks');
 const gatherTasks = require('../lib/gather-watch-tasks');
-
 const yml         = require('js-yaml');
 
 describe('Resolving watch tasks to be run before watchers begin', function () {
