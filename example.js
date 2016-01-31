@@ -28,8 +28,23 @@
 //    //assert.equal(output.sequence[2].seq.taskItems.length, 2);
 //    //done();
 //});
-//
-////console.log('kittie');
-//const Rx = require('rx');
-//
-//Rx.
+//console.log('kittie');
+const Rx = require('rx');
+
+const first = Rx.Observable.create(obs => {
+    obs.onNext('1');
+    obs.onNext('2');
+    obs.onNext('3');
+});
+
+Rx.Observable.merge(first)
+    .subscribe(x => {
+        console.log(x);
+    });
+setTimeout(x => {
+    Rx.Observable.merge(first)
+        .subscribe(x => {
+            console.log(x);
+        })
+}, 1000);
+

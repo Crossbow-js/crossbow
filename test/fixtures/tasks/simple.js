@@ -4,7 +4,7 @@ function simple (obs, opts, ctx) {
     setTimeout(function () {
         console.log('simple1 done');
         obs.done();
-    }, 1000);
+    }, 10);
 }
 
 module.exports.tasks = [simple];
