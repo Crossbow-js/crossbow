@@ -1,11 +1,13 @@
-var assert = require('chai').assert;
-var watch  = require('../lib/command.watch');
-var cli    = require('../');
+const assert = require('chai').assert;
+const watch  = require('../lib/command.watch');
+const cli    = require('../');
+const Rx     = require('rx');
 
 describe('Initialising runner with task data', function () {
-    it('can gather all pre-tasks', function (done) {
+    it.only('can gather all pre-tasks', function (done) {
+        this.timeout(50000);
         const runner = cli({
-            input: ['watch', 'shane'],
+            input: ['watch'],
             flags: {
                 handoff: true
             }
@@ -16,19 +18,21 @@ describe('Initialising runner with task data', function () {
                         default: {
                             before: ['test/fixtures/tasks/simple.js'],
                             watchers: {
-                                "*.css": ["sass", "js"],
+                                "*.css:test/fixtures/*.html": ["css", "js"],
                                 "*.js": "js"
                             }
                         }
                     }
+                },
+                tasks: {
+                    css: ['test/fixtures/tasks/simple2.js'],
+                    js: ['test/fixtures/tasks/stream.js']
                 }
             }
         });
 
-        runner.beforeRunner
-            .series()
-            .subscribe(x => {}, e => {}, _ => {
-                done();
-            });
+
+        //console.log(runner.watcherTasks);
+        //done();
     });
 });
