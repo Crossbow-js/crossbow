@@ -7,7 +7,7 @@ const sinon = require('sinon');
 
 describe('Initialising runner with task data', function () {
 
-    it.skip('can gather all pre-tasks', function () {
+    it.skip('can gather all pre-tasks', function (done) {
         this.timeout(50000);
         const item1 = Rx.Observable.create(obs => {
             //obs.onNext({
