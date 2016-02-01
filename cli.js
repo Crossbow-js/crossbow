@@ -31,6 +31,10 @@ function handleCli (cli, input, cb) {
         input = {};
     }
 
+    //if (cli.flags.logLevel) {
+    //    logger.setLevel(cli.flags.logLevel);
+    //}
+
     if (cli.input[0] !== 'run' && cli.input[0] !== 'watch') {
         return console.log(cli.help);
     }

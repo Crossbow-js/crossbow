@@ -12,11 +12,12 @@ const runner = cli({
                     watchers: {
                         "*.css:test/fixtures/*.html": ["css", "js"],
                         "*.js": ["js"],
-                        "*.json": ["css"]
-
+                        "*.json": ["css"],
+                        "*.html": ["css"]
                     }
                 },
                 default: {
+
                     //before: ['test/fixtures/tasks/simpl
                     // e.js'],
                     watchers: {
@@ -28,7 +29,6 @@ const runner = cli({
             }
         },
         tasks: {
-
             css: ['test/fixtures/tasks/simple2.js'],
             js: ['test/fixtures/tasks/slow1.js']
         }
