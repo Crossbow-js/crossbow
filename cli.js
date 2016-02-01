@@ -31,6 +31,7 @@ function handleCli (cli, input, cb) {
         input = {};
     }
 
+    //console.log(cli.flags);
     //if (cli.flags.logLevel) {
     //    logger.setLevel(cli.flags.logLevel);
     //}

@@ -6,6 +6,5 @@ function slow1 (obs, opts, ctx) {
         console.log('Finished slow 2');
         obs.done();
     }, 100);
-
 }
 module.exports = slow1;
