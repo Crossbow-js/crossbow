@@ -11,7 +11,8 @@
   "repository": "crossbow-js/crossbow-cli",
   "files": [
     "lib",
-    "cli.js"
+    "cli.js",
+    "reporters"
   ],
   "author": "",
   "license": "ISC",
