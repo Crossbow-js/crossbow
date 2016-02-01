@@ -1,50 +1,36 @@
-//var cli = require('./');
-//
-//cli({
-//    input: [
-//        'run',
-//        '$bgShell watchify {{watchify.input}} -v -d -o {{watchify.output}}',
-//        '$bgShell webpack {{webpack.input}} --output-file {{webpack.output}} --watch',
-//    ]
-//}, {
-//    crossbow: {
-//        config: {
-//            watchify: {
-//                input: 'test/fixtures/js/app.js',
-//                output: 'test/fixtures/js/app.watchify.js',
-//            },
-//            webpack: {
-//                input: 'test/fixtures/js/app2.js',
-//                output: 'test/fixtures/js/app2.webpack.js',
-//            }
-//        }
-//    }
-//}, function (err, output) {
-//    //console.log(output);
-//    //assert.equal(output.sequence[0].seq.taskItems.length, 1);
-//    //assert.equal(output.sequence[0].seq.taskItems[0].FUNCTION.name, 'simple');
-//    //assert.equal(output.sequence[1].seq.taskItems.length, 1);
-//    //assert.equal(output.sequence[1].seq.taskItems[0].FUNCTION.name, 'simple2');
-//    //assert.equal(output.sequence[2].seq.taskItems.length, 2);
-//    //done();
-//});
-//console.log('kittie');
-const Rx = require('rx');
+const cli = require('./');
+const runner = cli({
+    input: ['watch', 'dev'],
+    flags: {
+        handoff: true
+    }
+}, {
+    crossbow: {
+        watch: {
+            tasks: {
+                dev: {
+                    watchers: {
+                        "*.css:test/fixtures/*.html": ["css", "js"],
+                        "*.js": ["js"],
+                        "*.json": ["css"]
 
-const first = Rx.Observable.create(obs => {
-    obs.onNext('1');
-    obs.onNext('2');
-    obs.onNext('3');
+                    }
+                },
+                default: {
+                    //before: ['test/fixtures/tasks/simpl
+                    // e.js'],
+                    watchers: {
+                        //"*.css:test/fixtures/*.html": ["css", "js"],
+                        "*.js":   ["js"],
+                        "*.json": ["css"]
+                    }
+                }
+            }
+        },
+        tasks: {
+
+            css: ['test/fixtures/tasks/simple2.js'],
+            js: ['test/fixtures/tasks/slow1.js']
+        }
+    }
 });
-
-Rx.Observable.merge(first)
-    .subscribe(x => {
-        console.log(x);
-    });
-setTimeout(x => {
-    Rx.Observable.merge(first)
-        .subscribe(x => {
-            console.log(x);
-        })
-}, 1000);
-
