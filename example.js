@@ -17,20 +17,31 @@ const runner = cli({
                     }
                 },
                 default: {
-
-                    //before: ['test/fixtures/tasks/simpl
-                    // e.js'],
                     watchers: {
-                        //"*.css:test/fixtures/*.html": ["css", "js"],
                         "*.js":   ["js"],
                         "*.json": ["css"]
                     }
                 }
             }
         },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         tasks: {
             css: ['test/fixtures/tasks/simple2.js'],
-            js: ['test/fixtures/tasks/slow1.js']
+            js: ['test/fixtures/tasks/slow1.js', 'test/fixtures/tasks/error.js']
         }
     }
 });
