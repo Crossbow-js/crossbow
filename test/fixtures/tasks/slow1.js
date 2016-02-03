@@ -5,6 +5,6 @@ function slow1 (obs, opts, ctx) {
     setTimeout(x => {
         //console.log('Finished slow 1');
         obs.done();
-    }, 3000);
+    }, 500);
 }
 module.exports = slow1;
