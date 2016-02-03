@@ -2,7 +2,7 @@ const assert = require('chai').assert;
 const watch = require('../lib/command.watch');
 const cli = require("../cli");
 
-describe.only('Gathering run tasks with errors', function () {
+describe('Gathering run tasks with errors', function () {
     it('reports single missing module', function () {
     	const runner = cli({
             input: ['run', 'list'],
@@ -53,5 +53,14 @@ describe.only('Gathering run tasks with errors', function () {
         }}});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, 'SUBTASK_NOT_FOUND');
+    });
+    it('reports when subtask as * given, but not config exists', function () {
+    	const runner = cli({
+            input: ['run', 'test/fixtures/tasks/simple.js:*'],
+            flags: {handoff: true}
+        }, {crossbow: {config: {}}});
+        //console.log(runner.tasks);
+        assert.equal(runner.tasks.invalid[0].errors.length, 1);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 'SUBTASKS_NOT_IN_CONFIG');
     });
 });

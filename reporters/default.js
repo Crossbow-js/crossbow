@@ -61,17 +61,16 @@ const errors = {
         logger.info('{cyan:`%s`} sub task of {cyan:`%s`} not found', error.name, task.taskName);
         //logger.info(`{cyan:\`crossbow %s:%s\`} means run the task {cyan:${task.taskName}}`, task.taskName, error.name);
         //logger.info('with the configuration found under {cyan:`%s.%s`}', task.taskName, error.name);
-        logger.info(`
-
+        logger.unprefixed('info', `
 Running the command:
-{cyan:$ ${task.taskName}:${error.name}}
+{gray:$ {cyan.bold:${task.taskName}{white::}${error.name}}}
 
 Would require configuration along the lines of:
 {yellow:config:
-  '${task.taskName}':
-    '${error.name}':
-      input: 'core.scss'
-      output: 'core.css'}`);
+  {yellow.bold:${task.taskName}}:
+    {yellow.bold:${error.name}}:
+      input: './js/app.js'
+      output: './js/dist/app.min.js'}`);
     },
     SUBTASK_NOT_PROVIDED: (task, error) => {
         logger.info(`Sub-task not provided for {cyan:${task.taskName}}
@@ -80,17 +79,37 @@ When you use a colon {yellow::} separator, you need to provide a key-name after
 that matches in your config.
 
 For example, running the command:
-{cyan:$ ${task.taskName}:fakeSubTask}
+{gray:$ {cyan.bold:${task.taskName}{white::}fakeSubTask}}}
 
 Will look at your config for an item under \`{cyan:${task.taskName}}\` with the key \`{cyan:fakeSubTask}\`.
 Something like this:
 
 {yellow:config:
   ${task.taskName}:
-    fakeSubTask:
+    {yellow.bold:fakeSubTask}:
       input: 'core.scss'
       output: 'core.css'}
         `)
+    },
+    SUBTASKS_NOT_IN_CONFIG: (task, error) => {
+        logger.info(`Sub-task configuration not found for {cyan:${task.taskName}}`);
+        logger.unprefixed('info', `
+When you use \`{cyan:*}\` after a task name, you're instructing crossbow
+to run the task once for each key provided in the config.
+
+So running
+{gray:$} {cyan:${task.taskName}{white::}*}
+
+With the configuration
+{yellow:config:
+  ${task.taskName}:
+    dev: 'app.js'
+    prod: 'app.min.js'}
+
+Will cause {cyan:${task.taskName}} to be run {bold.underline:TWICE},
+-> Once with the values from {yellow:dev} (app.js)
+-> Then with the values from {yellow:prod} (app.min.js)
+`);
     }
 };
 
