@@ -1,19 +1,11 @@
 var assert = require('chai').assert;
 var watch = require('../lib/command.watch');
-var cwd = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var resolve = require('path').resolve;
-var getBsConfig = require('../lib/utils').getBsConfig;
 var cli = require("../cli");
 
-function testCase (command, input, cb) {
-    cli({input: command}, input, cb);
-}
-
-describe('Gathering run tasks', function () {
-    it.skip('can recover from errors correctly', function (done) {
+describe('Running tasks with errors', function () {
+    it.skip('can report missing task', function (done) {
         cli({
-            input: ["run", "test/fixtures/tasks/error.js"]
+            input: ['run', 'test/fixtures/tasks/error.js']
         }, {
             crossbow: {
                 config: {
