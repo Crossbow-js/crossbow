@@ -1,10 +1,6 @@
-var assert = require('chai').assert;
-var watch = require('../lib/command.watch');
-var cwd = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var resolve = require('path').resolve;
-var getBsConfig = require('../lib/utils').getBsConfig;
-var cli = require('../cli');
+const assert = require('chai').assert;
+const watch = require('../lib/command.watch');
+const cli = require('../cli');
 
 function handoff (cmd, input, cb) {
     return cli({
@@ -15,8 +11,8 @@ function handoff (cmd, input, cb) {
     }, input, cb);
 }
 
-describe('Gathering run tasks with widlcard', function () {
-    it('can handle multi tasks with wildcard', function (done) {
+describe('Gathering run tasks with wildcard', function () {
+    it('can handle multi tasks with wildcard', function () {
 
     	var runner = handoff(['test/fixtures/tasks/single-export.js:*'], {
             crossbow: {
@@ -34,7 +30,8 @@ describe('Gathering run tasks with widlcard', function () {
         });
 
         assert.equal(runner.sequence.length, 2);
-
-        done();
+        assert.equal(runner.sequence[0].task.taskName, 'test/fixtures/tasks/single-export.js');
+        assert.equal(runner.sequence[0].subTaskName, 'site');
+        assert.equal(runner.sequence[1].subTaskName, 'ie');
     });
 });

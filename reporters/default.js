@@ -68,8 +68,8 @@ Running the command:
 
 Would require configuration along the lines of:
 {yellow:config:
-  sass:
-    ${error.name}:
+  '${task.taskName}':
+    '${error.name}':
       input: 'core.scss'
       output: 'core.css'}`);
     },

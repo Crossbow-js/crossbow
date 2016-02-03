@@ -3,7 +3,7 @@ const watch  = require('../lib/command.watch');
 const cli    = require("../cli");
 
 describe('Gathering run tasks for grunt', function () {
-    it('can use grunt-compat to gather single Grunt tasks', function (done) {
+    it('can use grunt-adaptors to gather single Grunt tasks', function (done) {
         cli({
             input: ["run", "$grunt jshint"]
         }, {
@@ -16,7 +16,7 @@ describe('Gathering run tasks for grunt', function () {
             done();
         });
     });
-    it('can use grunt-compat to gather multiple Grunt tasks', function (done) {
+    it('can use grunt-adaptors to gather multiple Grunt tasks', function (done) {
         cli({
             input: ["run", "$grunt jshint:dev jshint:other"]
         }, {
@@ -29,7 +29,7 @@ describe('Gathering run tasks for grunt', function () {
             done();
         });
     });
-    it('can use shell-compat to gather shell command', function (done) {
+    it('can use shell-adaptors to gather shell command', function (done) {
         var runner = cli({
             input: ["run", "$shell npm run es6"],
             flags: {handoff: true}
@@ -42,7 +42,7 @@ describe('Gathering run tasks for grunt', function () {
 
         done();
     });
-    it('can flag attempted compat flag that does not exist', function (done) {
+    it('can flag attempted adaptors flag that does not exist', function (done) {
         var runner = cli({
             input: ["run", "$gulp jshint:dev jshint:other"],
             flags: {

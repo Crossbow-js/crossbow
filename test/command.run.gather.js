@@ -155,28 +155,27 @@ describe('Gathering run tasks', function () {
             done();
         })
     });
-    it('can gather simple tasks', function (done) {
-        testCase(["run", "test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple2.js"], {
+    it('can gather simple tasks', function () {
+        const runner = cli({
+            input: ['run', 'test/fixtures/tasks/simple.js:dev'],
+            flags: {
+                handoff: true
+            }
+        }, {
             crossbow: {
                 config: {
-                    sass: {
-                        default: {
-                            input: "scss/scss/core.scss",
-                            output: "css/scss/core.css"
-                        },
-                        "test/fixtures/tasks/simple.js": {
+                    "test/fixtures/tasks/simple.js": {
+                        dev: {
                             input: "scss/scss/core.scss",
                             output: "css/scss/core.min.css"
                         }
                     }
                 }
             }
-        }, function (err, output) {
-            assert.equal(output.tasks.valid.length, 2);
-            assert.equal(output.tasks.valid[0].subTasks.length, 1);
-            assert.equal(output.tasks.valid[1].subTasks.length, 0);
-            done();
-        })
+        });
+
+        assert.equal(runner.tasks.valid.length, 1);
+        assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
     it('can gather opts for sub tasks', function (done) {
         testCase(["run", "test/fixtures/tasks/simple.js:dev"], {
@@ -204,12 +203,16 @@ describe('Gathering run tasks', function () {
             done();
         })
     });
-    it('can gather tasks when multi give in alias', function (done) {
-
-        testCase(["run", "js"], {
+    it('can gather tasks when multi given in alias', function () {
+        const runner = cli({
+            input: ['run', 'js'],
+            flags: {
+                handoff: true
+            }
+        }, {
             crossbow: {
                 tasks: {
-                    js: ["test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple.js:shane:kittie"]
+                    js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
                 },
                 config: {
                     "test/fixtures/tasks/simple.js": {
@@ -224,49 +227,44 @@ describe('Gathering run tasks', function () {
                     }
                 }
             }
-        }, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-            assert.equal(output.tasks.valid[0].tasks[0].subTasks[0], 'dev');
-            assert.equal(output.tasks.valid[0].tasks[1].subTasks[0], 'shane');
-            assert.equal(output.tasks.valid[0].tasks[1].subTasks[1], 'kittie');
-            done();
-        })
-    });
-    it('can gather tasks from multiple aliass', function (done) {
-
-        testCase(["run", "css"], {
-            crossbow: {
-                tasks: {
-                    css: ["js"],
-                    js:  ["test/fixtures/tasks/simple.js:dev", "test/fixtures/tasks/simple.js:shane:kittie"]
-                },
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        default: {
-                            input: "scss/core.scss",
-                            output: "css/core.css"
-                        },
-                        dev: {
-                            input: "scss/main.scss",
-                            output: "css/main.min.css"
-                        }
-                    }
-                }
-            }
-        }, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-
-            assert.equal(output.sequence[0].opts.input, 'scss/main.scss');
-            assert.equal(output.sequence[0].opts.output, 'css/main.min.css');
-            assert.equal(output.sequence[1].task.subTasks[0], 'shane');
-            assert.equal(output.sequence[1].task.subTasks[1], 'kittie');
-
-            done();
         });
+
+        assert.equal(runner.tasks.valid[0].taskName, 'js');
+        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+        assert.equal(runner.tasks.valid[0].tasks[0].subTasks[0], 'dev');
+
+        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+        assert.equal(runner.tasks.valid[0].tasks[1].subTasks[0], 'default');
+    });
+    it('can gather tasks from multiple alias', function () {
+        const runner = cli({
+            input: ['run', 'css'],
+            flags: {handoff: true}
+        }, {
+            crossbow: {
+                tasks: {
+                    css: ['js'],
+                    js:  ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
+                },
+                config: {
+                    'test/fixtures/tasks/simple.js': {
+                        default: {
+                            input: "scss/core.scss",
+                            output: "css/core.css"
+                        },
+                        dev: {
+                            input: "scss/main.scss",
+                            output: "css/main.min.css"
+                        }
+                    }
+                }
+            }
+        });
+
+        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
+        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
+        assert.equal(runner.sequence[1].task.subTasks[0], 'dev');
+        assert.equal(runner.sequence[1].task.subTasks[1], 'default');
     });
     it('can gather handle no-tasks in config', function (done) {
 

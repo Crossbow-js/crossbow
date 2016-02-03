@@ -103,7 +103,10 @@ describe('Gathering run task with return types', function () {
         }, {
             crossbow: {
                 config: {
-
+                    "test/fixtures/tasks/simple.js": {
+                        dev1: {},
+                        dev2: {}
+                    }
                 }
             }
         });
