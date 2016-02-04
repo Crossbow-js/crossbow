@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npm run lint && npm run unit",
     "unit": "mocha test",
-    "lint": "eslint lib"
+    "lint": "eslint lib",
+    "ts": "node cli.js watch ts"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
@@ -56,6 +57,8 @@
     "q": "1.4.1",
     "sinon": "1.17.2",
     "through2": "2.0.0",
+    "typescript": "1.7.5",
+    "typings": "0.6.6",
     "watchify": "3.7.0"
   }
 }

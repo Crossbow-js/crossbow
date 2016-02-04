@@ -1,0 +1,10 @@
+watch:
+  tasks:
+    ts:
+      before: ['compile']
+      'lib/*.ts': ['compile']
+
+tasks:
+  compile: >
+    @npm tsc lib/*.ts
+    --module commonjs
