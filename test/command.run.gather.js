@@ -30,9 +30,7 @@ describe('Gathering run tasks', function () {
         done();
     });
     it('can handoff through --handoff with tasks that have multi steps', function (done) {
-    	var runner = handoff(["test/fixtures/tasks/stream.js"], {
-            crossbow: {}
-        });
+    	var runner = handoff(["test/fixtures/tasks/stream.js"]);
         runner.run.subscribe(function () {}, function (err) {
         	console.log(err);
         }, function () {
@@ -66,9 +64,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.tasks.valid.length, 2);
     });
     it('can handle error after handing off', function () {
-        var runner = handoff(["test/fixtures/tasks/simplse.js"], {
-            crossbow: {}
-        });
+        var runner = handoff(["test/fixtures/tasks/simplse.js"]);
         assert.equal(runner.tasks.invalid.length, 1);
     });
     it('can combine files to form sequence', function (done) {
@@ -104,11 +100,11 @@ describe('Gathering run tasks', function () {
             done();
         });
     });
-    it.only('can gather from external config file', function (done) {
+    it('can gather from external config file', function (done) {
         cli({
             input: ["run", "js"],
             flags: {config: "examples/crossbow.js"}
-        }, {}, function (err, output) {
+        }, null, function (err, output) {
             if (err) {
                 return done(err);
             }
@@ -123,7 +119,7 @@ describe('Gathering run tasks', function () {
             flags: {
                 config: 'examples/crossbow-alt.js'
             }
-        }, {}, function (err, output) {
+        }, null, function (err, output) {
             if (err) {
                 return done(err);
             }
@@ -141,7 +137,7 @@ describe('Gathering run tasks', function () {
             flags: {
                 config: 'examples/crossbow.yaml'
             }
-        }, {}, function (err, output) {
+        }, null, function (err, output) {
             if (err) {
                 return done(err);
             }
@@ -156,13 +152,11 @@ describe('Gathering run tasks', function () {
                 handoff: true
             }
         }, {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        dev: {
-                            input: "scss/scss/core.scss",
-                            output: "css/scss/core.min.css"
-                        }
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    dev: {
+                        input: "scss/scss/core.scss",
+                        output: "css/scss/core.min.css"
                     }
                 }
             }
@@ -173,17 +167,15 @@ describe('Gathering run tasks', function () {
     });
     it('can gather opts for sub tasks', function (done) {
         testCase(["run", "test/fixtures/tasks/simple.js:dev"], {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        default: {
-                            input: "scss/core.scss",
-                            output: "css/core.css"
-                        },
-                        dev: {
-                            input: "scss/main.scss",
-                            output: "css/main.min.css"
-                        }
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    default: {
+                        input: "scss/core.scss",
+                        output: "css/core.css"
+                    },
+                    dev: {
+                        input: "scss/main.scss",
+                        output: "css/main.min.css"
                     }
                 }
             }
@@ -204,20 +196,18 @@ describe('Gathering run tasks', function () {
                 handoff: true
             }
         }, {
-            crossbow: {
-                tasks: {
-                    js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
-                },
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        default: {
-                            input: "scss/core.scss",
-                            output: "css/core.css"
-                        },
-                        dev: {
-                            input: "scss/main.scss",
-                            output: "css/main.min.css"
-                        }
+            tasks: {
+                js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
+            },
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    default: {
+                        input: "scss/core.scss",
+                        output: "css/core.css"
+                    },
+                    dev: {
+                        input: "scss/main.scss",
+                        output: "css/main.min.css"
                     }
                 }
             }
@@ -235,21 +225,19 @@ describe('Gathering run tasks', function () {
             input: ['run', 'css'],
             flags: {handoff: true}
         }, {
-            crossbow: {
-                tasks: {
-                    css: ['js'],
-                    js:  ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
-                },
-                config: {
-                    'test/fixtures/tasks/simple.js': {
-                        default: {
-                            input: "scss/core.scss",
-                            output: "css/core.css"
-                        },
-                        dev: {
-                            input: "scss/main.scss",
-                            output: "css/main.min.css"
-                        }
+            tasks: {
+                css: ['js'],
+                js:  ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
+            },
+            config: {
+                'test/fixtures/tasks/simple.js': {
+                    default: {
+                        input: "scss/core.scss",
+                        output: "css/core.css"
+                    },
+                    dev: {
+                        input: "scss/main.scss",
+                        output: "css/main.min.css"
                     }
                 }
             }
@@ -263,17 +251,15 @@ describe('Gathering run tasks', function () {
     it('can gather handle no-tasks in config', function (done) {
 
         testCase(["run", "test/fixtures/tasks/simple.js"], {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        default: {
-                            input: "scss/core.scss",
-                            output: "css/core.css"
-                        },
-                        dev: {
-                            input: "scss/main.scss",
-                            output: "css/main.min.css"
-                        }
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    default: {
+                        input: "scss/core.scss",
+                        output: "css/core.css"
+                    },
+                    dev: {
+                        input: "scss/main.scss",
+                        output: "css/main.min.css"
                     }
                 }
             }
@@ -291,11 +277,9 @@ describe('Gathering run tasks', function () {
     });
     it('can gather valid tasks when using an alias', function (done) {
         testCase(["run", "css", "js"], {
-            crossbow: {
-                tasks: {
-                    css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
-                    js:  ['test/fixtures/tasks/simple.js']
-                }
+            tasks: {
+                css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
+                js:  ['test/fixtures/tasks/simple.js']
             }
         }, function (err, output) {
 
@@ -312,36 +296,34 @@ describe('Gathering run tasks', function () {
     });
     it('can process config options ith {} replacements', function (done) {
         testCase(["run", "css"], {
-            crossbow: {
-                tasks: {
-                    "css": ['test/fixtures/tasks/simple.js:default', 'test/fixtures/tasks/simple.js:dev']
+            tasks: {
+                "css": ['test/fixtures/tasks/simple.js:default', 'test/fixtures/tasks/simple.js:dev']
+            },
+            config: {
+                $: {
+                    name: 'kittie'
                 },
-                config: {
-                    $: {
-                        name: 'kittie'
-                    },
-                    root: '/user',
-                    public: '{{root}}/public',
-                    nested: {
-                        props: 'no-problem',
-                        arr: [
-                            {
-                                another: 'shane'
-                            }
-                        ]
-                    },
-                    'test/fixtures/tasks/simple.js': {
-                        default: {
-                            input: '{{public}}/css',
-                            output: '{{public}}/dist/css',
-                            random: '{{nested.props}}/js',
-                            joke: '{{nested.arr.0.another}}',
-                            animal: '{{$.name}}'
-                        },
-                        dev: {
-                            input: '{{root}}/css',
-                            output: '{{root}}/dist/css'
+                root: '/user',
+                public: '{{root}}/public',
+                nested: {
+                    props: 'no-problem',
+                    arr: [
+                        {
+                            another: 'shane'
                         }
+                    ]
+                },
+                'test/fixtures/tasks/simple.js': {
+                    default: {
+                        input: '{{public}}/css',
+                        output: '{{public}}/dist/css',
+                        random: '{{nested.props}}/js',
+                        joke: '{{nested.arr.0.another}}',
+                        animal: '{{$.name}}'
+                    },
+                    dev: {
+                        input: '{{root}}/css',
+                        output: '{{root}}/dist/css'
                     }
                 }
             }

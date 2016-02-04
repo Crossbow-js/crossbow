@@ -7,11 +7,9 @@ describe('Detecting infinite loops in task definition', function () {
             cli({
                 input: ["run", "js", "test/fixtures/tasks/stream.js"]
             }, {
-                crossbow: {
-                    tasks: {
-                        js: ["dummy"],
-                        dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js", "js"]
-                    }
+                tasks: {
+                    js: ["dummy"],
+                    dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js", "js"]
                 }
             });
         })

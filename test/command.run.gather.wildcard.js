@@ -15,15 +15,13 @@ describe('Gathering run tasks with wildcard', function () {
     it('can handle multi tasks with wildcard', function () {
 
     	var runner = handoff(['test/fixtures/tasks/single-export.js:*'], {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/single-export.js": {
-                        site: {
-                            input: ['css/core.scss']
-                        },
-                        ie: {
-                            input: ['css/ie.scss']
-                        }
+            config: {
+                "test/fixtures/tasks/single-export.js": {
+                    site: {
+                        input: ['css/core.scss']
+                    },
+                    ie: {
+                        input: ['css/ie.scss']
                     }
                 }
             }

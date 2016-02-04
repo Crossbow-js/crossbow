@@ -30,7 +30,6 @@ if (!module.parent) {
  */
 function handleCli(cli, input, cb) {
     cli = generateMeowInput(cli);
-    input = generateConfig(input);
     if (cli.flags.logLevel) {
         logger.setLevel(cli.flags.logLevel);
     }
@@ -38,7 +37,6 @@ function handleCli(cli, input, cb) {
         return console.log(cli.help);
     }
     cb = cb || defaultCallback;
-    cli.flags = cli.flags || {};
     var config = require('./lib/config').merge(cli.flags);
     if (input) {
         return processInput(cli, generateConfig(input), cb);
@@ -46,7 +44,7 @@ function handleCli(cli, input, cb) {
     else {
         var fromFile = retrieveConfig(cli.flags, config);
         if (fromFile.length) {
-            return processInput(cli, fromFile[0], cb);
+            return processInput(cli, generateConfig(fromFile[0]), cb);
         }
         else {
             if (config.get('strict')) {

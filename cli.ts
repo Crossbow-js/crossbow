@@ -50,7 +50,6 @@ if (!module.parent) {
 function handleCli (cli: Meow, input: CrossbowInput|void, cb?) {
 
     cli = generateMeowInput(cli);
-    input = generateConfig(input);
 
     if (cli.flags.logLevel) {
         logger.setLevel(cli.flags.logLevel);
@@ -60,16 +59,15 @@ function handleCli (cli: Meow, input: CrossbowInput|void, cb?) {
         return console.log(cli.help);
     }
 
-    cb            = cb || defaultCallback;
-    cli.flags     = cli.flags || {};
-    var config    = require('./lib/config').merge(cli.flags);
+    cb           = cb || defaultCallback;
+    const config = require('./lib/config').merge(cli.flags);
 
     if (input) {
         return processInput(cli, generateConfig(input), cb);
     } else {
         var fromFile = <CrossbowInput[]>retrieveConfig(cli.flags, config);
         if (fromFile.length) {
-            return processInput(cli, fromFile[0], cb);
+            return processInput(cli, generateConfig(fromFile[0]), cb);
         } else {
             if (config.get('strict')) {
                 throw new Error('Config not provided. Either use a crossbow.js file in this directory, a `crossbow` property in your package.json, or use the --config flag' +

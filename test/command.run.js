@@ -56,19 +56,17 @@ describe('Gathering run task with return types', function () {
                 handoff: true
             }
         }, {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        "dev1": {
-                            input: "shane"
-                        },
-                        "dev2": {
-                            input: "shane"
-                        }
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    "dev1": {
+                        input: "shane"
                     },
-                    "test/fixtures/tasks/stream.js": {
-
+                    "dev2": {
+                        input: "shane"
                     }
+                },
+                "test/fixtures/tasks/stream.js": {
+
                 }
             }
         });
@@ -101,12 +99,10 @@ describe('Gathering run task with return types', function () {
                 handoff: true
             }
         }, {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        dev1: {},
-                        dev2: {}
-                    }
+            config: {
+                "test/fixtures/tasks/simple.js": {
+                    dev1: {},
+                    dev2: {}
                 }
             }
         });
