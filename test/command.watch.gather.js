@@ -4,20 +4,6 @@ var gather = require('../lib/gather-watch-tasks');
 const yml  = require('js-yaml');
 
 describe('Gathering watch tasks', function () {
-    it.only('can gather tasks in string format', function () {
-        var tasks = gather({
-           watch: {
-               before: ['js'],
-               tasks: {
-                   default: 'test/fixtures -> somefile.js'
-               }
-           }
-        });
-        assert.equal(tasks.default.watchers.length, 1);
-        assert.equal(tasks.default.watchers[0].patterns.length, 1);
-        assert.equal(tasks.default.watchers[0].patterns[0], 'test/fixtures');
-        assert.equal(tasks.default.watchers[0].tasks[0], 'somefile.js');
-    });
     it('can gather tasks in shorthand format', function () {
         var tasks = gather({
            watch: {

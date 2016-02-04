@@ -87,7 +87,7 @@ function handleCli (cli, input, cb) {
 
         if (cli.input[0] === 'watch') {
 
-            if (!input.crossbow.watch) {
+            if (!input.crossbow.watch && cli.input.length === 1) {
                 input.cb(new Error('Watch config not found'));
                 return;
             }
