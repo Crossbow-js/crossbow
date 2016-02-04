@@ -3,13 +3,11 @@ const watch  = require('../lib/command.watch');
 const cli    = require("../cli");
 
 describe('Gathering run tasks for grunt', function () {
-    it('can use grunt-adaptors to gather single Grunt tasks', function (done) {
+    it.only('can use grunt-adaptors to gather single Grunt tasks', function (done) {
         cli({
             input: ["run", "@grunt jshint"]
         }, {
-            crossbow: {
-                gruntfile: "examples/Gruntfile.js"
-            }
+            gruntfile: "examples/Gruntfile.js"
         }, function (err, out) {
             assert.equal(out.tasks.valid[0].taskName, 'jshint');
             assert.equal(out.tasks.valid[0].compat, 'grunt');

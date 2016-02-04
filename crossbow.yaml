@@ -2,9 +2,10 @@ watch:
   tasks:
     ts:
       before: ['compile']
-      'lib/*.ts': ['compile']
+      'lib/*.ts:cli.ts': ['compile']
 
 tasks:
   compile: >
-    @npm tsc lib/*.ts
+    @npm tsc
+    cli.ts lib/*.ts
     --module commonjs

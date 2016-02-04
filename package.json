@@ -7,7 +7,7 @@
     "test": "npm run lint && npm run unit",
     "unit": "mocha test",
     "lint": "eslint lib",
-    "ts": "node cli.js watch ts"
+    "ts": "tsc cli.ts lib/*.ts -w"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
