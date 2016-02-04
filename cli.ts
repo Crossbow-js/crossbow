@@ -23,11 +23,11 @@ interface CrossbowInput {
 }
 
 function generateMeowInput (incoming: Meow|any) : Meow {
-    return objectAssign({input: [], flags:{}, help: ''}, incoming);
+    return objectAssign({input: [], flags:{}, help: ''}, incoming || {});
 }
 
 function generateConfig (incoming: CrossbowInput|any) : CrossbowInput {
-    return objectAssign({tasks:{}, watch: {}, config:{}}, incoming);
+    return objectAssign({tasks:{}, watch: {}, config:{}}, incoming || {});
 }
 
 const cli = meow({
@@ -50,6 +50,7 @@ if (!module.parent) {
 function handleCli (cli: Meow, input: CrossbowInput|void, cb?) {
 
     cli = generateMeowInput(cli);
+    input = generateConfig(input);
 
     if (cli.flags.logLevel) {
         logger.setLevel(cli.flags.logLevel);

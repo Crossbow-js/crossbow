@@ -8,10 +8,10 @@ var retrieveConfig = require('./lib/utils').retrieveConfig;
 var Immutable = require('immutable');
 var objectAssign = require('object-assign');
 function generateMeowInput(incoming) {
-    return objectAssign({ input: [], flags: {}, help: '' }, incoming);
+    return objectAssign({ input: [], flags: {}, help: '' }, incoming || {});
 }
 function generateConfig(incoming) {
-    return objectAssign({ tasks: {}, watch: {}, config: {} }, incoming);
+    return objectAssign({ tasks: {}, watch: {}, config: {} }, incoming || {});
 }
 var cli = meow({
     help: [
@@ -30,6 +30,7 @@ if (!module.parent) {
  */
 function handleCli(cli, input, cb) {
     cli = generateMeowInput(cli);
+    input = generateConfig(input);
     if (cli.flags.logLevel) {
         logger.setLevel(cli.flags.logLevel);
     }

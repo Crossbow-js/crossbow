@@ -1,14 +1,15 @@
 /// <reference path="../typings/main.d.ts" />
-
 const isPlainObj = require('./utils').plainObj;
 const blacklist  = ['options', 'bs-config', 'before'];
 const merge      = require('lodash.merge');
 
-
 var watcherUID = 1;
 
-interface WatchOptions {
-    ignoreInitial: boolean
+import {WatchOptions} from "chokidar";
+
+interface CBWatchOptions extends WatchOptions {
+    throttle: number
+    block: boolean
 }
 
 interface WatchTask {
@@ -18,8 +19,10 @@ interface WatchTask {
     watcherUID: any
 }
 
-const defaultWatchOptions = {
-    ignoreInitial: true
+const defaultWatchOptions = <CBWatchOptions>{
+    ignoreInitial: true,
+    block: true,
+    throttle: 0
 };
 
 /**
@@ -42,6 +45,7 @@ function createOne (item, itemOptions, globalOptions) : WatchTask {
                 watcherUID: watcherUID++
             };
         }
+
         // todo: Add error handling for incorrect formats ie: user error
     }
     return item;
@@ -143,7 +147,7 @@ function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
  */
 interface WatchTaskParent {
     before: string[]
-    options: WatchOptions
+    options: CBWatchOptions
     watchers: WatchTask[]
 }
 
@@ -159,7 +163,7 @@ module.exports = function getWatchTasks (input)  {
 
     const watch      = input.watch;
     const tasks      = watch.tasks || {};
-    const globalOpts = watch.options || {};
+    const globalOpts = <CBWatchOptions>watch.options || {};
 
     return Object.keys(tasks)
         .reduce((all, key) => {

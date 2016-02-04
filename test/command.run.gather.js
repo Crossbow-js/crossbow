@@ -18,10 +18,8 @@ function handoff (cmd, input, cb) {
 describe('Gathering run tasks', function () {
     it('Accepts single string', function (done) {
     	var runner = handoff(['list'], {
-            crossbow: {
-                tasks: {
-                    list: '@npm ls'
-                }
+            tasks: {
+                list: '@npm ls'
             }
         });
 
@@ -75,13 +73,11 @@ describe('Gathering run tasks', function () {
     });
     it('can combine files to form sequence', function (done) {
         cli({
-            input: ["run", "test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
+            input: ['run', 'test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
         }, {
-            crossbow: {
-                config: {
-                    "test/fixtures/tasks/simple.js": {
-                        "name": "shane"
-                    }
+            config: {
+                'test/fixtures/tasks/simple.js': {
+                    'name': 'shane'
                 }
             }
         }, function (err, output) {
@@ -95,11 +91,9 @@ describe('Gathering run tasks', function () {
         cli({
             input: ["run", "js", "test/fixtures/tasks/stream.js"]
         }, {
-            crossbow: {
-                tasks: {
-                    js: ["dummy"],
-                    dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
-                }
+            tasks: {
+                js: ["dummy"],
+                dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
             }
         }, function (err, output) {
             assert.equal(output.sequence[0].seq.taskItems.length, 1);
@@ -110,7 +104,7 @@ describe('Gathering run tasks', function () {
             done();
         });
     });
-    it('can gather from external config file', function (done) {
+    it.only('can gather from external config file', function (done) {
         cli({
             input: ["run", "js"],
             flags: {config: "examples/crossbow.js"}
