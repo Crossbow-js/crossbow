@@ -1,7 +1,7 @@
 watch:
     tasks:
         default:
-            "test/fixtures": ["test/fixtures/tasks/error", "bs:reload"]
+            "test/fixtures": ["test/fixtures/tasks/error"]
         dev:
             "test/fixtures/**/*.scss": ["css", "bs:reload:{sass.output}"]
             "test/fixtures/asses/**/*.css": ["bs:reload"]
