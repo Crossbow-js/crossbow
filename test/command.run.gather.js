@@ -20,7 +20,7 @@ describe('Gathering run tasks', function () {
     	var runner = handoff(['list'], {
             crossbow: {
                 tasks: {
-                    list: '$npm ls'
+                    list: '@npm ls'
                 }
             }
         });

@@ -5,7 +5,7 @@ describe('using flags', function () {
     it('can set runMode -> parallel with -p flag', function (done) {
 
         var runner = cli({
-            input: ['run', '$npm ls'],
+            input: ['run', '@npm ls'],
             flags: {
                 handoff: true,
                 p: true

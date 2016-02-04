@@ -30,7 +30,7 @@ describe('Gathering watch tasks', function () {
                },
                tasks: {
                    default: {
-                       before: ['$npm webpack'],
+                       before: ['@npm webpack'],
                        watchers: [
                            {
                                patterns: ["*.css"],
@@ -107,7 +107,7 @@ watch:
                before: ['js'],
                tasks: {
                    dev: {
-                       before: ['js', '$npm watchify'],
+                       before: ['js', '@npm watchify'],
                        watchers: {
                             "*.js:*.html": "bs.reload('')"
                        }

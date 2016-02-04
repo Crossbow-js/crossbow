@@ -8,7 +8,7 @@ module.exports.tasks = [
                 setTimeout(function () {
                     obs.log.info('Stream task 1');
                     cb();
-                }, 50)
+                }, 5)
             }));
     },
     function (obs) {
@@ -17,7 +17,7 @@ module.exports.tasks = [
                 setTimeout(function () {
                     obs.log.info('Stream task 2');
                     cb();
-                }, 50)
+                }, 5)
             }));
     }
 ];
