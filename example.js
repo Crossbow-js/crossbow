@@ -30,7 +30,7 @@ const cli = require('./');
 //});
 
 const runner = cli({
-    input: ['watch', 'dev'],
+    input: ['run', 'js'],
     flags: {
         handoff: true
     }

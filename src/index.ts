@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /// <reference path="../typings/main.d.ts" />
 import runner = require("./command.run");
-import config = require("./config");
+import {CrossbowConfiguration, merge} from './config';
+import run from './command.run';
+import {Map} from 'immutable';
 const meow    = require('meow');
 const assign  = require('object-assign');
 
-interface Meow {
+export interface Meow {
     input: string[]
     flags: any
     help: string
@@ -15,11 +17,15 @@ function generateMeowInput (incoming: Meow|any) : Meow {
     return assign({input: [], flags:{}}, incoming || {});
 }
 
-interface CrossbowInput {
+export interface CrossbowInput {
     tasks?: any
     watch?: any
     config?: any
     gruntfile?: string
+}
+
+function generateInput (incoming: CrossbowInput|any) : CrossbowInput {
+    return assign({tasks:{}, watch: {}, config:{}}, incoming || {});
 }
 
 const availableCommands = ['watch', 'run'];
@@ -32,19 +38,27 @@ if (!module.parent) {
 
 function handleIncoming (cli: Meow, input: CrossbowInput | void) {
     cli = generateMeowInput(cli);
-    const mergedConfig = config.merge(cli.flags);
+    const mergedConfig = merge(cli.flags);
 
     if (availableCommands.indexOf(cli.input[0]) === -1) {
         return console.log(cli.help);
     }
 
     if (input) {
-
+        processInput(cli, generateInput(input), mergedConfig);
     }
 }
 
-function processInput(cli: Meow, input: CrossbowInput) {
+function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
+    if (cli.input[0] === 'run') {
+        if (cli.input.length === 1) {
+            console.log('You didn\'t provide a command for Crossbow to run');
+            return;
+        }
+
+        return run(cli, input, config);
+    }
 }
 
 export default handleIncoming;

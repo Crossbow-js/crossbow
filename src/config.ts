@@ -1,17 +1,18 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
-import {Map, List, fromJS, Iterable} from 'immutable';
+const assign  = require('object-assign');
 
-interface CrossbowConfiguration {
-    logLevel?: string
-    cwd?: string
-    runMode?: string
-    resumeOnError?: boolean
-    exitOnError?: boolean
-    summary?: string
-    strict?: boolean
-    stack?: boolean
-    reporter?: string
+export interface CrossbowConfiguration {
+    logLevel: string
+    cwd: string
+    runMode: string
+    resumeOnError: boolean
+    exitOnError: boolean
+    summary: string
+    strict: boolean
+    stack: boolean
+    reporter: string
 }
+
 /**
  * @type {{cwd: *, runMode: string, resumeOnError: boolean, summary: string, strict: boolean}}
  */
@@ -66,21 +67,21 @@ const flagTransforms = {
      * @returns {Immutable.Map}
      */
     p: (opts) => {
-        return opts.update('runMode', () => 'parallel');
+        return assign({}, opts, {runMode: 'parallel'});
     },
     /**
      * @param {Immutable.Map} opts
      * @returns {Immutable.Map}
      */
     s: (opts) => {
-        return opts.update('strict', () => true);
+        return assign({}, opts, {strict: true});
     },
     /**
      * @param {Immutable.Map} opts
      * @returns {Immutable.Map}
      */
     e: (opts) => {
-        return opts.update('exitOnError', () => true);
+        return assign({}, opts, {exitOnError: true});
     }
 };
 
@@ -89,13 +90,13 @@ const flagTransforms = {
  * Also deal with single char flag
  * @returns {*}
  */
-export function merge (opts: CrossbowConfiguration) {
+export function merge (opts: CrossbowConfiguration|any) : CrossbowConfiguration {
 
-    const newOpts = fromJS(defaults).mergeDeep(opts);
+    const newOpts = assign({}, defaults, opts);
 
     return Object.keys(flagTransforms)
         .reduce(function (opts, x) {
-            if (opts.has(x)) {
+            if (typeof opts[x] !== undefined) {
                 return flagTransforms[x].call(null, opts);
             }
             return opts;
