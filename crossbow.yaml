@@ -2,10 +2,11 @@ watch:
   tasks:
     ts:
       before: ['compile']
-      'lib/*.ts:cli.ts': ['compile']
+      'src': ['compile']
 
 tasks:
   compile: >
     @npm tsc
-    cli.ts lib/*.ts
+    src/**
     --module commonjs
+    --outDir dist

@@ -2,7 +2,7 @@
   "name": "crossbow-cli",
   "version": "2.3.0",
   "description": "",
-  "main": "cli.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "npm run lint && npm run unit",
     "unit": "mocha test",
