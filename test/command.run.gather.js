@@ -1,6 +1,5 @@
-var assert = require('chai').assert;
-var watch = require('../lib/command.watch');
-var cli = require("../cli");
+const assert = require('chai').assert;
+const cli = require("../");
 
 function testCase (command, input, cb) {
     cli({input: command}, input, cb);
@@ -16,18 +15,18 @@ function handoff (cmd, input, cb) {
 }
 
 describe('Gathering run tasks', function () {
-    it('Accepts single string', function (done) {
+    it.only('Accepts single string', function () {
+
     	var runner = handoff(['list'], {
             tasks: {
-                list: '@npm ls'
+                list: 'test/fixtures/tasks/observable.js'
             }
         });
 
-        assert.equal(runner.sequence[0].seq.taskItems.length, 1);
-        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'ls');
-        assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
-
-        done();
+        console.log(runner);
+        //assert.equal(runner.sequence[0].seq.taskItems.length, 1);
+        //assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'ls');
+        //assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
     });
     it('can handoff through --handoff with tasks that have multi steps', function (done) {
     	var runner = handoff(["test/fixtures/tasks/stream.js"]);

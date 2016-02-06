@@ -18,9 +18,9 @@ function generateMeowInput (incoming: Meow|any) : Meow {
 }
 
 export interface CrossbowInput {
-    tasks?: any
-    watch?: any
-    config?: any
+    tasks: any
+    watch: any
+    config: any
     gruntfile?: string
 }
 
@@ -36,7 +36,7 @@ if (!module.parent) {
     console.log(cli);
 }
 
-function handleIncoming (cli: Meow, input: CrossbowInput | void) {
+function handleIncoming (cli: Meow, input: CrossbowInput | any) {
     cli = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
 

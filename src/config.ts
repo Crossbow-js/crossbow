@@ -11,6 +11,7 @@ export interface CrossbowConfiguration {
     strict: boolean
     stack: boolean
     reporter: string
+    handoff: boolean
 }
 
 /**
@@ -51,7 +52,12 @@ const defaults = <CrossbowConfiguration>{
     /**
      * How should task summaries be output
      */
-    reporter: 'default'
+    reporter: 'default',
+    /**
+     * should the resolved workload be handed off
+     * to the caller?
+     */
+    handoff: false
 };
 
 /**
