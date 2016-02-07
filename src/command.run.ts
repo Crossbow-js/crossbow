@@ -1,5 +1,6 @@
 /// <reference path="../typings/main.d.ts" />
 const debug = require('debug')('cb:command.run');
+
 const Rx    = require('rx');
 
 import {Meow, CrossbowInput} from "./index";

@@ -2,7 +2,7 @@ watch:
   tasks:
     ts:
       before: ['compile']
-      'src': ['compile']
+      'src': ['test.js', 'compile']
 
 tasks:
   compile: >

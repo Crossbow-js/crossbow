@@ -1,9 +1,9 @@
 const spawn  = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
 const utils = require('./../utils');
-const debug = require('debug')('compat.npm');
-var sh = 'sh';
-var shFlag = '-c';
+const debug = require('debug')('cb:npm');
+var sh      = 'sh';
+var shFlag  = '-c';
 
 if (process.platform === 'win32') {
     sh = process.env.comspec || 'cmd';

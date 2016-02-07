@@ -1,8 +1,8 @@
 const merge   = require('lodash.merge');
 
-import {gatherTaskErrors} from "./task.errors";
+import {TaskError, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
-import {TaskError} from "./task.errors";
+import adaptors from "./adaptor.defaults";
 
 import {RunCommandTrigger} from "./command.run";
 
@@ -37,6 +37,16 @@ function createTask(obj: any) : Task {
     return merge({}, defaultTask, obj);
 }
 
+function createAdaptorTask (taskName, parent) {
+    /**
+     * Get a valid adaptors adaptor name
+     * @type {string|undefined}
+     */
+    const validAdaptorName = adaptorKeys.filter(x => {
+        return taskName.match(new RegExp('^@' + x));
+    })[0];
+}
+
 export interface Tasks {
     valid: Task[]
     invalid: Task[]
@@ -47,6 +57,17 @@ export interface TaskRunner {
 };
 
 function createFlattenedTask (taskName:string, parent:string, trigger:RunCommandTrigger): Task {
+
+    /**
+     * Never modify the current task if it begins
+     * with a `$` - instead just return early with
+     * a adaptors task
+     *  eg: `$npm webpack`
+     */
+    if (taskName.match(/^@/)) {
+        return createAdaptorTask(taskName, parent);
+    }
+
     /**
      * Split the incoming taskname on colons
      *  eg: sass:site:dev
