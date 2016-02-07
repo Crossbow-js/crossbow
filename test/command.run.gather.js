@@ -15,135 +15,97 @@ function handoff (cmd, input, cb) {
 }
 
 describe('Gathering run tasks', function () {
-    it.only('Accepts single string', function () {
-    	var runner = handoff(['list'], {
+    it('Accepts single string for adaptor task', function () {
+    	var runner = handoff(['@npm ls'], {});
+
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
+        assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
+        assert.equal(runner.tasks.valid[0].command, 'ls');
+    });
+    it('Accepts single string for on-disk file', function () {
+    	var runner = handoff(['test/fixtures/tasks/observable.js'], {});
+        assert.equal(runner.sequence[0].sequenceTasks.length, 2); // 2 exported functions
+    });
+    it('Accepts single string for nested tasks', function () {
+    	var runner = handoff(['js'], {
             tasks: {
-                list: 'test/fixtures/tasks/observable.js'
+                js: 'test/fixtures/tasks/simple.js'
             }
         });
-
-        //console.log(runner);
-        //assert.equal(runner.sequence[0].seq.taskItems.length, 1);
-        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
-        //assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 2 exported functions
     });
-    it('can handoff through --handoff with tasks that have multi steps', function (done) {
-    	var runner = handoff(["test/fixtures/tasks/stream.js"]);
-        runner.run.subscribe(function () {}, function (err) {
-        	console.log(err);
-        }, function () {
-            assert.equal(runner.sequence[0].seq.taskItems.length, 2);
-            assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].startTime);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].endTime);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].duration);
-            assert.isTrue(runner.sequence[0].seq.taskItems[0].duration > 0);
-        	done();
-        });
-    });
-    it('can handoff through --handoff', function (done) {
-    	var runner = handoff(["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"], {
-            crossbow: {}
-        });
-        runner.run.subscribe(function () {}, function (err) {
-        	console.log(err);
-        }, function () {
-
-            assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].startTime);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].endTime);
-            assert.isNumber(runner.sequence[0].seq.taskItems[0].duration);
-            assert.isTrue(runner.sequence[1].seq.taskItems[0].completed);
-            assert.isNumber(runner.sequence[1].seq.taskItems[0].startTime);
-            assert.isNumber(runner.sequence[1].seq.taskItems[0].endTime);
-            assert.isNumber(runner.sequence[1].seq.taskItems[0].duration);
-        	done();
-        });
-        assert.equal(runner.tasks.valid.length, 2);
-    });
-    it('can handle error after handing off', function () {
-        var runner = handoff(["test/fixtures/tasks/simplse.js"]);
-        assert.equal(runner.tasks.invalid.length, 1);
-    });
-    it('can combine files to form sequence', function (done) {
-        cli({
-            input: ['run', 'test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
-        }, {
-            config: {
-                'test/fixtures/tasks/simple.js': {
-                    'name': 'shane'
-                }
+    it('Accepts single string for multi nested tasks on disk', function () {
+    	var runner = handoff(['js'], {
+            tasks: {
+                js: 'js2',
+                js2: 'js3',
+                js3: 'js4',
+                js4: 'test/fixtures/tasks/simple.js'
             }
-        }, function (err, output) {
-            assert.equal(output.sequence.length, 2);
-            assert.equal(output.sequence[0].seq.taskItems.length, 1);
-            assert.equal(output.sequence[0].opts.name, "shane");
-            done();
         });
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 1 exported functions
+        assert.equal(runner.sequence[0].task.taskName, 'test/fixtures/tasks/simple.js');
+        assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2', 'js3', 'js4']);
     });
-    it('can combine files to form sequence from alias', function (done) {
-        cli({
-            input: ["run", "js", "test/fixtures/tasks/stream.js"]
-        }, {
+    it('Accepts single string for multi nested adaptor tasks', function () {
+    	var runner = handoff(['js'], {
+            tasks: {
+                js: 'js2',
+                js2: '@npm tsc src/*.ts --module commonjs --outDir dist'
+            }
+        });
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 1 exported functions
+        assert.equal(runner.sequence[0].task.taskName, '@npm tsc src/*.ts --module commonjs --outDir dist');
+        assert.equal(runner.sequence[0].task.adaptor, 'npm');
+        assert.equal(runner.sequence[0].task.rawInput, '@npm tsc src/*.ts --module commonjs --outDir dist');
+        assert.equal(runner.sequence[0].task.command, 'tsc src/*.ts --module commonjs --outDir dist');
+        assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2']);
+    });
+    it('can combine files to form sequence', function () {
+        const runner = handoff(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']);
+        assert.equal(runner.sequence.length, 2);
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
+        assert.equal(runner.sequence[1].sequenceTasks.length, 1);
+    });
+    it('can combine files to form sequence from alias', function () {
+        const runner = handoff(["js", "test/fixtures/tasks/stream.js"],{
             tasks: {
                 js: ["dummy"],
                 dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
             }
-        }, function (err, output) {
-            assert.equal(output.sequence[0].seq.taskItems.length, 1);
-            assert.equal(output.sequence[0].seq.taskItems[0].FUNCTION.name, 'simple');
-            assert.equal(output.sequence[1].seq.taskItems.length, 1);
-            assert.equal(output.sequence[1].seq.taskItems[0].FUNCTION.name, 'simple2');
-            assert.equal(output.sequence[2].seq.taskItems.length, 2);
-            done();
         });
+
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
+        assert.equal(runner.sequence[0].sequenceTasks[0].FUNCTION.name, 'simple');
+        assert.equal(runner.sequence[1].sequenceTasks.length, 1);
+        assert.equal(runner.sequence[1].sequenceTasks[0].FUNCTION.name, 'simple2');
+        assert.equal(runner.sequence[2].sequenceTasks.length, 2);
     });
-    it('can gather from external config file', function (done) {
-        cli({
+    it('can gather from external config file', function () {
+        const runner = cli({
             input: ["run", "js"],
-            flags: {config: "examples/crossbow.js"}
-        }, null, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-            assert.equal(output.tasks.valid.length, 1);
-            assert.equal(output.tasks.valid[0].subTasks.length, 0);
-            done();
-        })
+            flags: {config: "examples/crossbow.js", handoff: true}
+        });
+
+        assert.equal(runner.tasks.valid.length, 1);
+        assert.equal(runner.tasks.valid[0].taskName, 'js');
+        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
+        assert.deepEqual(runner.sequence[0].task.parents, ['js']);
     });
-    it('can gather from external config file via flag', function (done) {
-        cli({
-            input: ["run", "my-awesome-task"],
-            flags: {
-                config: 'examples/crossbow-alt.js'
-            }
-        }, null, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-            assert.equal(output.tasks.valid.length, 1);
-            assert.equal(output.tasks.valid[0].subTasks.length, 0);
-            assert.equal(output.tasks.valid[0].tasks.length, 2);
-            assert.equal(output.tasks.valid[0].tasks[0].tasks.length, 0);
-            assert.equal(output.tasks.valid[0].tasks[1].tasks.length, 0);
-            done();
-        })
-    });
-    it('can gather from default yaml file', function (done) {
-        cli({
+    it('can gather from a default yaml file', function () {
+        const runner = cli({
             input: ["run", "js"],
             flags: {
-                config: 'examples/crossbow.yaml'
+                config: 'examples/crossbow.yaml',
+                handoff: true
             }
-        }, null, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-            assert.equal(output.tasks.valid.length, 1);
-            done();
-        })
+        });
+        assert.equal(runner.tasks.valid.length, 1);
     });
-    it('can gather simple tasks', function () {
+
+    // TODO Continue refactoring tests for new ts implementation
+    it.only('can gather simple tasks', function () {
         const runner = cli({
             input: ['run', 'test/fixtures/tasks/simple.js:dev'],
             flags: {
@@ -292,7 +254,7 @@ describe('Gathering run tasks', function () {
             done();
         })
     });
-    it('can process config options ith {} replacements', function (done) {
+    it('can process config options with {} replacements', function (done) {
         testCase(["run", "css"], {
             tasks: {
                 "css": ['test/fixtures/tasks/simple.js:default', 'test/fixtures/tasks/simple.js:dev']

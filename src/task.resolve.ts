@@ -13,12 +13,12 @@ export interface Task {
     modules: string[]
     tasks: Task[]
     rawInput: string
-    parent: string
+    parents: string[]
     errors: TaskError[]
 }
 
 export interface AdaptorTask extends Task {
-    adaptor: string|void
+    adaptor: string
     command: string
 }
 
@@ -29,7 +29,7 @@ const defaultTask = <Task>{
     subTasks: [],
     modules: [],
     tasks: [],
-    parent: '',
+    parents: [],
     errors: []
 };
 
@@ -42,7 +42,7 @@ function createTask(obj: any) : Task {
     return merge({}, defaultTask, obj);
 }
 
-function createAdaptorTask (taskName, parent) : Task {
+function createAdaptorTask (taskName, parents) : Task {
     /**
      * Get a valid adaptors adaptor name
      * @type {string|undefined}
@@ -81,7 +81,7 @@ function createAdaptorTask (taskName, parent) : Task {
         modules: [],
         tasks: [],
         rawInput: taskName,
-        parent: parent,
+        parents: parents,
         errors: [],
         command: commandInput
     };
@@ -92,11 +92,7 @@ export interface Tasks {
     invalid: Task[]
 }
 
-export interface TaskRunner {
-
-}
-
-function createFlattenedTask (taskName:string, parent:string, trigger:RunCommandTrigger): Task {
+function createFlattenedTask (taskName:string, parents:string[], trigger:RunCommandTrigger): Task {
 
     /**
      * Never modify the current task if it begins
@@ -105,7 +101,7 @@ function createFlattenedTask (taskName:string, parent:string, trigger:RunCommand
      *  eg: `$npm webpack`
      */
     if (taskName.match(/^@/)) {
-        return createAdaptorTask(taskName, parent);
+        return createAdaptorTask(taskName, parents);
     }
 
     /**
@@ -139,7 +135,7 @@ function createFlattenedTask (taskName:string, parent:string, trigger:RunCommand
      * Next resolve any child tasks, this is the core of how the recursive
      * alias's work
      */
-    const childTasks     = resolveChildTasks([], trigger.input.tasks, baseTaskName, parent, trigger);
+    const childTasks     = resolveChildTasks([], trigger.input.tasks, baseTaskName, parents, trigger);
     const subTaskItems   = splitTask.slice(1);
 
     const errors         = gatherTaskErrors(
@@ -157,12 +153,12 @@ function createFlattenedTask (taskName:string, parent:string, trigger:RunCommand
         modules:  locatedModules,
         tasks:    childTasks,
         valid:    errors.length === 0,
-        parent:   parent,
+        parents:  parents,
         errors:   errors
     });
 }
 
-function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskName: string, parent: string, trigger: RunCommandTrigger): Task[] {
+function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {
     /**
      * If current task object we're looking at does not contain
      * the current taskName, just return the initialTasks array (could be empty)
@@ -175,8 +171,8 @@ function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskNa
      * Ensure we're not looking at a previously resolved item to avoid
      * an infinite loop
      */
-    if (parent.indexOf(taskName) > -1) {
-        throw new ReferenceError(`Infinite loop detected from task: \`${taskName}\` Parent Tasks: ${parent}`);
+    if (parents.indexOf(taskName) > -1) {
+        throw new ReferenceError(`Infinite loop detected from task: \`${taskName}\` Parent Tasks: ${parents.join(', ')}`);
     }
 
     /**
@@ -192,8 +188,8 @@ function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskNa
      * resolved recursively
      */
     return subject.map(item => {
-        const flat = createFlattenedTask(item, parent + ' ' + taskName, trigger);
-        flat.tasks = resolveChildTasks(flat.tasks, currentTasksObject, item, parent + ' ' + taskName, trigger);
+        const flat = createFlattenedTask(item, parents.concat(taskName), trigger);
+        flat.tasks = resolveChildTasks(flat.tasks, currentTasksObject, item, parents.concat(taskName), trigger);
         return flat;
     });
 }
@@ -257,8 +253,8 @@ function validateTask (task:AdaptorTask, trigger:RunCommandTrigger):boolean {
     }
 }
 
-export function gatherTasks (taskNames:string[], trigger:RunCommandTrigger): Tasks {
-    const taskList = taskNames.map(taskName => createFlattenedTask(taskName, '', trigger));
+export function resolveTasks (taskNames:string[], trigger:RunCommandTrigger): Tasks {
+    const taskList = taskNames.map(taskName => createFlattenedTask(taskName, [], trigger));
     /**
      * Return both valid & invalid tasks. We want to let consumers
      * handle errors/successes
@@ -270,10 +266,4 @@ export function gatherTasks (taskNames:string[], trigger:RunCommandTrigger): Tas
     };
 
     return output;
-}
-
-export function createTaskRunner (taskNames:string[], trigger:RunCommandTrigger): TaskRunner {
-    const tasks = gatherTasks(taskNames, trigger);
-
-    return {tasks};
 }

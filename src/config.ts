@@ -12,6 +12,7 @@ export interface CrossbowConfiguration {
     stack: boolean
     reporter: string
     handoff: boolean
+    config: string|void
 }
 
 /**
@@ -69,25 +70,27 @@ const defaults = <CrossbowConfiguration>{
 const flagTransforms = {
     /**
      * -p changes 'runMode' from series to parallel
-     * @param {Immutable.Map} opts
-     * @returns {Immutable.Map}
      */
     p: (opts) => {
         return assign({}, opts, {runMode: 'parallel'});
     },
     /**
-     * @param {Immutable.Map} opts
-     * @returns {Immutable.Map}
+     * -s sets Strict Mode
      */
     s: (opts) => {
         return assign({}, opts, {strict: true});
     },
     /**
-     * @param {Immutable.Map} opts
-     * @returns {Immutable.Map}
+     * -e sets exitOnError => true
      */
     e: (opts) => {
         return assign({}, opts, {exitOnError: true});
+    },
+    /**
+     * -c specifies a config file
+     */
+    c: (opts) => {
+        return assign({}, opts, {config: opts.c});
     }
 };
 
@@ -102,9 +105,9 @@ export function merge (opts: CrossbowConfiguration|any) : CrossbowConfiguration 
 
     return Object.keys(flagTransforms)
         .reduce(function (opts, x) {
-            if (typeof opts[x] !== undefined) {
+            if (opts[x] !== undefined) {
                 return flagTransforms[x].call(null, opts);
             }
             return opts;
-    }, newOpts);
+        }, newOpts);
 }

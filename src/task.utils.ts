@@ -1,5 +1,8 @@
-import {resolve} from 'path';
-import {existsSync} from 'fs';
+import {resolve, extname, basename} from 'path';
+import {existsSync, readFileSync} from 'fs';
+import {CrossbowConfiguration} from "./config";
+
+const yml = require('js-yaml');
 
 const objPath  = require('object-path');
 
@@ -51,3 +54,69 @@ function replaceOne(item, root) {
         return match;
     });
 }
+
+/**
+ * Try to auto-load configuration
+ * @param flags
+ * @param config
+ * @returns {*}
+ */
+export function retrieveExternalInputFiles (config: CrossbowConfiguration): any[] {
+
+    const validExts = ['.js', '.json', '.yaml', '.yml'];
+    const maybes    = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
+    const cwd       = config.cwd;
+
+    /**
+     * Was the --config flag given? if so, use the that
+     * value to lookup a configuration file
+     */
+    if (config.config) {
+        return filterFiles([config.config]).map(importConfig);
+    } else {
+        return getFiles(filterFiles(maybes));
+    }
+
+    function importConfig(filepath: string): any {
+        var ext = extname(filepath);
+        if (validExts.indexOf(ext) > -1) {
+            if (ext.match(/ya?ml$/)) {
+                return yml.safeLoad(readFileSync(filepath));
+            }
+            return require(filepath);
+        }
+        return {};
+    }
+
+    /**
+     * Get a file
+     * @param input
+     * @returns {*}
+     */
+    function getFiles(input: string[]) : string[] {
+        var out = []
+            .concat(input)
+            .map(x => {
+                if (basename(x) === 'crossbow.js') {
+                    return require(x);
+                } else if (x.match(/yml|yaml$/)) {
+                    return yml.safeLoad(readFileSync(x));
+                } else {
+                    var mod = require(x);
+                    if (mod.crossbow) {
+                        return mod.crossbow;
+                    }
+                }
+                return false;
+            })
+            .filter(x => x);
+
+        return out;
+    }
+
+    function filterFiles(input: string[]|any[]): string[] {
+        return input
+            .map(x => resolve(cwd, x))
+            .filter(existsSync);
+    }
+};

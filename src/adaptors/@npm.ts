@@ -6,6 +6,7 @@ const spawn        = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
 const debug        = require('debug')('cb:npm');
 const assign       = require('object-assign');
+
 import {transformStrings} from '../task.utils';
 import {join} from "path";
 

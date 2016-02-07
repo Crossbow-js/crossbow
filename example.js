@@ -32,7 +32,8 @@ const cli = require('./');
 const runner = cli({
     input: ['run', '@npm ls', 'js'],
     flags: {
-        handoff: true
+        handoff: true,
+        c: 'examples/crossbpw.yaml'
     }
 }, {
     tasks: {

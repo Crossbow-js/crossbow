@@ -21,7 +21,7 @@ tasks:
     observable: ['test/fixtures/tasks/observable.js']
     compat-all: ['grunt', 'myscript', 'es6']
     grunt:      ['@grunt jshint:dev']
-    myscript:   ['@shell ls -a']
+    myscript:   ['@npm ls -a']
     es6:        ['@npm es6']
 
 config:
