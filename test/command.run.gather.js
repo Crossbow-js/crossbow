@@ -16,16 +16,15 @@ function handoff (cmd, input, cb) {
 
 describe('Gathering run tasks', function () {
     it.only('Accepts single string', function () {
-
     	var runner = handoff(['list'], {
             tasks: {
                 list: 'test/fixtures/tasks/observable.js'
             }
         });
 
-        console.log(runner);
+        //console.log(runner);
         //assert.equal(runner.sequence[0].seq.taskItems.length, 1);
-        //assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'ls');
+        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
         //assert.equal(runner.tasks.valid[0].tasks[0].compat, 'npm');
     });
     it('can handoff through --handoff with tasks that have multi steps', function (done) {

@@ -8,7 +8,6 @@ import {RunCommandTrigger} from "./command.run";
 
 export interface Task {
     valid: boolean
-    adaptor: string|void
     taskName: string|void
     subTasks: string[]
     modules: string[]
@@ -19,12 +18,13 @@ export interface Task {
 }
 
 export interface AdaptorTask extends Task {
+    adaptor: string|void
     command: string
 }
 
 const defaultTask = <Task>{
     valid: false,
-    adaptor: undefined,
+    rawInput: '',
     taskName: undefined,
     subTasks: [],
     modules: [],
@@ -150,15 +150,15 @@ function createFlattenedTask (taskName:string, parent:string, trigger:RunCommand
         trigger.input
     );
 
-    return createTask({
+    return createTask(<Task>{
         rawInput: taskName,
         taskName: baseTaskName,
         subTasks: subTaskItems,
-        modules: locatedModules,
-        tasks: childTasks,
-        valid: errors.length === 0,
-        parent: parent,
-        errors: errors
+        modules:  locatedModules,
+        tasks:    childTasks,
+        valid:    errors.length === 0,
+        parent:   parent,
+        errors:   errors
     });
 }
 
@@ -202,7 +202,8 @@ function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskNa
  * A task is valid if every child eventually resolves to
  * having a module or has a adaptors helper
  */
-function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
+function validateTask (task:Task, trigger:RunCommandTrigger):boolean;
+function validateTask (task:AdaptorTask, trigger:RunCommandTrigger):boolean {
     /**
      * Return early if a task has previously
      * been marked as invalid
