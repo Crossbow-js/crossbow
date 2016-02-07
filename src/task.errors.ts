@@ -9,6 +9,8 @@ export interface SubtaskNotInConfigError extends TaskError { type: 'SUBTASKS_NOT
 export interface SubtaskNotProvidedError extends TaskError { type: 'SUBTASK_NOT_PROVIDED',   name: string }
 export interface SubtaskNotFoundError    extends TaskError { type: 'SUBTASK_NOT_FOUND',      name: string }
 
+export interface AdaptorNotFoundError    extends TaskError { type: 'ADAPTOR_NOT_FOUND',      taskName: string }
+
 export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, baseTaskName, input): TaskError[] {
     /**
      * If a module was not located, and there are 0 child tasks,

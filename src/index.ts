@@ -4,6 +4,9 @@ import runner = require("./command.run");
 import {CrossbowConfiguration, merge} from './config';
 import run from './command.run';
 import {Map} from 'immutable';
+import {TaskRunner} from "./task.resolve";
+import {Task} from "./task.resolve";
+
 const meow    = require('meow');
 const assign  = require('object-assign');
 
@@ -36,20 +39,21 @@ if (!module.parent) {
     console.log(cli);
 }
 
-function handleIncoming (cli: Meow, input: CrossbowInput | any) {
+function handleIncoming (cli: Meow, input: CrossbowInput | any): TaskRunner | void {
     cli = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
 
     if (availableCommands.indexOf(cli.input[0]) === -1) {
-        return console.log(cli.help);
+        console.log(cli.help);
+        return;
     }
 
     if (input) {
-        processInput(cli, generateInput(input), mergedConfig);
+        return processInput(cli, generateInput(input), mergedConfig);
     }
 }
 
-function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : TaskRunner {
 
     if (cli.input[0] === 'run') {
         if (cli.input.length === 1) {

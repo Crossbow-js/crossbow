@@ -5,7 +5,7 @@ const Rx    = require('rx');
 
 import {Meow, CrossbowInput} from "./index";
 import {CrossbowConfiguration} from "./config";
-import {createTaskRunner, TaskRunner} from "./tasks.resolve";
+import {createTaskRunner, TaskRunner} from "./task.resolve";
 
 export interface CommandTrigger {
     type: string
@@ -31,5 +31,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         debug(`Handing off runner`);
         return runner;
     }
+
+    return runner;
 }
 

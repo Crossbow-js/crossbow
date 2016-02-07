@@ -1,25 +1,30 @@
 const merge   = require('lodash.merge');
 
-import {TaskError, gatherTaskErrors} from "./task.errors";
+import {AdaptorNotFoundError, TaskError, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
-import adaptors from "./adaptor.defaults";
+import * as adaptors from "./adaptors";
 
 import {RunCommandTrigger} from "./command.run";
 
 export interface Task {
-    valid: boolean,
-    compat: string|void,
-    taskName: string|void,
-    subTasks: string[],
-    modules: string[],
-    tasks: Task[],
-    parent: string,
+    valid: boolean
+    adaptor: string|void
+    taskName: string|void
+    subTasks: string[]
+    modules: string[]
+    tasks: Task[]
+    rawInput: string
+    parent: string
     errors: TaskError[]
+}
+
+export interface AdaptorTask extends Task {
+    command: string
 }
 
 const defaultTask = <Task>{
     valid: false,
-    compat: undefined,
+    adaptor: undefined,
     taskName: undefined,
     subTasks: [],
     modules: [],
@@ -37,14 +42,49 @@ function createTask(obj: any) : Task {
     return merge({}, defaultTask, obj);
 }
 
-function createAdaptorTask (taskName, parent) {
+function createAdaptorTask (taskName, parent) : Task {
     /**
      * Get a valid adaptors adaptor name
      * @type {string|undefined}
      */
-    const validAdaptorName = adaptorKeys.filter(x => {
+    const validAdaptorName = Object.keys(adaptors).filter(x => {
         return taskName.match(new RegExp('^@' + x));
     })[0];
+
+    /**
+     * If it was not valid, return a simple
+     * task that will be invalid
+     */
+    if (!validAdaptorName) {
+        return createTask({
+            taskName: taskName,
+            errors: [<AdaptorNotFoundError>{
+                type: 'ADAPTOR_NOT_FOUND',
+                taskName: taskName
+            }]
+        });
+    }
+
+    /**
+     * Strip the first part of the task name.
+     *  eg: `$npm eslint`
+     *   ->  eslint
+     * @type {string}
+     */
+    const commandInput = taskName.replace(/^@(.+?) /, '');
+
+    return <AdaptorTask>{
+        valid: true,
+        adaptor: validAdaptorName,
+        taskName: taskName,
+        subTasks: [],
+        modules: [],
+        tasks: [],
+        rawInput: taskName,
+        parent: parent,
+        errors: [],
+        command: commandInput
+    };
 }
 
 export interface Tasks {
@@ -54,7 +94,7 @@ export interface Tasks {
 
 export interface TaskRunner {
 
-};
+}
 
 function createFlattenedTask (taskName:string, parent:string, trigger:RunCommandTrigger): Task {
 
@@ -111,6 +151,7 @@ function createFlattenedTask (taskName:string, parent:string, trigger:RunCommand
     );
 
     return createTask({
+        rawInput: taskName,
         taskName: baseTaskName,
         subTasks: subTaskItems,
         modules: locatedModules,
@@ -187,7 +228,23 @@ function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
         });
     }
 
-    // TODO ADD ADAPTORS for task resolution/validation
+    /**
+     * The final chance for a task to be deemed valid
+     * is when `task.adaptors` is set to a string.
+     *  eg: lint: '$npm eslint'
+     *   -> true
+     */
+    if (typeof task.adaptor === 'string') {
+
+        /**
+         * task.adaptor is a string, but does it match any adaptors?
+         * If it does, return the result of running the
+         * validate method from the adaptor
+         */
+        if (adaptors[<any>task.adaptor]) {
+            return adaptors[<any>task.adaptor].validate.apply(null, [task, trigger]);
+        }
+    }
 
     /**
      * In the case where `task.modules` has a length (meaning a JS file was found)
@@ -216,5 +273,6 @@ export function gatherTasks (taskNames:string[], trigger:RunCommandTrigger): Tas
 
 export function createTaskRunner (taskNames:string[], trigger:RunCommandTrigger): TaskRunner {
     const tasks = gatherTasks(taskNames, trigger);
-    return tasks;
+
+    return {tasks};
 }

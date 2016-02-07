@@ -29,3 +29,4 @@ const adaptors = {
 };
 
 export = adaptors;
+

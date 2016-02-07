@@ -1,4 +1,4 @@
-const cli = require('./cli');
+const cli = require('./');
 //const runner = cli({
 //    input: ['watch', 'dev'],
 //    flags: {
@@ -30,7 +30,7 @@ const cli = require('./cli');
 //});
 
 const runner = cli({
-    input: ['run', 'js'],
+    input: ['run', '@npm ls', 'js'],
     flags: {
         handoff: true
     }
@@ -40,4 +40,6 @@ const runner = cli({
     }
 });
 
-console.log(runner.tasks.valid[0].tasks);
+console.log(runner);
+
+//console.log(runner);
