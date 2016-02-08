@@ -73,5 +73,7 @@ export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, base
                 name: name
             });
         }
+
+        return all;
     }, moduleError);
 }

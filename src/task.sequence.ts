@@ -96,10 +96,21 @@ function loadModules(task: Task, trigger: RunCommandTrigger): SequenceItem[] {
     let lookup       = task.taskName;
 
     /**
-     * Now access a child property related to this task
+     * Now access a child property related to this task.
+     * eg:     $ sass:dev
+     * config: sass:
+     *           dev: "scss/core.scss"
+     * -> dev: "scss/core.scss"
+     *
+     * or
+     * config: sass:
+     *           dev:
+     *              input: "scss/core.scss"
+     *           site:
+     *              input: "scss/site.scss"
+     * -> {dev: {input: "scss/core.scss"}, site: {input: "scss/site.scss"}}
      */
-    let topLevelOpts = objPath.get(config, lookup, {});
-
+    let topLevelOpts = objPath.get(config, [lookup], {});
 
     /**
      * If no sub tasks exist, pass the config object relating to

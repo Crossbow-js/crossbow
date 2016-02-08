@@ -1,11 +1,7 @@
 const assert = require('chai').assert;
 const cli = require("../");
 
-function testCase (command, input, cb) {
-    cli({input: command}, input, cb);
-}
-
-function handoff (cmd, input, cb) {
+function handoff(cmd, input, cb) {
     return cli({
         input: ['run'].concat(cmd),
         flags: {
@@ -16,18 +12,18 @@ function handoff (cmd, input, cb) {
 
 describe('Gathering run tasks', function () {
     it('Accepts single string for adaptor task', function () {
-    	var runner = handoff(['@npm ls'], {});
+        var runner = handoff(['@npm ls'], {});
 
         assert.equal(runner.sequence[0].sequenceTasks.length, 1);
         assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
         assert.equal(runner.tasks.valid[0].command, 'ls');
     });
     it('Accepts single string for on-disk file', function () {
-    	var runner = handoff(['test/fixtures/tasks/observable.js'], {});
+        var runner = handoff(['test/fixtures/tasks/observable.js'], {});
         assert.equal(runner.sequence[0].sequenceTasks.length, 2); // 2 exported functions
     });
     it('Accepts single string for nested tasks', function () {
-    	var runner = handoff(['js'], {
+        var runner = handoff(['js'], {
             tasks: {
                 js: 'test/fixtures/tasks/simple.js'
             }
@@ -35,7 +31,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 2 exported functions
     });
     it('Accepts single string for multi nested tasks on disk', function () {
-    	var runner = handoff(['js'], {
+        var runner = handoff(['js'], {
             tasks: {
                 js: 'js2',
                 js2: 'js3',
@@ -48,7 +44,7 @@ describe('Gathering run tasks', function () {
         assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2', 'js3', 'js4']);
     });
     it('Accepts single string for multi nested adaptor tasks', function () {
-    	var runner = handoff(['js'], {
+        var runner = handoff(['js'], {
             tasks: {
                 js: 'js2',
                 js2: '@npm tsc src/*.ts --module commonjs --outDir dist'
@@ -62,13 +58,13 @@ describe('Gathering run tasks', function () {
         assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2']);
     });
     it('can combine files to form sequence', function () {
-        const runner = handoff(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']);
+        const runner = handoff(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
         assert.equal(runner.sequence.length, 2);
         assert.equal(runner.sequence[0].sequenceTasks.length, 1);
         assert.equal(runner.sequence[1].sequenceTasks.length, 1);
     });
     it('can combine files to form sequence from alias', function () {
-        const runner = handoff(["js", "test/fixtures/tasks/stream.js"],{
+        const runner = handoff(["js", "test/fixtures/tasks/stream.js"], {
             tasks: {
                 js: ["dummy"],
                 dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
@@ -103,9 +99,7 @@ describe('Gathering run tasks', function () {
         });
         assert.equal(runner.tasks.valid.length, 1);
     });
-
-    // TODO Continue refactoring tests for new ts implementation
-    it.only('can gather simple tasks', function () {
+    it('can gather simple tasks', function () {
         const runner = cli({
             input: ['run', 'test/fixtures/tasks/simple.js:dev'],
             flags: {
@@ -122,11 +116,13 @@ describe('Gathering run tasks', function () {
             }
         });
 
-        assert.equal(runner.tasks.valid.length, 1);
         assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
-    it('can gather opts for sub tasks', function (done) {
-        testCase(["run", "test/fixtures/tasks/simple.js:dev"], {
+    it('can gather opts for sub tasks', function () {
+        const runner = cli({
+            input: ["run", "test/fixtures/tasks/simple.js:dev"],
+            flags: {handoff: true}
+        }, {
             config: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
@@ -139,15 +135,11 @@ describe('Gathering run tasks', function () {
                     }
                 }
             }
-        }, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-            assert.equal(output.sequence[0].seq.taskItems.length, 1);
-            assert.equal(output.sequence[0].opts.input, 'scss/main.scss');
-            assert.equal(output.sequence[0].opts.output, 'css/main.min.css');
-            done();
-        })
+        });
+
+        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
+        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
+        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
     });
     it('can gather tasks when multi given in alias', function () {
         const runner = cli({
@@ -176,9 +168,14 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.tasks.valid[0].taskName, 'js');
         assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
         assert.equal(runner.tasks.valid[0].tasks[0].subTasks[0], 'dev');
+        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
+        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
 
-        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+        assert.equal(runner.tasks.valid[0].taskName, 'js');
+        assert.equal(runner.tasks.valid[0].tasks[1].taskName, 'test/fixtures/tasks/simple.js');
         assert.equal(runner.tasks.valid[0].tasks[1].subTasks[0], 'default');
+        assert.equal(runner.sequence[1].opts.input, 'scss/core.scss');
+        assert.equal(runner.sequence[1].opts.output, 'css/core.css');
     });
     it('can gather tasks from multiple alias', function () {
         const runner = cli({
@@ -187,7 +184,7 @@ describe('Gathering run tasks', function () {
         }, {
             tasks: {
                 css: ['js'],
-                js:  ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
+                js: ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
             },
             config: {
                 'test/fixtures/tasks/simple.js': {
@@ -208,9 +205,12 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[1].task.subTasks[0], 'dev');
         assert.equal(runner.sequence[1].task.subTasks[1], 'default');
     });
-    it('can gather handle no-tasks in config', function (done) {
+    it('can gather handle no-tasks in config', function () {
 
-        testCase(["run", "test/fixtures/tasks/simple.js"], {
+        const runner = cli({
+            input: ["run", "test/fixtures/tasks/simple.js"],
+            flags: {handoff: true}
+        }, {
             config: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
@@ -223,39 +223,35 @@ describe('Gathering run tasks', function () {
                     }
                 }
             }
-        }, function (err, output) {
-            if (err) {
-                return done(err);
-            }
-
-            assert.equal(output.sequence.length, 1);
-            assert.equal(output.sequence[0].opts.default.input, 'scss/core.scss');
-            assert.equal(output.sequence[0].opts.default.output, 'css/core.css');
-
-            done();
         });
+
+        assert.equal(runner.sequence.length, 1);
+        assert.equal(runner.sequence[0].opts.default.input, 'scss/core.scss');
+        assert.equal(runner.sequence[0].opts.default.output, 'css/core.css');
     });
-    it('can gather valid tasks when using an alias', function (done) {
-        testCase(["run", "css", "js"], {
+    it('can gather multiple valid tasks when using an alias', function () {
+        const runner = cli({
+            input: ["run", "css", "js"],
+            flags: {handoff: true}
+        }, {
             tasks: {
                 css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
-                js:  ['test/fixtures/tasks/simple.js']
+                js: ['test/fixtures/tasks/simple.js']
             }
-        }, function (err, output) {
-
-            var first = output.tasks.valid[0];
-
-            assert.equal(first.taskName, 'css');
-            assert.equal(first.modules.length, 0);
-            assert.equal(first.tasks.length, 2);
-            assert.equal(first.tasks[0].tasks.length, 0);
-            assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');
-            assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
-            done();
-        })
+        });
+        var first = runner.tasks.valid[0];
+        assert.equal(first.taskName, 'css');
+        assert.equal(first.modules.length, 0);
+        assert.equal(first.tasks.length, 2);
+        assert.equal(first.tasks[0].tasks.length, 0);
+        assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');
+        assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
     });
-    it('can process config options with {} replacements', function (done) {
-        testCase(["run", "css"], {
+    it('can process config options with {} replacements', function () {
+        const runner = cli({
+            input: ["run", "css"],
+            flags: {handoff: true}
+        }, {
             tasks: {
                 "css": ['test/fixtures/tasks/simple.js:default', 'test/fixtures/tasks/simple.js:dev']
             },
@@ -287,17 +283,15 @@ describe('Gathering run tasks', function () {
                     }
                 }
             }
-        }, function (err, output) {
+        });
 
-            assert.equal(output.sequence[0].opts.input, '/user/public/css');
-            assert.equal(output.sequence[0].opts.output, '/user/public/dist/css');
-            assert.equal(output.sequence[0].opts.random, 'no-problem/js');
-            assert.equal(output.sequence[0].opts.joke,  'shane');
-            assert.equal(output.sequence[0].opts.animal,  'kittie');
+        assert.equal(runner.sequence[0].opts.input, '/user/public/css');
+        assert.equal(runner.sequence[0].opts.output, '/user/public/dist/css');
+        assert.equal(runner.sequence[0].opts.random, 'no-problem/js');
+        assert.equal(runner.sequence[0].opts.joke, 'shane');
+        assert.equal(runner.sequence[0].opts.animal, 'kittie');
 
-            assert.equal(output.sequence[1].opts.output, '/user/dist/css');
-            assert.equal(output.sequence[1].opts.output, '/user/dist/css');
-            done();
-        })
+        assert.equal(runner.sequence[1].opts.output, '/user/dist/css');
+        assert.equal(runner.sequence[1].opts.output, '/user/dist/css');
     });
 });
