@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const watch = require('../lib/command.watch');
-const cli = require("../cli");
+const cli = require("../");
 
 describe('Gathering run tasks with errors', function () {
     it('reports single missing module', function () {

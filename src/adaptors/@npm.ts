@@ -13,6 +13,17 @@ import {join} from "path";
 var sh             = 'sh';
 var shFlag         = '-c';
 
+if (process.platform === 'win32') {
+    sh = process.env.comspec || 'cmd';
+    shFlag = '/d /s /c';
+}
+
+export interface CommandOptions {
+    cwd: string,
+    env: any,
+    stdio: number[]
+}
+
 interface CrossbowSpawnError extends Error {
     code: string
     errno: string
@@ -20,14 +31,9 @@ interface CrossbowSpawnError extends Error {
     file: string
 }
 
-if (process.platform === 'win32') {
-    sh = process.env.comspec || 'cmd';
-    shFlag = '/d /s /c';
-}
-
-function runCommand(args, options) {
-    var raw = spawn(sh, args, options);
-    var cooked = new EventEmitter();
+function runCommand(args: string[], options: CommandOptions) {
+    const raw    = spawn(sh, args, options);
+    const cooked = new EventEmitter();
 
     raw.on('error', function (er) {
         er.file = [sh, args].join(' ');
@@ -69,21 +75,13 @@ function getEnv (env: any, config: CrossbowConfiguration) {
     return localEnv;
 }
 
-/**
- * Get the env & cmd needed to run a shell script
- * @param input
- * @param config
- * @param item
- * @param env
- * @returns {{stringInput: (*|Object), env: (Object|*), cmd: Array.<*>}}
- */
 export interface CommandArgs {
     stringInput: string
     cmd: string[]
 }
 
-function getArgs (task: Task, input: RunCommandTrigger) : CommandArgs {
-    const stringInput = transformStrings(task.rawInput, input.config);
+function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
+    const stringInput = transformStrings(task.rawInput, trigger.config);
     return {
         stringInput: stringInput,
         cmd: [shFlag].concat(stringInput)
@@ -94,23 +92,23 @@ function getArgs (task: Task, input: RunCommandTrigger) : CommandArgs {
  * The main export is the function this will be run in the sequence
  * @returns {Function}
  */
-module.exports = function (task: Task, input: RunCommandTrigger) {
+export default function (task: Task, trigger: RunCommandTrigger) {
 
     return (obs) => {
 
-        const commandArgs = getArgs(task, input); // todo: allow user to set env vars from config
-        const env = getEnv(process.env, input.config);
+        const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
+        const env = getEnv(process.env, trigger.config);
 
         debug(`running %s`, commandArgs.cmd);
 
         const emitter = runCommand(commandArgs.cmd, {
-            cwd: input.config.cwd,
+            cwd: trigger.config.cwd,
             env: env,
             stdio: [0, 1, 2]
         });
 
         emitter.on('close', function (code) {
-            if (input.config.exitOnError) {
+            if (trigger.config.exitOnError) {
                 if (code !== 0) {
                     const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
                     return obs.onError(e);
@@ -123,6 +121,5 @@ module.exports = function (task: Task, input: RunCommandTrigger) {
     };
 };
 
-module.exports.runCommand = runCommand;
-module.exports.getEnv = getEnv;
-module.exports.getArgs = getArgs;
+
+export {runCommand, getEnv, getArgs};

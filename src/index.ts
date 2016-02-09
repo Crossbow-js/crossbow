@@ -14,7 +14,7 @@ const assign  = require('object-assign');
 export interface Meow {
     input: string[]
     flags: any
-    help: string
+    help?: string
 }
 
 function generateMeowInput (incoming: Meow|any) : Meow {
@@ -46,7 +46,7 @@ function handleIncoming (cli: Meow, input: CrossbowInput | any): TaskRunner | vo
     const mergedConfig = merge(cli.flags);
 
     if (availableCommands.indexOf(cli.input[0]) === -1) {
-        console.log(cli.help);
+        console.log('Show help here');
         return;
     }
 
@@ -78,4 +78,13 @@ function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfigura
 }
 
 export default handleIncoming;
+
 module.exports = handleIncoming;
+
+module.exports.getRunner = function getRunner (tasks: string[], input?: any) {
+    return handleIncoming({
+        input: ['run', ...tasks],
+        flags: {handoff: true}
+    }, input || {});
+}
+
