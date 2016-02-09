@@ -1,20 +1,12 @@
 const assert = require('chai').assert;
 const watch = require('../lib/command.watch');
-const cli = require('../cli');
-
-function handoff (cmd, input, cb) {
-    return cli({
-        input: ['run'].concat(cmd),
-        flags: {
-            handoff: true
-        }
-    }, input, cb);
-}
+const cli = require('../');
 
 describe('Gathering run tasks with wildcard', function () {
+
     it('can handle multi tasks with wildcard', function () {
 
-    	var runner = handoff(['test/fixtures/tasks/single-export.js:*'], {
+    	const runner = cli.getRunner(['test/fixtures/tasks/single-export.js:*'], {
             config: {
                 "test/fixtures/tasks/single-export.js": {
                     site: {
