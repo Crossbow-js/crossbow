@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /// <reference path="../typings/main.d.ts" />
-import runner = require("./command.run");
+import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
 import run from './command.run';
 import {Map} from 'immutable';
-import {TaskRunner} from "./task.runner";
-import {Task} from "./task.resolve";
-import {retrieveExternalInputFiles} from "./task.utils";
+import {TaskRunner} from './task.runner';
+import {Task} from './task.resolve';
+import {retrieveExternalInputFiles} from './task.utils';
 
 const meow    = require('meow');
 const assign  = require('object-assign');
+const debug   = require('debug')('cb:init');
 
 export interface Meow {
     input: string[]
@@ -37,11 +38,10 @@ const availableCommands = ['watch', 'run'];
 
 if (!module.parent) {
     const cli = <Meow>meow();
-    // passing string here produces the correct compiler error
-    console.log(cli);
+    handleIncoming(cli);
 }
 
-function handleIncoming (cli: Meow, input: CrossbowInput | any): TaskRunner | void {
+function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
     cli = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
 
@@ -54,16 +54,24 @@ function handleIncoming (cli: Meow, input: CrossbowInput | any): TaskRunner | vo
      * If a user tried to load configuration from
      * an external file, load that now and set as the input
      */
-    if (mergedConfig.config) {
+    if (mergedConfig.config || input === undefined) {
+
+        if (mergedConfig.config) {
+            debug(`Config flag provided ${mergedConfig.config}`);
+        } else {
+            if (input === undefined) {
+               debug('No input provided');
+            }
+        }
+
         const externalInputs = retrieveExternalInputFiles(mergedConfig);
         if (externalInputs.length) {
+            debug('Using external input');
             return processInput(cli, generateInput(externalInputs[0]), mergedConfig);
         }
     }
 
-    if (input) {
-        return processInput(cli, generateInput(input), mergedConfig);
-    }
+    return processInput(cli, generateInput(input), mergedConfig);
 }
 
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : TaskRunner {

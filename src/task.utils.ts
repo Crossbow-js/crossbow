@@ -119,4 +119,4 @@ export function retrieveExternalInputFiles (config: CrossbowConfiguration): any[
             .map(x => resolve(cwd, x))
             .filter(existsSync);
     }
-};
+}
