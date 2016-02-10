@@ -1,5 +1,4 @@
 const assert = require('chai').assert;
-const watch = require('../lib/command.watch');
 const cli = require('../');
 
 describe('Gathering run tasks with wildcard', function () {

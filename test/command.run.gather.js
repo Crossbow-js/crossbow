@@ -77,18 +77,6 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[1].sequenceTasks[0].FUNCTION.name, 'simple2');
         assert.equal(runner.sequence[2].sequenceTasks.length, 2);
     });
-    it('can gather from external config file', function () {
-        const runner = cli({
-            input: ["run", "js"],
-            flags: {config: "examples/crossbow.js", handoff: true}
-        });
-
-        assert.equal(runner.tasks.valid.length, 1);
-        assert.equal(runner.tasks.valid[0].taskName, 'js');
-        assert.equal(runner.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/simple.js');
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
-        assert.deepEqual(runner.sequence[0].task.parents, ['js']);
-    });
     it('can gather from a default yaml file', function () {
         const runner = cli({
             input: ["run", "js"],

@@ -6,7 +6,7 @@ import run from './command.run';
 import {Map} from 'immutable';
 import {TaskRunner} from './task.runner';
 import {Task} from './task.resolve';
-import {retrieveExternalInputFiles} from './task.utils';
+import {retrieveExternalInputFiles, ExternalFileInput} from './task.utils';
 
 const meow    = require('meow');
 const assign  = require('object-assign');
@@ -67,7 +67,7 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
         const externalInputs = retrieveExternalInputFiles(mergedConfig);
         if (externalInputs.length) {
             debug('Using external input');
-            return processInput(cli, generateInput(externalInputs[0]), mergedConfig);
+            return processInput(cli, generateInput(externalInputs[0].input), mergedConfig);
         }
     }
 

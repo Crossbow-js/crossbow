@@ -1,6 +1,7 @@
 import {resolve, extname, basename} from 'path';
 import {existsSync, readFileSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
+import {CrossbowInput} from "./index";
 
 const yml = require('js-yaml');
 
@@ -55,68 +56,36 @@ function replaceOne(item, root) {
     });
 }
 
+export interface ExternalFileInput {
+    path: string
+    input: CrossbowInput|any
+}
 /**
  * Try to auto-load configuration
  * @param flags
  * @param config
  * @returns {*}
  */
-export function retrieveExternalInputFiles (config: CrossbowConfiguration): any[] {
+export function retrieveExternalInputFiles (config: CrossbowConfiguration): ExternalFileInput[] {
 
-    const validExts = ['.js', '.json', '.yaml', '.yml'];
-    const maybes    = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml', 'package.json'];
-    const cwd       = config.cwd;
+    const maybes     = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
+    const cwd        = config.cwd;
+    const configFlag = config.config;
 
-    /**
-     * Was the --config flag given? if so, use the that
-     * value to lookup a configuration file
-     */
-    if (config.config) {
-        return filterFiles([config.config]).map(importConfig);
-    } else {
-        return getFiles(filterFiles(maybes));
-    }
-
-    function importConfig(filepath: string): any {
-        var ext = extname(filepath);
-        if (validExts.indexOf(ext) > -1) {
-            if (ext.match(/ya?ml$/)) {
-                return yml.safeLoad(readFileSync(filepath));
-            }
-            return require(filepath);
-        }
-        return {};
-    }
-
-    /**
-     * Get a file
-     * @param input
-     * @returns {*}
-     */
-    function getFiles(input: string[]) : string[] {
-        var out = []
-            .concat(input)
-            .map(x => {
-                if (basename(x) === 'crossbow.js') {
-                    return require(x);
-                } else if (x.match(/yml|yaml$/)) {
-                    return yml.safeLoad(readFileSync(x));
-                } else {
-                    var mod = require(x);
-                    if (mod.crossbow) {
-                        return mod.crossbow;
-                    }
+    return [configFlag, ...maybes]
+        .filter(x => x !== undefined)
+        .map(x => resolve(cwd, x))
+        .filter(existsSync)
+        .map(x => {
+            if (x.match(/\.ya?ml$/)) {
+                return <ExternalFileInput> {
+                    path: x,
+                    input: yml.safeLoad(readFileSync(x))
                 }
-                return false;
-            })
-            .filter(x => x);
-
-        return out;
-    }
-
-    function filterFiles(input: string[]|any[]): string[] {
-        return input
-            .map(x => resolve(cwd, x))
-            .filter(existsSync);
-    }
+            }
+            return <ExternalFileInput> {
+                path: x,
+                input: require(x)
+            }
+        });
 }
