@@ -2,11 +2,15 @@ const assert = require('chai').assert;
 const cli    = require("../");
 
 describe('Gathering run task with return types', function () {
-    it.only('can handle node streams', function (done) {
-        const runner = cli.getRunner(['test/fixtures/tasks/stream.js']);
-        const stream$ = runner
+    it('can handle node streams', function (done) {
+
+        const taskRunner = cli.getRunner(['test/fixtures/tasks/stream.js']);
+
+        const stream$ = taskRunner
+            .runner
             .series()
             .subscribe();
+
         stream$.subscribeOnCompleted(x => {
             done();
         });

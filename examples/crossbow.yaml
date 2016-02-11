@@ -24,6 +24,10 @@ tasks:
     myscript:   ['@npm ls -a']
     es6:        ['@npm es6']
 
+    build-all@p:  ['build-css', 'build-js']
+    build-css:    ['sass', 'cssmin', 'cachebreaker:css']
+    build-js:     ['@npm webpack', '@shell uglify-js src/dist/app.js', 'cachebreaker:js']
+
 config:
     $:
         root: test/fixtures

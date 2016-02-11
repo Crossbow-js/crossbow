@@ -4,7 +4,7 @@ import {Task} from "./task.resolve";
 
 interface Observable {}
 
-interface Runner {
+export interface Runner {
     series: () => any
     parallel: () => any
 }
