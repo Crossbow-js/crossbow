@@ -8,6 +8,7 @@ import {Meow, CrossbowInput} from "./index";
 import {CrossbowConfiguration} from "./config";
 import {resolveTasks} from "./task.resolve";
 import {createSequence} from "./task.sequence";
+import {createRunner} from "./runner";
 
 export interface CommandTrigger {
     type: string
@@ -29,12 +30,11 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     const ctx: RunCommandTrigger = {cli, input, config, type: 'command'};
     const tasks = resolveTasks(cliInput, ctx);
     const sequence = createSequence(tasks.valid, ctx);
+    const runner = createRunner(tasks, sequence, ctx);
 
     if (config.handoff) {
         debug(`Handing off runner`);
         return {tasks, sequence};
     }
-
-    return {tasks, sequence};
 }
 

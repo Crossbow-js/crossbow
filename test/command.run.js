@@ -1,38 +1,13 @@
-var assert = require('chai').assert;
-var watch = require('../lib/command.watch');
-var cwd = require('path').resolve('test/fixtures');
-var current = process.cwd();
-var resolve = require('path').resolve;
-var getBsConfig = require('../lib/utils').getBsConfig;
-var cli = require("../cli");
-var seq = require("../lib/sequence");
-var Rx = require('rx');
-
-function testCase (file, cb) {
-    var runner = cli({
-        input: ["run"].concat(file.map(function(x) { return "test/fixtures/tasks/" + x } )),
-        flags: {
-            handoff: true
-        }
-    }, {
-        crossbow: {}
-    });
-
-    runner.run
-        .subscribe(function () {},
-        function (err) { console.log(err); },
-        function () {
-        	cb(null, runner);
-        }
-    );
-}
+const assert = require('chai').assert;
+const cli    = require("../");
 
 describe('Gathering run task with return types', function () {
-    it('can handle node streams', function (done) {
-        testCase(['stream.js'], function (err, runner) {
-            assert.isTrue(runner.sequence[0].seq.taskItems[0].completed);
-            assert.isTrue(runner.sequence[0].seq.taskItems[1].completed);
-            assert.equal(runner.sequence[0].seq.taskItems.length, 2);
+    it.only('can handle node streams', function (done) {
+        const runner = cli.getRunner(['test/fixtures/tasks/stream.js']);
+        const stream$ = runner
+            .series()
+            .subscribe();
+        stream$.subscribeOnCompleted(x => {
             done();
         });
     });
