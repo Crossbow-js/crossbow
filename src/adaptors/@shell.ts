@@ -1,9 +1,9 @@
 import {RunCommandTrigger} from "../command.run";
-import {AdaptorTask} from "../task.resolve";
 import {getArgs, runCommand} from './@npm';
+import {Task} from "../task.resolve";
 const debug = require('debug')('cb:@shell');
 
-module.exports = function (task: AdaptorTask, trigger: RunCommandTrigger) {
+module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
     return function (obs) {
 

@@ -4,7 +4,6 @@ const objPath = require('object-path');
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
-import {AdaptorTask} from "./task.resolve";
 
 interface Observer {}
 
@@ -25,8 +24,7 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): Sequ
 
     function flatten(initial: any[], items: Task[]) {
 
-        function reducer(all, item: Task);
-        function reducer(all, item: AdaptorTask) {
+        function reducer(all, item: Task) {
 
             /**
              * If the current task has no related module,
@@ -67,7 +65,7 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): Sequ
  * @param config
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function adaptorSequence(item: AdaptorTask, trigger: RunCommandTrigger): SequenceItem {
+function adaptorSequence(item: Task, trigger: RunCommandTrigger): SequenceItem {
 
     return {
         sequenceTasks: [

@@ -15,11 +15,8 @@ export interface Task {
     rawInput: string
     parents: string[]
     errors: TaskError[]
-}
-
-export interface AdaptorTask extends Task {
-    adaptor: string
-    command: string
+    adaptor?: string
+    command?: string
 }
 
 const defaultTask = <Task>{
@@ -73,7 +70,7 @@ function createAdaptorTask (taskName, parents) : Task {
      */
     const commandInput = taskName.replace(/^@(.+?) /, '');
 
-    return <AdaptorTask>{
+    return <Task>{
         valid: true,
         adaptor: validAdaptorName,
         taskName: taskName,
@@ -198,8 +195,7 @@ function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskNa
  * A task is valid if every child eventually resolves to
  * having a module or has a adaptors helper
  */
-function validateTask (task:Task, trigger:RunCommandTrigger):boolean;
-function validateTask (task:AdaptorTask, trigger:RunCommandTrigger):boolean {
+function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
     /**
      * Return early if a task has previously
      * been marked as invalid

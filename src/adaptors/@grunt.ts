@@ -1,9 +1,8 @@
 import {RunCommandTrigger} from "../command.run";
 import {Task} from "../task.resolve";
-import {AdaptorTask} from "../task.resolve";
 import {resolve} from 'path';
 
-module.exports = function (task: AdaptorTask, trigger: RunCommandTrigger) {
+module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
     return function (obs) {
 

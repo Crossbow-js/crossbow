@@ -30,7 +30,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     const ctx: RunCommandTrigger = {cli, input, config, type: 'command'};
     const tasks = resolveTasks(cliInput, ctx);
     const sequence = createSequence(tasks.valid, ctx);
-    const runner = createRunner(tasks, sequence, ctx);
+    //const runner = createRunner(tasks.valid, sequence, ctx);
 
     if (config.handoff) {
         debug(`Handing off runner`);
