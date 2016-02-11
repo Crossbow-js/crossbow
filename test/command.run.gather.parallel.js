@@ -14,13 +14,16 @@ describe('Gathering run tasks, grouped by runMode', function () {
     it.only('can gather tasks when parallel syntax used', function () {
         var runner = handoff(['build-all@p'], {
             tasks: {
-                'build-all@p': ['css', 'js'],
-                'css': ['@npm sass', '@npm postcss', '@shell ls'],
-                'js':  ['@npm webpack', '@npm uglify src/*.js']
+                'build-all': ['css', 'js'],
+                'css':       ['@npm sass', '@npm postcss', '@shell ls'],
+                'js':        ['@npm webpack', '@npm uglify src/*.js']
             }
         });
 
-        //console.log(runner.sequence[0].task.taskName);
+        console.log(runner.tasks.valid[0].tasks[0].tasks[0]);
+
+        //console.log(runner.sequence[0]);
+        //console.log(runner.sequence[1]);
         //console.log(runner.sequence[1].task.taskName);
         //console.log(runner.sequence[2].task.taskName);
         //console.log(runner.sequence[3].task.taskName);

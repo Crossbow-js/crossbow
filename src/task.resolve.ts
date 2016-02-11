@@ -8,7 +8,7 @@ import {RunCommandTrigger} from "./command.run";
 
 export interface Task {
     valid: boolean
-    taskName: string|void
+    taskName: string
     subTasks: string[]
     modules: string[]
     tasks: Task[]
@@ -17,6 +17,7 @@ export interface Task {
     errors: TaskError[]
     adaptor?: string
     command?: string
+    runMode: string
 }
 
 const defaultTask = <Task>{
@@ -27,7 +28,8 @@ const defaultTask = <Task>{
     modules: [],
     tasks: [],
     parents: [],
-    errors: []
+    errors: [],
+    runMode: 'series'
 };
 
 /**
@@ -80,7 +82,8 @@ function createAdaptorTask (taskName, parents) : Task {
         rawInput: taskName,
         parents: parents,
         errors: [],
-        command: commandInput
+        command: commandInput,
+        runMode: 'series'
     };
 }
 
@@ -101,13 +104,23 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         return createAdaptorTask(taskName, parents);
     }
 
+    var split = taskName;
+    var runMode = 'series';
+
+    if (taskName.match(/@[p]$/)) {
+        const breakup = taskName.match(/(.+?)(@[p])$/);
+        split = breakup[1];
+        runMode = 'parallel';
+    }
+
+
     /**
      * Split the incoming taskname on colons
      *  eg: sass:site:dev
      *  ->  ['sass', 'site', 'dev']
      * @type {Array}
      */
-    const splitTask = taskName.split(':');
+    const splitTask = split.split(':');
 
     /**
      * Take the first (or the only) item as the base task name
@@ -151,7 +164,8 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         tasks:    childTasks,
         valid:    errors.length === 0,
         parents:  parents,
-        errors:   errors
+        errors:   errors,
+        runMode:  runMode
     });
 }
 

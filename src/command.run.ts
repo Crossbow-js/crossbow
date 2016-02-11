@@ -28,7 +28,6 @@ if (process.env.DEBUG) {
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): TaskRunner {
     const cliInput = cli.input.slice(1);
     const ctx: RunCommandTrigger = {cli, input, config, type: 'command'};
-    console.log(cliInput);
     const tasks = resolveTasks(cliInput, ctx);
     const sequence = createSequence(tasks.valid, ctx);
     const runner = createRunner(tasks.valid, sequence, ctx);

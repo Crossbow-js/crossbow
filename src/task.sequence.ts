@@ -22,7 +22,7 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): Sequ
 
     return flatten([], tasks);
 
-    function flatten(initial: any[], items: Task[]) {
+    function flatten(initial: SequenceItem[], items: Task[]) {
 
         function reducer(all, item: Task) {
 
