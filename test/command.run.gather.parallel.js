@@ -15,45 +15,25 @@ function handoff(cmd, input, cb) {
 describe('Gathering run tasks, grouped by runMode', function () {
     it.only('can gather tasks when parallel syntax used', function (done) {
         this.timeout(10000);
-        var runner = handoff(['build-all'], {
+        var runner = handoff(['build-all@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
-                'css':       ['@npm sass', '@npm postcss', '@shell ls', 'html'],
+                'css':       ['@npm css1', '@npm css2', '@shell css3', 'html'],
                 'js':        ['@npm webpack', '@npm uglify src/*.js'],
-                'html':      ['@npm HTMLmin', '@npm curl something']
+                'html':      ['@npm html1', '@npm curl html2']
             }
         });
 
-
-
         function pullMany (items, parents) {
             return items.reduce(function (all, task) {
-                if (task.runMode === 'parallel' && task.tasks.length) {
-
-                    return all.concat({
-                        type: 'Parallel Group',
-                        parents: parents,
-                        items: task.tasks.map(_task => {
-                            if (_task.adaptor) {
-                                return {
-                                    type: 'Item',
-                                    parents: parents.concat(task.taskName),
-                                    task: _task
-                                };
-                            }
-                            if (_task.tasks) {
-                                return {
-                                    parents: parents,
-                                    tasks: pullMany(_task.tasks, parents.concat(task.taskName))
-                                };
-                            }
-                        })
-                    });
-                }
+                var type = 'Series Group';
 
                 if (task.tasks.length) {
+                    if (task.runMode === 'parallel') {
+                        type = 'Parallel Group';
+                    }
                     return all.concat({
-                        type: 'Series Group',
+                        type: type,
                         parents: parents,
                         items: pullMany(task.tasks, parents.concat(task.taskName))
                     });
@@ -72,42 +52,81 @@ describe('Gathering run tasks, grouped by runMode', function () {
         const res = pullMany(runner.tasks.valid, []);
 
         function getObs (items, initial) {
+
             return items.reduce(function (acc, item) {
 
                 if (item.type === 'Series Group') {
-                    return acc.concat(Rx.Observable.concat(getObs(item.items, acc)));
+                    return acc.concat(Rx.Observable.concat(getObs(item.items, [])));
                 }
 
                 if (item.type === 'Parallel Group') {
-
-                    return acc.concat(Rx.Observable.merge(getObs(item.items, acc)));
+                    return acc.concat(Rx.Observable.merge(getObs(item.items, [])));
                 }
 
-                return acc.concat(createObservableForTask(item));
+                if (item.type === 'Item') {
+                    return acc.concat(createObservableForTask(item));
+                }
+
+                return acc;
 
             }, initial);
         }
 
+        //done();
+
         //log(res);
         //done();
-        //console.log(getObs(res, [])[0]);
 
-        done();
-        //const obs = Rx.Observable.concat(getObs(res, [])).share();
+        //const stream$ = Rx.Observable.merge(
+        //        Rx.Observable.concat(
+        //            // second series
+        //            createObservableForTask({task: {taskName: '1 - 1'}}),
+        //            createObservableForTask({task: {taskName: '1 - 2'}})
+        //        ),
+        //        Rx.Observable.concat(
+        //            // second series
+        //            createObservableForTask({task: {taskName: '2 - 1'}}),
+        //            createObservableForTask({task: {taskName: '2 - 2'}}),
+        //            createObservableForTask({task: {taskName: '2 - 3'}}),
+        //            Rx.Observable.concat(
+        //                createObservableForTask({task: {taskName: '3 - 1'}}),
+        //                createObservableForTask({task: {taskName: '3 - 2'}}),
+        //                Rx.Observable.merge(
+        //                    createObservableForTask({task: {taskName: '4 - 1'}}),
+        //                    createObservableForTask({task: {taskName: '4 - 2'}}),
+        //                    createObservableForTask({task: {taskName: '4 - 3'}}),
+        //                    createObservableForTask({task: {taskName: '4 - 4'}}),
+        //                    createObservableForTask({task: {taskName: '4 - 5'}}),
+        //                    createObservableForTask({task: {taskName: '4 - 6'}})
+        //                )
+        //            )
+        //        )
+        //    );
         //
-        //obs.subscribeOnNext(function (value) {
-        //    console.log(value);
-        //});
-        //
-        //obs.subscribeOnCompleted(function () {
-        //    console.timeEnd('rx');
+        //stream$.subscribe(function (val) {
+        //	console.log('val', val);
+        //})
+        //stream$.subscribeOnCompleted(function () {
+        //    console.log('done');
         //    done();
-        //});
+        //})
+
+        const obs = Rx.Observable.concat(getObs(res, [])).share();
+
+        obs.subscribeOnNext(function (value) {
+            console.log(value);
+        });
+
+        obs.subscribeOnCompleted(function () {
+            console.timeEnd('rx');
+            done();
+        });
         ////
         //
         var now = new Date().getTime();
         //
         function createObservableForTask(item) {
+            console.log(item.type);
             return Rx.Observable.create(observer => {
                 setTimeout(function () {
                     observer.onNext(item.task.taskName);
