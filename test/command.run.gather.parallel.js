@@ -13,7 +13,38 @@ function handoff(cmd, input, cb) {
 }
 
 describe('Gathering run tasks, grouped by runMode', function () {
-    it.only('can gather tasks when parallel syntax used', function (done) {
+    it.only('can run in series', function (done) {
+        this.timeout(10000);
+        var runner = handoff(['js', 'css'], {
+            tasks: {
+                'build-all': ['js', 'css'],
+                'css':       ['@npm sleep 0.1', '@npm sleep 0.1', '@npm sleep 0.1', 'html'],
+                'js':        ['@npm sleep 1', '@npm sleep 1'],
+                'html':      ['@npm sleep 0.1']
+            }
+        });
+        var stream$ = Rx.Observable.merge(runner.sequence)
+            .subscribe(function (val) {
+
+            }, function (e) {
+
+            }, function () {
+            	//console.log('done');
+                console.log(runner.tasks.valid[1].tasks[3]);
+                done();
+            })
+
+        //stream$.subscribeOnNext(function (val) {
+        //	//console.log(val);
+        //});
+        //
+        //stream$.subscribeOnCompleted(function (val) {
+        //    console.log(runner.sequence[0]._sources);
+        //    done();
+        //});
+
+    })
+    it.skip('can gather tasks when parallel syntax used', function (done) {
         this.timeout(10000);
         var runner = handoff(['build-all@p'], {
             tasks: {
@@ -24,55 +55,22 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        function pullMany (items, parents) {
-            return items.reduce(function (all, task) {
-
-                var type = 'Series Group';
-
-                if (task.tasks.length) {
-                    if (task.runMode === 'parallel') {
-                        type = 'Parallel Group';
-                    }
-
-                    return all.concat({
-                        type: type,
-                        parents: parents,
-                        items: pullMany(task.tasks, parents.concat(task.taskName))
-                    });
-                }
-
-                return all.concat({
-                    type: 'Item',
-                    parents: parents,
-                    task: task
-                });
-            }, []);
-        }
-
-        const res = pullMany(runner.tasks.valid, []);
-
         function getObs (items, initial) {
-
             return items.reduce(function (acc, item) {
-
-                if (item.type === 'Series Group') {
-                    return acc.concat(Rx.Observable.concat(getObs(item.items, [])));
+                if (item.tasks.length) {
+                    if (item.runMode === 'parallel') {
+                        return acc.concat(Rx.Observable.merge(getObs(item.tasks, [])));
+                    } else {
+                        return acc.concat(Rx.Observable.concat(getObs(item.tasks, [])));
+                    }
                 }
-
-                if (item.type === 'Parallel Group') {
-                    return acc.concat(Rx.Observable.merge(getObs(item.items, [])));
-                }
-
-                if (item.type === 'Item') {
-                    return acc.concat(createObservableForTask(item));
-                }
-
-                return acc;
-
+                return acc.concat(createObservableForTask(item));
             }, initial);
         }
 
-        const obs = Rx.Observable.concat(getObs(res, [])).share();
+        //console.log(getObs(runner.tasks.valid, []));
+
+        const obs = Rx.Observable.concat(getObs(runner.tasks.valid, [])).share();
 
         var count = 0;
         var time = 0;
@@ -81,6 +79,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         var now = new Date().getTime();
 
         obs.subscribeOnNext(function (value) {
+            console.log(value);
             time += value.timestamp;
             count += 1;
         });
@@ -93,10 +92,10 @@ describe('Gathering run tasks, grouped by runMode', function () {
             done();
         });
 
-        function createObservableForTask(item) {
+        function createObservableForTask(task) {
             return Rx.Observable.create(observer => {
                 setTimeout(function () {
-                    observer.onNext(item.task.taskName);
+                    observer.onNext(task.taskName);
                     observer.onCompleted();
                 }, 50);
             }).timestamp()

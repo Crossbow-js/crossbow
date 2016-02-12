@@ -81,7 +81,7 @@ export interface CommandArgs {
 }
 
 function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
-    const stringInput = transformStrings(task.rawInput, trigger.config);
+    const stringInput = transformStrings(task.command, trigger.config);
     return {
         stringInput: stringInput,
         cmd: [shFlag].concat(stringInput)

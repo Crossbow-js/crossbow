@@ -1,5 +1,6 @@
 import {transformStrings} from "./task.utils";
 const objPath = require('object-path');
+const Rx = require('rx');
 
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
@@ -18,37 +19,53 @@ export interface SequenceItem {
     task: Task
 }
 
-export function createSequence (tasks: Task[], trigger: RunCommandTrigger): SequenceItem[] {
+export function createSequence (tasks: Task[], trigger: RunCommandTrigger): any[] {
 
-    return flatten([], tasks);
+    return flatten(tasks, []);
 
-    function flatten(initial: SequenceItem[], items: Task[]) {
+    function flatten(items: Task[], initial: SequenceItem[]) {
 
-        function reducer(all, item: Task) {
+        function reducer(all, task: Task) {
 
             /**
-             * If the current task has no related module,
-             * but did have the adaptors flag, load the adaptors function for it
+             * If the current task has child tasks, we build a tree of
+             * nested observables for it (a task with children cannot itself
+             * be a task that should be run)
              */
-            if (!item.modules.length && item.adaptor) {
-                return all.concat(adaptorSequence(item, trigger));
+            if (task.tasks.length) {
+
+                /**
+                 * If the current task was marked as `parallel`, all immediate children
+                 * of (this task) will be run in `parallel`
+                 */
+                if (task.runMode === 'parallel') {
+                    return all.concat(Rx.Observable.merge(flatten(task.tasks, [])));
+                }
+                /**
+                 * If the current task was marked as `series`, all immediate child tasks
+                 * will be queued and run in series - each waiting until the previous
+                 * one has completed
+                 */
+                if (task.runMode === 'series') {
+                    return all.concat(Rx.Observable.concat(flatten(task.tasks, [])));
+                }
             }
 
             /**
-             * If the modules property is populated (ie: a JS file was found for it)
-             * then load the module into memory and return
+             * At this point, we must be dealing with a task that should be run,
+             * so we first check if it's an adaptor @ task
              */
-            if (item.modules.length) {
-                return all.concat(loadModules(item, trigger));
+            if (task.adaptor) {
+                return all.concat(adaptorSequence(task, trigger));
             }
 
             /**
-             * if the current item also has tasks (children tasks)
-             * then repeat this process to retrieve them also
+             * Finally, if the does not have children tasks & is not an
+             * adaptor task it must have at least 1 associated module
              */
-            if (item.tasks.length) {
-                return flatten(all, item.tasks);
-            }
+            //if (task.modules.length) {
+            //    return all.concat(loadModules(task, trigger));
+            //}
 
             return all;
         }
@@ -60,23 +77,37 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): Sequ
 /**
  * Call the create method of the compatibility layer
  * to enable a fn that can be used in the pipeline
- * @param item
+ * @param task
  * @param input
  * @param config
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function adaptorSequence(item: Task, trigger: RunCommandTrigger): SequenceItem {
+function adaptorSequence(task: Task, trigger: RunCommandTrigger): SequenceItem {
 
-    return {
-        sequenceTasks: [
-            {
-                FUNCTION: adaptors[item.adaptor].create.apply(null, [item, trigger]),
-                completed: false
+    const adaptor = adaptors[task.adaptor].create(task, trigger);
+    return Rx.Observable.create(obs => {
+        obs.done = function () {
+            obs.onCompleted();
+        };
+        task.startTime = new Date().getTime();
+        process.nextTick(function () {
+            try {
+                adaptor(obs);
+            } catch (e) {
+                obs.onError(e);
             }
-        ],
-        opts: {},
-        task: item
-    };
+        });
+        return () => {
+            task.endTime   = new Date().getTime();
+            task.duration  = task.endTime - task.startTime;
+            task.completed = true;
+        }
+    })
+        .catch(function (e) {
+            console.log(e);
+            return Rx.Observable.empty();
+        })
+        .share();
 }
 
 /**
