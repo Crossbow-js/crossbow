@@ -18,7 +18,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         var runner = handoff(['build-all@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
-                'css':       ['@npm css1', '@npm css2', '@shell css3', 'html'],
+                'css':       ['@npm css1', '@npm css2', '@npm css3', 'html'],
                 'js':        ['@npm webpack', '@npm uglify src/*.js'],
                 'html':      ['@npm html1', '@npm curl html2']
             }
@@ -26,12 +26,14 @@ describe('Gathering run tasks, grouped by runMode', function () {
 
         function pullMany (items, parents) {
             return items.reduce(function (all, task) {
+
                 var type = 'Series Group';
 
                 if (task.tasks.length) {
                     if (task.runMode === 'parallel') {
                         type = 'Parallel Group';
                     }
+
                     return all.concat({
                         type: type,
                         parents: parents,
@@ -46,8 +48,6 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 });
             }, []);
         }
-
-        console.time('rx');
 
         const res = pullMany(runner.tasks.valid, []);
 
@@ -72,106 +72,43 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }, initial);
         }
 
-        //done();
-
-        //log(res);
-        //done();
-
-        //const stream$ = Rx.Observable.merge(
-        //        Rx.Observable.concat(
-        //            // second series
-        //            createObservableForTask({task: {taskName: '1 - 1'}}),
-        //            createObservableForTask({task: {taskName: '1 - 2'}})
-        //        ),
-        //        Rx.Observable.concat(
-        //            // second series
-        //            createObservableForTask({task: {taskName: '2 - 1'}}),
-        //            createObservableForTask({task: {taskName: '2 - 2'}}),
-        //            createObservableForTask({task: {taskName: '2 - 3'}}),
-        //            Rx.Observable.concat(
-        //                createObservableForTask({task: {taskName: '3 - 1'}}),
-        //                createObservableForTask({task: {taskName: '3 - 2'}}),
-        //                Rx.Observable.merge(
-        //                    createObservableForTask({task: {taskName: '4 - 1'}}),
-        //                    createObservableForTask({task: {taskName: '4 - 2'}}),
-        //                    createObservableForTask({task: {taskName: '4 - 3'}}),
-        //                    createObservableForTask({task: {taskName: '4 - 4'}}),
-        //                    createObservableForTask({task: {taskName: '4 - 5'}}),
-        //                    createObservableForTask({task: {taskName: '4 - 6'}})
-        //                )
-        //            )
-        //        )
-        //    );
-        //
-        //stream$.subscribe(function (val) {
-        //	console.log('val', val);
-        //})
-        //stream$.subscribeOnCompleted(function () {
-        //    console.log('done');
-        //    done();
-        //})
-
         const obs = Rx.Observable.concat(getObs(res, [])).share();
 
+        var count = 0;
+        var time = 0;
+
+        console.time('rx');
+        var now = new Date().getTime();
+
         obs.subscribeOnNext(function (value) {
-            console.log(value);
+            time += value.timestamp;
+            count += 1;
         });
 
         obs.subscribeOnCompleted(function () {
             console.timeEnd('rx');
+            assert.equal(count, 7);
+            const timeTaken = new Date().getTime() - now;
+            assert.ok(timeTaken > 250 && timeTaken < 300, 'should be within this time window: 250ms & 300ms');
             done();
         });
-        ////
-        //
-        var now = new Date().getTime();
-        //
+
         function createObservableForTask(item) {
-            console.log(item.type);
             return Rx.Observable.create(observer => {
                 setTimeout(function () {
                     observer.onNext(item.task.taskName);
                     observer.onCompleted();
-                }, 100);
+                }, 50);
             }).timestamp()
                 .map(x => {
                     x.timestamp = x.timestamp - now;
                     return x;
                 })
         }
-        //
-        //var s$ = Rx.Observable.merge(
-        //    createObservableForTask('1'),
-        //    createObservableForTask('2')
-        //);
-        //
-        //var s2$ = Rx.Observable.merge(
-        //    createObservableForTask('3'),
-        //    createObservableForTask('4')
-        //);
-        //
-        //const result$ = Rx.Observable.merge(s$, s2$);
-        //
-        //result$.subscribeOnCompleted(function () {
-        //    console.timeEnd('rx');
-        //    console.log('All done');
-        //    done();
-        //});
 
         function log (obj) {
             console.log(obj);
             require('fs').writeFileSync('out.json', JSON.stringify(obj, null, 4));
         }
-
-        //console.log(runner.sequence[0]);
-        //console.log(runner.sequence[1]);
-        //console.log(runner.sequence[1].task.taskName);
-        //console.log(runner.sequence[2].task.taskName);
-        //console.log(runner.sequence[3].task.taskName);
-        //console.log(runner.sequence[4].task.taskName);
-
-        //assert.equal(runner.sequence[0].sequenceTasks.length, 1);
-        //assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
-        //assert.equal(runner.tasks.valid[0].command, 'ls');
-
     });
 });
