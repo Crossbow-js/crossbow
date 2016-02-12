@@ -1,0 +1,50 @@
+[
+    {
+        "type": "Parallel Group",
+        "parents": [],
+        "items": [
+            {
+                "type": "Item",
+                "parents": [
+                    "js"
+                ],
+                "task": {
+                    "valid": true,
+                    "adaptor": "npm",
+                    "taskName": "@npm webpack",
+                    "subTasks": [],
+                    "modules": [],
+                    "tasks": [],
+                    "rawInput": "@npm webpack",
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "command": "webpack",
+                    "runMode": "series"
+                }
+            },
+            {
+                "type": "Item",
+                "parents": [
+                    "js"
+                ],
+                "task": {
+                    "valid": true,
+                    "adaptor": "npm",
+                    "taskName": "@npm uglify src/*.js",
+                    "subTasks": [],
+                    "modules": [],
+                    "tasks": [],
+                    "rawInput": "@npm uglify src/*.js",
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "command": "uglify src/*.js",
+                    "runMode": "series"
+                }
+            }
+        ]
+    }
+]
