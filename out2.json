@@ -1,0 +1,34 @@
+[
+    {
+        "valid": true,
+        "rawInput": "js",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "completed": true,
+                "taskName": "test/fixtures/tasks/simple.js",
+                "startTime": 1455397651093,
+                "endTime": 1455397651104,
+                "duration": 11
+            }
+        ],
+        "parents": [],
+        "errors": [],
+        "runMode": "series",
+        "completed": false,
+        "taskName": "js"
+    }
+]

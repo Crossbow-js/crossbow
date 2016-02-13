@@ -119,7 +119,6 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         runMode = 'parallel';
     }
 
-
     /**
      * Split the incoming taskname on colons
      *  eg: sass:site:dev

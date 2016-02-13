@@ -2,6 +2,7 @@ const assert = require('chai').assert;
 const cli = require("../");
 const Rx = require("rx");
 const createSeq = require("../dist/task.sequence").createSequence;
+const createSeq2 = require("../dist/task.sequence").createFlattenedSequence;
 
 function handoff(cmd, input, cb) {
     return cli({
@@ -12,27 +13,100 @@ function handoff(cmd, input, cb) {
     }, input, cb);
 }
 
+function log (obj, pathname) {
+    console.log(obj);
+    require('fs').writeFileSync(pathname || 'out.json', JSON.stringify(obj, null, 4));
+}
+
 describe('Gathering run tasks, grouped by runMode', function () {
     it.only('can run in series', function (done) {
         this.timeout(10000);
-        var runner = handoff(['js', 'css'], {
+        var runner = handoff(['js'], {
             tasks: {
                 'build-all': ['js', 'css'],
-                'css':       ['@npm sleep 0.1', '@npm sleep 0.1', '@npm sleep 0.1', 'html'],
-                'js':        ['@npm sleep 1', '@npm sleep 1'],
-                'html':      ['@npm sleep 0.1']
+                'js':        ['test/fixtures/tasks/simple.multi.js']
+            },
+            config: {
+                'test/fixtures/tasks/simple.js': {
+                    first: 'shane',
+                    second: 'kittie'
+                }
             }
         });
-        var stream$ = Rx.Observable.merge(runner.sequence)
-            .subscribe(function (val) {
 
-            }, function (e) {
+        const seq = createSeq2(runner.tasks.valid);
+        log(seq);
+        //console.log(runner.tasks.valid);
 
-            }, function () {
-            	//console.log('done');
-                console.log(runner.tasks.valid[1].tasks[3]);
-                done();
-            })
+        var o = [
+            {
+                type: 'Series Group',
+                parents: [],
+                name: 'js',
+                items: [
+                    {
+                        type: 'Task',
+                        parents: ['js'],
+                        factory: function simple(){},
+                        task: {
+                            "modules": [
+                                "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                            ],
+                            "parents": [
+                                "js"
+                            ],
+                            "valid": true,
+                            "rawInput": "test/fixtures/tasks/simple.multi.js",
+                            "subTasks": [],
+                            "tasks": [],
+                            "errors": [],
+                            "runMode": "series",
+                            "completed": false,
+                            "taskName": "test/fixtures/tasks/simple.multi.js"
+                        }
+                    },
+                    {
+                        type: 'Task',
+                        parents: ['js'],
+                        id: '0.1',
+                        factory: function simple2(){},
+                        task: {
+                            "modules": [
+                                "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                            ],
+                            "parents": [
+                                "js"
+                            ],
+                            "valid": true,
+                            "rawInput": "test/fixtures/tasks/simple.multi.js",
+                            "subTasks": [],
+                            "tasks": [],
+                            "errors": [],
+                            "runMode": "series",
+                            "completed": false,
+                            "taskName": "test/fixtures/tasks/simple.multi.js"
+                        }
+                    }
+                ]
+            }
+        ]
+
+        done();
+
+        //log(runner.tasks.valid);
+        //console.log(runner.sequence);
+
+
+        //var stream$ = Rx.Observable.merge(runner.sequence)
+        //    .subscribe(function (val) {
+        //        console.log(val);
+        //    }, function (e) {
+        //
+        //    }, function () {
+        //        //log(runner.tasks.valid, 'out2.json');
+        //        console.log(runner.tasks.valid[0]);
+        //        done();
+        //    })
 
         //stream$.subscribeOnNext(function (val) {
         //	//console.log(val);
@@ -103,11 +177,6 @@ describe('Gathering run tasks, grouped by runMode', function () {
                     x.timestamp = x.timestamp - now;
                     return x;
                 })
-        }
-
-        function log (obj) {
-            console.log(obj);
-            require('fs').writeFileSync('out.json', JSON.stringify(obj, null, 4));
         }
     });
 });

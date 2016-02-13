@@ -1,198 +1,62 @@
 [
     {
         "type": "Series Group",
-        "parents": [],
+        "name": "js",
         "items": [
             {
-                "type": "Series Group",
-                "parents": [
-                    "build-all"
-                ],
-                "items": [
-                    {
-                        "type": "Item",
-                        "parents": [
-                            "build-all",
-                            "js"
-                        ],
-                        "task": {
-                            "valid": true,
-                            "adaptor": "npm",
-                            "taskName": "@npm webpack",
-                            "subTasks": [],
-                            "modules": [],
-                            "tasks": [],
-                            "rawInput": "@npm webpack",
-                            "parents": [
-                                "build-all",
-                                "js"
-                            ],
-                            "errors": [],
-                            "command": "webpack",
-                            "runMode": "series"
-                        }
-                    },
-                    {
-                        "type": "Item",
-                        "parents": [
-                            "build-all",
-                            "js"
-                        ],
-                        "task": {
-                            "valid": true,
-                            "adaptor": "npm",
-                            "taskName": "@npm uglify src/*.js",
-                            "subTasks": [],
-                            "modules": [],
-                            "tasks": [],
-                            "rawInput": "@npm uglify src/*.js",
-                            "parents": [
-                                "build-all",
-                                "js"
-                            ],
-                            "errors": [],
-                            "command": "uglify src/*.js",
-                            "runMode": "series"
-                        }
-                    }
-                ]
-            },
-            {
-                "type": "Series Group",
-                "parents": [
-                    "build-all"
-                ],
-                "items": [
-                    {
-                        "type": "Item",
-                        "parents": [
-                            "build-all",
-                            "css"
-                        ],
-                        "task": {
-                            "valid": true,
-                            "adaptor": "npm",
-                            "taskName": "@npm sass",
-                            "subTasks": [],
-                            "modules": [],
-                            "tasks": [],
-                            "rawInput": "@npm sass",
-                            "parents": [
-                                "build-all",
-                                "css"
-                            ],
-                            "errors": [],
-                            "command": "sass",
-                            "runMode": "series"
-                        }
-                    },
-                    {
-                        "type": "Item",
-                        "parents": [
-                            "build-all",
-                            "css"
-                        ],
-                        "task": {
-                            "valid": true,
-                            "adaptor": "npm",
-                            "taskName": "@npm postcss",
-                            "subTasks": [],
-                            "modules": [],
-                            "tasks": [],
-                            "rawInput": "@npm postcss",
-                            "parents": [
-                                "build-all",
-                                "css"
-                            ],
-                            "errors": [],
-                            "command": "postcss",
-                            "runMode": "series"
-                        }
-                    },
-                    {
-                        "type": "Item",
-                        "parents": [
-                            "build-all",
-                            "css"
-                        ],
-                        "task": {
-                            "valid": true,
-                            "adaptor": "shell",
-                            "taskName": "@shell ls",
-                            "subTasks": [],
-                            "modules": [],
-                            "tasks": [],
-                            "rawInput": "@shell ls",
-                            "parents": [
-                                "build-all",
-                                "css"
-                            ],
-                            "errors": [],
-                            "command": "ls",
-                            "runMode": "series"
-                        }
-                    },
-                    {
-                        "type": "Series Group",
-                        "parents": [
-                            "build-all",
-                            "css"
-                        ],
-                        "items": [
-                            {
-                                "type": "Item",
-                                "parents": [
-                                    "build-all",
-                                    "css",
-                                    "html"
-                                ],
-                                "task": {
-                                    "valid": true,
-                                    "adaptor": "npm",
-                                    "taskName": "@npm HTMLmin",
-                                    "subTasks": [],
-                                    "modules": [],
-                                    "tasks": [],
-                                    "rawInput": "@npm HTMLmin",
-                                    "parents": [
-                                        "build-all",
-                                        "css",
-                                        "html"
-                                    ],
-                                    "errors": [],
-                                    "command": "HTMLmin",
-                                    "runMode": "series"
-                                }
-                            },
-                            {
-                                "type": "Item",
-                                "parents": [
-                                    "build-all",
-                                    "css",
-                                    "html"
-                                ],
-                                "task": {
-                                    "valid": true,
-                                    "adaptor": "npm",
-                                    "taskName": "@npm curl something",
-                                    "subTasks": [],
-                                    "modules": [],
-                                    "tasks": [],
-                                    "rawInput": "@npm curl something",
-                                    "parents": [
-                                        "build-all",
-                                        "css",
-                                        "html"
-                                    ],
-                                    "errors": [],
-                                    "command": "curl something",
-                                    "runMode": "series"
-                                }
-                            }
-                        ]
-                    }
-                ]
+                "type": "Task",
+                "task": {
+                    "valid": true,
+                    "rawInput": "test/fixtures/tasks/simple.multi.js",
+                    "subTasks": [],
+                    "modules": [
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                    ],
+                    "tasks": [],
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "runMode": "series",
+                    "completed": false,
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
+                },
+                "factory": {
+                    "tasks": [
+                        null,
+                        null
+                    ]
+                }
             }
-        ]
+        ],
+        "task": {
+            "valid": true,
+            "rawInput": "js",
+            "subTasks": [],
+            "modules": [],
+            "tasks": [
+                {
+                    "valid": true,
+                    "rawInput": "test/fixtures/tasks/simple.multi.js",
+                    "subTasks": [],
+                    "modules": [
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                    ],
+                    "tasks": [],
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "runMode": "series",
+                    "completed": false,
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
+                }
+            ],
+            "parents": [],
+            "errors": [],
+            "runMode": "series",
+            "completed": false,
+            "taskName": "js"
+        }
     }
 ]

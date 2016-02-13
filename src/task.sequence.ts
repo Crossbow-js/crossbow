@@ -19,6 +19,73 @@ export interface SequenceItem {
     task: Task
 }
 
+export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigger): any[] {
+    return flatten(tasks, []);
+
+    function flatten(items: Task[], initial: SequenceItem[]) {
+        function reducer(all, task: Task) {
+            /**
+             * If the current task has child tasks, we build a tree of
+             * nested observables for it (a task with children cannot itself
+             * be a task that should be run)
+             */
+            if (task.tasks.length) {
+
+                /**
+                 * If the current task was marked as `parallel`, all immediate children
+                 * of (this task) will be run in `parallel`
+                 */
+                if (task.runMode === 'parallel') {
+                    return all.concat({
+                        type: 'Parallel Group',
+                        name: task.taskName,
+                        items: flatten(task.tasks, []),
+                        task: task
+                    });
+                }
+                /**
+                 * If the current task was marked as `series`, all immediate child tasks
+                 * will be queued and run in series - each waiting until the previous
+                 * one has completed
+                 */
+                if (task.runMode === 'series') {
+                    return all.concat({
+                        type: 'Series Group',
+                        name: task.taskName,
+                        items: flatten(task.tasks, []),
+                        task: task
+                    });
+                }
+            }
+
+            /**
+             * At this point, we must be dealing with a task that should be run,
+             * so we first check if it's an adaptor @ task first
+             */
+            if (task.adaptor) {
+                return all.concat({
+                    type: 'Task',
+                    task: task,
+                    factory: createAdaptorTask(task, trigger)
+                });
+            }
+
+            /**
+             * Finally, if the does not have children tasks & is not an
+             * adaptor task it must have at least 1 associated module
+             */
+            if (task.modules.length) {
+                return all.concat({
+                    type: 'Task',
+                    task: task,
+                    factory: require(task.modules[0])
+                });
+            }
+        }
+        return items.reduce(reducer, initial);
+    }
+}
+
 export function createSequence (tasks: Task[], trigger: RunCommandTrigger): any[] {
 
     return flatten(tasks, []);
@@ -53,19 +120,19 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): any[
 
             /**
              * At this point, we must be dealing with a task that should be run,
-             * so we first check if it's an adaptor @ task
+             * so we first check if it's an adaptor @ task first
              */
             if (task.adaptor) {
-                return all.concat(adaptorSequence(task, trigger));
+                return all.concat(createAdaptorTask(task, trigger));
             }
 
             /**
              * Finally, if the does not have children tasks & is not an
              * adaptor task it must have at least 1 associated module
              */
-            //if (task.modules.length) {
-            //    return all.concat(loadModules(task, trigger));
-            //}
+            if (task.modules.length) {
+                return all.concat(loadModules(task, trigger));
+            }
 
             return all;
         }
@@ -78,34 +145,37 @@ export function createSequence (tasks: Task[], trigger: RunCommandTrigger): any[
  * Call the create method of the compatibility layer
  * to enable a fn that can be used in the pipeline
  * @param task
- * @param input
- * @param config
+ * @param trigger
  * @returns {{fns: *[], opts: {}, task: *}}
  */
-function adaptorSequence(task: Task, trigger: RunCommandTrigger): SequenceItem {
+function createAdaptorTask(task: Task, trigger: RunCommandTrigger): SequenceItem {
 
-    const adaptor = adaptors[task.adaptor].create(task, trigger);
+    const taskFactory = adaptors[task.adaptor].create(task, trigger);
+    return createObservableFromTask(task, trigger, {}, taskFactory);
+}
+
+function createObservableFromTask(task: Task, trigger: RunCommandTrigger, opts:any, factory: any) {
     return Rx.Observable.create(obs => {
-        obs.done = function () {
-            obs.onCompleted();
-        };
-        task.startTime = new Date().getTime();
-        process.nextTick(function () {
-            try {
-                adaptor(obs);
-            } catch (e) {
-                obs.onError(e);
+            obs.done = function () {
+                obs.onCompleted();
+            };
+            task.startTime = new Date().getTime();
+            process.nextTick(function () {
+                try {
+                    factory(obs, opts, trigger);
+                } catch (e) {
+                    obs.onError(e);
+                }
+            });
+            return () => {
+                task.endTime   = new Date().getTime();
+                task.duration  = task.endTime - task.startTime;
+                task.completed = true;
             }
-        });
-        return () => {
-            task.endTime   = new Date().getTime();
-            task.duration  = task.endTime - task.startTime;
-            task.completed = true;
-        }
-    })
+        })
         .catch(function (e) {
             console.log(e);
-            return Rx.Observable.empty();
+            return Rx.Observable.throw(e);
         })
         .share();
 }
@@ -146,11 +216,12 @@ function loadModules(task: Task, trigger: RunCommandTrigger): SequenceItem[] {
      * this item
      */
     if (!task.subTasks.length) {
-        return [{
-            sequenceTasks: requireModule(task.modules[0]),
-            opts: transformStrings(topLevelOpts, config),
-            task: task
-        }];
+
+        const opts       = transformStrings(topLevelOpts, config);
+        const moduleTask = getTaskFunctions(require(task.modules[0]), task.taskName, []);
+        return moduleTask.map(fn => {
+            return createObservableFromTask(task, trigger, opts, fn);
+        });
     }
 
     /**
