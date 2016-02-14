@@ -102,7 +102,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         	done();
         });
     });
-    it.only('can run in parallel', function (done) {
+    it('can run in parallel', function (done) {
         this.timeout(10000);
         var runner = handoff(['js@p', 'css@p'], {
             tasks: {
