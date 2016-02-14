@@ -79,45 +79,62 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
              * adaptor task it must have at least 1 associated module
              */
             if (task.modules.length) {
+
+                const localConfig = loadConfig(task, trigger);
+                const imported    = require(task.modules[0]);
+
                 if (task.subTasks.length) {
-                    console.log('Has sub tasks', task.subTasks);
+
+                    const configs = task.subTasks
+                        .map(configKey => {
+                            return objPath.get(localConfig, configKey);
+                        });
+
+                    return all.concat(configs.reduce(function (acc, _c) {
+                        return acc.concat(getSequenceItemWithConfig(task, trigger, imported, _c));
+                    }, []));
                 }
-                const imported = require(task.modules[0]);
-                /**
-                 * If the module did not export a function, but has a 'tasks'
-                 * property that is an array, use each function from it
-                 * eg:
-                 *  module.exports.tasks [sass, cssmin, version-rev]
-                 */
-                if (imported.tasks && Array.isArray(imported.tasks)) {
-                    return all.concat(imported.tasks.map(function (importedFn) {
-                        return {
-                            type: 'Task',
-                            fnName: importedFn.name,
-                            factory: importedFn,
-                            task: task,
-                            config: loadConfig(task, trigger)
-                        }
-                    }));
-                }
-                /**
-                 * If the module exported a function, use that as the factory
-                 * and return a single task for it.
-                 * eg:
-                 *  module.exports = function runSass() {}
-                 */
-                if (typeof imported === 'function') {
-                    return all.concat({
-                        type: 'Task',
-                        fnName: imported.name,
-                        factory: imported,
-                        task: task,
-                        config: loadConfig(task, trigger)
-                    });
-                }
+
+                return getSequenceItemWithConfig(task, trigger, imported, localConfig);
             }
         }
         return items.reduce(reducer, initial);
+    }
+}
+
+function getSequenceItemWithConfig (task, trigger, imported, config) {
+
+    /**
+     * If the module did not export a function, but has a 'tasks'
+     * property that is an array, use each function from it
+     * eg:
+     *  module.exports.tasks [sass, cssmin, version-rev]
+     */
+    if (imported.tasks && Array.isArray(imported.tasks)) {
+        return imported.tasks.map(function (importedFn) {
+            return {
+                type: 'Task',
+                fnName: importedFn.name,
+                factory: importedFn,
+                task: task,
+                config: config
+            }
+        });
+    }
+    /**
+     * If the module exported a function, use that as the factory
+     * and return a single task for it.
+     * eg:
+     *  module.exports = function runSass() {}
+     */
+    if (typeof imported === 'function') {
+        return {
+            type: 'Task',
+            fnName: imported.name,
+            factory: imported,
+            config: config,
+            task: task,
+        }
     }
 }
 

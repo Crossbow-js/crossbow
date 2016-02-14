@@ -26,12 +26,12 @@ describe('Gathering run tasks, grouped by runMode', function () {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js'],
-                'css':       'test/fixtures/tasks/simple.js:first'
+                'css':       'test/fixtures/tasks/simple.js:first:second'
             },
             config: {
                 'test/fixtures/tasks/simple.js': {
-                    first: 'shane',
-                    second: 'kittie'
+                    first: {name: 'shane'},
+                    second: {name: 'kittie'}
                 }
             }
         });

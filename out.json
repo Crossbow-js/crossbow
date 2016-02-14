@@ -8,9 +8,10 @@
                 "fnName": "simple",
                 "task": {
                     "valid": true,
-                    "rawInput": "test/fixtures/tasks/simple.js:first",
+                    "rawInput": "test/fixtures/tasks/simple.js:first:second",
                     "subTasks": [
-                        "first"
+                        "first",
+                        "second"
                     ],
                     "modules": [
                         "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
@@ -25,8 +26,33 @@
                     "taskName": "test/fixtures/tasks/simple.js"
                 },
                 "config": {
-                    "first": "shane",
-                    "second": "kittie"
+                    "name": "shane"
+                }
+            },
+            {
+                "type": "Task",
+                "fnName": "simple",
+                "task": {
+                    "valid": true,
+                    "rawInput": "test/fixtures/tasks/simple.js:first:second",
+                    "subTasks": [
+                        "first",
+                        "second"
+                    ],
+                    "modules": [
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                    ],
+                    "tasks": [],
+                    "parents": [
+                        "css"
+                    ],
+                    "errors": [],
+                    "runMode": "series",
+                    "completed": false,
+                    "taskName": "test/fixtures/tasks/simple.js"
+                },
+                "config": {
+                    "name": "kittie"
                 }
             }
         ]
