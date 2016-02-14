@@ -7,6 +7,12 @@ import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
 import Seq = Immutable.Seq;
 
+export const types = {
+    PARALLEL_GROUP: 'PARALLEL_GROUP',
+    SERIES_GROUP: 'SERIES_GROUP',
+    TASK: 'TASK'
+};
+
 export interface SequenceItem {
     type: string
     taskName?: string
@@ -43,13 +49,13 @@ export interface TaskFactory {
 }
 
 export function createSequenceTaskItem(incoming: SequenceTask): SequenceItem {
-    return assign({type: 'Task', items: []}, incoming);
+    return assign({type: types.TASK, items: []}, incoming);
 }
 
 export function createSequenceSeriesGroup(incoming: SequenceSeriesGroup): SequenceItem {
-    return assign({type: 'Series Group'}, incoming);
+    return assign({type: types.SERIES_GROUP}, incoming);
 }
 
 export function createSequenceParallelGroup(incoming: SequenceParallelGroup): SequenceItem {
-    return assign({type: 'Parallel Group'}, incoming);
+    return assign({type: types.PARALLEL_GROUP}, incoming);
 }

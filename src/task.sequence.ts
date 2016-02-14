@@ -11,6 +11,7 @@ import Seq = Immutable.Seq;
 import {
     SequenceItem,
     TaskFactory,
+    types,
     createSequenceParallelGroup,
     createSequenceSeriesGroup,
     createSequenceTaskItem} from "./task.sequence.factories";
@@ -199,7 +200,7 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
              * If the current task was marked as `parallel`, all immediate children
              * of (this task) will be run in `parallel`
              */
-            if (item.type === 'Parallel Group') {
+            if (item.type === types.PARALLEL_GROUP) {
 
                 return all.concat(Rx.Observable.merge(flatten(item.items, [])));
             }
@@ -208,13 +209,13 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
              * will be queued and run in series - each waiting until the previous
              * one has completed
              */
-            if (item.type === 'Series Group') {
+            if (item.type === types.SERIES_GROUP) {
                 return all.concat(Rx.Observable.concat(flatten(item.items, [])));
             }
             /**
              * Finally is item is a task, create an observable for it.
              */
-            if (item.type === 'Task' && item.factory) {
+            if (item.type === types.TASK && item.factory) {
                 createObservableFromSequenceItem(item, trigger);
             }
         }
