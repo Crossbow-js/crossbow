@@ -1,5 +1,5 @@
 import {Tasks} from "./task.resolve";
-import {SequenceItem} from "./task.sequence";
+import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 
 export interface TaskRunner {

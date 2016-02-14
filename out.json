@@ -1,29 +1,29 @@
 [
     {
         "type": "Series Group",
-        "taskName": "css",
+        "taskName": "js",
         "items": [
             {
                 "type": "Task",
+                "items": [],
                 "fnName": "simple",
                 "task": {
                     "valid": true,
-                    "rawInput": "test/fixtures/tasks/simple.js:first:second",
+                    "rawInput": "test/fixtures/tasks/simple.multi.js:*",
                     "subTasks": [
-                        "first",
-                        "second"
+                        "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
-                        "css"
+                        "js"
                     ],
                     "errors": [],
                     "runMode": "series",
                     "completed": false,
-                    "taskName": "test/fixtures/tasks/simple.js"
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "shane"
@@ -31,25 +31,77 @@
             },
             {
                 "type": "Task",
-                "fnName": "simple",
+                "items": [],
+                "fnName": "simple2",
                 "task": {
                     "valid": true,
-                    "rawInput": "test/fixtures/tasks/simple.js:first:second",
+                    "rawInput": "test/fixtures/tasks/simple.multi.js:*",
                     "subTasks": [
-                        "first",
-                        "second"
+                        "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
-                        "css"
+                        "js"
                     ],
                     "errors": [],
                     "runMode": "series",
                     "completed": false,
-                    "taskName": "test/fixtures/tasks/simple.js"
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
+                },
+                "config": {
+                    "name": "shane"
+                }
+            },
+            {
+                "type": "Task",
+                "items": [],
+                "fnName": "simple",
+                "task": {
+                    "valid": true,
+                    "rawInput": "test/fixtures/tasks/simple.multi.js:*",
+                    "subTasks": [
+                        "*"
+                    ],
+                    "modules": [
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                    ],
+                    "tasks": [],
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "runMode": "series",
+                    "completed": false,
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
+                },
+                "config": {
+                    "name": "kittie"
+                }
+            },
+            {
+                "type": "Task",
+                "items": [],
+                "fnName": "simple2",
+                "task": {
+                    "valid": true,
+                    "rawInput": "test/fixtures/tasks/simple.multi.js:*",
+                    "subTasks": [
+                        "*"
+                    ],
+                    "modules": [
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                    ],
+                    "tasks": [],
+                    "parents": [
+                        "js"
+                    ],
+                    "errors": [],
+                    "runMode": "series",
+                    "completed": false,
+                    "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "kittie"

@@ -1,5 +1,6 @@
 import {transformStrings} from "./task.utils";
 const objPath = require('object-path');
+const assign = require('object-assign');
 const Rx = require('rx');
 
 import * as adaptors from "./adaptors";
@@ -7,26 +8,19 @@ import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
 import Seq = Immutable.Seq;
+import {
+    SequenceItem,
+    TaskFactory,
+    createSequenceParallelGroup,
+    createSequenceSeriesGroup,
+    createSequenceTaskItem} from "./task.sequence.factories";
 
 interface Observer {}
-
-export interface SequenceItem {
-    type: string
-    taskName?: string
-    task?: Task
-    items: SequenceItem[]
-    factory: (obs: any, opts: any, ctx: RunCommandTrigger) => any
-    startTime: number
-    endTime: number
-    duration: number
-    completed: boolean
-    opts: any
-}
 
 export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigger): SequenceItem[] {
     return flatten(tasks, []);
 
-    function flatten(items: Task[], initial: SequenceItem[]) {
+    function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
 
         function reducer(all, task: Task) {
             /**
@@ -41,11 +35,10 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
                  * of (this task) will be run in `parallel`
                  */
                 if (task.runMode === 'parallel') {
-                    return all.concat({
-                        type: 'Parallel Group',
+                    return all.concat(createSequenceParallelGroup({
                         taskName: task.taskName,
                         items: flatten(task.tasks, [])
-                    });
+                    }));
                 }
                 /**
                  * If the current task was marked as `series`, all immediate child tasks
@@ -53,11 +46,10 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
                  * one has completed
                  */
                 if (task.runMode === 'series') {
-                    return all.concat({
-                        type: 'Series Group',
+                    return all.concat(createSequenceSeriesGroup({
                         taskName: task.taskName,
                         items: flatten(task.tasks, []),
-                    });
+                    }));
                 }
             }
 
@@ -66,43 +58,92 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
              * so we first check if it's an adaptor @ task first
              */
             if (task.adaptor) {
-                return all.concat({
-                    type: 'Task',
-                    task: task,
-                    factory: adaptors[task.adaptor].create(task, trigger),
-                    opts: {}
-                });
+                return all.concat(getSequenceItemWithConfig(
+                    task,
+                    trigger,
+                    adaptors[task.adaptor].create(task, trigger),
+                    {}
+                ));
             }
 
             /**
              * Finally, if the does not have children tasks & is not an
              * adaptor task it must have at least 1 associated module
+             * so we can begin working with it by first resolving
+             * the top-level configuration object for it.
              */
-            if (task.modules.length) {
+            const localConfig = loadTopLevelConfig(task, trigger);
+            /**
+             * Next we load the module
+             */
+            const imported    = require(task.modules[0]);
 
-                const localConfig = loadConfig(task, trigger);
-                const imported    = require(task.modules[0]);
-
-                if (task.subTasks.length) {
-
-                    const configs = task.subTasks
-                        .map(configKey => {
-                            return objPath.get(localConfig, configKey);
-                        });
-
-                    return all.concat(configs.reduce(function (acc, _c) {
-                        return acc.concat(getSequenceItemWithConfig(task, trigger, imported, _c));
-                    }, []));
-                }
-
-                return getSequenceItemWithConfig(task, trigger, imported, localConfig);
+            /**
+             * If the current item has no sub-tasks, we can return early
+             * with a simple task creation using the global config
+             *
+             * eg:
+             *      $ crossbow run sass
+             *
+             * config:
+             *      sass:
+             *        input:  "core.scss"
+             *        output: "core.css"
+             *
+             * -> `sass` task will be run with the configuration
+             *    {input: "core.scss", output: "core.css"}
+             */
+            if (!task.subTasks.length) {
+                return all.concat(getSequenceItemWithConfig(task, trigger, imported, localConfig));
             }
+
+            /**
+             * Now we know for sure that this task has `sub-items`
+             * so if the first entry in the subTasks array is a `*` - then
+             * the user wants to run all tasks under this configuration
+             * object. So we need to get the keys and use each one as a lookup
+             * on the local configuration.
+             *
+             * eg:
+             *      $ crossbow run sass:*
+             *
+             * config:
+             *   sass:
+             *     site:  {input: "core.scss"}
+             *     debug: {input: "debug.scss"}
+             *
+             * lookupKeys = ['site', 'debug']
+             */
+            const lookupKeys = task.subTasks[0] === '*'
+                ? Object.keys(localConfig)
+                : task.subTasks;
+
+            /**
+             * Now use each lookup key to generate a task
+             * that uses the config object it points to
+             */
+            return all.concat(lookupKeys
+                /**
+                 * `configKey` here will be a string that represented the subTask
+                 * name, so we use that to try and find a child key
+                 * in the config that matched it.
+                 */
+                .map(configKey => objPath.get(localConfig, configKey))
+                /**
+                 * At this point, the reducer callback will be called once with each matched
+                 * configuration item - this can then be used to generate a task with
+                 * that localised configuration
+                 */
+                .reduce((acc, currentConfigObject) => {
+                    return acc.concat(getSequenceItemWithConfig(task, trigger, imported, currentConfigObject));
+                }, [])
+            );
         }
         return items.reduce(reducer, initial);
     }
 }
 
-function getSequenceItemWithConfig (task, trigger, imported, config) {
+function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -112,13 +153,12 @@ function getSequenceItemWithConfig (task, trigger, imported, config) {
      */
     if (imported.tasks && Array.isArray(imported.tasks)) {
         return imported.tasks.map(function (importedFn) {
-            return {
-                type: 'Task',
+            return createSequenceTaskItem({
                 fnName: importedFn.name,
                 factory: importedFn,
                 task: task,
                 config: config
-            }
+            })
         });
     }
     /**
@@ -128,13 +168,12 @@ function getSequenceItemWithConfig (task, trigger, imported, config) {
      *  module.exports = function runSass() {}
      */
     if (typeof imported === 'function') {
-        return {
-            type: 'Task',
+        return [createSequenceTaskItem({
             fnName: imported.name,
             factory: imported,
             config: config,
             task: task,
-        }
+        })]
     }
 }
 
@@ -211,115 +250,9 @@ function createObservableFromSequenceItem(item: SequenceItem, trigger: RunComman
         .share();
 }
 
-/**
- * @param input
- * @param modules
- * @param item
- * @returns {*}
- */
-function loadConfig(task: Task, trigger: RunCommandTrigger): any {
-
-    /**
-     * First access top-level configuration
-     */
-    let config       = trigger.input.config;
-    let lookup       = task.taskName;
-
-    /**
-     * Now access a child property related to this task.
-     * eg:     $ sass:dev
-     * config: sass:
-     *           dev: "scss/core.scss"
-     * -> dev: "scss/core.scss"
-     *
-     * or
-     * config: sass:
-     *           dev:
-     *              input: "scss/core.scss"
-     *           site:
-     *              input: "scss/site.scss"
-     * -> {dev: {input: "scss/core.scss"}, site: {input: "scss/site.scss"}}
-     */
-    let topLevelOpts = objPath.get(config, [lookup], {});
-
-    return topLevelOpts;
-    /**
-    // * If no sub tasks exist, pass the config object relating to
-    // * this item
-    // */
-    //if (!task.subTasks.length) {
-    //
-    //    const opts       = transformStrings(topLevelOpts, config);
-    //    const moduleTask = getTaskFunctions(require(task.modules[0]), task.taskName, []);
-    //    return moduleTask.map(fn => {
-    //        return createObservableFromSequenceItem(task, trigger, opts, fn);
-    //    });
-    //}
-
-    /**
-     * If the subTasks[0] is a *
-     * add a task for each key in the provided config
-     * eg:
-     *   tasks:
-     *      css: ['sass:*', 'version-rev']
-     *
-     *   config:
-     *      sass: {
-     *          site: 'core.scss'
-     *          dev:  'core.scss'
-     *      }
-     *
-     * is exactly equivalent to running:
-     *   -> ['sass:site', 'sass:dev']
-     */
-    //if (task.subTasks[0] === '*') {
-    //    let keys = Object.keys(topLevelOpts);
-    //    if (keys.length) {
-    //        return keys.reduce((all, subTaskName) => {
-    //            return all.concat({
-    //                sequenceTasks: requireModule(task.modules[0]),
-    //                opts: transformStrings(topLevelOpts[subTaskName], config),
-    //                task: task,
-    //                subTaskName: subTaskName
-    //            });
-    //        }, []);
-    //    }
-    //}
-    //
-    ///**
-    // * Final case is when there ARE subTasks,
-    // * Add a new task for each item.
-    // */
-    //return task.subTasks.map(function (subTaskName) {
-    //    let subTaskOptions = objPath.get(topLevelOpts, [subTaskName], {});
-    //    return {
-    //        sequenceTasks: requireModule(task.modules[0]),
-    //        opts: transformStrings(subTaskOptions, config),
-    //        task: task,
-    //        subTaskName: subTaskName
-    //    };
-    //});
+function loadTopLevelConfig(task: Task, trigger: RunCommandTrigger): any {
+    return objPath.get(trigger.input.config, [task.taskName], {});
 }
-
-
-/**
-// * If the task resolves to a file on disk,
-// * we pick out either the 'tasks' property
-// * or the function export
-// * @param {String} item
-// * @returns {Object}
-// */
-//function requireModule(taskName: string): SequenceTask[]  {
-//
-//    const tasks = getTaskFunctions(require(taskName), taskName, []);
-//
-//    return tasks.map(function (fn) {
-//        return {
-//            FUNCTION: fn,
-//            completed: false
-//        };
-//    });
-//}
 
 /**
  * Accept first an array of tasks as an export,

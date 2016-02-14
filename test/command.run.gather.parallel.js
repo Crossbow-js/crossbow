@@ -22,14 +22,14 @@ function log (obj, pathname) {
 describe('Gathering run tasks, grouped by runMode', function () {
     it.only('can run in series', function (done) {
         this.timeout(10000);
-        var runner = handoff(['css'], {
+        var runner = handoff(['js'], {
             tasks: {
                 'build-all': ['js', 'css'],
-                'js':        ['test/fixtures/tasks/simple.multi.js'],
+                'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
             config: {
-                'test/fixtures/tasks/simple.js': {
+                'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}
                 }
@@ -37,7 +37,6 @@ describe('Gathering run tasks, grouped by runMode', function () {
         });
 
         log(runner.sequence);
-
         //const seq = createSeq2(runner.tasks.valid);
         //log(runner.sequence);
         //const run = createRunner(seq);
