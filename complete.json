@@ -28,9 +28,9 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455483754144,
-                "endTime": 1455483754159,
-                "duration": 15,
+                "startTime": 1455483867723,
+                "endTime": 1455483867737,
+                "duration": 14,
                 "completed": true
             },
             {
@@ -58,9 +58,9 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455483754144,
-                "endTime": 1455483754160,
-                "duration": 16,
+                "startTime": 1455483867724,
+                "endTime": 1455483867737,
+                "duration": 13,
                 "completed": true
             },
             {
@@ -88,9 +88,9 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
+                "startTime": 1455483867724,
+                "endTime": 1455483867738,
+                "duration": 14,
                 "completed": true
             },
             {
@@ -118,9 +118,9 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
+                "startTime": 1455483867724,
+                "endTime": 1455483867738,
+                "duration": 14,
                 "completed": true
             }
         ]
@@ -155,9 +155,9 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
+                "startTime": 1455483867724,
+                "endTime": 1455483867738,
+                "duration": 14,
                 "completed": true
             },
             {
@@ -186,9 +186,9 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
+                "startTime": 1455483867724,
+                "endTime": 1455483867739,
+                "duration": 15,
                 "completed": true
             }
         ]

@@ -16,7 +16,7 @@ function log (obj, pathname) {
     require('fs').writeFileSync(pathname || 'out.json', JSON.stringify(obj, null, 4));
 }
 
-describe.only('Gathering run tasks, grouped by runMode', function () {
+describe('Gathering run tasks, grouped by runMode', function () {
     it('can gather groups in series', function () {
         this.timeout(10000);
         var runner = handoff(['js'], {
@@ -102,7 +102,7 @@ describe.only('Gathering run tasks, grouped by runMode', function () {
         	done();
         });
     });
-    it('can run in parallel', function (done) {
+    it.only('can run in parallel', function (done) {
         this.timeout(10000);
         var runner = handoff(['js@p', 'css@p'], {
             tasks: {
@@ -122,12 +122,14 @@ describe.only('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
+        log(runner.sequence, 'start.json');
         const stream$  = runner.runner.parallel().share();
         const messages = [];
         stream$.subscribeOnNext(function (val) {
             messages.push(val);
         });
         stream$.subscribeOnCompleted(function () {
+            log(runner.sequence, 'complete.json');
             assert.equal(messages.length, 6);
             done();
         });

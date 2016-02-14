@@ -27,11 +27,7 @@
                 },
                 "config": {
                     "name": "shane"
-                },
-                "startTime": 1455483754144,
-                "endTime": 1455483754159,
-                "duration": 15,
-                "completed": true
+                }
             },
             {
                 "type": "TASK",
@@ -57,11 +53,7 @@
                 },
                 "config": {
                     "name": "shane"
-                },
-                "startTime": 1455483754144,
-                "endTime": 1455483754160,
-                "duration": 16,
-                "completed": true
+                }
             },
             {
                 "type": "TASK",
@@ -87,11 +79,7 @@
                 },
                 "config": {
                     "name": "kittie"
-                },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
-                "completed": true
+                }
             },
             {
                 "type": "TASK",
@@ -117,11 +105,7 @@
                 },
                 "config": {
                     "name": "kittie"
-                },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
-                "completed": true
+                }
             }
         ]
     },
@@ -154,11 +138,7 @@
                 },
                 "config": {
                     "name": "shane"
-                },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
-                "completed": true
+                }
             },
             {
                 "type": "TASK",
@@ -185,11 +165,7 @@
                 },
                 "config": {
                     "name": "kittie"
-                },
-                "startTime": 1455483754145,
-                "endTime": 1455483754161,
-                "duration": 16,
-                "completed": true
+                }
             }
         ]
     }
