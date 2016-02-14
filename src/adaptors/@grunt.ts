@@ -4,7 +4,7 @@ import {resolve} from 'path';
 
 module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
-    return function (obs) {
+    return function (opts, ctx, observer) {
 
         const grunt = require('grunt');
         const taskList = task.command.split(' ');
@@ -16,9 +16,9 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
             npm: []
         }, function (err) {
             if (err) {
-                return obs.onError(err);
+                return observer.onError(err);
             }
-            obs.onCompleted();
+            observer.onCompleted();
         });
     };
 };

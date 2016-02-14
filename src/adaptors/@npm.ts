@@ -94,7 +94,7 @@ function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
  */
 module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
-    return (obs) => {
+    return (opts, ctx, observer) => {
 
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const env = getEnv(process.env, trigger.config);
@@ -111,12 +111,12 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
             if (trigger.config.exitOnError) {
                 if (code !== 0) {
                     const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
-                    return obs.onError(e);
+                    return observer.onError(e);
                 }
             }
-            obs.done();
+            observer.done();
         }).on('error', function (err) {
-            obs.onError(err);
+            observer.onError(err);
         });
     };
 };

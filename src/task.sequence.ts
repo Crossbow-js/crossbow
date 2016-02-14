@@ -183,8 +183,8 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
     const flattened = flatten(items, []);
 
     return {
-        series: () => {},
-        parallel: () => {},
+        series: () => Rx.Observable.concat(flattened),
+        parallel: () => Rx.Observable.merge(flattened)
     };
 
     function flatten(items: SequenceItem[], initial: SequenceItem[]) {
@@ -216,7 +216,7 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
              * Finally is item is a task, create an observable for it.
              */
             if (item.type === types.TASK && item.factory) {
-                createObservableFromSequenceItem(item, trigger);
+                return all.concat(createObservableFromSequenceItem(item, trigger));
             }
         }
 
@@ -233,7 +233,7 @@ function createObservableFromSequenceItem(item: SequenceItem, trigger: RunComman
             item.startTime = new Date().getTime();
             process.nextTick(function () {
                 try {
-                    item.factory(obs, item.opts, trigger);
+                    item.factory(item.opts, trigger, obs);
                 } catch (e) {
                     obs.onError(e);
                 }
@@ -253,30 +253,4 @@ function createObservableFromSequenceItem(item: SequenceItem, trigger: RunComman
 
 function loadTopLevelConfig(task: Task, trigger: RunCommandTrigger): any {
     return objPath.get(trigger.input.config, [task.taskName], {});
-}
-
-/**
- * Accept first an array of tasks as an export,
- * then look if a single function was exported and
- * use that instead
- * @param {Object} item
- * @param {String} taskName
- * @param {Array} previous
- * @returns {Array}
- */
-function getTaskFunctions(item: any, taskName: string, previous) {
-
-    if (typeof item === 'function') {
-        return previous.concat(item);
-    }
-
-    const moduleTasks = item.tasks;
-
-    if (Array.isArray(moduleTasks)) {
-        return previous.concat(moduleTasks);
-    }
-
-    console.error('Module %s did not have a tasks array or function export', taskName);
-
-    return previous;
 }

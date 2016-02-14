@@ -1,15 +1,13 @@
-function simple (obs, opts, ctx) {
-
-    //obs.log.info('{blue:+} Running simple 1');
+function simple (opts, ctx, obs) {
     setTimeout(function () {
-        console.log('simple1 done');
+        obs.onNext('simple multi 1');
         obs.done();
     }, 10);
 }
 
-function simple2 (obs, opts, ctx) {
+function simple2 (opts, ctx, obs) {
     setTimeout(function () {
-        console.log('simple2 done');
+        obs.onNext('simple multi 2');
         obs.done();
     }, 10);
 }

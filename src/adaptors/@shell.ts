@@ -5,7 +5,7 @@ const debug = require('debug')('cb:@shell');
 
 module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
-    return function (obs) {
+    return function (opts, ctx, observer) {
 
         const args = getArgs(task, trigger);
 
@@ -21,12 +21,12 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
             if (trigger.config.exitOnError) {
                 if (code !== 0) {
                     const e = new Error(`Command ${args.cmd.join(' ')} failed with exit code ${code}`);
-                    return obs.onError(e);
+                    return observer.onError(e);
                 }
             }
-            obs.done();
+            observer.done();
         }).on('error', function (err) {
-            obs.onError(err);
+            observer.onError(err);
         });
     };
 };
