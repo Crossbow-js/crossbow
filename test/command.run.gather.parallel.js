@@ -3,6 +3,7 @@ const cli = require("../");
 const Rx = require("rx");
 const createSeq = require("../dist/task.sequence").createSequence;
 const createSeq2 = require("../dist/task.sequence").createFlattenedSequence;
+const createRunner = require("../dist/task.sequence").createRunner;
 
 function handoff(cmd, input, cb) {
     return cli({
@@ -21,10 +22,11 @@ function log (obj, pathname) {
 describe('Gathering run tasks, grouped by runMode', function () {
     it.only('can run in series', function (done) {
         this.timeout(10000);
-        var runner = handoff(['js'], {
+        var runner = handoff(['css'], {
             tasks: {
                 'build-all': ['js', 'css'],
-                'js':        ['test/fixtures/tasks/simple.multi.js']
+                'js':        ['test/fixtures/tasks/simple.multi.js'],
+                'css':       'test/fixtures/tasks/simple.js:first'
             },
             config: {
                 'test/fixtures/tasks/simple.js': {
@@ -34,9 +36,14 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const seq = createSeq2(runner.tasks.valid);
-        log(seq);
+        log(runner.sequence);
+
+        //const seq = createSeq2(runner.tasks.valid);
+        //log(runner.sequence);
+        //const run = createRunner(seq);
+        //log(seq);
         //console.log(runner.tasks.valid);
+        //console.log(runner.runner);
 
         var o = [
             {
