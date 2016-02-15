@@ -1,10 +1,10 @@
 [
     {
-        "type": "PARALLEL_GROUP",
+        "type": 1,
         "taskName": "js",
         "items": [
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -30,7 +30,7 @@
                 }
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple2",
                 "task": {
@@ -56,7 +56,7 @@
                 }
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -82,7 +82,7 @@
                 }
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple2",
                 "task": {
@@ -110,11 +110,11 @@
         ]
     },
     {
-        "type": "PARALLEL_GROUP",
+        "type": 1,
         "taskName": "css",
         "items": [
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -141,7 +141,7 @@
                 }
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {

@@ -8,6 +8,7 @@ import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
 import Seq = Immutable.Seq;
+import handleReturn from './task.return.values';
 import {
     SequenceItemTypes,
     SequenceItem,
@@ -15,8 +16,6 @@ import {
     createSequenceParallelGroup,
     createSequenceSeriesGroup,
     createSequenceTaskItem} from "./task.sequence.factories";
-
-interface Observer {}
 
 export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigger): SequenceItem[] {
     return flatten(tasks, []);
@@ -226,17 +225,43 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
 
 function createObservableFromSequenceItem(item: SequenceItem, trigger: RunCommandTrigger) {
 
-    return Rx.Observable.create(obs => {
-            obs.done = function () {
-                obs.onCompleted();
+    return Rx.Observable.create(observer => {
+            observer.done = function () {
+                observer.onCompleted();
             };
             item.startTime = new Date().getTime();
             process.nextTick(function () {
+
+                var output;
+
                 try {
-                    item.factory(item.opts, trigger, obs);
+                    output = item.factory(item.opts, trigger, observer);
                 } catch (e) {
-                    obs.onError(e);
+                    observer.onError(e);
                 }
+
+                /**
+                 * If the task did return something, we can look at the
+                 * type of it's value to work out how to handle to complete the task
+                 */
+                if (output !== undefined) {
+                    return handleReturn(output, observer);
+                }
+
+                /**
+                 * If the argument length is less than 3, it means the user
+                 * has not asked for access to the observer - which means
+                 * we can complete the task immediately
+                 */
+                if (item.factory.length < 3) {
+                    return observer.onCompleted();
+                }
+
+                /**
+                 * At this point, the user has asked for access to the observer (the 3rd arg)
+                 * so we need to assume the user is going to call done on it.
+                 */
+
             });
             return () => {
                 item.endTime   = new Date().getTime();

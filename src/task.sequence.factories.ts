@@ -8,8 +8,8 @@ import {Runner} from "./runner";
 import Seq = Immutable.Seq;
 
 export enum SequenceItemTypes {
-    ParallelGroup,
     SeriesGroup,
+    ParallelGroup,
     Task
 }
 

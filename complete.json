@@ -1,10 +1,10 @@
 [
     {
-        "type": "PARALLEL_GROUP",
+        "type": 1,
         "taskName": "js",
         "items": [
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -28,13 +28,13 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple2",
                 "task": {
@@ -58,13 +58,13 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -88,13 +88,13 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple2",
                 "task": {
@@ -118,19 +118,19 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             }
         ]
     },
     {
-        "type": "PARALLEL_GROUP",
+        "type": 1,
         "taskName": "css",
         "items": [
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -155,13 +155,13 @@
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             },
             {
-                "type": "TASK",
+                "type": 2,
                 "items": [],
                 "fnName": "simple",
                 "task": {
@@ -186,8 +186,8 @@
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455484403390,
-                "endTime": 1455484403401,
+                "startTime": 1455527791648,
+                "endTime": 1455527791659,
                 "duration": 11,
                 "completed": true
             }

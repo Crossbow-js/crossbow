@@ -30,6 +30,6 @@ describe('Gathering run tasks for `@` Adaptors', function () {
     it('can flag attempted adaptors flag that does not exist', function () {
         const runner = cli.getRunner(["@gulp jshint:dev jshint:other"]);
         assert.equal(runner.tasks.invalid[0].taskName, '@gulp jshint:dev jshint:other');
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'ADAPTOR_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 4);
     });
 });

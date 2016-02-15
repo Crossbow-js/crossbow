@@ -9,7 +9,7 @@ describe('Gathering run tasks with errors', function () {
             flags: {handoff: true}
         }, {crossbow: {}});
 
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'MODULE_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 0);
     });
     it('reports multiple missing modules', function () {
     	const runner = cli({
@@ -17,9 +17,9 @@ describe('Gathering run tasks with errors', function () {
             flags: {handoff: true}
         }, {crossbow: {}});
 
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'MODULE_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 0);
         assert.equal(runner.tasks.invalid[0].taskName, 'list');
-        assert.equal(runner.tasks.invalid[1].errors[0].type, 'MODULE_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[1].errors[0].type, 0);
         assert.equal(runner.tasks.invalid[1].taskName, 'otheraswell');
     });
     it('reports multiple missing modules plus missing subtask config', function () {
@@ -29,11 +29,11 @@ describe('Gathering run tasks with errors', function () {
         }, {crossbow: {}});
 
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'MODULE_NOT_FOUND');
-        assert.equal(runner.tasks.invalid[0].errors[1].type, 'SUBTASK_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 0);
+        assert.equal(runner.tasks.invalid[0].errors[1].type, 3);
 
         assert.equal(runner.tasks.invalid[1].errors.length, 1);
-        assert.equal(runner.tasks.invalid[1].errors[0].type, 'MODULE_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[1].errors[0].type, 0);
     });
     it('reports when subtask not given', function () {
     	const runner = cli({
@@ -42,7 +42,7 @@ describe('Gathering run tasks with errors', function () {
         }, {crossbow: {}});
 
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'SUBTASK_NOT_PROVIDED');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 2);
     });
     it('reports when subtask not found', function () {
     	const runner = cli({
@@ -52,7 +52,7 @@ describe('Gathering run tasks with errors', function () {
             'test/fixtures/tasks/simple.js': {}
         }}});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'SUBTASK_NOT_FOUND');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 3);
     });
     it('reports when subtask as * given, but not config exists', function () {
     	const runner = cli({
@@ -61,6 +61,6 @@ describe('Gathering run tasks with errors', function () {
         }, {crossbow: {config: {}}});
         //console.log(runner.tasks);
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 'SUBTASKS_NOT_IN_CONFIG');
+        assert.equal(runner.tasks.invalid[0].errors[0].type, 1);
     });
 });

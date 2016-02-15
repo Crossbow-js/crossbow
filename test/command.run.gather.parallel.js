@@ -33,7 +33,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        assert.equal(runner.sequence[0].type, types.SERIES_GROUP);
+        assert.equal(runner.sequence[0].type, 0);
         assert.equal(runner.sequence[0].items.length, 4);
         assert.equal(runner.sequence[0].items[0].config.name, 'shane');
         assert.equal(runner.sequence[0].items[1].config.name, 'shane');
@@ -60,7 +60,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
         assert.equal(runner.sequence[0].items.length, 2);
-        assert.equal(runner.sequence[0].items[0].type, types.SERIES_GROUP);
+        assert.equal(runner.sequence[0].items[0].type, 0);
         assert.equal(runner.sequence[0].items[0].items.length, 4);
         assert.equal(runner.sequence[0].items[1].items.length, 2);
     });

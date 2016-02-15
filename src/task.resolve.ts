@@ -163,15 +163,15 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
     );
 
     return createTask(<Task>{
+        parents,
+        errors,
+        runMode,
         rawInput: taskName,
         taskName: baseTaskName,
         subTasks: subTaskItems,
         modules:  locatedModules,
         tasks:    childTasks,
         valid:    errors.length === 0,
-        parents:  parents,
-        errors:   errors,
-        runMode:  runMode
     });
 }
 
