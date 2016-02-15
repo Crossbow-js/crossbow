@@ -15,7 +15,6 @@ export interface TaskRunner {
 }
 
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: RunCommandTrigger) {
-
     return Rx.Observable.create(observer => {
             observer.done = function () {
                 observer.onCompleted();
@@ -72,6 +71,5 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Ru
                 console.log(e.stack);
                 return Rx.Observable.empty();
             }
-        })
-        .share();
+        });
 }
