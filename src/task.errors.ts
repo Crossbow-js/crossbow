@@ -1,15 +1,20 @@
 const objPath = require('object-path');
 
-export interface TaskError {
-    type: string
+export enum TaskErrorTypes {
+    ModuleNotFound,
+    SubtasksNotInConfig,
+    SubtaskNotProvided,
+    SubtaskNotFound,
+    AdaptorNotFound
 }
 
-export interface ModuleNotFoundError     extends TaskError { type: 'MODULE_NOT_FOUND' }
-export interface SubtaskNotInConfigError extends TaskError { type: 'SUBTASKS_NOT_IN_CONFIG', name: string }
-export interface SubtaskNotProvidedError extends TaskError { type: 'SUBTASK_NOT_PROVIDED',   name: string }
-export interface SubtaskNotFoundError    extends TaskError { type: 'SUBTASK_NOT_FOUND',      name: string }
+export interface TaskError {}
 
-export interface AdaptorNotFoundError    extends TaskError { type: 'ADAPTOR_NOT_FOUND',      taskName: string }
+export interface ModuleNotFoundError     extends TaskError { type: TaskErrorTypes }
+export interface SubtaskNotInConfigError extends TaskError { type: TaskErrorTypes, name: string }
+export interface SubtaskNotProvidedError extends TaskError { type: TaskErrorTypes, name: string }
+export interface SubtaskNotFoundError    extends TaskError { type: TaskErrorTypes, name: string }
+export interface AdaptorNotFoundError    extends TaskError { type: TaskErrorTypes, taskName: string }
 
 export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, baseTaskName, input): TaskError[] {
     /**
@@ -17,7 +22,7 @@ export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, base
      * this can be classified as a `module not found error`
      */
     const moduleError = (locatedModules.length === 0 && childTasks.length === 0)
-        ? [<ModuleNotFoundError>{type: 'MODULE_NOT_FOUND'}]
+        ? [<ModuleNotFoundError>{type: TaskErrorTypes.ModuleNotFound}]
         : [];
 
     /**
@@ -40,7 +45,7 @@ export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, base
             const configKeys = Object.keys(objPath.get(input, ['config'].concat(baseTaskName), {}));
             if (!configKeys.length) {
                 return all.concat(<SubtaskNotInConfigError>{
-                    type: 'SUBTASKS_NOT_IN_CONFIG',
+                    type: TaskErrorTypes.SubtasksNotInConfig,
                     name: name
                 });
             }
@@ -58,7 +63,7 @@ export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, base
          */
         if (name === '') {
             return all.concat(<SubtaskNotProvidedError>{
-                type: 'SUBTASK_NOT_PROVIDED',
+                type: TaskErrorTypes.SubtaskNotProvided,
                 name: name
             });
         }
@@ -69,7 +74,7 @@ export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, base
         const match = objPath.get(input, ['config'].concat(baseTaskName, name));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
-                type: 'SUBTASK_NOT_FOUND',
+                type: TaskErrorTypes.SubtaskNotFound,
                 name: name
             });
         }

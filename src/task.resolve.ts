@@ -1,6 +1,7 @@
+import {AdaptorNotFoundError} from "./task.errors";
 const merge   = require('lodash.merge');
 
-import {AdaptorNotFoundError, TaskError, gatherTaskErrors} from "./task.errors";
+import {TaskErrorTypes, TaskError, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
@@ -63,7 +64,7 @@ function createAdaptorTask (taskName, parents) : Task {
         return createTask({
             taskName: taskName,
             errors: [<AdaptorNotFoundError>{
-                type: 'ADAPTOR_NOT_FOUND',
+                type: TaskErrorTypes.AdaptorNotFound,
                 taskName: taskName
             }]
         });
