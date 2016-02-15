@@ -4,7 +4,7 @@ import {Task} from "../task.resolve";
 
 const spawn        = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
-const debug        = require('debug')('cb:npm');
+const debug        = require('debug')('cb:adaptors.npm');
 const assign       = require('object-assign');
 
 import {transformStrings} from '../task.utils';
@@ -99,7 +99,7 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const env = getEnv(process.env, trigger.config);
 
-        debug(`running %s`, commandArgs.cmd);
+        debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,

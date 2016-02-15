@@ -35,7 +35,7 @@ const defaults = <CrossbowConfiguration>{
      * CI mode - will exit if any shell/npm scripts
      * return a non-zero exit code
      */
-    exitOnError: false,
+    exitOnError: true,
     /**
      * How much task information should be output
      * following task completion/setup
@@ -84,7 +84,7 @@ const flagTransforms = {
      * -e sets exitOnError => true
      */
     e: (opts) => {
-        return assign({}, opts, {exitOnError: true});
+        return assign({}, opts, {exitOnError: opts.e});
     },
     /**
      * -c specifies a config file
