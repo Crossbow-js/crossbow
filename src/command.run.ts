@@ -7,6 +7,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
+import {summary} from './reporters/defaultReporter';
 
 export interface CommandTrigger {
     type: string
@@ -77,10 +78,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          * will have already been printed)
          */
         .catch(function (e) {
+            console.log(e.stack);
             if (config.exitOnError === true) {
                 return process.exit(1);
             }
-            console.log(e.stack);
             return Rx.Observable.empty(e);
         }).share();
 
@@ -88,6 +89,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * The subscription to kick-start everything
      */
     runner$.subscribeOnCompleted(function () {
+        summary(sequence, cli, input, config);
     	// todo: reporter: handle completion here.
     })
 }

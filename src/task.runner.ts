@@ -5,7 +5,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {RunCommandTrigger} from './command.run';
 const debug = require('debug')('cb:task.runner');
-
+import logger from './logger';
 import handleReturn from './task.return.values';
 
 export interface TaskRunner {
@@ -61,7 +61,11 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Ru
             }
         })
         .catch(function (e) {
-            console.log('The following error is from the task ', item.task.taskName);
+            const msg = ('The following error is from the task'  +  item.task.taskName).length;
+            const lineLength = new Array(msg).join('-');
+            logger.info('{gray: ----' + lineLength);
+            logger.info('{err: } The following error is from the task ', item.task.taskName);
+            logger.info('{gray: ----' + lineLength);
             // todo: reporter: allow logging here
             if (trigger.config.exitOnError === true) {
                 debug('Exiting because exitOnError === true');

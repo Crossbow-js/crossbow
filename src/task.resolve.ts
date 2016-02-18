@@ -22,7 +22,6 @@ export interface Task {
     startTime?: number
     endTime?: number
     duration?: number
-    completed: boolean
 }
 
 const defaultTask = <Task>{
@@ -34,8 +33,7 @@ const defaultTask = <Task>{
     tasks: [],
     parents: [],
     errors: [],
-    runMode: 'series',
-    completed: false
+    runMode: 'series'
 };
 
 /**
@@ -89,8 +87,7 @@ function createAdaptorTask (taskName, parents) : Task {
         parents: parents,
         errors: [],
         command: commandInput,
-        runMode: 'series',
-        completed: false
+        runMode: 'series'
     };
 }
 
