@@ -109,31 +109,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         return createAdaptorTask(taskName, parents);
     }
 
-    var split = taskName;
-    var runMode = 'series';
-
-    if (taskName.match(/@[p]$/)) {
-        const breakup = taskName.match(/(.+?)(@[p])$/);
-        split = breakup[1];
-        runMode = 'parallel';
-    }
-
-    /**
-     * Split the incoming taskname on colons
-     *  eg: sass:site:dev
-     *  ->  ['sass', 'site', 'dev']
-     * @type {Array}
-     */
-    const splitTask = split.split(':');
-
-    /**
-     * Take the first (or the only) item as the base task name
-     *  eg: uglify:*
-     *  ->  'uglify'
-     * @type {string}
-     */
-    const baseTaskName  = splitTask[0];
-    const subTaskItems  = splitTask.slice(1);
+    const incoming = preprocessTask(taskName);
 
     /**
      * Try to locate modules/files using the cwd + the current
@@ -144,33 +120,29 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      *   =  tasks/sass.js will be run
      * @type {Array}
      */
-    const locatedModules = locateModule(trigger.config.cwd, baseTaskName);
+    const locatedModules = locateModule(trigger.config.cwd, incoming.baseTaskName);
 
     /**
      * Next resolve any child tasks, this is the core of how the recursive
      * alias's work
      */
-    const childTasks     = resolveChildTasks([], trigger.input.tasks, baseTaskName, parents, trigger);
+    const childTasks     = resolveChildTasks([], trigger.input.tasks, incoming.baseTaskName, parents, trigger);
 
     const errors         = gatherTaskErrors(
         locatedModules,
         childTasks,
-        subTaskItems,
-        baseTaskName,
+        incoming.subTasks,
+        incoming.baseTaskName,
         trigger.input
     );
 
-    return createTask(<Task>{
+    return createTask(Object.assign({}, incoming, {
         parents,
         errors,
-        runMode,
-        rawInput: taskName,
-        taskName: baseTaskName,
-        subTasks: subTaskItems,
         modules:  locatedModules,
         tasks:    childTasks,
-        valid:    errors.length === 0,
-    });
+        valid:    errors.length === 0
+    }));
 }
 
 function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {

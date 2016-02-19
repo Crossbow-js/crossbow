@@ -5,7 +5,9 @@ export enum TaskErrorTypes {
     SubtasksNotInConfig,
     SubtaskNotProvided,
     SubtaskNotFound,
-    AdaptorNotFound
+    AdaptorNotFound,
+    FlagNotFound,
+    FlagNotProvided
 }
 
 export interface TaskError {}
@@ -15,6 +17,8 @@ export interface SubtaskNotInConfigError extends TaskError { type: TaskErrorType
 export interface SubtaskNotProvidedError extends TaskError { type: TaskErrorTypes, name: string }
 export interface SubtaskNotFoundError    extends TaskError { type: TaskErrorTypes, name: string }
 export interface AdaptorNotFoundError    extends TaskError { type: TaskErrorTypes, taskName: string }
+export interface FlagNotFoundError       extends TaskError { type: TaskErrorTypes, taskName: string }
+export interface FlagNotProvidedError    extends TaskError { type: TaskErrorTypes, taskName: string }
 
 export function gatherTaskErrors (locatedModules, childTasks, subTaskItems, baseTaskName, input): TaskError[] {
     /**

@@ -14,7 +14,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -22,15 +22,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             },
             {
@@ -44,7 +45,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -52,15 +53,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             },
             {
@@ -74,7 +76,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -82,15 +84,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             },
             {
@@ -104,7 +107,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -112,15 +115,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             }
         ]
@@ -141,7 +145,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -149,15 +153,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.js",
                     "taskName": "test/fixtures/tasks/simple.js"
                 },
                 "config": {
                     "name": "shane"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             },
             {
@@ -172,7 +177,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -180,15 +185,16 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.js",
                     "taskName": "test/fixtures/tasks/simple.js"
                 },
                 "config": {
                     "name": "kittie"
                 },
-                "startTime": 1455527791648,
-                "endTime": 1455527791659,
-                "duration": 11,
+                "startTime": 1455876895004,
+                "endTime": 1455876895016,
+                "duration": 12,
                 "completed": true
             }
         ]

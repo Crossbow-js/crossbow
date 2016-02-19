@@ -14,7 +14,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -22,7 +22,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
@@ -40,7 +41,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -48,7 +49,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
@@ -66,7 +68,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -74,7 +76,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
@@ -92,7 +95,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -100,7 +103,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.multi.js",
                     "taskName": "test/fixtures/tasks/simple.multi.js"
                 },
                 "config": {
@@ -125,7 +129,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -133,7 +137,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.js",
                     "taskName": "test/fixtures/tasks/simple.js"
                 },
                 "config": {
@@ -152,7 +157,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -160,7 +165,8 @@
                     ],
                     "errors": [],
                     "runMode": "series",
-                    "completed": false,
+                    "flags": [],
+                    "baseTaskName": "test/fixtures/tasks/simple.js",
                     "taskName": "test/fixtures/tasks/simple.js"
                 },
                 "config": {

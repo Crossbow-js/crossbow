@@ -1,7 +1,7 @@
 const assert = require('chai').assert;
 const cli    = require("../");
 
-describe('Gathering run task with return types', function () {
+describe.skip('Gathering run task with return types', function () {
     it('can handle node streams', function (done) {
 
         const taskRunner = cli.getRunner(['test/fixtures/tasks/stream.js']);

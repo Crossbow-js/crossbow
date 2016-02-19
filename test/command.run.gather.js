@@ -10,7 +10,7 @@ function handoff(cmd, input, cb) {
     }, input, cb);
 }
 
-describe('Gathering run tasks', function () {
+describe('Gathering run tasks (1)', function () {
     it('Accepts single string for adaptor task', function () {
         var runner = handoff(['@npm ls'], {});
 
@@ -97,22 +97,14 @@ describe('Gathering run tasks', function () {
         assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');
         assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
     });
-    it.skip('can gather a tasks array given in module', function () {
-        const runner = cli({
-            input: ["run", "js"],
-            flags: {handoff: true}
-        }, {
+    it('can tasks with inline flags', function () {
+        const runner = cli.getRunner(['js@p'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.multi.js']
             }
         });
-        assert.equal(runner.tasks.valid.length, 2);
-        //assert.equal(first.tasks.length, 2);
-        //var first = runner.tasks.valid[0];
-        //assert.equal(first.taskName, 'css');
-        //assert.equal(first.modules.length, 0);
-        //assert.equal(first.tasks[0].tasks.length, 0);
-        //assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');
-        //assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
+
+        assert.equal(runner.tasks.valid[0].runMode, 'parallel');
+        assert.equal(runner.tasks.valid[0].tasks[0].runMode, 'series');
     });
 });

@@ -33,16 +33,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const tasks = resolveTasks(cliInput, ctx);
 
-    console.log(tasks);
-
-    /**
-     * Never continue if any tasks were flagged as invalid.
-     */
-    if (tasks.invalid.length) {
-        console.log('Invalid tasks');
-        return;
-    }
-
     /**
      * All this point, all given task names have been resolved
      * to either modules on disk, or @adaptor tasks, so we can
@@ -64,6 +54,15 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     if (config.handoff) {
         debug(`Handing off runner`);
         return {tasks, sequence, runner};
+    }
+
+    /**
+     * Never continue if any tasks were flagged as invalid and we've not handed
+     * off
+     */
+    if (tasks.invalid.length) {
+        console.log('Invalid tasks');
+        return;
     }
 
     debug(`~ run mode from CLI '${config.runMode}'`);
