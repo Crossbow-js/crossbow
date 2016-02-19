@@ -48,6 +48,11 @@ export function reportTaskErrors (tasks: Task[],
                                   cli: Meow,
                                   input: CrossbowInput,
                                   config: CrossbowConfiguration) {
+
+    logger.info('{gray.bold:-----------------------------------------------}');
+    logger.info('{err: } Sorry, there were errors resolving your tasks');
+    logger.info('{gray.bold:-----------------------------------------------}');
+
     logErrors(tasks, '');
 
     function logErrors(tasks, indent) {
@@ -62,11 +67,11 @@ export function reportTaskErrors (tasks: Task[],
                 });
             }
             if (task.tasks.length) {
-                logger.info('-%s {bold.underline:%s}', indent, task.taskName);
+                logger.info('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
                 logErrors(task.tasks, indent += '-');
             } else {
                 if (!logged) {
-                    logger.info('-%s %s', indent, task.taskName);
+                    logger.info('{gray.bold:-%s} {ok: } %s', indent, task.taskName);
                 }
             }
         })
@@ -75,7 +80,7 @@ export function reportTaskErrors (tasks: Task[],
 
 const errorHandlers = {
     ModuleNotFound: function (task, error, indent) {
-        logger.info('%s {err: } {cyan:`%s`} could not be located', indent, task.taskName);
+        logger.info('{red:%s} {err: } {cyan:`%s`} could not be located', indent, task.taskName);
     }
 };
 
