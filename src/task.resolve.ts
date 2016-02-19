@@ -130,7 +130,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      * Next resolve any child tasks, this is the core of how the recursive
      * alias's work
      */
-    const childTasks     = resolveChildTasks([], trigger.input.tasks, incoming.baseTaskName, parents, trigger);
+    incoming.tasks = resolveChildTasks([], trigger.input.tasks, incoming.baseTaskName, parents, trigger);
 
     const errors         = gatherTaskErrors(
         incoming,

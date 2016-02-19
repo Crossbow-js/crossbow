@@ -1,6 +1,8 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
+import {Task} from "../task.resolve";
+import {TaskErrorTypes} from "../task.errors";
 export function summary (
     sequence: SequenceItem[],
     cli: Meow,
@@ -33,3 +35,47 @@ export function summary (
         }, initial);
     }
 }
+
+export function reportTaskList (sequence: SequenceItem[],
+                                cli: Meow,
+                                input: CrossbowInput,
+                                config: CrossbowConfiguration) {
+
+    logger.info('{yellow:->} {cyan:%s', cli.input.slice(1).join(', '));
+}
+
+export function reportTaskErrors (tasks: Task[],
+                                  cli: Meow,
+                                  input: CrossbowInput,
+                                  config: CrossbowConfiguration) {
+    logErrors(tasks, '');
+
+    function logErrors(tasks, indent) {
+        tasks.forEach(function (task) {
+            var logged = false;
+            if (task.errors.length) {
+                logged = true;
+                task.errors.forEach(function (error) {
+                    if (errorHandlers[TaskErrorTypes[error.type]]) {
+                        errorHandlers[TaskErrorTypes[error.type]](task, error, indent + '-');
+                    }
+                });
+            }
+            if (task.tasks.length) {
+                logger.info('-%s {bold.underline:%s}', indent, task.taskName);
+                logErrors(task.tasks, indent += '-');
+            } else {
+                if (!logged) {
+                    logger.info('-%s %s', indent, task.taskName);
+                }
+            }
+        })
+    }
+}
+
+const errorHandlers = {
+    ModuleNotFound: function (task, error, indent) {
+        logger.info('%s {err: } {cyan:`%s`} could not be located', indent, task.taskName);
+    }
+};
+

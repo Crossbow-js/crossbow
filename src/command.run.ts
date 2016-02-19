@@ -7,7 +7,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
-import {summary} from './reporters/defaultReporter';
+import {summary, reportTaskList, reportTaskErrors} from './reporters/defaultReporter';
 
 export interface CommandTrigger {
     type: string
@@ -61,11 +61,14 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * off
      */
     if (tasks.invalid.length) {
-        console.log('Invalid tasks');
+        // todo output error summary
+        reportTaskErrors(tasks.invalid, cli, input, config);
         return;
     }
 
     debug(`~ run mode from CLI '${config.runMode}'`);
+
+    //reportTaskList(sequence, cli, input, config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
