@@ -33,6 +33,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const tasks = resolveTasks(cliInput, ctx);
 
+    console.log(tasks);
+
     /**
      * Never continue if any tasks were flagged as invalid.
      */

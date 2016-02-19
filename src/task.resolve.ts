@@ -6,6 +6,7 @@ import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {RunCommandTrigger} from "./command.run";
+import preprocessTask from "./task.preprocess";
 
 export interface Task {
     valid: boolean
@@ -70,7 +71,7 @@ function createAdaptorTask (taskName, parents) : Task {
 
     /**
      * Strip the first part of the task name.
-     *  eg: `$npm eslint`
+     *  eg: `@npm eslint`
      *   ->  eslint
      * @type {string}
      */
@@ -100,9 +101,9 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
 
     /**
      * Never modify the current task if it begins
-     * with a `$` - instead just return early with
+     * with a `@` - instead just return early with
      * a adaptors task
-     *  eg: `$npm webpack`
+     *  eg: `@npm webpack`
      */
     if (taskName.match(/^@/)) {
         return createAdaptorTask(taskName, parents);
@@ -132,6 +133,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      * @type {string}
      */
     const baseTaskName  = splitTask[0];
+    const subTaskItems  = splitTask.slice(1);
 
     /**
      * Try to locate modules/files using the cwd + the current
@@ -149,7 +151,6 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      * alias's work
      */
     const childTasks     = resolveChildTasks([], trigger.input.tasks, baseTaskName, parents, trigger);
-    const subTaskItems   = splitTask.slice(1);
 
     const errors         = gatherTaskErrors(
         locatedModules,
@@ -191,8 +192,8 @@ function resolveChildTasks (initialTasks: any[], currentTasksObject: any, taskNa
 
     /**
      * Allow tasks in either string or array format
-     *  eg 1: lint: '$npm eslint'
-     *  eg 2: lint: ['$npm eslint']
+     *  eg 1: lint: '@npm eslint'
+     *  eg 2: lint: ['@npm eslint']
      * @type {Array}
      */
     const subject = [].concat(currentTasksObject[taskName]);
@@ -241,7 +242,7 @@ function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
     /**
      * The final chance for a task to be deemed valid
      * is when `task.adaptors` is set to a string.
-     *  eg: lint: '$npm eslint'
+     *  eg: lint: '@npm eslint'
      *   -> true
      */
     if (typeof task.adaptor === 'string') {
