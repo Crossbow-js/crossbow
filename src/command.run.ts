@@ -67,6 +67,12 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     debug(`~ run mode from CLI '${config.runMode}'`);
 
     /**
+     * A generic timestamp to mark the beginning of the tasks
+     * @type {number}
+     */
+    const timestamp = new Date().getTime();
+
+    /**
      * If we've reached this point, we're going to handle running
      * the tasks! We use the `config.runMode` flag to select a top-level
      * parallel or series runner
@@ -89,7 +95,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * The subscription to kick-start everything
      */
     runner$.subscribeOnCompleted(function () {
-        summary(sequence, cli, input, config);
+        summary(sequence, cli, input, config, new Date().getTime() - timestamp);
     	// todo: reporter: handle completion here.
     })
 }

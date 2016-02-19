@@ -1,13 +1,19 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
-export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function summary (
+    sequence: SequenceItem[],
+    cli: Meow,
+    input: CrossbowInput,
+    config: CrossbowConfiguration,
+    runtime: number
+) {
 
     if (config.summary !== 'short') {
         logTasks(sequence, '');
     }
 
-    logger.info('Total: {yellow:(%sms)}', timeall(sequence, 0));
+    logger.info('Total: {yellow:(%sms)}', runtime);
 
     function logTasks (sequence, indent) {
         sequence.forEach(function (item) {
