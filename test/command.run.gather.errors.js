@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const watch = require('../lib/command.watch');
 const cli = require("../");
+const errorTypes = require('../dist/task.errors').TaskErrorTypes;
 
 describe('Gathering run tasks with errors', function () {
     it('reports single missing module', function () {
@@ -59,8 +60,22 @@ describe('Gathering run tasks with errors', function () {
             input: ['run', 'test/fixtures/tasks/simple.js:*'],
             flags: {handoff: true}
         }, {crossbow: {config: {}}});
-        //console.log(runner.tasks);
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, 1);
+    });
+    it('reports when @flag is present, but no flag given ', function () {
+    	const runner = cli.getRunner(['test/fixtures/tasks/simple.js@'],{
+            config: {}
+        });
+        assert.equal(runner.tasks.invalid[0].errors.length, 1);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.FlagNotProvided);
+    });
+    it('reports when @flag is present, but no flag given + module error ', function () {
+        const runner = cli.getRunner(['test/fixtures/tasks/NOTEXIST.js@'],{
+            config: {}
+        });
+        assert.equal(runner.tasks.invalid[0].errors.length, 2);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[0].errors[1].type, errorTypes.FlagNotProvided);
     });
 });

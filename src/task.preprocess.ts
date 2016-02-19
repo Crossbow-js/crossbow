@@ -1,5 +1,6 @@
 import {RunCommandTrigger} from "./command.run";
 import {TaskError} from "./task.errors";
+import {Task} from "./task.resolve";
 
 const flagRegex = /(.+?)@(.+)?$/;
 
@@ -9,10 +10,13 @@ export interface IncomingTask {
     rawInput: string
     taskName: string
     flags: string[]
+    modules?: string[]
+    tasks?: Task[]
 }
 
 export interface OutgoingTask extends IncomingTask {
     runMode: string
+    tasks: Task[]
 }
 
 export default function preprocessTask(taskName: string): OutgoingTask {
@@ -49,7 +53,8 @@ export default function preprocessTask(taskName: string): OutgoingTask {
         baseTaskName,
         subTasks,
         taskName: baseTaskName,
-        rawInput: taskName
+        rawInput: taskName,
+        tasks: []
     };
 
     /**

@@ -109,6 +109,10 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         return createAdaptorTask(taskName, parents);
     }
 
+    /**
+     * Do basic processing on each task such as splitting out flags/sub-tasks
+     * @type {OutgoingTask}
+     */
     const incoming = preprocessTask(taskName);
 
     /**
@@ -120,7 +124,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      *   =  tasks/sass.js will be run
      * @type {Array}
      */
-    const locatedModules = locateModule(trigger.config.cwd, incoming.baseTaskName);
+    incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
 
     /**
      * Next resolve any child tasks, this is the core of how the recursive
@@ -129,18 +133,13 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
     const childTasks     = resolveChildTasks([], trigger.input.tasks, incoming.baseTaskName, parents, trigger);
 
     const errors         = gatherTaskErrors(
-        locatedModules,
-        childTasks,
-        incoming.subTasks,
-        incoming.baseTaskName,
+        incoming,
         trigger.input
     );
 
     return createTask(Object.assign({}, incoming, {
         parents,
         errors,
-        modules:  locatedModules,
-        tasks:    childTasks,
         valid:    errors.length === 0
     }));
 }
