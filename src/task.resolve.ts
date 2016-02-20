@@ -1,5 +1,6 @@
 import {AdaptorNotFoundError} from "./task.errors";
 const merge   = require('lodash.merge');
+const assign  = require('object-assign');
 
 import {TaskErrorTypes, TaskError, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
@@ -141,7 +142,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         trigger.input
     );
 
-    return createTask(Object.assign({}, incoming, {
+    return createTask(assign({}, incoming, {
         parents,
         errors,
         valid:    errors.length === 0

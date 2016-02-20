@@ -2,6 +2,7 @@ import {RunCommandTrigger} from "./command.run";
 import {TaskError} from "./task.errors";
 import {Task} from "./task.resolve";
 
+const assign = require('object-assign');
 const flagRegex = /(.+?)@(.+)?$/;
 
 export interface IncomingTask {
@@ -116,7 +117,7 @@ function processFlags (incoming: IncomingTask): OutgoingTask {
         ? 'parallel'
         : 'series';
 
-    return Object.assign({}, incoming, {
+    return assign({}, incoming, {
         runMode
     });
 }

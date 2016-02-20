@@ -7,6 +7,6 @@ watch:
 tasks:
   compile: >
     @npm tsc
-    src/** src/adaptors/** src/reporters/**
+    src/**/*.ts
     --module commonjs
     --outDir dist

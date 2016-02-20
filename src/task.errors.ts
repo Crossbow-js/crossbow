@@ -1,4 +1,5 @@
 import {OutgoingTask} from "./task.preprocess";
+import {CrossbowInput} from "./index";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
