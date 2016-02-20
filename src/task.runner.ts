@@ -25,7 +25,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Ru
                 var output;
 
                 try {
-                    output = item.factory(item.opts, trigger, observer);
+                    output = item.factory(item.config, trigger, observer);
                 } catch (e) {
                     observer.onError(e);
                 }

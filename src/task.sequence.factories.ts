@@ -23,7 +23,6 @@ export interface SequenceItem {
     endTime?: number
     duration?: number
     completed?: boolean
-    opts?: any
     fnName?: string
     config?: any
     subTaskName?: string
