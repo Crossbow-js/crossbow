@@ -3,6 +3,7 @@ import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve";
 import {TaskErrorTypes} from "../task.errors";
+import {SubtaskNotFoundError} from "../task.errors";
 export function summary (
     sequence: SequenceItem[],
     cli: Meow,
@@ -53,7 +54,11 @@ export function reportTaskErrors (tasks: Task[],
     logger.info('{err: } Sorry, there were errors resolving your tasks');
     logger.info('{gray.bold:-----------------------------------------------}');
 
-    logErrors(tasks, '');
+    cli.input.slice(1).forEach(function (n, i) {
+    	logger.info("{gray:+ input: {gray.bold:'%s'}", n);
+        logErrors([tasks[i]], '');
+        logger.info('{gray.bold:-----------------------------------------------}');
+    });
 
     function logErrors(tasks, indent) {
         tasks.forEach(function (task) {
@@ -61,8 +66,11 @@ export function reportTaskErrors (tasks: Task[],
             if (task.errors.length) {
                 logged = true;
                 task.errors.forEach(function (error) {
-                    if (errorHandlers[TaskErrorTypes[error.type]]) {
-                        errorHandlers[TaskErrorTypes[error.type]](task, error, indent + '-');
+                    const errorType = TaskErrorTypes[error.type];
+                    if (errorHandlers[errorType]) {
+                        errorHandlers[errorType](task, error, indent + '-');
+                    } else {
+                        console.error('No reporter for error type', errorType);
                     }
                 });
             }
@@ -79,8 +87,14 @@ export function reportTaskErrors (tasks: Task[],
 }
 
 const errorHandlers = {
-    ModuleNotFound: function (task, error, indent) {
-        logger.info('{red:%s} {err: } {cyan:`%s`} could not be located', indent, task.taskName);
+    AdaptorNotFound: function (task, error, indent) {
+        logger.info("{red:%s} {err: } {cyan:'%s'} Adaptor not supported", indent, task.adaptor);
+    },
+    ModuleNotFound: function (task: Task, error, indent) {
+        logger.info("{red:%s} {err: } {cyan:'%s'} could not be located as a Task or Module", indent, task.rawInput);
+    },
+    SubtaskNotFound: function (task: Task, error: SubtaskNotFoundError, indent) {
+        logger.info("{red:%s} {err: } {cyan:'%s'} Sub-Task {yellow.bold:%s} not found", indent, task.rawInput, error.name);
     }
 };
 

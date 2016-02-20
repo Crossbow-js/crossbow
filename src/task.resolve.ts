@@ -61,7 +61,10 @@ function createAdaptorTask (taskName, parents) : Task {
      */
     if (!validAdaptorName) {
         return createTask({
+            rawInput: taskName,
             taskName: taskName,
+            //command: split[2] || '',
+            adaptor: taskName.split(' ')[0],
             errors: [<AdaptorNotFoundError>{
                 type: TaskErrorTypes.AdaptorNotFound,
                 taskName: taskName
@@ -94,7 +97,8 @@ function createAdaptorTask (taskName, parents) : Task {
 
 export interface Tasks {
     valid: Task[]
-    invalid: Task[]
+    invalid: Task[],
+    all: Task[]
 }
 
 function createFlattenedTask (taskName:string, parents:string[], trigger:RunCommandTrigger): Task {
@@ -247,7 +251,8 @@ export function resolveTasks (taskNames:string[], trigger:RunCommandTrigger): Ta
      */
     const output = {
         valid: taskList.filter(x => validateTask(x, trigger)),
-        invalid: taskList.filter(x => !validateTask(x, trigger))
+        invalid: taskList.filter(x => !validateTask(x, trigger)),
+        all: taskList
     };
 
     return output;

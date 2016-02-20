@@ -15,7 +15,7 @@ tasks:
     css:        ['sass']
     js:         ['all', 'myscript']
     other:      ['dummy']
-    dummy:      ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js', 'prom']
+    dummy:      ['test/fixtures/tasks/simple.js:dse4:as', 'test/fixtures/tasks/simple2.js', 'prom']
     all:        ['observable', 'prom', 'stream', 'dummy']
     prom:       ['test/fixtures/tasks/promise.js']
     stream:     ['test/fixtures/tasks/stream.js']
@@ -33,7 +33,7 @@ config:
     $:
         root: test/fixtures
 
-    sass:
+    crossbow-sass:
         input: '{$.root}/scss/main.scss'
         output: '{$.root}/css/main.min.css'
 

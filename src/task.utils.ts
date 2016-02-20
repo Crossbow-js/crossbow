@@ -16,7 +16,7 @@ export function locateModule (cwd: string, name: string): string[] {
         ['tasks', name],
         [name + '.js'],
         [name],
-        ['node_modules', 'crossbow-' + name]
+        ['node_modules', name]
     ]
         .map(x => resolve.apply(null, [cwd].concat(x)))
         .filter(existsSync);
