@@ -92,7 +92,7 @@ function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
  * The main export is the function this will be run in the sequence
  * @returns {Function}
  */
-module.exports = function (task: Task, trigger: RunCommandTrigger) {
+export default function (task: Task, trigger: RunCommandTrigger) {
 
     return (opts, ctx, observer) => {
 

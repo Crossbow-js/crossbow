@@ -91,6 +91,12 @@ const flagTransforms = {
      */
     c: (opts) => {
         return assign({}, opts, {config: opts.c});
+    },
+    /**
+     * -c specifies a config file
+     */
+    v: (opts) => {
+        return assign({}, opts, {summary: 'verbose'});
     }
 };
 

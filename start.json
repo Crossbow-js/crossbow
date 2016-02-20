@@ -14,7 +14,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -41,7 +41,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -68,7 +68,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -95,7 +95,7 @@
                         "*"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.multi.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -129,7 +129,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [
@@ -157,7 +157,7 @@
                         "second"
                     ],
                     "modules": [
-                        "/Users/shaneobsourne/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                        "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
                     ],
                     "tasks": [],
                     "parents": [

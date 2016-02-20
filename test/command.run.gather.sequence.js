@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const cli = require("../");
+const seqTypes = require('../dist/task.sequence.factories').SequenceItemTypes;
 
 function handoff(cmd, input, cb) {
     return cli({
@@ -10,21 +11,21 @@ function handoff(cmd, input, cb) {
     }, input, cb);
 }
 
-describe.skip('Gathering run tasks', function () {
+describe('Gathering run tasks', function () {
     it('Accepts single string for on-disk file', function () {
-        var runner = handoff(['test/fixtures/tasks/observable.js'], {});
-        assert.equal(runner.sequence[0].sequenceTasks.length, 2); // 2 exported functions
+        var runner = cli.getRunner(['test/fixtures/tasks/observable.js'], {});
+        assert.equal(runner.sequence.length, 2); // 2 exported functions
     });
     it('Accepts single string for nested tasks', function () {
-        var runner = handoff(['js'], {
+        var runner = cli.getRunner(['js'], {
             tasks: {
                 js: 'test/fixtures/tasks/simple.js'
             }
         });
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 2 exported functions
+        assert.equal(runner.sequence.length, 1); // 2 exported functions
     });
     it('Accepts single string for multi nested tasks on disk', function () {
-        var runner = handoff(['js'], {
+        var runner = cli.getRunner(['js'], {
             tasks: {
                 js: 'js2',
                 js2: 'js3',
@@ -32,49 +33,16 @@ describe.skip('Gathering run tasks', function () {
                 js4: 'test/fixtures/tasks/simple.js'
             }
         });
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 1 exported functions
-        assert.equal(runner.sequence[0].task.taskName, 'test/fixtures/tasks/simple.js');
-        assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2', 'js3', 'js4']);
-    });
-    it('Accepts single string for multi nested adaptor tasks', function () {
-        var runner = handoff(['js'], {
-            tasks: {
-                js: 'js2',
-                js2: '@npm tsc src/*.ts --module commonjs --outDir dist'
-            }
-        });
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1); // 1 exported functions
-        assert.equal(runner.sequence[0].task.taskName, '@npm tsc src/*.ts --module commonjs --outDir dist');
-        assert.equal(runner.sequence[0].task.adaptor, 'npm');
-        assert.equal(runner.sequence[0].task.rawInput, '@npm tsc src/*.ts --module commonjs --outDir dist');
-        assert.equal(runner.sequence[0].task.command, 'tsc src/*.ts --module commonjs --outDir dist');
-        assert.deepEqual(runner.sequence[0].task.parents, ['js', 'js2']);
+        assert.equal(runner.sequence.length, 1); // 1 exported functions
+        assert.equal(runner.sequence[0].items[0].items[0].items[0].items[0].task.taskName, 'test/fixtures/tasks/simple.js');
+        assert.deepEqual(runner.sequence[0].items[0].items[0].items[0].items[0].task.parents, ['js', 'js2', 'js3', 'js4']);
     });
     it('can combine files to form sequence', function () {
-        const runner = handoff(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
+        const runner = cli.getRunner(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
         assert.equal(runner.sequence.length, 2);
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
-        assert.equal(runner.sequence[1].sequenceTasks.length, 1);
     });
-    it('can combine files to form sequence from alias', function () {
-        const runner = handoff(["js", "test/fixtures/tasks/stream.js"], {
-            tasks: {
-                js: ["dummy"],
-                dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js"]
-            }
-        });
-
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
-        assert.equal(runner.sequence[0].sequenceTasks[0].FUNCTION.name, 'simple');
-        assert.equal(runner.sequence[1].sequenceTasks.length, 1);
-        assert.equal(runner.sequence[1].sequenceTasks[0].FUNCTION.name, 'simple2');
-        assert.equal(runner.sequence[2].sequenceTasks.length, 2);
-    });
-    it('can gather opts for sub tasks', function () {
-        const runner = cli({
-            input: ["run", "test/fixtures/tasks/simple.js:dev"],
-            flags: {handoff: true}
-        }, {
+    it.only('can gather opts for sub tasks', function () {
+        const runner = cli.getRunner(["test/fixtures/tasks/simple.js:dev"], {
             config: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
@@ -88,10 +56,8 @@ describe.skip('Gathering run tasks', function () {
                 }
             }
         });
-
-        assert.equal(runner.sequence[0].sequenceTasks.length, 1);
-        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
-        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
+        assert.equal(runner.sequence.length, 1);
+        assert.equal(runner.sequence[0].subTaskName, 'dev');
     });
     it('can gather tasks when multi given in alias', function () {
         const runner = cli({

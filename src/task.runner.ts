@@ -66,6 +66,18 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Ru
             logger.info('{gray: ----' + lineLength);
             logger.info('{err: } The following error is from the task ', item.task.taskName);
             logger.info('{gray: ----' + lineLength);
+
+            if (!e) {
+                e = new Error(`Error Message not provided for ${item.task.taskName}`);
+                e._cbStack = [`Task: ${item.task.taskName}`, ` msg: No message was provided`].join('\n');
+            }
+
+            if (typeof e === 'string') {
+                const msg = e;
+                e = new Error(e);
+                e._cbStack = [`Task: ${item.task.taskName}`, ` msg: ${msg}`].join('\n');
+            }
+
             // todo: reporter: allow logging here
             if (trigger.config.exitOnError === true) {
                 debug('Exiting because exitOnError === true');

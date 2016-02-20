@@ -125,18 +125,25 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
              */
             return all.concat(lookupKeys
                 /**
-                 * `configKey` here will be a string that represented the subTask
-                 * name, so we use that to try and find a child key
-                 * in the config that matched it.
-                 */
-                .map(configKey => objPath.get(localConfig, configKey))
-                /**
                  * At this point, the reducer callback will be called once with each matched
                  * configuration item - this can then be used to generate a task with
                  * that localised configuration
                  */
-                .reduce((acc, currentConfigObject) => {
-                    return acc.concat(getSequenceItemWithConfig(task, trigger, imported, currentConfigObject));
+                .reduce((acc, key) => {
+                    /**
+                     * `configKey` here will be a string that represented the subTask
+                     * name, so we use that to try and find a child key
+                     * in the config that matched it.
+                     * */
+                    const currentConfigObject = objPath.get(localConfig, key);
+                    const sequenceItems =
+                        getSequenceItemWithConfig(task, trigger, imported, currentConfigObject)
+                            .map((seqItem: SequenceItem) => {
+                                seqItem.subTaskName = key;
+                                return seqItem;
+                            });
+
+                    return acc.concat(sequenceItems);
                 }, [])
             );
         }
@@ -162,6 +169,7 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
             })
         });
     }
+
     /**
      * If the module exported a function, use that as the factory
      * and return a single task for it.
@@ -172,8 +180,8 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
         return [createSequenceTaskItem({
             fnName: imported.name,
             factory: imported,
-            config: config,
             task: task,
+            config: config,
         })]
     }
 }

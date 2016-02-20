@@ -68,7 +68,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     debug(`~ run mode from CLI '${config.runMode}'`);
 
-    //reportTaskList(sequence, cli, input, config);
+    /**
+     * Report task list that's about to run
+     */
+    reportTaskList(sequence, cli, input, config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -88,7 +91,11 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          * will have already been printed)
          */
         .catch(function (e) {
-            console.log(e.stack);
+            if (e._cbStack) {
+                console.log(e._cbStack);
+            } else {
+                console.log(e.stack);
+            }
             if (config.exitOnError === true) {
                 return process.exit(1);
             }

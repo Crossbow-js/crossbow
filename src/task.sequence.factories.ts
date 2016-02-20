@@ -26,6 +26,7 @@ export interface SequenceItem {
     opts?: any
     fnName?: string
     config?: any
+    subTaskName?: string
 }
 
 export interface SequenceSeriesGroup {
