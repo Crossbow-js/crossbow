@@ -3,6 +3,7 @@ import {TaskError} from "./task.errors";
 import {Task} from "./task.resolve";
 
 const assign = require('object-assign');
+const qs = require('query-string');
 const flagRegex = /(.+?)@(.+)?$/;
 
 export interface IncomingTask {
@@ -13,6 +14,7 @@ export interface IncomingTask {
     flags: string[]
     modules?: string[]
     tasks?: Task[]
+    query: any
 }
 
 export interface OutgoingTask extends IncomingTask {
@@ -51,6 +53,7 @@ export default function preprocessTask(taskName: string): OutgoingTask {
      */
     const incomingTask = <IncomingTask>{
         flags: split.flags,
+        query: split.query,
         baseTaskName,
         subTasks,
         taskName: baseTaskName,
@@ -67,6 +70,7 @@ export default function preprocessTask(taskName: string): OutgoingTask {
 export interface SplitTaskAndFlags {
     taskName: string
     flags: string[]
+    query: any
 }
 
 function getSplitFlags (taskName: string): SplitTaskAndFlags {
@@ -84,7 +88,11 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      * an empty array and the full task name
      */
     if (!splitFlags) {
-        return {taskName, flags:[]};
+        const splitQuery = taskName.split('?');
+        const query = splitQuery.length > 1
+            ?  qs.parse(splitQuery[1])
+            : {};
+        return {taskName: splitQuery[0], query, flags:[]};
     }
 
     /**
@@ -92,6 +100,11 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      * @type {string}
      */
     const base = splitFlags[1];
+    const splitQuery = base.split('?');
+    const query = splitQuery.length > 1
+        ?  qs.parse(splitQuery[1])
+        : {};
+
     /**
      * If the 3rd item in the regex match is undefined, it means
      * the @ was used at the end of the task name, but a value was not given.
@@ -107,8 +120,7 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
          *   ->  flags: ['p', 'a', 's']
          */
         : splitFlags[2].split('');
-
-    return {taskName: base, flags};
+    return {taskName: splitQuery[0], query, flags};
 }
 
 function processFlags (incoming: IncomingTask): OutgoingTask {

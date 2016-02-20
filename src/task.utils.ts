@@ -8,18 +8,27 @@ const yml = require('js-yaml');
 const objPath  = require('object-path');
 
 export function locateModule (cwd: string, name: string): string[] {
-    if (name.indexOf(':') > -1) {
-        name = name.split(':')[0];
-    }
-    return [
+
+    const files = [
         ['tasks', name + '.js'],
         ['tasks', name],
         [name + '.js'],
-        [name],
-        ['node_modules', name]
+        [name]
     ]
         .map(x => resolve.apply(null, [cwd].concat(x)))
         .filter(existsSync);
+
+    if (files.length === 0) {
+        try {
+            files.push(require.resolve(name));
+        } catch (e) {
+            if (e.code !== 'MODULE_NOT_FOUND') {
+                throw e;
+            }
+        }
+    }
+
+    return files;
 }
 
 /**

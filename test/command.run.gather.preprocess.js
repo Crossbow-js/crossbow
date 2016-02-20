@@ -12,7 +12,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: [],
                 runMode: 'series',
                 rawInput: '@npm run shane',
-                taskName: '@npm run shane'
+                taskName: '@npm run shane',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -25,7 +27,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: [],
                 runMode: 'series',
                 rawInput: 'file.js',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -38,7 +42,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: ['dev'],
                 runMode: 'series',
                 rawInput: 'file.js:dev',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -51,7 +57,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: ['dev', 'site'],
                 runMode: 'series',
                 rawInput: 'file.js:dev:site',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -65,7 +73,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: [],
                 runMode: 'parallel',
                 rawInput: 'file.js@p',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -79,7 +89,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: [],
                 runMode: 'parallel',
                 rawInput: 'file.js@psa',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -93,7 +105,9 @@ describe('can pre-process incoming task names', function () {
                 subTasks: [],
                 runMode: 'series',
                 rawInput: 'file.js@',
-                taskName: 'file.js'
+                taskName: 'file.js',
+                query: {},
+                tasks: []
             }
         );
     });
@@ -106,7 +120,54 @@ describe('can pre-process incoming task names', function () {
                 subTasks: ['dev', 'site'],
                 runMode: 'parallel',
                 rawInput: 'file.js:dev:site@p',
-                taskName: "file.js"
+                taskName: "file.js",
+                query: {},
+                tasks: []
+            }
+        );
+    });
+    it('can handle query params', function () {
+        assert.deepEqual(
+            preprocess('crossbow-sass?input=shane'),
+            {
+                flags: [],
+                baseTaskName: 'crossbow-sass',
+                subTasks: [],
+                runMode: 'series',
+                rawInput: 'crossbow-sass?input=shane',
+                taskName: 'crossbow-sass',
+                query: {input: 'shane'},
+                tasks: []
+            }
+        );
+    });
+    it('can handle query params with flags', function () {
+        assert.deepEqual(
+            preprocess('crossbow-sass?input=shane@p'),
+            {
+                flags: ['p'],
+                baseTaskName: 'crossbow-sass',
+                subTasks: [],
+                runMode: 'parallel',
+                rawInput: 'crossbow-sass?input=shane@p',
+                taskName: 'crossbow-sass',
+                query: {input: 'shane'},
+                tasks: []
+            }
+        );
+    });
+    it('can handle query params with flags and sub-tasks', function () {
+        assert.deepEqual(
+            preprocess('crossbow-sass:shane:kittie?input=core.min.css@p'),
+            {
+                flags: ['p'],
+                baseTaskName: 'crossbow-sass',
+                subTasks: ['shane', 'kittie'],
+                runMode: 'parallel',
+                rawInput: 'crossbow-sass:shane:kittie?input=core.min.css@p',
+                taskName: 'crossbow-sass',
+                query: {input: 'core.min.css'},
+                tasks: []
             }
         );
     });

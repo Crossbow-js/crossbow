@@ -24,6 +24,7 @@ export interface Task {
     startTime?: number
     endTime?: number
     duration?: number
+    query: any
 }
 
 const defaultTask = <Task>{
@@ -92,7 +93,8 @@ function createAdaptorTask (taskName, parents) : Task {
         parents: parents,
         errors: [],
         command: commandInput,
-        runMode: 'series'
+        runMode: 'series',
+        query: {}
     };
 }
 

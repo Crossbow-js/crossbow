@@ -12,7 +12,7 @@ aliases:
     simple: 'test/fixtures/tasks/simple.js'
 
 tasks:
-    css:        ['sass']
+    css:        ['crossbow-sass?input=css/core.css']
     js:         ['all', 'myscript']
     other:      ['dummy']
     dummy:      ['test/fixtures/tasks/simple.multi.js:dev1:dev2', 'test/fixtures/tasks/simple2.js', 'prom']

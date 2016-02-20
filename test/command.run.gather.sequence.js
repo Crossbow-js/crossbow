@@ -2,15 +2,6 @@ const assert = require('chai').assert;
 const cli = require("../");
 const seqTypes = require('../dist/task.sequence.factories').SequenceItemTypes;
 
-function handoff(cmd, input, cb) {
-    return cli({
-        input: ['run'].concat(cmd),
-        flags: {
-            handoff: true
-        }
-    }, input, cb);
-}
-
 describe('Gathering run tasks', function () {
     it('Accepts single string for on-disk file', function () {
         var runner = cli.getRunner(['test/fixtures/tasks/observable.js'], {});
@@ -41,7 +32,7 @@ describe('Gathering run tasks', function () {
         const runner = cli.getRunner(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
         assert.equal(runner.sequence.length, 2);
     });
-    it.only('can gather opts for sub tasks', function () {
+    it('can gather opts for sub tasks', function () {
         const runner = cli.getRunner(["test/fixtures/tasks/simple.js:dev"], {
             config: {
                 "test/fixtures/tasks/simple.js": {
@@ -60,12 +51,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[0].subTaskName, 'dev');
     });
     it('can gather tasks when multi given in alias', function () {
-        const runner = cli({
-            input: ['run', 'js'],
-            flags: {
-                handoff: true
-            }
-        }, {
+        const runner = cli.getRunner(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
@@ -83,65 +69,23 @@ describe('Gathering run tasks', function () {
             }
         });
 
-        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
-        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
+        assert.equal(runner.sequence[0].items[0].config.input, 'scss/main.scss');
+        assert.equal(runner.sequence[0].items[0].config.output, 'css/main.min.css');
 
-        assert.equal(runner.sequence[1].opts.input, 'scss/core.scss');
-        assert.equal(runner.sequence[1].opts.output, 'css/core.css');
+        assert.equal(runner.sequence[0].items[1].config.input, 'scss/core.scss');
+        assert.equal(runner.sequence[0].items[1].config.output, 'css/core.css');
     });
-    it('can gather tasks from multiple alias', function () {
-        const runner = cli({
-            input: ['run', 'css'],
-            flags: {handoff: true}
-        }, {
+    it('can gather tasks wth query-config', function () {
+        const runner = cli.getRunner(['js'], {
             tasks: {
-                css: ['js'],
-                js: ['test/fixtures/tasks/simple.js:dev', 'test/fixtures/tasks/simple.js:dev:default']
+                js: ['test/fixtures/tasks/simple.js?input=app.js']
             },
-            config: {
-                'test/fixtures/tasks/simple.js': {
-                    default: {
-                        input: "scss/core.scss",
-                        output: "css/core.css"
-                    },
-                    dev: {
-                        input: "scss/main.scss",
-                        output: "css/main.min.css"
-                    }
-                }
-            }
+            config: {}
         });
 
-        assert.equal(runner.sequence[0].opts.input, 'scss/main.scss');
-        assert.equal(runner.sequence[0].opts.output, 'css/main.min.css');
-        assert.equal(runner.sequence[1].task.subTasks[0], 'dev');
-        assert.equal(runner.sequence[1].task.subTasks[1], 'default');
+        assert.equal(runner.sequence[0].items[0].config.input, 'app.js');
     });
-    it('can gather handle no-tasks in config', function () {
-
-        const runner = cli({
-            input: ["run", "test/fixtures/tasks/simple.js"],
-            flags: {handoff: true}
-        }, {
-            config: {
-                "test/fixtures/tasks/simple.js": {
-                    default: {
-                        input: "scss/core.scss",
-                        output: "css/core.css"
-                    },
-                    dev: {
-                        input: "scss/main.scss",
-                        output: "css/main.min.css"
-                    }
-                }
-            }
-        });
-
-        assert.equal(runner.sequence.length, 1);
-        assert.equal(runner.sequence[0].opts.default.input, 'scss/core.scss');
-        assert.equal(runner.sequence[0].opts.default.output, 'css/core.css');
-    });
-    it('can process config options with {} replacements', function () {
+    it.skip('can process config options with {} replacements', function () {
         const runner = cli({
             input: ["run", "css"],
             flags: {handoff: true}

@@ -122,14 +122,12 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        log(runner.sequence, 'start.json');
         const stream$  = runner.runner.parallel().share();
         const messages = [];
         stream$.subscribeOnNext(function (val) {
             messages.push(val);
         });
         stream$.subscribeOnCompleted(function () {
-            log(runner.sequence, 'complete.json');
             assert.equal(messages.length, 6);
             done();
         });

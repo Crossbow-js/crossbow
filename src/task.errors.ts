@@ -59,6 +59,7 @@ function getFlagErrors (outgoing: OutgoingTask): TaskError[] {
                 taskName: outgoing.taskName
             });
         }
+
         return all;
     }, []);
 }

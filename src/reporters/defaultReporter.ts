@@ -6,6 +6,8 @@ import {SubtaskNotFoundError, TaskErrorTypes} from "../task.errors";
 import {Meow, CrossbowInput} from "../index";
 import {SubtaskNotProvidedError} from "../task.errors";
 
+const baseUrl = 'http://crossbow-cli.io/docs/errors';
+
 const escape = (x) => x
     .replace(/\{/g, '\\\{')
     .replace(/}/g, '\\\}');
@@ -63,7 +65,7 @@ function logTaskTree (sequence: SequenceItem[], indent: string) {
         if (item.type === SequenceItemTypes.Task) {
             let name = item.task.taskName;
             if (item.fnName !== '') {
-                name = `${name} fn: {${item.fnName}`;
+                name = `${name} fn: ${item.fnName}`;
             }
             if (item.subTaskName) {
                 logger.info('{gray:%s}%s (with config: {bold:%s})', indent.length ? indent + ' ': '', name, item.subTaskName);
@@ -100,6 +102,27 @@ export function reportTaskList (sequence: SequenceItem[],
     }
 }
 
+export function reportTaskErrorLinks (tasks: Task[],
+                                  cli: Meow,
+                                  input: CrossbowInput,
+                                  config: CrossbowConfiguration) {
+    logger.info('');
+    logger.info('Documentation links for the errors above');
+    logger.info('');
+    logLinks(tasks);
+    function logLinks(tasks) {
+        tasks.forEach(function (item) {
+            if (item.errors.length) {
+                item.errors.forEach(function (error) {
+                    logger.info('  {underline:%s/%s}', baseUrl, TaskErrorTypes[error.type]);
+                })
+            }
+            if (item.tasks) {
+                logLinks(item.tasks);
+            }
+        })
+    }
+}
 export function reportTaskErrors (tasks: Task[],
                                   cli: Meow,
                                   input: CrossbowInput,
@@ -157,7 +180,10 @@ function logMultipleErrors (task, errors, indent) {
     errors.forEach(function (error) {
         const errorType = TaskErrorTypes[error.type];
         if (errorHandlers[errorType]) {
+            logger.info('');
             errorHandlers[errorType](task, error, indent + '-');
+            logger.info("{red:%s} {err: } Docs: {underline:%s/{bold.underline:%s}}", indent + '-', baseUrl, errorType);
+            logger.info('');
         } else {
             console.error('No reporter for error type', errorType);
         }
@@ -166,20 +192,24 @@ function logMultipleErrors (task, errors, indent) {
 
 const errorHandlers = {
     AdaptorNotFound: function (task, error, indent) {
-        logger.info("{red:%s} {err: } {cyan:'%s'} Adaptor not supported", indent, task.adaptor);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Adaptor not supported", indent, task.adaptor);
     },
     ModuleNotFound: function (task: Task, error, indent) {
-        logger.info("{red:%s} {err: } {cyan:'%s'} Task / Module not found", indent, task.rawInput);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Task / Module not found", indent, task.rawInput);
     },
     SubtaskNotFound: function (task: Task, error: SubtaskNotFoundError, indent) {
-        logger.info("{red:%s} {err: } {cyan:'%s'} Sub-Task {yellow.bold:'%s'} not found", indent, task.rawInput, error.name);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Sub-Task {yellow.bold:'%s'} not found", indent, task.rawInput, error.name);
     },
     SubtaskNotProvided: function (task: Task, error: SubtaskNotProvidedError, indent) {
-        logger.info("{red:%s} {err: } {cyan:'%s'} Sub-Task not provided", indent, task.rawInput, error.name);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Sub-Task not provided", indent, task.rawInput, error.name);
     },
     SubtasksNotInConfig: function (task: Task, error: SubtaskNotProvidedError, indent) {
-        logger.info("{red:%s} {err: } {cyan:'%s'} Configuration not provided for this task", indent, task.rawInput);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Configuration not provided for this task", indent, task.rawInput);
         logger.info("{red:%s} {err: } so you cannot use {cyan:<task>}:{yellow:*} syntax", indent);
+    },
+    FlagNotProvided: function (task: Task, error: SubtaskNotProvidedError, indent) {
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} is missing a valid flag (such as {yellow:'p'}, for example)", indent, task.rawInput);
+        logger.info("{red:%s} {err: } Desc: Should be something like: {cyan:'%s@p'}", indent, task.taskName);
     }
 };
 

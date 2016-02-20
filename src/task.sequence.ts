@@ -1,5 +1,6 @@
 import {transformStrings} from "./task.utils";
 const objPath = require('object-path');
+const merge = require('lodash.merge');
 const assign = require('object-assign');
 const Rx = require('rx');
 
@@ -24,6 +25,8 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
     function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
 
         function reducer(all, task: Task) {
+
+
             /**
              * If the current task has child tasks, we build a tree of
              * nested observables for it (a task with children cannot itself
@@ -159,13 +162,15 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
      * eg:
      *  module.exports.tasks [sass, cssmin, version-rev]
      */
+    const mergedConfigWithQuery = merge({}, config, task.query);
+
     if (imported.tasks && Array.isArray(imported.tasks)) {
         return imported.tasks.map(function (importedFn) {
             return createSequenceTaskItem({
                 fnName: importedFn.name,
                 factory: importedFn,
                 task: task,
-                config: config
+                config: mergedConfigWithQuery
             })
         });
     }
@@ -181,7 +186,7 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
             fnName: imported.name,
             factory: imported,
             task: task,
-            config: config,
+            config: mergedConfigWithQuery,
         })]
     }
 }

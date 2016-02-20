@@ -28,6 +28,7 @@
     "mkdirp": "0.5.1",
     "object-assign": "4.0.1",
     "object-path": "0.9.2",
+    "query-string": "3.0.0",
     "read-pkg-up": "1.0.1",
     "rx": "4.0.7",
     "rx-node": "1.0.1",
