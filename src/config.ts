@@ -12,7 +12,8 @@ export interface CrossbowConfiguration {
     stack: boolean
     reporter: string
     handoff: boolean
-    config: string|void
+    config: string|void,
+    interactive: boolean
 }
 
 /**
@@ -58,7 +59,11 @@ const defaults = <CrossbowConfiguration>{
      * should the resolved workload be handed off
      * to the caller?
      */
-    handoff: false
+    handoff: false,
+    /**
+     * Show the prompt for selecting tasks?
+     */
+    interactive: false
 };
 
 /**
@@ -97,6 +102,12 @@ const flagTransforms = {
      */
     v: (opts) => {
         return assign({}, opts, {summary: 'verbose'});
+    },
+    /**
+     * -c specifies a config file
+     */
+    i: (opts) => {
+        return assign({}, opts, {interactive: opts.i});
     }
 };
 

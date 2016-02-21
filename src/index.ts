@@ -7,6 +7,7 @@ import {Map} from 'immutable';
 import {TaskRunner} from './task.runner';
 import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
+import prompt from './command.run.interactive';
 
 const meow   = require('meow');
 const assign = require('object-assign');
@@ -92,11 +93,19 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : TaskRunner {
 
     if (cli.input[0] === 'run') {
-        if (cli.input.length === 1) {
-            console.log('You didn\'t provide a command for Crossbow to run');
-            return;
+        //if (cli.input.length === 1) {
+        //    console.log('You didn\'t provide a command for Crossbow to run');
+        //    return;
+        //}
+
+        if (config.interactive) {
+            prompt(cli, input, config, function (err, cli, input, config) {
+                return run(cli, input, config);
+            });
+        } else {
+
+            return run(cli, input, config);
         }
-        return run(cli, input, config);
     }
 }
 
@@ -109,5 +118,5 @@ module.exports.getRunner = function getRunner (tasks: string[], input?: any) {
         input: ['run', ...tasks],
         flags: {handoff: true}
     }, input || {});
-}
+};
 
