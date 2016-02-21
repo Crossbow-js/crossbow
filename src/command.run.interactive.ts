@@ -1,18 +1,15 @@
 /// <reference path="../typings/main.d.ts" />
-const debug = require('debug')('cb:command.run');
-const Rx    = require('rx');
+const debug    = require('debug')('cb:command.run');
+const Rx       = require('rx');
+const merge    = require('lodash.merge');
+const inquirer = require('inquirer');
 
 import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
-import {resolveTasks} from './task.resolve';
 import {compile} from './logger';
-import {createRunner, createFlattenedSequence} from './task.sequence';
-import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks} from './reporters/defaultReporter';
 
-export default function prompt (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, cb) {
-
-    var inquirer = require("inquirer");
+export default function prompt (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
     const taskSelect = {
         type: "checkbox",
@@ -47,27 +44,37 @@ export default function prompt (cli: Meow, input: CrossbowInput, config: Crossbo
 
     const pr = Rx.Observable.fromCallback(inquirer.prompt, inquirer);
 
-    pr(taskSelect)
-        .subscribe(x => {
-            console.log(x);
-        })
-
-    //inquirer.prompt(taskSelect, function( taskAnswer ) {
-    //    cli.input = ['run', ...taskAnswer.tasks];
-    //    if (taskAnswer.tasks.length === 1) {
-    //        return cb(null, cli, input, config);
-    //    }
-    //    inquirer.prompt(runModeSelect, function (runmodeAnswer) {
-    //        config.runMode = runmodeAnswer.runMode;
-    //        return cb(null, cli, input, config);
-    //    });
-    //});
+    return pr(taskSelect)
+        .pluck('tasks')
+        .flatMap(tasks => {
+            if (tasks.length === 1) {
+                return Rx.Observable.just({tasks});
+            }
+            return pr(runModeSelect).pluck('runMode').map(runMode => {
+                return {
+                    runMode: runMode,
+                    tasks: tasks
+                }
+            });
+        });
 }
 
 
 export function buildPrompt (input, config) {
 
-    return Object.keys(input.tasks).map(x => ({
-        name: compile(`${x} {gray:(${input.tasks[x]})}`)
-    }));
+    const extract  = (x) => Object.keys(x).map(x => ({name:x, value: x}));
+    const cbTasks  = extract(input.tasks);
+
+    const npmTasks = extract(input.npmScripts);
+
+    if (npmTasks.length) {
+        return [
+            new inquirer.Separator(compile("{underline:NPM Scripts (from your package.json}")),
+            ...npmTasks,
+            new inquirer.Separator(compile("{underline:Other tasks from config")),
+            ...cbTasks
+        ];
+    }
+
+    return cbTasks;
 }

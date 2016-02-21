@@ -2,12 +2,11 @@
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
-import run from './command.run';
 import {Map} from 'immutable';
 import {TaskRunner} from './task.runner';
 import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
-import prompt from './command.run.interactive';
+import {handleIncomingRunCommand} from "./command.run";
 
 const meow   = require('meow');
 const assign = require('object-assign');
@@ -29,6 +28,8 @@ export interface CrossbowInput {
     watch: any
     config: any
     gruntfile?: string
+    npmScripts: any
+    mergedTasks: any
 }
 
 /**
@@ -41,11 +42,14 @@ export interface CrossbowInput {
 function generateInput (incoming: CrossbowInput|any, config: CrossbowConfiguration) : CrossbowInput {
 
     const npmScriptsAsCrossbowTasks = createCrossbowTasksFromNpmScripts(config.cwd);
+    const mergedTasks = _merge({}, npmScriptsAsCrossbowTasks, incoming.tasks || {});
 
     return _merge({
-        tasks: npmScriptsAsCrossbowTasks,
+        tasks: {},
         watch: {},
-        config:{}
+        config:{},
+        mergedTasks,
+        npmScripts: npmScriptsAsCrossbowTasks
     }, incoming || {});
 }
 
@@ -90,22 +94,13 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
     return processInput(cli, generateInput(input, mergedConfig), mergedConfig);
 }
 
+/**
+ * Now decide who should handle the current command
+ */
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : TaskRunner {
 
     if (cli.input[0] === 'run') {
-        //if (cli.input.length === 1) {
-        //    console.log('You didn\'t provide a command for Crossbow to run');
-        //    return;
-        //}
-
-        if (config.interactive) {
-            prompt(cli, input, config, function (err, cli, input, config) {
-                return run(cli, input, config);
-            });
-        } else {
-
-            return run(cli, input, config);
-        }
+        return handleIncomingRunCommand(cli, input, config);
     }
 }
 

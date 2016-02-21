@@ -171,6 +171,12 @@ export function reportTaskErrors (tasks: Task[],
     }
 }
 
+export function reportNoTasksProvided() {
+    logger.info("{gray:-------------------------------------------------------------");
+    logger.info("Entering {bold:interactive mode} as you didn't provide a task to run");
+    logger.info("{gray:-------------------------------------------------------------");
+}
+
 /**
  * @param task
  * @param errors

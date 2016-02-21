@@ -1,13 +1,15 @@
 /// <reference path="../typings/main.d.ts" />
-const debug = require('debug')('cb:command.run');
-const Rx    = require('rx');
+const debug  = require('debug')('cb:command.run');
+const Rx     = require('rx');
+const merge  = require('lodash.merge');
 
 import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
-import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks} from './reporters/defaultReporter';
+import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks, reportNoTasksProvided} from './reporters/defaultReporter';
+import prompt from './command.run.interactive';
 
 export interface CommandTrigger {
     type: string
@@ -109,5 +111,26 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         summary(sequence, cli, input, config, new Date().getTime() - timestamp);
     	// todo: reporter: handle completion here.
     })
+}
+
+export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+    /**
+     * If no task given, or if user has selected interactive mode,
+     * show the UI for task selection
+     */
+    if (cli.input.length === 1 || config.interactive) {
+        if (cli.input.length === 1) {
+            reportNoTasksProvided();
+        }
+        prompt(cli, input, config)
+            .subscribe(answers => {
+                const cliMerged       = merge({}, cli, {input: ['run', ...answers.tasks]});
+                const configMerged    = merge({}, config, {runMode: answers.runMode});
+                return execute(cliMerged, input, configMerged);
+            });
+        return;
+    }
+
+    return execute(cli, input, config);
 }
 
