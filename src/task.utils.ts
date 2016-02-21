@@ -4,7 +4,7 @@ import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
 
 const yml = require('js-yaml');
-
+const readPkgUp = require('read-pkg-up');
 const objPath  = require('object-path');
 
 export function locateModule (cwd: string, name: string): string[] {
@@ -81,11 +81,22 @@ export function retrieveExternalInputFiles (config: CrossbowConfiguration): Exte
     const cwd        = config.cwd;
     const configFlag = config.config;
 
-    return [configFlag, ...maybes]
-        .filter(x => x !== undefined)
+    const configFiles = readFiles([configFlag, ...maybes], cwd);
+    return configFiles;
+}
+
+/**
+ * @param paths
+ * @param cwd
+ * @returns {any}
+ */
+function readFiles (paths, cwd) {
+    return paths
+        .filter(x => x)
         .map(x => resolve(cwd, x))
         .filter(existsSync)
         .map(x => {
+            console.log(x);
             if (x.match(/\.ya?ml$/)) {
                 return <ExternalFileInput> {
                     path: x,
@@ -97,4 +108,43 @@ export function retrieveExternalInputFiles (config: CrossbowConfiguration): Exte
                 input: require(x)
             }
         });
+}
+
+/**
+ * @param cwd
+ * @returns {{}}
+ */
+export function createCrossbowTasksFromNpmScripts (cwd:string): any {
+    const pkg = readPkgUp.sync({
+        cwd: cwd,
+        normalize: false
+    }).pkg;
+
+    const npmScripts = objPath.get(pkg, ['scripts'], {});
+
+    if (!isPlainObject(npmScripts)) {
+        return {};
+    }
+
+    const transformed = Object.keys(npmScripts)
+        .reduce((acc, key) => {
+            acc[key] = '@npm ' + npmScripts[key];
+            return acc;
+        }, {});
+
+    return transformed;
+}
+
+const toStringTypes = {
+    'obj': '[object Object]',
+    'string': '[object String]',
+    'array': '[object Array]'
+};
+
+function testType (com:string, val:any): boolean {
+    return Object.prototype.toString.call(val) === com;
+}
+
+export function isPlainObject (val:any): boolean {
+    return testType(toStringTypes['obj'], val);
 }
