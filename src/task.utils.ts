@@ -115,17 +115,29 @@ function readFiles (paths, cwd) {
  * @returns {{}}
  */
 export function createCrossbowTasksFromNpmScripts (cwd:string): any {
+    /**
+     * Ready package.json from current project
+     */
     const pkg = readPkgUp.sync({
         cwd: cwd,
         normalize: false
     }).pkg;
 
+    /**
+     * Try to retrieve `scripts`
+     */
     const npmScripts = objPath.get(pkg, ['scripts'], {});
 
+    /**
+     * Return if anything failed with package.json or scripts prop
+     */
     if (!isPlainObject(npmScripts)) {
         return {};
     }
 
+    /**
+     * Now create @npm adaptor tasks for each script found
+     */
     const transformed = Object.keys(npmScripts)
         .reduce((acc, key) => {
             acc[key] = '@npm ' + npmScripts[key];
