@@ -6,6 +6,7 @@ import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
+import {compile} from './logger';
 import {createRunner, createFlattenedSequence} from './task.sequence';
 import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks} from './reporters/defaultReporter';
 
@@ -66,5 +67,7 @@ export default function prompt (cli: Meow, input: CrossbowInput, config: Crossbo
 
 export function buildPrompt (input, config) {
 
-    return Object.keys(input.tasks).map(x => ({name: x}));
+    return Object.keys(input.tasks).map(x => ({
+        name: compile(`${x} {gray:(${input.tasks[x]})}`)
+    }));
 }
