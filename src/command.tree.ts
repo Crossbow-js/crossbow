@@ -19,6 +19,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const tasks = resolveTasks(Object.keys(input.tasks), ctx);
 
-    logErrors(tasks.all, '');
+    reportTree(tasks.all);
 }
 

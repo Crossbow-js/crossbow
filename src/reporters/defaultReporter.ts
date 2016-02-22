@@ -178,12 +178,35 @@ export function reportNoTasksProvided() {
 
 export function reportTree (tasks) {
 
+    var taskCount = 0;
+    var taskErrors = 0;
+    var taskValid = 0;
+
     logTasks(tasks, '');
+    logger.info('');
+    logger.info('{red:%s} error%s found.', taskErrors, (taskErrors > 1 || taskErrors === 0) ? 's' : '');
 
     function logTasks(tasks, indent) {
         tasks.forEach(function (task) {
-        	logger.info('{gray:%s} {bold:%s}', indent);
-        })
+            if (task.tasks.length) {
+                logger.info('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
+            } else {
+                taskCount += 1;
+                if (task.errors.length) {
+                    logger.info('{red:-%s x {red.bold:%s}}', indent, task.taskName);
+                } else {
+                    taskValid += 1;
+                    logger.info('{gray.bold:-%s} %s', indent, task.taskName);
+                }
+            }
+            if (task.errors.length) {
+                taskErrors += task.errors.length;
+                logMultipleErrors(task, task.errors, indent);
+            }
+            if (task.tasks.length) {
+                logTasks(task.tasks, indent + '-');
+            }
+        });
     }
 }
 
