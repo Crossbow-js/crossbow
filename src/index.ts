@@ -7,6 +7,7 @@ import {TaskRunner} from './task.runner';
 import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
+import treeCommand from "./command.tree";
 
 const meow   = require('meow');
 const assign = require('object-assign');
@@ -53,8 +54,7 @@ function generateInput (incoming: CrossbowInput|any, config: CrossbowConfigurati
     }, incoming || {});
 }
 
-const availableCommands = ['watch', 'run'];
-
+const availableCommands = ['watch', 'run', 'tree'];
 
 if (!module.parent) {
     const cli = <Meow>meow();
@@ -97,10 +97,13 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
 /**
  * Now decide who should handle the current command
  */
-function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : TaskRunner {
+function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : any {
 
     if (cli.input[0] === 'run') {
         return handleIncomingRunCommand(cli, input, config);
+    }
+    if (cli.input[0] === 'tree') {
+        return treeCommand(cli, input, config);
     }
 }
 

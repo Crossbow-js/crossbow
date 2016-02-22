@@ -5,7 +5,7 @@ import {Task} from "../task.resolve";
 import {SubtaskNotFoundError, TaskErrorTypes} from "../task.errors";
 import {Meow, CrossbowInput} from "../index";
 import {SubtaskNotProvidedError} from "../task.errors";
-
+const modulePredicate = (x) => x.type === TaskErrorTypes.ModuleNotFound;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 
 const escape = (x) => x
@@ -128,8 +128,6 @@ export function reportTaskErrors (tasks: Task[],
                                   input: CrossbowInput,
                                   config: CrossbowConfiguration) {
 
-    const modulePredicate = (x) => x.type === TaskErrorTypes.ModuleNotFound;
-
     logger.info('{gray.bold:------------------------------------------------}');
     logger.info('{err: } Sorry, there were errors resolving your tasks,');
     logger.info('{err: } So none of them were run.');
@@ -140,41 +138,53 @@ export function reportTaskErrors (tasks: Task[],
         logErrors([tasks[i]], '');
         logger.info('{gray.bold:-----------------------------------------------}');
     });
+}
 
-    function logErrors(tasks, indent) {
-        tasks.forEach(function (task) {
-            var logged = false;
-            if (task.errors.length) {
-                /**
-                 * If one of the errors is a module not found error, all other errors
-                 * don't make sense
-                 * @type {boolean}
-                 */
-                logged = true;
-                const logOnlyModuleNotFoundErrors = task.errors.some(modulePredicate);
+export function logErrors(tasks, indent) {
 
-                if (logOnlyModuleNotFoundErrors) {
-                    logMultipleErrors(task, task.errors.filter(modulePredicate), indent);
-                } else {
-                    logMultipleErrors(task, task.errors, indent);
-                }
-            }
-            if (task.tasks.length) {
-                logger.info('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
-                logErrors(task.tasks, indent += '-');
+    tasks.forEach(function (task) {
+        var logged = false;
+        if (task.errors.length) {
+            /**
+             * If one of the errors is a module not found error, all other errors
+             * don't make sense
+             * @type {boolean}
+             */
+            logged = true;
+            const logOnlyModuleNotFoundErrors = task.errors.some(modulePredicate);
+
+            if (logOnlyModuleNotFoundErrors) {
+                logMultipleErrors(task, task.errors.filter(modulePredicate), indent);
             } else {
-                if (!logged) {
-                    logger.info('{gray.bold:-%s} {ok: } %s', indent, task.taskName);
-                }
+                logMultipleErrors(task, task.errors, indent);
             }
-        })
-    }
+        }
+        if (task.tasks.length) {
+            logger.info('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
+            logErrors(task.tasks, indent += '-');
+        } else {
+            if (!logged) {
+                logger.info('{gray.bold:-%s} {ok: } %s', indent, task.taskName);
+            }
+        }
+    })
 }
 
 export function reportNoTasksProvided() {
     logger.info("{gray:-------------------------------------------------------------");
     logger.info("Entering {bold:interactive mode} as you didn't provide a task to run");
     logger.info("{gray:-------------------------------------------------------------");
+}
+
+export function reportTree (tasks) {
+
+    logTasks(tasks, '');
+
+    function logTasks(tasks, indent) {
+        tasks.forEach(function (task) {
+        	logger.info('{gray:%s} {bold:%s}', indent);
+        })
+    }
 }
 
 /**
@@ -186,7 +196,6 @@ function logMultipleErrors (task, errors, indent) {
     errors.forEach(function (error) {
         const errorType = TaskErrorTypes[error.type];
         if (errorHandlers[errorType]) {
-            logger.info('');
             errorHandlers[errorType](task, error, indent + '-');
             logger.info("{red:%s} {err: } Docs: {underline:%s/{bold.underline:%s}}", indent + '-', baseUrl, errorType);
             logger.info('');

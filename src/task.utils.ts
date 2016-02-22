@@ -96,7 +96,6 @@ function readFiles (paths, cwd) {
         .map(x => resolve(cwd, x))
         .filter(existsSync)
         .map(x => {
-            console.log(x);
             if (x.match(/\.ya?ml$/)) {
                 return <ExternalFileInput> {
                     path: x,
