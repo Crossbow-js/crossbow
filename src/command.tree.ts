@@ -22,3 +22,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     reportTree(tasks.all);
 }
 
+export function handleIncomingTreeCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+    execute(cli, input, config);
+}

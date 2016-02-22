@@ -7,7 +7,7 @@ import {TaskRunner} from './task.runner';
 import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
-import treeCommand from "./command.tree";
+import {handleIncomingTreeCommand} from "./command.tree";
 
 const meow   = require('meow');
 const assign = require('object-assign');
@@ -103,7 +103,7 @@ function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfigura
         return handleIncomingRunCommand(cli, input, config);
     }
     if (cli.input[0] === 'tree') {
-        return treeCommand(cli, input, config);
+        return handleIncomingTreeCommand(cli, input, config);
     }
 }
 

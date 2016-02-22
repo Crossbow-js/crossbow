@@ -9,7 +9,7 @@ import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
 import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks, reportNoTasksProvided} from './reporters/defaultReporter';
-import prompt from './command.run.interactive';
+import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
     type: string
@@ -122,7 +122,7 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
         if (cli.input.length === 1) {
             reportNoTasksProvided();
         }
-        prompt(cli, input, config)
+        promptForRunCommand(cli, input, config)
             .subscribe(answers => {
                 const cliMerged       = merge({}, cli, {input: ['run', ...answers.tasks]});
                 const configMerged    = merge({}, config, {runMode: answers.runMode});

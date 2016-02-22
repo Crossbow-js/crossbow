@@ -133,14 +133,11 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      */
     incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
 
-
     /**
      * Next resolve any child tasks, this is the core of how the recursive
      * alias's work
      */
-
-    incoming.tasks = resolveChildTasks([], trigger.input.mergedTasks, incoming.baseTaskName, parents, trigger);
-
+    incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
 
     const errors         = gatherTaskErrors(
         incoming,
@@ -154,12 +151,14 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
     }));
 }
 
-function resolveChildTasks (initialTasks: any[], mergedTasks: any, taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {
+function resolveChildTasks (initialTasks: any[], taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {
     /**
      * If current task object we're looking at does not contain
      * the current taskName, just return the initialTasks array (could be empty)
      */
-    if (Object.keys(mergedTasks).indexOf(taskName) === -1) {
+    console.log(trigger.input.tasks);
+    console.log(trigger.input.npmScripts);
+    if (Object.keys(trigger.input.tasks).indexOf(taskName) === -1) {
         return initialTasks;
     }
 
@@ -177,15 +176,15 @@ function resolveChildTasks (initialTasks: any[], mergedTasks: any, taskName: str
      *  eg 2: lint: ['@npm eslint']
      * @type {Array}
      */
-    const subject = [].concat(mergedTasks[taskName]);
-
+    const subject = [].concat(trigger.input.tasks[taskName]);
+    
     /**
      * Now return an array of sub-tasks that have also been
      * resolved recursively
      */
     return subject.map(item => {
         const flat = createFlattenedTask(item, parents.concat(taskName), trigger);
-        flat.tasks = resolveChildTasks(flat.tasks, mergedTasks, item, parents.concat(taskName), trigger);
+        flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
         return flat;
     });
 }
