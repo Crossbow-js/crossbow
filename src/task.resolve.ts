@@ -8,6 +8,7 @@ import * as adaptors from "./adaptors";
 
 import {RunCommandTrigger} from "./command.run";
 import preprocessTask from "./task.preprocess";
+import {CrossbowInput} from "./index";
 
 export interface Task {
     valid: boolean
@@ -25,6 +26,7 @@ export interface Task {
     endTime?: number
     duration?: number
     query: any
+    origin: TaskOriginTypes
 }
 
 const defaultTask = <Task>{
@@ -65,6 +67,7 @@ function createAdaptorTask (taskName, parents) : Task {
         return createTask({
             rawInput: taskName,
             taskName: taskName,
+            origin: TaskOriginTypes.Adaptor,
             //command: split[2] || '',
             adaptor: taskName.split(' ')[0],
             errors: [<AdaptorNotFoundError>{
@@ -94,7 +97,8 @@ function createAdaptorTask (taskName, parents) : Task {
         errors: [],
         command: commandInput,
         runMode: 'series',
-        query: {}
+        query: {},
+        origin: TaskOriginTypes.Adaptor
     };
 }
 
@@ -139,7 +143,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
      */
     incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
 
-    const errors         = gatherTaskErrors(
+    const errors = gatherTaskErrors(
         incoming,
         trigger.input
     );
@@ -147,18 +151,15 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
     return createTask(assign({}, incoming, {
         parents,
         errors,
-        valid:    errors.length === 0
+        valid: errors.length === 0
     }));
 }
 
 function resolveChildTasks (initialTasks: any[], taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {
-    /**
-     * If current task object we're looking at does not contain
-     * the current taskName, just return the initialTasks array (could be empty)
-     */
-    console.log(trigger.input.tasks);
-    console.log(trigger.input.npmScripts);
-    if (Object.keys(trigger.input.tasks).indexOf(taskName) === -1) {
+
+    const subject = pullTaskFromInput(taskName, trigger.input);
+
+    if (subject.items.length === 0) {
         return initialTasks;
     }
 
@@ -171,22 +172,56 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
     }
 
     /**
+     * Now return an array of sub-tasks that have also been
+     * resolved recursively
+     */
+    return subject.items.map(item => {
+        const flat  = createFlattenedTask(item, parents.concat(taskName), trigger);
+        flat.origin = subject.origin;
+        flat.tasks  = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
+        return flat;
+    });
+}
+
+export enum TaskOriginTypes {
+    NpmScripts,
+    CrossbowConfig,
+    FileSystem,
+    Adaptor
+}
+
+export interface TasknameWithOrigin {
+    items: string[]
+    origin: TaskOriginTypes
+}
+
+function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWithOrigin {
+
+    if (input.tasks[taskName] !== undefined) {
+        return {items: [].concat(input.tasks[taskName]), origin: TaskOriginTypes.CrossbowConfig}
+    }
+
+    if (input.npmScripts[taskName] !== undefined) {
+        return {items: [].concat(input.npmScripts[taskName]), origin: TaskOriginTypes.NpmScripts}
+    }
+
+    return {items: [], origin: TaskOriginTypes.CrossbowConfig};
+    /**
+     * If current task object we're looking at does not contain
+     * the current taskName, just return the initialTasks array (could be empty)
+     */
+    //if (Object.keys(input.npmScripts).indexOf(taskName) === -1) {
+    //
+    //}
+
+    /**
      * Allow tasks in either string or array format
      *  eg 1: lint: '@npm eslint'
      *  eg 2: lint: ['@npm eslint']
      * @type {Array}
      */
-    const subject = [].concat(trigger.input.tasks[taskName]);
-    
-    /**
-     * Now return an array of sub-tasks that have also been
-     * resolved recursively
-     */
-    return subject.map(item => {
-        const flat = createFlattenedTask(item, parents.concat(taskName), trigger);
-        flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
-        return flat;
-    });
+    //const subject = [].concat(trigger.input.tasks[taskName]);
+    //return [].concat(input.npmScripts[taskName]);
 }
 
 /**

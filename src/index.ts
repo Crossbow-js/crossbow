@@ -43,13 +43,11 @@ export interface CrossbowInput {
 function generateInput (incoming: CrossbowInput|any, config: CrossbowConfiguration) : CrossbowInput {
 
     const npmScriptsAsCrossbowTasks = createCrossbowTasksFromNpmScripts(config.cwd);
-    const mergedTasks = _merge({}, npmScriptsAsCrossbowTasks, incoming.tasks || {});
 
     return _merge({
         tasks: {},
         watch: {},
         config:{},
-        mergedTasks,
         npmScripts: npmScriptsAsCrossbowTasks
     }, incoming || {});
 }
