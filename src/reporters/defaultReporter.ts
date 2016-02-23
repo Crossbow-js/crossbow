@@ -5,13 +5,19 @@ import {Task} from "../task.resolve";
 import {SubtaskNotFoundError, TaskErrorTypes} from "../task.errors";
 import {Meow, CrossbowInput} from "../index";
 import {SubtaskNotProvidedError} from "../task.errors";
+import {TaskOriginTypes} from "../task.resolve";
 const modulePredicate = (x) => x.type === TaskErrorTypes.ModuleNotFound;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 
-const escape = (x) => x
-    .replace(/\{/g, '\\\{')
-    .replace(/}/g, '\\\}');
+function sectionTitle (title, secondary) {
 
+    const lineLength = new Array(secondary.length + title.length).join('-');
+
+    logger.info('');
+    logger.info('{gray:----' + lineLength);
+    logger.info("{yellow:+ %s {cyan:%s}", title, secondary);
+    logger.info('{gray:----' + lineLength);
+}
 export function summary (
     sequence: SequenceItem[],
     cli: Meow,
@@ -23,10 +29,7 @@ export function summary (
     if (config.summary !== 'short') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         const lineLength = new Array(cliInput.length).join('-');
-        logger.info('');
-        logger.info('{gray:---------------------------' + lineLength);
-        logger.info("{gray:+ Summary from the input: {gray.bold:%s}", cliInput);
-        logger.info('{gray:---------------------------' + lineLength);
+        sectionTitle('Summary from the input', cliInput);
         logTaskCompletion(sequence, '');
         logger.info('{gray:---------------------------' + lineLength);
     }
@@ -42,15 +45,21 @@ export function summary (
  * @param indent
  */
 function logTaskCompletion (sequence: SequenceItem[], indent: string) {
+    const localIndent = indent.length ? indent + ' ': '';
     sequence.forEach(function (item) {
         if (item.type === SequenceItemTypes.Task) {
             if (item.subTaskName) {
-                return logger.info('{gray:%s}{ok: } %s (with config: {bold:%s}) {yellow:%sms}', indent.length ? indent + ' ': '', item.task.taskName, item.subTaskName, item.duration);
+                return logger.info('{gray:%s}{ok: } %s (with config: {bold:%s}) {yellow:%sms}', localIndent, item.task.taskName, item.subTaskName, item.duration);
             } else {
-                return logger.info('{gray:%s}{ok: } %s {yellow:%sms}', indent.length ? indent + ' ': '', item.task.taskName, item.duration);
+
+                if (item.task.origin === TaskOriginTypes.NpmScripts) {
+                    return logger.info('{gray:%s}{ok: } {magenta:[npm]} %s {yellow:%sms}', localIndent, item.task.command, item.duration);
+                } else {
+                    return logger.info('{gray:%s}{ok: } %s {yellow:%sms}', localIndent, item.task.taskName, item.duration);
+                }
             }
         }
-        logger.info('{gray:%s}{white.bold:[%s]} {gray:%s}', indent.length ? indent + ' ': '', item.taskName, SequenceItemTypes[item.type]);
+        logger.info('{gray:%s}{white.bold:[%s]} {gray:%s}', localIndent, item.taskName, SequenceItemTypes[item.type]);
         logTaskCompletion(item.items, indent + '-');
     });
 }
@@ -61,6 +70,7 @@ function logTaskCompletion (sequence: SequenceItem[], indent: string) {
  * @param indent
  */
 function logTaskTree (sequence: SequenceItem[], indent: string) {
+    const localIndent = indent.length ? indent + ' ': '';
     sequence.forEach(function (item) {
         if (item.type === SequenceItemTypes.Task) {
             let name = item.task.taskName;
@@ -68,13 +78,17 @@ function logTaskTree (sequence: SequenceItem[], indent: string) {
                 name = `${name} fn: ${item.fnName}`;
             }
             if (item.subTaskName) {
-                logger.info('{gray:%s}%s (with config: {bold:%s})', indent.length ? indent + ' ': '', name, item.subTaskName);
+                logger.info('{gray:%s}%s (with config: {bold:%s})', localIndent, name, item.subTaskName);
             } else {
-                logger.info('{gray:%s}%s', indent.length ? indent + ' ': '', name);
+                if (item.task.origin === TaskOriginTypes.NpmScripts) {
+                    return logger.info('{gray:%s}{ok: } {magenta:[npm]} %s', localIndent, item.task.command);
+                } else {
+                    return logger.info('{gray:%s}{ok: } %s', localIndent, item.task.taskName);
+                }
             }
             return;
         }
-        logger.info('{gray:%s}{white.bold:[%s]} {gray:%s}', indent.length ? indent + ' ': '', item.taskName, SequenceItemTypes[item.type]);
+        logger.info('{gray:%s}{white.bold:[%s]} {gray:%s}', localIndent, item.taskName, SequenceItemTypes[item.type]);
         logTaskTree(item.items, indent + '-');
     });
 }
@@ -93,10 +107,7 @@ export function reportTaskList (sequence: SequenceItem[],
     if (config.summary !== 'short') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         const lineLength = new Array(cliInput.length).join('-');
-        logger.info('');
-        logger.info('{gray:---------------------------' + lineLength);
-        logger.info("{gray:+ Task tree for the input: {gray.bold:%s}", cliInput);
-        logger.info('{gray:---------------------------' + lineLength);
+        sectionTitle('Task tree for the input', cliInput);
         logTaskTree(sequence, '');
         logger.info('{gray:---------------------------' + lineLength);
     }
@@ -176,27 +187,32 @@ export function reportNoTasksProvided() {
     logger.info("{gray:-------------------------------------------------------------");
 }
 
-export function reportTree (tasks) {
+export function reportTree (tasks, title) {
 
     var taskCount = 0;
     var taskErrors = 0;
     var taskValid = 0;
-
+    sectionTitle(title, '');
     logTasks(tasks, '');
     logger.info('');
     logger.info('{red:%s} error%s found.', taskErrors, (taskErrors > 1 || taskErrors === 0) ? 's' : '');
+    logger.info('');
 
     function logTasks(tasks, indent) {
         tasks.forEach(function (task) {
             if (task.tasks.length) {
-                logger.info('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
+                logger.info('{gray.bold:-%s} {bold:%s}', indent, task.taskName);
             } else {
                 taskCount += 1;
                 if (task.errors.length) {
                     logger.info('{red:-%s x {red.bold:%s}}', indent, task.taskName);
                 } else {
                     taskValid += 1;
-                    logger.info('{gray.bold:-%s} %s', indent, task.taskName);
+                    if (task.origin === TaskOriginTypes.NpmScripts) {
+                        logger.info('{gray.bold:-%s} %s', indent, task.command);
+                    } else {
+                        logger.info('{gray.bold:-%s} %s', indent, task.taskName);
+                    }
                 }
             }
             if (task.errors.length) {
@@ -236,7 +252,7 @@ const errorHandlers = {
         logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Task / Module not found", indent, task.rawInput);
     },
     SubtaskNotFound: function (task: Task, error: SubtaskNotFoundError, indent) {
-        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Sub-Task {yellow.bold:'%s'} not found", indent, task.rawInput, error.name);
+        logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Sub-Task {yellow:'%s'} not found", indent, task.rawInput, error.name);
     },
     SubtaskNotProvided: function (task: Task, error: SubtaskNotProvidedError, indent) {
         logger.info("{red:%s} {err: } Desc: {cyan:'%s'} Sub-Task not provided", indent, task.rawInput, error.name);

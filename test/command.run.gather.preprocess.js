@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const preprocess = require('../dist/task.preprocess').default;
+const preprocess = require('../dist/task.preprocess').preprocessTask;
 
 describe('can pre-process incoming task names', function () {
 

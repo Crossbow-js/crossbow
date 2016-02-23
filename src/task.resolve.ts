@@ -7,7 +7,7 @@ import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {RunCommandTrigger} from "./command.run";
-import preprocessTask from "./task.preprocess";
+import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 
 export interface Task {
@@ -51,6 +51,15 @@ function createTask(obj: any) : Task {
 }
 
 function createAdaptorTask (taskName, parents) : Task {
+
+    /**
+     * Remove any newlines on incoming task names
+     * (eg: in yaml files where commands are split
+     * into multiple lines, that sometimes leaves a trailing
+     * \n char.
+     */
+    taskName = removeNewlines(taskName);
+
     /**
      * Get a valid adaptors adaptor name
      * @type {string|undefined}
@@ -68,7 +77,6 @@ function createAdaptorTask (taskName, parents) : Task {
             rawInput: taskName,
             taskName: taskName,
             origin: TaskOriginTypes.Adaptor,
-            //command: split[2] || '',
             adaptor: taskName.split(' ')[0],
             errors: [<AdaptorNotFoundError>{
                 type: TaskErrorTypes.AdaptorNotFound,

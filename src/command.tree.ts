@@ -17,9 +17,11 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * First Resolve the task names given in input.
      */
-    const tasks = resolveTasks(Object.keys(input.tasks), ctx);
-
-    reportTree(tasks.all);
+    reportTree(resolveTasks(Object.keys(input.tasks), ctx).all, 'CrossbowConfig');
+    /**
+     * Next report the available Npm scripts
+     */
+    reportTree(resolveTasks(Object.keys(input.npmScripts), ctx).all, 'Npm Scripts');
 }
 
 export function handleIncomingTreeCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
