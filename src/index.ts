@@ -108,10 +108,25 @@ export default handleIncoming;
 
 module.exports = handleIncoming;
 
-module.exports.getRunner = function getRunner (tasks: string[], input?: any) {
+module.exports.getRunner = function getRunner (tasks: string[], input?: any, config?: any) {
     return handleIncoming({
         input: ['run', ...tasks],
-        flags: {handoff: true}
+        flags: assign({handoff: true}, config)
+    }, input || {});
+};
+
+module.exports.runner = function getRunner (tasks: string[], input?: any, config?: any) {
+    const result = handleIncoming({
+        input: ['run', ...tasks],
+        flags: assign({handoff: true}, config)
+    }, input || {});
+    return result.runner;
+};
+
+module.exports.run = function run (tasks: string[], input?: any, config?: any) {
+    handleIncoming({
+        input: ['run', ...tasks],
+        flags: config || {}
     }, input || {});
 };
 
