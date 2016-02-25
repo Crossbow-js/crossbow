@@ -5,7 +5,7 @@ import {Task} from "./task.resolve";
 const assign = require('object-assign');
 const qs = require('query-string');
 const flagRegex = /(.+?)@(.+)?$/;
-export const removeNewlines = (x) => x.replace(/\n|\r/g, '');
+export const removeNewlines = (x: string) => x.replace(/\n|\r/g, '').trim();
 const e = (x) => x
     .replace(/\n|\r/g, '')
     .replace(/\{/g, '\\\{')
@@ -28,8 +28,6 @@ export interface OutgoingTask extends IncomingTask {
 }
 
 export function preprocessTask(taskName: string): OutgoingTask {
-
-    taskName = removeNewlines(taskName);
 
     /**
      * Split any end flags from the main task name

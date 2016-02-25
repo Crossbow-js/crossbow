@@ -41,6 +41,24 @@ const defaultTask = <Task>{
     runMode: 'series'
 };
 
+export enum TaskOriginTypes {
+    NpmScripts,
+    CrossbowConfig,
+    FileSystem,
+    Adaptor
+}
+
+export interface TasknameWithOrigin {
+    items: string[]
+    origin: TaskOriginTypes
+}
+
+export interface Tasks {
+    valid: Task[]
+    invalid: Task[],
+    all: Task[]
+}
+
 /**
  * Factory for creating a new Task Item
  * @param {object} obj
@@ -50,7 +68,10 @@ function createTask(obj: any) : Task {
     return merge({}, defaultTask, obj);
 }
 
-function createAdaptorTask (taskName, parents) : Task {
+/**
+ * Entry point for all tasks
+ */
+function createFlattenedTask (taskName:string, parents:string[], trigger:RunCommandTrigger): Task {
 
     /**
      * Remove any newlines on incoming task names
@@ -59,64 +80,6 @@ function createAdaptorTask (taskName, parents) : Task {
      * \n char.
      */
     taskName = removeNewlines(taskName);
-
-    /**
-     * Get a valid adaptors adaptor name
-     * @type {string|undefined}
-     */
-    const validAdaptorName = Object.keys(adaptors).filter(x => {
-        return taskName.match(new RegExp('^@' + x));
-    })[0];
-
-    /**
-     * If it was not valid, return a simple
-     * task that will be invalid
-     */
-    if (!validAdaptorName) {
-        return createTask({
-            rawInput: taskName,
-            taskName: taskName,
-            origin: TaskOriginTypes.Adaptor,
-            adaptor: taskName.split(' ')[0],
-            errors: [<AdaptorNotFoundError>{
-                type: TaskErrorTypes.AdaptorNotFound,
-                taskName: taskName
-            }]
-        });
-    }
-
-    /**
-     * Strip the first part of the task name.
-     *  eg: `@npm eslint`
-     *   ->  eslint
-     * @type {string}
-     */
-    const commandInput = taskName.replace(/^@(.+?) /, '');
-
-    return <Task>{
-        valid: true,
-        adaptor: validAdaptorName,
-        taskName: taskName,
-        subTasks: [],
-        modules: [],
-        tasks: [],
-        rawInput: taskName,
-        parents: parents,
-        errors: [],
-        command: commandInput,
-        runMode: 'series',
-        query: {},
-        origin: TaskOriginTypes.Adaptor
-    };
-}
-
-export interface Tasks {
-    valid: Task[]
-    invalid: Task[],
-    all: Task[]
-}
-
-function createFlattenedTask (taskName:string, parents:string[], trigger:RunCommandTrigger): Task {
 
     /**
      * Never modify the current task if it begins
@@ -191,17 +154,58 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
     });
 }
 
-export enum TaskOriginTypes {
-    NpmScripts,
-    CrossbowConfig,
-    FileSystem,
-    Adaptor
+function createAdaptorTask (taskName, parents) : Task {
+
+    /**
+     * Get a valid adaptors adaptor name
+     * @type {string|undefined}
+     */
+    const validAdaptorName = Object.keys(adaptors).filter(x => {
+        return taskName.match(new RegExp('^@' + x));
+    })[0];
+
+    /**
+     * If it was not valid, return a simple
+     * task that will be invalid
+     */
+    if (!validAdaptorName) {
+        return createTask({
+            rawInput: taskName,
+            taskName: taskName,
+            origin: TaskOriginTypes.Adaptor,
+            adaptor: taskName.split(' ')[0],
+            errors: [<AdaptorNotFoundError>{
+                type: TaskErrorTypes.AdaptorNotFound,
+                taskName: taskName
+            }]
+        });
+    }
+
+    /**
+     * Strip the first part of the task name.
+     *  eg: `@npm eslint`
+     *   ->  eslint
+     * @type {string}
+     */
+    const commandInput = taskName.replace(/^@(.+?) /, '');
+
+    return <Task>{
+        valid: true,
+        adaptor: validAdaptorName,
+        taskName: taskName,
+        subTasks: [],
+        modules: [],
+        tasks: [],
+        rawInput: taskName,
+        parents: parents,
+        errors: [],
+        command: commandInput,
+        runMode: 'series',
+        query: {},
+        origin: TaskOriginTypes.Adaptor
+    };
 }
 
-export interface TasknameWithOrigin {
-    items: string[]
-    origin: TaskOriginTypes
-}
 
 function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWithOrigin {
 
@@ -214,22 +218,6 @@ function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWit
     }
 
     return {items: [], origin: TaskOriginTypes.CrossbowConfig};
-    /**
-     * If current task object we're looking at does not contain
-     * the current taskName, just return the initialTasks array (could be empty)
-     */
-    //if (Object.keys(input.npmScripts).indexOf(taskName) === -1) {
-    //
-    //}
-
-    /**
-     * Allow tasks in either string or array format
-     *  eg 1: lint: '@npm eslint'
-     *  eg 2: lint: ['@npm eslint']
-     * @type {Array}
-     */
-    //const subject = [].concat(trigger.input.tasks[taskName]);
-    //return [].concat(input.npmScripts[taskName]);
 }
 
 /**
@@ -291,7 +279,13 @@ function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
 }
 
 export function resolveTasks (taskNames:string[], trigger:RunCommandTrigger): Tasks {
-    const taskList = taskNames.map(taskName => createFlattenedTask(taskName, [], trigger));
+    const taskList = taskNames
+        /**
+         * Now begin making the nested task tree
+         */
+        .map(taskName => {
+            return createFlattenedTask(taskName, [], trigger)
+        });
     /**
      * Return both valid & invalid tasks. We want to let consumers
      * handle errors/successes
