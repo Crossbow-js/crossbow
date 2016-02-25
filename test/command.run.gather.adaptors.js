@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const watch  = require('../lib/command.watch');
 const cli    = require("../");
+const errors    = require("../dist/task.errors");
 
 describe('Gathering run tasks for `@` Adaptors', function () {
     it('can use grunt-adaptors to gather single Grunt tasks', function () {
@@ -30,6 +31,6 @@ describe('Gathering run tasks for `@` Adaptors', function () {
     it('can flag attempted adaptors flag that does not exist', function () {
         const runner = cli.getRunner(["@gulp jshint:dev jshint:other"]);
         assert.equal(runner.tasks.invalid[0].taskName, '@gulp jshint:dev jshint:other');
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 4);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errors.TaskErrorTypes.AdaptorNotFound);
     });
 });

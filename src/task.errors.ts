@@ -7,6 +7,7 @@ export enum TaskErrorTypes {
     SubtasksNotInConfig,
     SubtaskNotProvided,
     SubtaskNotFound,
+    SubtaskWildcardNotAvailable,
     AdaptorNotFound,
     FlagNotFound,
     FlagNotProvided
@@ -15,8 +16,9 @@ export enum TaskErrorTypes {
 export interface TaskError {}
 
 export interface ModuleNotFoundError     extends TaskError { type: TaskErrorTypes, taskName: string }
-export interface SubtaskNotInConfigError extends TaskError { type: TaskErrorTypes, name: string }
+export interface SubtasksNotInConfigError extends TaskError { type: TaskErrorTypes, name: string }
 export interface SubtaskNotProvidedError extends TaskError { type: TaskErrorTypes, name: string }
+export interface SubtaskWildcardNotAvailableError extends TaskError { type: TaskErrorTypes, name: string }
 export interface SubtaskNotFoundError    extends TaskError { type: TaskErrorTypes, name: string }
 export interface AdaptorNotFoundError    extends TaskError { type: TaskErrorTypes, taskName: string }
 export interface FlagNotFoundError       extends TaskError { type: TaskErrorTypes, taskName: string }
@@ -76,20 +78,30 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
      *          dev: 'input.scss'
      */
     return outgoing.subTasks.reduce((all, name) => {
-        /**
-         * if a star was given as a subTask,
-         * then this item must have configuration
-         * as we'll want to run once with each key
-         */
-        if (name === '*') {
-            const configKeys = Object.keys(objPath.get(input, ['config'].concat(outgoing.baseTaskName), {}));
-            if (!configKeys.length) {
-                return all.concat(<SubtaskNotInConfigError>{
-                    type: TaskErrorTypes.SubtasksNotInConfig,
+        const configKeys = Object.keys(objPath.get(input, ['config'].concat(outgoing.baseTaskName), {}));
+        if (!configKeys.length) {
+            if (name === '') {
+                return all.concat(<SubtaskNotProvidedError>{
+                    type: TaskErrorTypes.SubtaskNotProvided,
                     name: name
                 });
             }
-            return all;
+            /**
+             * if a star was given as a subTask,
+             * then this item must have configuration
+             * as we'll want to run once with each key
+             */
+            if (name === '*') {
+                return all.concat(<SubtaskWildcardNotAvailableError>{
+                    type: TaskErrorTypes.SubtaskWildcardNotAvailable,
+                    name: name
+                });
+            }
+
+            return all.concat(<SubtasksNotInConfigError>{
+                type: TaskErrorTypes.SubtasksNotInConfig,
+                name: name
+            });
         }
         /**
          * if `name` is an empty string, the user provided a colon-separated task
@@ -107,6 +119,21 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
                 name: name
             });
         }
+
+        /**
+         * if a star was given as a subTask,
+         * then this item must have configuration
+         * as we'll want to run once with each key
+         */
+        if (name === '*') {
+            if (configKeys.length === 0) {
+                return all.concat(<SubtaskWildcardNotAvailableError>{
+                    type: TaskErrorTypes.SubtaskWildcardNotAvailable,
+                    name: name
+                });
+            }
+        }
+
         /**
          * Finally check if there's configuration that Matches this
          * key.

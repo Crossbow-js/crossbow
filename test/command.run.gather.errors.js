@@ -30,11 +30,12 @@ describe('Gathering run tasks with errors', function () {
         }, {crossbow: {}});
 
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 0);
-        assert.equal(runner.tasks.invalid[0].errors[1].type, 3);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        console.log(errorTypes[runner.tasks.invalid[0].errors[1].type]);
+        assert.equal(runner.tasks.invalid[0].errors[1].type, errorTypes.SubtasksNotInConfig);
 
         assert.equal(runner.tasks.invalid[1].errors.length, 1);
-        assert.equal(runner.tasks.invalid[1].errors[0].type, 0);
+        assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.ModuleNotFound);
     });
     it('reports when subtask not given', function () {
     	const runner = cli({
@@ -43,25 +44,25 @@ describe('Gathering run tasks with errors', function () {
         }, {crossbow: {}});
 
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 2);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskNotProvided);
     });
     it('reports when subtask not found', function () {
     	const runner = cli({
             input: ['run', 'test/fixtures/tasks/simple.js:dev'],
             flags: {handoff: true}
-        }, {crossbow: {config: {
-            'test/fixtures/tasks/simple.js': {}
-        }}});
+        }, {config: {
+            'test/fixtures/tasks/simple.js': {shane:'here'}
+        }});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 3);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskNotFound);
     });
     it('reports when subtask as * given, but not config exists', function () {
     	const runner = cli({
             input: ['run', 'test/fixtures/tasks/simple.js:*'],
             flags: {handoff: true}
-        }, {crossbow: {config: {}}});
+        }, {config: {}});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 1);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskWildcardNotAvailable);
     });
     it('reports when @flag is present, but no flag given ', function () {
     	const runner = cli.getRunner(['test/fixtures/tasks/simple.js@'],{
