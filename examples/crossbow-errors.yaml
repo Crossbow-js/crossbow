@@ -26,8 +26,8 @@ tasks:
     es6:        ['@npm es6']
 
     build-all:  ['build-css', 'build-js']
-    build-css:  ['crossbow-sass']
-    build-js:   ['@npm webpack', '@shell uglify-js src/dist/app.js']
+    build-css:  ['sass', 'cssmin', 'cachebreaker:css']
+    build-js:   ['@npm webpack', '@shell uglify-js src/dist/app.js', 'cachebreaker:js']
 
 config:
     $:

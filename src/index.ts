@@ -52,7 +52,11 @@ function generateInput (incoming: CrossbowInput|any, config: CrossbowConfigurati
     }, incoming || {});
 }
 
-const availableCommands = ['watch', 'run', 'tree'];
+const availableCommands = {
+    run: handleIncomingRunCommand,
+    tree: handleIncomingTreeCommand,
+    doctor: handleIncomingTreeCommand
+};
 
 if (!module.parent) {
     const cli = <Meow>meow();
@@ -63,7 +67,7 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
     cli = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
 
-    if (availableCommands.indexOf(cli.input[0]) === -1) {
+    if (Object.keys(availableCommands).indexOf(cli.input[0]) === -1) {
         console.log('Show help here');
         return;
     }
@@ -96,13 +100,8 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
  * Now decide who should handle the current command
  */
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : any {
-
-    if (cli.input[0] === 'run') {
-        return handleIncomingRunCommand(cli, input, config);
-    }
-    if (cli.input[0] === 'tree') {
-        return handleIncomingTreeCommand(cli, input, config);
-    }
+    const firstArg = cli.input[0];
+    return availableCommands[firstArg].call(null, cli, input, config);
 }
 
 export default handleIncoming;

@@ -13,15 +13,14 @@ import {logErrors} from "./reporters/defaultReporter";
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): void {
 
     const ctx: RunCommandTrigger = {cli, input, config, type: 'command'};
-
     /**
      * First Resolve the task names given in input.
      */
-    reportTree(resolveTasks(Object.keys(input.tasks), ctx).all, 'CrossbowConfig');
+    reportTree(resolveTasks(Object.keys(input.tasks), ctx).all, config, 'Crossbow Config');
     /**
      * Next report the available Npm scripts
      */
-    reportTree(resolveTasks(Object.keys(input.npmScripts), ctx).all, 'Npm Scripts');
+    reportTree(resolveTasks(Object.keys(input.npmScripts), ctx).all, config, 'Npm Scripts');
 }
 
 export function handleIncomingTreeCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {

@@ -95,6 +95,9 @@ const flagTransforms = {
      * -c specifies a config file
      */
     c: (opts) => {
+        if (typeof opts.c !== 'string') {
+            return opts;
+        }
         return assign({}, opts, {config: opts.c});
     },
     /**
