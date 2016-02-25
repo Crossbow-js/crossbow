@@ -67,7 +67,6 @@ function getFlagErrors (outgoing: OutgoingTask): TaskError[] {
 }
 
 function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskError[] {
-
     /**
      * Now validate any subtasks given with colon syntax
      *  eg: sass:dev
@@ -77,32 +76,8 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
      *        sass:
      *          dev: 'input.scss'
      */
-    return outgoing.subTasks.reduce((all, name) => {
+    return outgoing.subTasks.reduce((all, subTaskName) => {
         const configKeys = Object.keys(objPath.get(input, ['config'].concat(outgoing.baseTaskName), {}));
-        if (!configKeys.length) {
-            if (name === '') {
-                return all.concat(<SubtaskNotProvidedError>{
-                    type: TaskErrorTypes.SubtaskNotProvided,
-                    name: name
-                });
-            }
-            /**
-             * if a star was given as a subTask,
-             * then this item must have configuration
-             * as we'll want to run once with each key
-             */
-            if (name === '*') {
-                return all.concat(<SubtaskWildcardNotAvailableError>{
-                    type: TaskErrorTypes.SubtaskWildcardNotAvailable,
-                    name: name
-                });
-            }
-
-            return all.concat(<SubtasksNotInConfigError>{
-                type: TaskErrorTypes.SubtasksNotInConfig,
-                name: name
-            });
-        }
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -113,10 +88,10 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
          *   $ crossbow run sass:site:dev
          *
          */
-        if (name === '') {
+        if (subTaskName === '') {
             return all.concat(<SubtaskNotProvidedError>{
                 type: TaskErrorTypes.SubtaskNotProvided,
-                name: name
+                name: subTaskName
             });
         }
 
@@ -125,27 +100,42 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
          * then this item must have configuration
          * as we'll want to run once with each key
          */
-        if (name === '*') {
-            if (configKeys.length === 0) {
-                return all.concat(<SubtaskWildcardNotAvailableError>{
-                    type: TaskErrorTypes.SubtaskWildcardNotAvailable,
-                    name: name
-                });
-            }
+        if (subTaskName === '*') {
+            return all.concat(handleWildcardSubtask(configKeys, subTaskName));
+        }
+
+        if (!configKeys.length) {
+            return all.concat(<SubtasksNotInConfigError>{
+                type: TaskErrorTypes.SubtasksNotInConfig,
+                name: subTaskName
+            });
         }
 
         /**
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = objPath.get(input, ['config'].concat(outgoing.baseTaskName, name));
+        const match = objPath.get(input, ['config'].concat(outgoing.baseTaskName, subTaskName));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,
-                name: name
+                name: subTaskName
             });
         }
+
         return all;
 
     }, []);
+}
+
+function handleWildcardSubtask (configKeys: string[], name: string): SubtaskWildcardNotAvailableError[] {
+
+    if (configKeys.length ) {
+        return [];
+    }
+
+    return [{
+        type: TaskErrorTypes.SubtaskWildcardNotAvailable,
+        name: name
+    }];
 }

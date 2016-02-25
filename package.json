@@ -59,7 +59,7 @@
     "q": "1.4.1",
     "sinon": "1.17.2",
     "through2": "2.0.0",
-    "typescript": "1.8.0",
+    "typescript": "1.8.2",
     "typings": "0.6.6",
     "watchify": "3.7.0"
   }
