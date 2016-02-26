@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
-const isPlainObj = require('./utils').plainObj;
-const blacklist  = ['options', 'bs-config', 'before'];
-const merge      = require('lodash.merge');
+import {isPlainObject} from './task.utils';
+const merge     = require('lodash.merge');
+const blacklist = ['options', 'bs-config', 'before'];
 
 var watcherUID = 1;
 
@@ -36,7 +36,7 @@ const defaultWatchOptions = <CBWatchOptions>{
  * @returns {*}
  */
 function createOne (item, itemOptions, globalOptions) : WatchTask {
-    if (isPlainObj(item)) {
+    if (isPlainObject(item)) {
         if (item.patterns && item.tasks) {
             return {
                 patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
@@ -45,7 +45,6 @@ function createOne (item, itemOptions, globalOptions) : WatchTask {
                 watcherUID: watcherUID++
             };
         }
-
         // todo: Add error handling for incorrect formats ie: user error
     }
     return item;
@@ -119,7 +118,7 @@ function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
                  *          "*.scss": ["$npm node-sass"]
                  *      }
                  */
-                if (isPlainObj(watchTask.watchers)) {
+                if (isPlainObject(watchTask.watchers)) {
                     return Object.keys(watchTask.watchers)
                         .map(key => createOne({
                             patterns: key,
@@ -159,10 +158,9 @@ function getWatchTaskParent(item: any, globalOpts: any) : WatchTaskParent {
     }
 }
 
-module.exports = function getWatchTasks (input)  {
-
+export function resolveWatchTasks (input) {
     const watch      = input.watch;
-    const tasks      = watch.tasks || {};
+    const tasks      = watch.tasks;
     const globalOpts = <CBWatchOptions>watch.options || {};
 
     return Object.keys(tasks)
@@ -170,4 +168,4 @@ module.exports = function getWatchTasks (input)  {
             all[key] = getWatchTaskParent(tasks[key], globalOpts);
             return all;
         }, {});
-};
+}

@@ -8,6 +8,7 @@ import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
+import {handleIncomingWatchCommand} from "./command.watch";
 
 const meow   = require('meow');
 const assign = require('object-assign');
@@ -55,7 +56,9 @@ function generateInput (incoming: CrossbowInput|any, config: CrossbowConfigurati
 const availableCommands = {
     run: handleIncomingRunCommand,
     tree: handleIncomingTreeCommand,
-    doctor: handleIncomingTreeCommand
+    doctor: handleIncomingTreeCommand,
+    watch: handleIncomingWatchCommand,
+    w: handleIncomingWatchCommand
 };
 
 if (!module.parent) {

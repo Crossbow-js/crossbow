@@ -1,14 +1,9 @@
 /// <reference path="../typings/main.d.ts" />
-import {RunCommandTrigger} from "./command.run";
-const debug  = require('debug')('cb:command.run');
-const Rx     = require('rx');
-const merge  = require('lodash.merge');
-
-import {CrossbowConfiguration} from "./config";
+import {RunCommandTrigger} from './command.run';
+import {CrossbowConfiguration} from './config';
 import {reportTree, reportTaskErrors} from './reporters/defaultReporter';
-import {CrossbowInput, Meow} from "./index";
-import {resolveTasks} from "./task.resolve";
-import {logErrors} from "./reporters/defaultReporter";
+import {CrossbowInput, Meow} from './index';
+import {resolveTasks} from './task.resolve';
 
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): void {
 

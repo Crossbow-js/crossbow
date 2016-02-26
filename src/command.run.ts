@@ -122,13 +122,12 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
         if (cli.input.length === 1) {
             reportNoTasksProvided();
         }
-        promptForRunCommand(cli, input, config)
+        return promptForRunCommand(cli, input, config)
             .subscribe(answers => {
                 const cliMerged       = merge({}, cli, {input: ['run', ...answers.tasks]});
                 const configMerged    = merge({}, config, {runMode: answers.runMode});
                 return execute(cliMerged, input, configMerged);
             });
-        return;
     }
 
     return execute(cli, input, config);

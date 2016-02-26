@@ -1,4 +1,10 @@
 module.exports = {
+    watch: {
+        default: {
+            before: ['some-tasks'],
+            "**.css": ['some-tasks']
+        }
+    },
     tasks: {
         js: ['test/fixtures/tasks/simple.js'],
         css: ['crossbow-sass']
