@@ -16,8 +16,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * First Resolve the task names given in input.
      */
-    const tasks = resolveWatchTasks(ctx.input);
-    console.log(tasks);
+    const tasks = resolveWatchTasks(cliInput, ctx);
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
