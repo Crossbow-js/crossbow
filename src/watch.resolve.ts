@@ -7,10 +7,24 @@ var watcherUID = 1;
 
 import {WatchOptions} from "chokidar";
 import {WatchTrigger} from "./command.watch";
+import {preprocessWatchTask} from "./watch.preprocess";
 
-interface CBWatchOptions extends WatchOptions {
+export const defaultWatchOptions = <CBWatchOptions>{
+    ignoreInitial: true,
+    block: true,
+    throttle: 0
+};
+
+export interface CBWatchOptions extends WatchOptions {
     throttle: number
     block: boolean
+}
+
+export interface WatchTaskParent {
+    before: string[]
+    options: CBWatchOptions
+    watchers: WatchTask[]
+    name: string
 }
 
 interface WatchTask {
@@ -19,19 +33,6 @@ interface WatchTask {
     options: any
     watcherUID: any
 }
-
-interface WatchTaskParent {
-    before: string[]
-    options: CBWatchOptions
-    watchers: WatchTask[]
-    name: string
-}
-
-export const defaultWatchOptions = <CBWatchOptions>{
-    ignoreInitial: true,
-    block: true,
-    throttle: 0
-};
 
 /**
  * Create a single watch task item consisting of
@@ -155,13 +156,36 @@ function getWatchTaskParent(item: any, key:string, globalOpts: any) : WatchTaskP
     }
 }
 
+function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTaskParent {
+
+    const incoming = preprocessWatchTask(taskName);
+
+    console.log(trigger.input);
+    // todo: select task from input trigger.input
+
+    //return {
+    //    name: taskName,
+    //    before: item.before   || [],
+    //    options: item.options || {},
+    //    watchers: getFormattedTask(item, globalOpts)
+    //}
+}
+
 export function resolveWatchTasks (taskNames:string[], trigger:WatchTrigger) {
+
     const watch      = trigger.input.watch;
     const globalOpts = <CBWatchOptions>watch.options || {};
 
-    return Object.keys(watch)
-        .filter(x => blacklist.indexOf(x) === -1)
-        .reduce((all, key) => {
-            return all.concat(getWatchTaskParent(watch[key], key, globalOpts));
-        }, []);
+    const taskList = taskNames
+        .map(taskName => {
+            return createFlattenedWatchTask(taskName, trigger);
+        });
+
+    console.log(taskNames, taskList);
+
+    //return Object.keys(watch)
+    //    .filter(x => blacklist.indexOf(x) === -1)
+    //    .reduce((all, key) => {
+    //        return all.concat(getWatchTaskParent(watch[key], key, globalOpts));
+    //    }, []);
 }
