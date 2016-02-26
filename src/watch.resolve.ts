@@ -8,7 +8,10 @@ var watcherUID = 1;
 import {WatchOptions} from "chokidar";
 import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
+import {gatherWatchTaskErrors} from "./watch.errors";
+import {WatchTaskError} from "./watch.errors";
 
+export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
     ignoreInitial: true,
     block: true,
@@ -25,6 +28,7 @@ export interface WatchTaskParent {
     options: CBWatchOptions
     watchers: WatchTask[]
     name: string
+    errors: WatchTaskError[]
 }
 
 interface WatchTask {
@@ -147,41 +151,60 @@ function getFormattedTask (watchTaskParent: WatchTaskParent, globalOptions: CBWa
         }, []);
 }
 
-function getWatchTaskParent(item: any, key:string, globalOpts: any) : WatchTaskParent {
+function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTaskParent {
+
+    const incoming  = preprocessWatchTask(taskName);
+    const selection = trigger.input.watch[incoming.taskName] || {};
+    const watchers  = getFormattedTask(selection, trigger.input.watch.options || {});
+
+    const errors    = gatherWatchTaskErrors(
+        incoming,
+        trigger.input
+    );
+
     return {
-        name: key,
-        before: item.before   || [],
-        options: item.options || {},
-        watchers: getFormattedTask(item, globalOpts)
+        name:     taskName,
+        before:   selection.before   || [],
+        options:  selection.options || {},
+        watchers: watchers,
+        errors:   errors
     }
 }
 
-function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTaskParent {
-
-    const incoming = preprocessWatchTask(taskName);
-
-    console.log(trigger.input);
-    // todo: select task from input trigger.input
-
-    //return {
-    //    name: taskName,
-    //    before: item.before   || [],
-    //    options: item.options || {},
-    //    watchers: getFormattedTask(item, globalOpts)
-    //}
+export interface WatchTasks {
+    valid: WatchTaskParent[]
+    invalid: WatchTaskParent[],
+    all: WatchTaskParent[]
 }
 
-export function resolveWatchTasks (taskNames:string[], trigger:WatchTrigger) {
+function validateTask (task:WatchTaskParent, trigger: WatchTrigger): boolean {
+    return task.errors.length === 0;
+}
 
-    const watch      = trigger.input.watch;
-    const globalOpts = <CBWatchOptions>watch.options || {};
+export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): WatchTasks {
+
+    //const watch      = trigger.input.watch;
+    //const globalOpts = <CBWatchOptions>watch.options || {};
 
     const taskList = taskNames
         .map(taskName => {
             return createFlattenedWatchTask(taskName, trigger);
         });
 
-    console.log(taskNames, taskList);
+    /**
+     * Return both valid & invalid tasks. We want to let consumers
+     * handle errors/successes
+     * @type {{valid: Array, invalid: Array}}
+     */
+    const output = {
+        valid: taskList.filter(x => validateTask(x, trigger)),
+        invalid: taskList.filter(x => !validateTask(x, trigger)),
+        all: taskList
+    };
+
+    console.log(output);
+
+    return output;
 
     //return Object.keys(watch)
     //    .filter(x => blacklist.indexOf(x) === -1)
