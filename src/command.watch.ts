@@ -13,10 +13,23 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     const cliInput = cli.input.slice(1);
     const ctx: WatchTrigger = {cli, input, config, type: 'watcher'};
 
+
+
     /**
      * First Resolve the task names given in input.
      */
     const tasks = resolveWatchTasks(cliInput, ctx);
+
+}
+
+export function unwrapShorthand(incoming) {
+
+
+
+    return {
+        patterns: [],
+        tasks: []
+    }
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {

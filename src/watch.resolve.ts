@@ -9,7 +9,7 @@ import {WatchOptions} from "chokidar";
 import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {gatherWatchTaskErrors} from "./watch.errors";
-import {WatchTaskError} from "./watch.errors";
+import {WatchTaskError, WatchTaskErrorTypes} from "./watch.errors";
 
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{

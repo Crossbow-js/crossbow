@@ -13,16 +13,18 @@ export enum TaskErrorTypes {
     FlagNotProvided
 }
 
-export interface TaskError {}
+export interface TaskError {
+    type: TaskErrorTypes
+}
 
-export interface ModuleNotFoundError      extends TaskError { type: TaskErrorTypes, taskName: string }
-export interface SubtasksNotInConfigError extends TaskError { type: TaskErrorTypes, name: string }
-export interface SubtaskNotProvidedError  extends TaskError { type: TaskErrorTypes, name: string }
-export interface SubtaskWildcardNotAvailableError extends TaskError { type: TaskErrorTypes, name: string }
-export interface SubtaskNotFoundError     extends TaskError { type: TaskErrorTypes, name: string }
-export interface AdaptorNotFoundError     extends TaskError { type: TaskErrorTypes, taskName: string }
-export interface FlagNotFoundError        extends TaskError { type: TaskErrorTypes, taskName: string }
-export interface FlagNotProvidedError     extends TaskError { type: TaskErrorTypes, taskName: string }
+export interface ModuleNotFoundError      extends TaskError { taskName: string }
+export interface SubtasksNotInConfigError extends TaskError { name: string }
+export interface SubtaskNotProvidedError  extends TaskError { name: string }
+export interface SubtaskWildcardNotAvailableError extends TaskError { name: string }
+export interface SubtaskNotFoundError     extends TaskError { name: string }
+export interface AdaptorNotFoundError     extends TaskError { taskName: string }
+export interface FlagNotFoundError        extends TaskError { taskName: string }
+export interface FlagNotProvidedError     extends TaskError { taskName: string }
 
 export function gatherTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskError[] {
     return [
