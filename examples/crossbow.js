@@ -1,6 +1,5 @@
 module.exports = {
     watch: {
-        before: ['hello'],
         default: {
             before: ['some-tasks'],
             "**.css": ['some-tasks']

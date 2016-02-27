@@ -13,7 +13,9 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     const cliInput = cli.input.slice(1);
     const ctx: WatchTrigger = {cli, input, config, type: 'watcher'};
 
-
+    cliInput.forEach(function (input) {
+    	unwrapShorthand(input);
+    })
 
     /**
      * First Resolve the task names given in input.
@@ -23,12 +25,18 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 }
 
 export function unwrapShorthand(incoming) {
+    var patterns = [];
+    var tasks = [];
 
-
+    if (incoming.indexOf(' -> ')) {
+        const split = incoming.split(' -> ').map(x => x.trim());
+        patterns = split[0].split(':');
+        tasks = [split[1]];
+    }
 
     return {
-        patterns: [],
-        tasks: []
+        patterns,
+        tasks
     }
 }
 

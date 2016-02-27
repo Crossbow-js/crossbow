@@ -1,43 +1,39 @@
 var assert  = require('chai').assert;
 var resolve = require('../dist/watch.resolve').resolveWatchTasks;
 var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
+var unwrapShorthand = require('../dist/command.watch').unwrapShorthand;
 
 describe('Resolving shorthand watch tasks', function () {
     it('can handle single pattern + single task', function () {
-        const gatheredTasks = resolve({
-            watch: {
-                shane: {
-                    before: ['js'],
-                    "*.css": ["sass", "js"],
-                    "*.js": ["js"],
-                    "*.html": "html-min"
-                }
-            }
-        });
-
-        assert.equal(gatheredTasks[0].name, 'shane');
-        assert.deepEqual(gatheredTasks[0].options, {});
-        assert.equal(gatheredTasks[0].watchers.length, 3);
-        assert.equal(gatheredTasks[0].watchers[0].patterns[0], '*.css');
-        assert.deepEqual(gatheredTasks[0].watchers[0].tasks, ['sass', 'js']);
-        assert.deepEqual(gatheredTasks[0].watchers[0].options, defaultWatchOptions);
+        const gatheredTasks = unwrapShorthand('*.js -> @npm tsc src/**/*.ts');
+        assert.equal(gatheredTasks.patterns.length, 1);
+        assert.equal(gatheredTasks.patterns[0], '*.js');
+        assert.equal(gatheredTasks.tasks.length, 1);
+        assert.equal(gatheredTasks.tasks[0], '@npm tsc src/**/*.ts');
     });
-    it('can maintain personal before tasks even when before given globally too', function () {
-        const gatheredTasks = resolve({
-            watch: {
-                before: ['js', 'sass'],
-                default: {
-                    before: ['@logger'],
-                    "*.css": ["sass", "js"],
-                    "*.js":  ["js"]
-                },
-                dev: {
-                    "*.html": "html-min"
-                }
-            }
-        });
-
-        assert.equal(gatheredTasks[0].before[0], '@logger');
-        assert.equal(gatheredTasks[1].before.length, 0);
+    it('can handle multiple patterns + single task', function () {
+        const gatheredTasks = unwrapShorthand('*.js:src/ -> @npm tsc src/**/*.ts');
+        assert.equal(gatheredTasks.patterns.length, 2);
+        assert.equal(gatheredTasks.patterns[0], '*.js');
+        assert.equal(gatheredTasks.patterns[1], 'src/');
+        assert.equal(gatheredTasks.tasks.length, 1);
+        assert.equal(gatheredTasks.tasks[0], '@npm tsc src/**/*.ts');
+    });
+    it('can handle multiple patterns + random ws', function () {
+        const gatheredTasks = unwrapShorthand('*.js:src/   ->  @npm tsc src/**/*.ts');
+        assert.equal(gatheredTasks.patterns.length, 2);
+        assert.equal(gatheredTasks.patterns[0], '*.js');
+        assert.equal(gatheredTasks.patterns[1], 'src/');
+        assert.equal(gatheredTasks.tasks.length, 1);
+        assert.equal(gatheredTasks.tasks[0], '@npm tsc src/**/*.ts');
+    });
+    it.only('can handle multiple patterns + multiple tasks', function () {
+        const gatheredTasks = unwrapShorthand('*.js:src/   ->  (unit) (lint)');
+        assert.equal(gatheredTasks.patterns.length, 2);
+        assert.equal(gatheredTasks.patterns[0], '*.js');
+        assert.equal(gatheredTasks.patterns[1], 'src/');
+        assert.equal(gatheredTasks.tasks.length, 2);
+        assert.equal(gatheredTasks.tasks[0], 'unit');
+        assert.equal(gatheredTasks.tasks[1], 'lint');
     });
 });
