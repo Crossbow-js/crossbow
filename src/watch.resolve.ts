@@ -202,8 +202,6 @@ export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): 
         all: taskList
     };
 
-    console.log(output);
-
     return output;
 
     //return Object.keys(watch)

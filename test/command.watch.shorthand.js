@@ -1,6 +1,5 @@
 var assert  = require('chai').assert;
 var resolve = require('../dist/watch.resolve').resolveWatchTasks;
-var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
 var unwrapShorthand = require('../dist/command.watch').unwrapShorthand;
 
 describe('Resolving shorthand watch tasks', function () {
@@ -27,7 +26,7 @@ describe('Resolving shorthand watch tasks', function () {
         assert.equal(gatheredTasks.tasks.length, 1);
         assert.equal(gatheredTasks.tasks[0], '@npm tsc src/**/*.ts');
     });
-    it.only('can handle multiple patterns + multiple tasks', function () {
+    it('can handle multiple patterns + multiple tasks', function () {
         const gatheredTasks = unwrapShorthand('*.js:src/   ->  (unit) (lint)');
         assert.equal(gatheredTasks.patterns.length, 2);
         assert.equal(gatheredTasks.patterns[0], '*.js');
