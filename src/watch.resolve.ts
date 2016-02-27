@@ -183,9 +183,6 @@ function validateTask (task:WatchTaskParent, trigger: WatchTrigger): boolean {
 
 export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): WatchTasks {
 
-    //const watch      = trigger.input.watch;
-    //const globalOpts = <CBWatchOptions>watch.options || {};
-
     const taskList = taskNames
         .map(taskName => {
             return createFlattenedWatchTask(taskName, trigger);
@@ -203,10 +200,4 @@ export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): 
     };
 
     return output;
-
-    //return Object.keys(watch)
-    //    .filter(x => blacklist.indexOf(x) === -1)
-    //    .reduce((all, key) => {
-    //        return all.concat(getWatchTaskParent(watch[key], key, globalOpts));
-    //    }, []);
 }

@@ -118,6 +118,13 @@ module.exports.getRunner = function getRunner (tasks: string[], input?: any, con
     }, input || {});
 };
 
+module.exports.getWatcher = function getWatcher (tasks: string[], input?: any, config?: any) {
+    return handleIncoming({
+        input: ['watch', ...tasks],
+        flags: assign({handoff: true}, config)
+    }, input || {});
+};
+
 module.exports.runner = function getRunner (tasks: string[], input?: any, config?: any) {
     const result = handleIncoming({
         input: ['run', ...tasks],

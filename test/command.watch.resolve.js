@@ -1,10 +1,13 @@
 var assert  = require('chai').assert;
-var resolve = require('../dist/watch.resolve').resolveWatchTasks;
+var cli = require('../');
 var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
 
 describe('Resolving watch tasks', function () {
     it('can resolve all watchers when no names given', function () {
-        const gatheredTasks = resolve({
+        const runner = cli({
+            input: ['watch', 'shane'],
+            flags: {handoff: true}
+        }, {
             watch: {
                 shane: {
                     before: ['js'],
@@ -15,15 +18,18 @@ describe('Resolving watch tasks', function () {
             }
         });
 
-        assert.equal(gatheredTasks[0].name, 'shane');
-        assert.deepEqual(gatheredTasks[0].options, {});
-        assert.equal(gatheredTasks[0].watchers.length, 3);
-        assert.equal(gatheredTasks[0].watchers[0].patterns[0], '*.css');
-        assert.deepEqual(gatheredTasks[0].watchers[0].tasks, ['sass', 'js']);
-        assert.deepEqual(gatheredTasks[0].watchers[0].options, defaultWatchOptions);
+        assert.equal(runner.tasks.valid[0].name, 'shane');
+        assert.deepEqual(runner.tasks.valid[0].options, {});
+        assert.equal(runner.tasks.valid[0].watchers.length, 3);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[0], '*.css');
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].tasks, ['sass', 'js']);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].options, defaultWatchOptions);
     });
     it('can maintain personal before tasks even when before given globally too', function () {
-        const gatheredTasks = resolve({
+        const runner = cli({
+            input: ['watch', 'default', 'dev'],
+            flags: {handoff: true}
+        }, {
             watch: {
                 before: ['js', 'sass'],
                 default: {
@@ -37,7 +43,7 @@ describe('Resolving watch tasks', function () {
             }
         });
 
-        assert.equal(gatheredTasks[0].before[0], '@logger');
-        assert.equal(gatheredTasks[1].before.length, 0);
+        assert.equal(runner.tasks.valid[0].before[0], '@logger');
+        assert.equal(runner.tasks.valid[1].before.length, 0);
     });
 });

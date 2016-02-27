@@ -4,14 +4,16 @@ import {CrossbowConfiguration} from './config';
 import {reportTree, reportTaskErrors} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks} from './watch.resolve';
+import {WatchTaskRunner} from "./watch.runner";
 
+const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
 }
 
-export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): void {
+export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): WatchTaskRunner {
     const ctx: WatchTrigger = {cli, input, config, type: 'watcher'};
     const moddedCtx = getNextContext(ctx);
 
@@ -19,7 +21,16 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * First Resolve the task names given in input.
      */
     const tasks = resolveWatchTasks(moddedCtx.cli.input, moddedCtx);
-    console.log(tasks);
+
+    /**
+     * Check if the user intends to handle running the tasks themselves,
+     * if thats the case we give them the resolved tasks along with
+     * the sequence and the primed runner
+     */
+    if (config.handoff) {
+        debug(`Handing off Watchers`);
+        return {tasks};
+    }
 }
 
 function getNextContext(ctx: WatchTrigger): WatchTrigger {
@@ -95,5 +106,5 @@ export function unwrapShorthand(incoming, i) {
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
-    execute(cli, input, config);
+    return execute(cli, input, config);
 }
