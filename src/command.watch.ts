@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {reportTree, reportTaskErrors, reportWatchTaskErrors} from './reporters/defaultReporter';
+import {reportTaskTree, reportTaskErrors, reportWatchTaskErrors} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";

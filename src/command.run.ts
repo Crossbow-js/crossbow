@@ -8,7 +8,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
-import {summary, reportTaskList, reportTaskErrors, reportTaskErrorLinks, reportNoTasksProvided} from './reporters/defaultReporter';
+import {summary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {

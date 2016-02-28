@@ -112,13 +112,12 @@ export function reportTaskList (sequence: SequenceItem[],
     l('');
     l('{yellow:+} {bold:%s}', cli.input.slice(1).join(', '));
 
-    if (config.summary !== 'short') {
-        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        const lineLength = new Array(cliInput.length).join('-');
-        sectionTitle('Task tree for the input', cliInput);
-        logTaskTree(sequence, '');
-        l('{gray:---------------------------' + lineLength);
+    if (config.summary !== 'verbose') {
+        return;
     }
+
+    const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+    reportSequenceTree(sequence, config, ` `);
 }
 export function reportTaskErrors (tasks: Task[],
                                   cli: Meow,
@@ -132,7 +131,7 @@ export function reportTaskErrors (tasks: Task[],
     l('{gray.bold:------------------------------------------------}');
 
     cli.input.slice(1).forEach(function (n, i) {
-        reportTree([tasks[i]], config, `+ input: '${n}'`);
+        reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
 }
 export function reportWatchTaskErrors (tasks: WatchTask[],
@@ -156,27 +155,9 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
 
     tasks.forEach(function (task) {
         if (task.errors.length) {
-            /**
-             * If one of the errors is a module not found error, all other errors
-             * don't make sense
-             * @type {boolean}
-             */
-            //logged = true;
             const logOnlyModuleNotFoundErrors = task.errors.filter(x => x.type === WatchTaskErrorTypes.WatchTaskNameNotFound);
-            //if (logOnlyModuleNotFoundErrors.length === task.errors.length) {
-            //
-            //}
             logMultipleErrors(task, task.errors, WatchTaskErrorTypes, indent);
-
         }
-        //if (task.tasks.length) {
-        //    l('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
-        //    logErrors(task.tasks, indent += '-');
-        //} else {
-        //    if (!logged) {
-        //        l('{gray.bold:-%s} {ok: } %s', indent, task.taskName);
-        //    }
-        //}
     })
 }
 
@@ -186,7 +167,61 @@ export function reportNoTasksProvided() {
     l("{gray:-------------------------------------------------------------");
 }
 
-export function reportTree (tasks, config: CrossbowConfiguration, title) {
+export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title) {
+
+    const toLog = getTasks(sequence, []);
+    const archy = require('archy');
+    const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
+
+    logger.info(o.slice(26));
+
+    function getTasks (tasks, initial) {
+        return tasks.reduce((acc, task: SequenceItem) => {
+            let label = getSequenceLabel(task);
+            let nodes = getTasks(task.items, []);
+
+            //if (config.summary === 'verbose') {
+            //    return acc.concat({
+            //        label: label,
+            //        nodes: nodes
+            //    });
+            //}
+            //
+            //if (task.type === TaskTypes.Adaptor ||
+            //    task.type === TaskTypes.Runnable) {
+            //    if (task.errors.length) {
+            //        return acc.concat({
+            //            label: label,
+            //            nodes: []
+            //        });
+            //    }
+            //    return acc;
+            //}
+            //
+            return acc.concat({
+                label: label,
+                nodes: nodes
+            });
+
+        }, initial);
+    }
+}
+
+function getSequenceLabel (item: SequenceItem) {
+    if (item.type === SequenceItemTypes.Task) {
+        if (item.subTaskName) {
+            return `${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
+        }
+        if (item.fnName) {
+            return `${item.task.taskName} (fn: {bold:${item.fnName}})`;
+        }
+        return item.task.taskName;
+    }
+
+    return compile(`{bold:[${item.taskName}]} {gray:[${SequenceItemTypes[item.type]}]}`);
+}
+
+export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
 
     const toLog = getTasks(tasks, []);
     const archy = require('archy');
@@ -224,55 +259,55 @@ export function reportTree (tasks, config: CrossbowConfiguration, title) {
 
         }, initial);
     }
+}
 
-    function getErrors (task) {
-        if (!task.errors.length) {
-            return [];
-        }
-        if (task.errors[0].type === TaskErrorTypes.ModuleNotFound) {
-            return [getSingleError(task.errors[0], task)];
-        }
-        return task.errors.map(error => getSingleError(error, task));
+function getErrors (task) {
+    if (!task.errors.length) {
+        return [];
+    }
+    if (task.errors[0].type === TaskErrorTypes.ModuleNotFound) {
+        return [getSingleError(task.errors[0], task)];
+    }
+    return task.errors.map(error => getSingleError(error, task));
+}
+
+function getSingleError(error, task) {
+    const type = TaskErrorTypes[error.type];
+    return [
+        compile(`{red:-} {bold:Error Type:}  ${type}`),
+        ...errorHandlers[TaskErrorTypes[error.type]].call(null, task, error),
+        compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
+    ].join('\n');
+}
+
+function getLabel (task) {
+
+    if (task.origin === TaskOriginTypes.NpmScripts) {
+        return `{cyan.bold:[npm script]} {cyan:${task.command}}`;
     }
 
-    function getSingleError(error, task) {
-        const type = TaskErrorTypes[error.type];
-        return [
-            compile(`{red:-} {bold:Error Type:}  ${type}`),
-            ...errorHandlers[TaskErrorTypes[error.type]].call(null, task, error),
-            compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
-        ].join('\n');
+    if (task.type === TaskTypes.Group) {
+        if (task.errors.length) {
+            return `{red.bold:x [${task.taskName}]}`;
+        }
+        return `{bold:[${task.taskName}]}`;
     }
 
-    function getLabel (task) {
-
-        if (task.origin === TaskOriginTypes.NpmScripts) {
-            return `{cyan.bold:[npm script]} {cyan:${task.command}}`;
+    if (task.type === TaskTypes.Runnable) {
+        if (task.errors.length) {
+            return `{red.bold:x ${task.rawInput}}`;
         }
-
-        if (task.type === TaskTypes.Group) {
-            if (task.errors.length) {
-                return `{red.bold:x [${task.taskName}]}`;
-            }
-            return `{bold:[${task.taskName}]}`;
-        }
-
-        if (task.type === TaskTypes.Runnable) {
-            if (task.errors.length) {
-                return `{red.bold:x ${task.rawInput}}`;
-            }
-            return `{cyan:${task.taskName}}`;
-        }
-
-        if (task.type === TaskTypes.Adaptor) {
-            if (task.errors.length) {
-                return `{red.bold:x ${task.rawInput}}`;
-            }
-            return `{cyan.bold:@${task.adaptor}} {cyan:${task.command}}`;
-        }
-
-        return `${task.taskName}}`;
+        return `{cyan:${task.taskName}}`;
     }
+
+    if (task.type === TaskTypes.Adaptor) {
+        if (task.errors.length) {
+            return `{red.bold:x ${task.rawInput}}`;
+        }
+        return `{cyan.bold:@${task.adaptor}} {cyan:${task.command}}`;
+    }
+
+    return `${task.taskName}}`;
 }
 
 /**
