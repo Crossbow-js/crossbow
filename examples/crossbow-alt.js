@@ -1,6 +1,7 @@
 module.exports = {
     tasks: {
-        "my-awesome-task": ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js']
+        "my-awesome-task": ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js', 'webpack'],
+        "webpack": '@npm webpack --config webpack.prod.js'
     },
     watch:  {
         'bs-config': {

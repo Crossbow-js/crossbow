@@ -7,7 +7,12 @@ module.exports = {
     },
     tasks: {
         buildall: ['js', 'css'],
-        js: ['test/fixtures/tasks/simple.js'],
+        js: [
+            'test/fixtures/tasks/simple.js',
+            'test/fixtures/tasks/simple.js',
+            'test/fixtures/tasks/simple.js',
+            'css'
+        ],
         css: ['crossbow-sass']
     },
     config: {

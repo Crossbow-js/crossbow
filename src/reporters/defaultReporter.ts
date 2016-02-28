@@ -5,7 +5,7 @@ import {Task} from "../task.resolve";
 import * as cbErrors from "../task.errors";
 import {Meow, CrossbowInput} from "../index";
 import {SubtaskNotProvidedError} from "../task.errors";
-import {TaskOriginTypes} from "../task.resolve";
+import {TaskOriginTypes, TaskTypes} from "../task.resolve";
 const modulePredicate = (x) => x.type === cbErrors.TaskErrorTypes.ModuleNotFound;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 import {relative} from 'path';
@@ -16,6 +16,7 @@ import {WatchTaskErrorTypes} from "../watch.errors";
 import {WatchTaskNameNotFoundError} from "../watch.errors";
 const l = logger.info;
 import {compile, prefix} from '../logger';
+import {TaskErrorTypes} from "../task.errors";
 
 function sectionTitle (title, secondary) {
 
@@ -258,21 +259,74 @@ export function reportTree (tasks, config: CrossbowConfiguration, title) {
 
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task) => {
+            let label = [getLabel(task), ...getErrors(task)].join('\n');
+            let nodes = getTasks(task.tasks, []);
 
-            const label = getLabel(task);
+            if (config.summary === 'verbose') {
+                return acc.concat({
+                    label: label,
+                    nodes: nodes
+                });
+            }
+
+            if (task.type === TaskTypes.Adaptor ||
+                task.type === TaskTypes.Runnable) {
+                if (task.errors.length) {
+                    return acc.concat({
+                        label: label,
+                        nodes: []
+                    });
+                }
+                return acc;
+            }
 
             return acc.concat({
                 label: label,
-                nodes: getTasks(task.tasks, [])
+                nodes: nodes
             });
+
         }, initial);
     }
 
+    function getErrors (task) {
+        if (!task.errors.length) {
+            return [];
+        }
+        if (task.errors[0].type === TaskErrorTypes.ModuleNotFound) {
+            return [getSingleError(task.errors[0], task)];
+        }
+        return task.errors.map(error => getSingleError(error, task));
+    }
+    function getSingleError(error, task) {
+        const type = TaskErrorTypes[error.type];
+        return [
+            compile(`{red:-} {bold:Error Type:}  ${type}`),
+            ...errorHandlers[TaskErrorTypes[error.type]].call(null, task, error),
+            compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
+        ].join('\n');
+    }
     function getLabel (task) {
 
-        if (task.tasks.length) {
+        if (task.origin === TaskOriginTypes.NpmScripts) {
+            return `{cyan.bold:[npm script]} {cyan:${task.command}}`;
+        }
+
+        if (task.type === TaskTypes.Group) {
             return `{bold:[${task.taskName}]}`;
         }
+
+        if (task.type === TaskTypes.Runnable) {
+            if (task.errors.length) {
+                return `{red.bold:x ${task.taskName}}`;
+            }
+            return `{cyan:${task.taskName}}`;
+        }
+
+        if (task.type === TaskTypes.Adaptor) {
+            return `{cyan.bold:@${task.adaptor}} {cyan:${task.command}}`;
+        }
+
+
         return `${task.taskName}}`;
     }
 
@@ -343,12 +397,22 @@ const errorHandlers = {
     ModuleNotFound: function (task: Task, error, indent) {
         l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Task / Module not found", indent, task.rawInput);
     },
-    SubtaskNotFound: function (task: Task, error: cbErrors.SubtaskNotFoundError, indent) {
-        l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Sub-Task {yellow:'%s'} not found", indent, task.rawInput, error.name);
+    SubtaskNotFound: function (task: Task, error: cbErrors.SubtaskNotFoundError) {
+        return [
+            compile(`{red:x} {bold:Description}: Configuration under the path {yellow:'${task.taskName}.${error.name}'} was not found.`),
+            compile(`  This means {cyan:'${task.rawInput}'} is not a valid way to run a task.`)
+        ];
     },
-    SubtaskNotProvided: function (task: Task, error: cbErrors.SubtaskNotProvidedError, indent) {
-        l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Sub-Task not provided", indent, task.rawInput, error.name);
-        genericSubtaskErrorInfo(task, indent);
+    SubtaskNotProvided: function (task: Task, error: cbErrors.SubtaskNotProvidedError) {
+        //console.log('called');
+        return [
+            compile('{red:-} {bold:Description}: Colon used after task, but config key missing.'),
+            compile(`  When you provide a task name, followed by a {cyan::} (colon)`),
+            compile(`  Crossbow expects the next bit to have a key name that matches`),
+            compile(`  something in your config, eg: {cyan:${task.taskName}}:{yellow:dev}`),
+        ];
+        //l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Sub-Task not provided", indent, task.rawInput, error.name);
+        //genericSubtaskErrorInfo(task, indent);
     },
     SubtasksNotInConfig: function (task: Task, error: cbErrors.SubtasksNotInConfigError, indent) {
         l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Configuration not provided for this task!", indent, task.rawInput);

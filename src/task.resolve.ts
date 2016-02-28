@@ -10,6 +10,13 @@ import {RunCommandTrigger} from "./command.run";
 import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 
+export enum TaskTypes {
+    Runnable,
+    Adaptor,
+    Group,
+    NpmScript
+}
+
 export interface Task {
     valid: boolean
     taskName: string
@@ -27,6 +34,7 @@ export interface Task {
     duration?: number
     query: any
     origin: TaskOriginTypes
+    type: TaskTypes
 }
 
 const defaultTask = <Task>{
@@ -119,9 +127,14 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
         trigger.input
     );
 
+    const type = incoming.modules.length
+        ? TaskTypes.Runnable
+        : TaskTypes.Group;
+
     return createTask(assign({}, incoming, {
         parents,
         errors,
+        type,
         valid: errors.length === 0
     }));
 }
@@ -172,6 +185,7 @@ function createAdaptorTask (taskName, parents) : Task {
         return createTask({
             rawInput: taskName,
             taskName: taskName,
+            type: TaskTypes.Adaptor,
             origin: TaskOriginTypes.Adaptor,
             adaptor: taskName.split(' ')[0],
             errors: [<AdaptorNotFoundError>{
@@ -202,7 +216,8 @@ function createAdaptorTask (taskName, parents) : Task {
         command: commandInput,
         runMode: 'series',
         query: {},
-        origin: TaskOriginTypes.Adaptor
+        origin: TaskOriginTypes.Adaptor,
+        type: TaskTypes.Adaptor
     };
 }
 

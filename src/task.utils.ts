@@ -1,5 +1,5 @@
 import {resolve, extname, basename} from 'path';
-import {existsSync, readFileSync} from 'fs';
+import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
 
@@ -16,7 +16,11 @@ export function locateModule (cwd: string, name: string): string[] {
         [name]
     ]
         .map(x => resolve.apply(null, [cwd].concat(x)))
-        .filter(existsSync);
+        .filter(existsSync)
+        .filter(x => {
+            var stat = lstatSync(x);
+            return stat.isFile();
+        });
 
     if (files.length === 0) {
         try {
