@@ -1,0 +1,11 @@
+tasks:
+    css:        ['crossbow-sass', 'crossbow-sass:sa']
+    some:       ['example.js', 'css']
+
+config:
+    $:
+        root: test/fixtures
+
+    crossbow-sass:
+        input: '{$.root}/scss/main.scss'
+        output: '{$.root}/css/main.min.css'

@@ -1,48 +1,29 @@
 var assert = require('chai').assert;
-var watch  = require('../lib/command.watch');
-var gather = require('../lib/gather-watch-tasks');
+var cli = require('../');
+var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
 const yml  = require('js-yaml');
 
-describe('Gathering watch tasks', function () {
-    it('can gather tasks in shorthand format', function () {
-        var tasks = gather({
-           watch: {
-               before: ['js'],
-               tasks: {
-                   default: {
-                       "*.css": ["sass", "js"],
-                       "*.js": "js"
-                   }
-               }
-           }
-        });
-        assert.equal(tasks.default.watchers.length, 2);
-        assert.equal(tasks.default.watchers[0].patterns.length, 1);
-        assert.equal(tasks.default.watchers[0].patterns[0], "*.css");
-        assert.equal(tasks.default.watchers[0].tasks[0], "sass");
-        assert.equal(tasks.default.watchers[0].tasks[1], "js");
-    });
+describe('Gathering watch tasks in longer format', function () {
     it('can gather tasks in long format', function () {
-        var tasks = gather({
+        var runner = cli.getWatcher(['default'], {
            watch: {
                "bs-config": {
                    server: true
                },
-               tasks: {
-                   default: {
-                       before: ['@npm webpack'],
-                       watchers: [
-                           {
-                               patterns: ["*.css"],
-                               tasks: ["sass", "js"]
-                           }
-                       ]
-                   }
+               default: {
+                   before: ['@npm webpack'],
+                   watchers: [
+                       {
+                           patterns: ["*.css"],
+                           tasks: ["sass", "js"]
+                       }
+                   ]
                }
            }
         });
-        assert.equal(tasks.default.watchers.length, 1);
-        assert.equal(tasks.default.watchers[0].patterns.length, 1);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].patterns, ['*.css']);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].tasks, ['sass', 'js']);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].options, defaultWatchOptions);
     });
     it('can gather tasks in array format', function () {
         const ymlInput = yml.safeLoad(`
@@ -51,75 +32,70 @@ watch:
         debounce: 3000
     bs-config:
         server: '.'
-    tasks:
-        default:
-            options:
-                exclude: '*.html'
-            before: ['bs']
-            watchers:
-                - patterns: ['test/fixtures']
-                  tasks:    ['1', '2']
-                - patterns: ['*.css']
-                  tasks:    '3'
-        sassdev:
-            watchers:
-                - patterns: ['*.scss']
-                  tasks:    ['sass']
+    default:
+        options:
+            exclude: '*.html'
+        before: ['bs']
+        watchers:
+            - patterns: ['test/fixtures']
+              tasks:    ['1', '2']
+            - patterns: ['*.css']
+              tasks:    '3'
+    sassdev:
+        watchers:
+            - patterns: ['*.scss']
+              tasks:    ['sass']
 `);
 
-        const gathered = gather(ymlInput);
-        assert.equal(gathered.default.watchers.length, 2);
-        assert.equal(gathered.default.watchers[0].patterns[0], 'test/fixtures');
-        assert.equal(gathered.default.before[0], 'bs');
-        assert.equal(gathered.default.watchers[1].tasks[0], '3');
-        assert.equal(gathered.default.watchers[0].options.debounce, 3000);
-        assert.equal(gathered.default.watchers[0].options.exclude, '*.html');
+        var runner = cli.getWatcher(['default', 'sassdev'], ymlInput);
+        assert.equal(runner.tasks.valid[0].watchers.length, 2);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[0], 'test/fixtures');
+        assert.equal(runner.tasks.valid[0].before[0], 'bs');
+        assert.equal(runner.tasks.valid[0].watchers[1].tasks[0], '3');
+        assert.equal(runner.tasks.valid[0].watchers[0].options.debounce, 3000);
+        assert.equal(runner.tasks.valid[0].watchers[0].options.exclude, '*.html');
 
-        assert.equal(gathered.sassdev.watchers.length, 1);
-        assert.equal(gathered.sassdev.before.length, 0);
-        assert.equal(gathered.sassdev.watchers[0].tasks[0], 'sass');
-        assert.equal(gathered.sassdev.watchers[0].options.debounce, 3000);
-        assert.isUndefined(gathered.sassdev.watchers[0].options.exclude);
+        assert.equal(runner.tasks.valid[1].watchers.length, 1);
+        assert.equal(runner.tasks.valid[1].before.length, 0);
+        assert.equal(runner.tasks.valid[1].watchers[0].tasks[0], 'sass');
+        assert.equal(runner.tasks.valid[1].watchers[0].options.debounce, 3000);
+        assert.isUndefined(runner.tasks.valid[1].watchers[0].options.exclude);
     });
     it('can gather tasks in colon-separated format', function () {
 
-        var tasks = gather({
+        var runner = cli.getWatcher(['dev'], {
            watch: {
                before: ['js'],
-               tasks: {
-                   dev: {
-                       "*.js:*.html": "bs.reload('')"
-                   }
+               dev: {
+                   "*.js:*.html": "bs.reload('')"
                }
            }
         });
 
-        assert.equal(tasks.dev.watchers.length, 1);
-        assert.equal(tasks.dev.before.length, 0);
-        assert.equal(tasks.dev.watchers[0].patterns.length, 2);
-        assert.equal(tasks.dev.watchers[0].patterns[0], "*.js");
-        assert.equal(tasks.dev.watchers[0].patterns[1], "*.html");
+        assert.equal(runner.tasks.valid[0].watchers.length, 1);
+        assert.equal(runner.tasks.valid[0].before.length, 0);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns.length, 2);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[0], "*.js");
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[1], "*.html");
     });
     it('can gather tasks in a mix of short/longhand', function () {
 
-        var tasks = gather({
+        var runner = cli.getWatcher(['dev'], {
            watch: {
                before: ['js'],
-               tasks: {
-                   dev: {
-                       before: ['js', '@npm watchify'],
-                       watchers: {
-                            "*.js:*.html": "bs.reload('')"
-                       }
+               dev: {
+                   before: ['js', '@npm watchify'],
+                   watchers: {
+                        "*.js:*.html": "bs.reload('')"
                    }
                }
            }
         });
 
-        assert.equal(tasks.dev.watchers.length, 1);
-        assert.equal(tasks.dev.before.length, 2);
-        assert.equal(tasks.dev.watchers[0].patterns.length, 2);
-        assert.equal(tasks.dev.watchers[0].patterns[0], "*.js");
-        assert.equal(tasks.dev.watchers[0].patterns[1], "*.html");
+        assert.equal(runner.tasks.valid[0].watchers.length, 1);
+        assert.equal(runner.tasks.valid[0].before.length, 2);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns.length, 2);
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[0], "*.js");
+        assert.equal(runner.tasks.valid[0].watchers[0].patterns[1], "*.html");
     });
 });

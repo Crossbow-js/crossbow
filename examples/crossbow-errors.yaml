@@ -1,0 +1,51 @@
+watch:
+    tasks:
+        default:
+            "test/fixtures": ["test/fixtures/tasks/error"]
+        dev:
+            "test/fixtures/**/*.scss": ["css", "bs:reload:{sass.output}"]
+            "test/fixtures/asses/**/*.css": ["bs:reload"]
+        prom:
+            "test/fixtures/**/*.html:test/fixtures/scss/**": ["prom", "stream", "observable", "test/fixtures/tasks/simple.js:dev1:dev2"]
+
+aliases:
+    simple: 'test/fixtures/tasks/simple.js'
+
+tasks:
+    css:        ['crossbow-sass?input=test/fixtures/scss/main.scss&output=test/fixtures/scss/main.css']
+    js:         ['all', 'myscript']
+    dummy:      ['test/fixtures/tasks/simple.multi.js:dev1:dev', 'test/fixtures/tasks/simple2.js', 'prom']
+    all:        ['observable', 'prom', 'stream']
+    prom:       ['test/fixtures/tasks/promise.js']
+    stream:     ['test/fixtures/tasks/stream.js']
+    observable: ['test/fixtures/tasks/observable.js']
+    compat-all: ['grunt', 'myscript', 'es6']
+    grunt:      ['@grunt jshint:dev']
+    myscript:   ['@npm ls -a']
+    es6:        ['@npm es6']
+
+    build-all:  ['build-css', 'build-js']
+    build-css:  ['sass', 'cssmin', 'cachebreaker:css']
+    build-js:   ['@npm webpack', '@shell uglify-js src/dist/app.js', 'cachebreaker:js']
+
+config:
+    $:
+        root: test/fixtures
+
+    crossbow-sass:
+        input: '{$.root}/scss/main.scss'
+        output: '{$.root}/css/main.min.css'
+
+    test/fixtures/tasks/single-export.js:
+        site: 'Site config'
+        dev: 'Dev Config'
+
+    'test/fixtures/tasks/simple.multi.js':
+        dev1:
+            input: '{$.root}/scss/main.scss'
+            output: '{$.root}/css/main.min.css'
+        dev2:
+            input: '{$.root}/scss/main.less'
+            output: '{$.root}/css/main.min.css'
+
+gruntfile: "examples/Gruntfile.js"

@@ -1,29 +1,42 @@
 /// <reference path="../typings/main.d.ts" />
-const isPlainObj = require('./utils').plainObj;
-const blacklist  = ['options', 'bs-config', 'before'];
-const merge      = require('lodash.merge');
+import {isPlainObject} from './task.utils';
+const merge     = require('lodash.merge');
+const blacklist = ['options', 'bs-config', 'before'];
 
 var watcherUID = 1;
 
 import {WatchOptions} from "chokidar";
+import {WatchTrigger} from "./command.watch";
+import {preprocessWatchTask} from "./watch.preprocess";
+import {gatherWatchTaskErrors} from "./watch.errors";
+import {WatchTaskError, WatchTaskErrorTypes} from "./watch.errors";
 
-interface CBWatchOptions extends WatchOptions {
+export const reservedTaskNames = ['before', 'options', 'bs-config'];
+export const defaultWatchOptions = <CBWatchOptions>{
+    ignoreInitial: true,
+    block: true,
+    throttle: 0
+};
+
+export interface CBWatchOptions extends WatchOptions {
     throttle: number
     block: boolean
 }
 
-interface WatchTask {
+export interface WatchTask {
+    before: string[]
+    options: CBWatchOptions
+    watchers: Watcher[]
+    name: string
+    errors: WatchTaskError[]
+}
+
+export interface Watcher {
     patterns: string[]
     tasks: string[]
     options: any
     watcherUID: any
 }
-
-const defaultWatchOptions = <CBWatchOptions>{
-    ignoreInitial: true,
-    block: true,
-    throttle: 0
-};
 
 /**
  * Create a single watch task item consisting of
@@ -35,8 +48,8 @@ const defaultWatchOptions = <CBWatchOptions>{
  * @param {object} globalOptions
  * @returns {*}
  */
-function createOne (item, itemOptions, globalOptions) : WatchTask {
-    if (isPlainObj(item)) {
+function createOne (item, itemOptions, globalOptions) : Watcher {
+    if (isPlainObject(item)) {
         if (item.patterns && item.tasks) {
             return {
                 patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
@@ -45,30 +58,28 @@ function createOne (item, itemOptions, globalOptions) : WatchTask {
                 watcherUID: watcherUID++
             };
         }
-
         // todo: Add error handling for incorrect formats ie: user error
     }
     return item;
 }
 
 /**
- * @param watchTask
+ * @param watchTaskParent
  * @param globalOptions
  * @returns {*}
  */
-function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
-
+function getFormattedTask (watchTaskParent: WatchTask, globalOptions: CBWatchOptions) : Watcher[] {
     /**
      * Look at each key provided to decide if it can
      * be transformed into a watcher obj
      */
-    return Object.keys(watchTask)
+    return Object.keys(watchTaskParent)
         /**
          * Exclude black listed keys that cannot be watcher
          * names such as `options` or `before`
          */
         .filter(x => blacklist.indexOf(x) === -1)
-        .reduce((all, item) => {
+        .reduce((all: Watcher[], item: string) => {
             /**
              * Here we assume the long-hand version is being
              * used where the watchers property is provided.
@@ -100,10 +111,10 @@ function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
                  *          }
                  *      ]
                  */
-                if (Array.isArray(watchTask.watchers)) {
+                if (Array.isArray(watchTaskParent.watchers)) {
                     return all.concat(
-                        watchTask.watchers.map(watcher => {
-                            return createOne(watcher, watchTask.options, globalOptions);
+                        watchTaskParent.watchers.map(watcher => {
+                            return createOne(watcher, watchTaskParent.options, globalOptions);
                         })
                     );
                 }
@@ -119,12 +130,12 @@ function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
                  *          "*.scss": ["$npm node-sass"]
                  *      }
                  */
-                if (isPlainObj(watchTask.watchers)) {
-                    return Object.keys(watchTask.watchers)
+                if (isPlainObject(watchTaskParent.watchers)) {
+                    return Object.keys(watchTaskParent.watchers)
                         .map(key => createOne({
                             patterns: key,
-                            tasks: watchTask.watchers[key]
-                        }, watchTask.options, globalOptions));
+                            tasks: watchTaskParent.watchers[key]
+                        }, watchTaskParent.options, globalOptions));
                 }
             }
 
@@ -135,39 +146,58 @@ function getFormattedTask (watchTask, globalOptions) : WatchTask[] {
              */
             return all.concat(createOne({
                 patterns: item,        // key as the pattern
-                tasks: watchTask[item] // value as the tasks array
-            }, watchTask.options, globalOptions));
+                tasks: watchTaskParent[item] // value as the tasks array
+            }, watchTaskParent.options, globalOptions));
         }, []);
 }
 
-/**
- * Gather tasks and flatten config
- * @returns {Array}
- * @param input
- */
-interface WatchTaskParent {
-    before: string[]
-    options: CBWatchOptions
-    watchers: WatchTask[]
-}
+function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTask {
 
-function getWatchTaskParent(item: any, globalOpts: any) : WatchTaskParent {
+    const incoming  = preprocessWatchTask(taskName);
+    const selection = trigger.input.watch[incoming.taskName] || {};
+    const watchers  = getFormattedTask(selection, trigger.input.watch.options || {});
+
+    const errors    = gatherWatchTaskErrors(
+        incoming,
+        trigger.input
+    );
+
     return {
-        before: item.before   || [],
-        options: item.options || {},
-        watchers: getFormattedTask(item, globalOpts)
+        name:     taskName,
+        before:   selection.before   || [],
+        options:  selection.options || {},
+        watchers: watchers,
+        errors:   errors
     }
 }
 
-module.exports = function getWatchTasks (input)  {
+export interface WatchTasks {
+    valid: WatchTask[]
+    invalid: WatchTask[],
+    all: WatchTask[]
+}
 
-    const watch      = input.watch;
-    const tasks      = watch.tasks || {};
-    const globalOpts = <CBWatchOptions>watch.options || {};
+function validateTask (task:WatchTask, trigger: WatchTrigger): boolean {
+    return task.errors.length === 0;
+}
 
-    return Object.keys(tasks)
-        .reduce((all, key) => {
-            all[key] = getWatchTaskParent(tasks[key], globalOpts);
-            return all;
-        }, {});
-};
+export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): WatchTasks {
+
+    const taskList = taskNames
+        .map(taskName => {
+            return createFlattenedWatchTask(taskName, trigger);
+        });
+
+    /**
+     * Return both valid & invalid tasks. We want to let consumers
+     * handle errors/successes
+     * @type {{valid: Array, invalid: Array}}
+     */
+    const output = {
+        valid: taskList.filter(x => validateTask(x, trigger)),
+        invalid: taskList.filter(x => !validateTask(x, trigger)),
+        all: taskList
+    };
+
+    return output;
+}
