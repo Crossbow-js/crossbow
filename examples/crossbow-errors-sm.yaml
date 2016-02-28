@@ -1,5 +1,6 @@
 tasks:
-    css:        ['crossbow-sass:']
+    css:        ['crossbow-sass', 'crossbow-sass:sa']
+    some:       ['example.js', 'css']
 
 config:
     $:

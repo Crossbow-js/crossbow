@@ -170,6 +170,14 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
 function createAdaptorTask (taskName, parents) : Task {
 
     /**
+     * Strip the first part of the task name.
+     *  eg: `@npm eslint`
+     *   ->  eslint
+     * @type {string}
+     */
+    const commandInput = taskName.replace(/^@(.+?) /, '');
+
+    /**
      * Get a valid adaptors adaptor name
      * @type {string|undefined}
      */
@@ -194,14 +202,6 @@ function createAdaptorTask (taskName, parents) : Task {
             }]
         });
     }
-
-    /**
-     * Strip the first part of the task name.
-     *  eg: `@npm eslint`
-     *   ->  eslint
-     * @type {string}
-     */
-    const commandInput = taskName.replace(/^@(.+?) /, '');
 
     return <Task>{
         valid: true,
