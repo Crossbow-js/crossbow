@@ -2,13 +2,13 @@ import {CrossbowInput} from "./index";
 import {OutgoingWatchTask} from "./watch.preprocess";
 
 export enum WatchTaskErrorTypes {
-    NameNotFound
+    WatchTaskNameNotFound
 }
 
 export interface WatchTaskError {
     type: WatchTaskErrorTypes
 }
-export interface NameNotFoundError extends WatchTaskError { taskName: string }
+export interface WatchTaskNameNotFoundError extends WatchTaskError { taskName: string }
 
 export function gatherWatchTaskErrors (outgoing: OutgoingWatchTask, input:CrossbowInput): WatchTaskError[] {
     return [
@@ -18,7 +18,7 @@ export function gatherWatchTaskErrors (outgoing: OutgoingWatchTask, input:Crossb
 
 function getModuleErrors (outgoing: OutgoingWatchTask, input: CrossbowInput): WatchTaskError[] {
     if (!input.watch[outgoing.taskName]) {
-        return [<NameNotFoundError>{type: WatchTaskErrorTypes.NameNotFound, taskName: outgoing.taskName}];
+        return [<WatchTaskNameNotFoundError>{type: WatchTaskErrorTypes.WatchTaskNameNotFound, taskName: outgoing.taskName}];
     }
     return [];
 }

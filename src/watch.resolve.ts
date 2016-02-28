@@ -23,15 +23,15 @@ export interface CBWatchOptions extends WatchOptions {
     block: boolean
 }
 
-export interface WatchTaskParent {
+export interface WatchTask {
     before: string[]
     options: CBWatchOptions
-    watchers: WatchTask[]
+    watchers: Watcher[]
     name: string
     errors: WatchTaskError[]
 }
 
-interface WatchTask {
+export interface Watcher {
     patterns: string[]
     tasks: string[]
     options: any
@@ -48,7 +48,7 @@ interface WatchTask {
  * @param {object} globalOptions
  * @returns {*}
  */
-function createOne (item, itemOptions, globalOptions) : WatchTask {
+function createOne (item, itemOptions, globalOptions) : Watcher {
     if (isPlainObject(item)) {
         if (item.patterns && item.tasks) {
             return {
@@ -68,7 +68,7 @@ function createOne (item, itemOptions, globalOptions) : WatchTask {
  * @param globalOptions
  * @returns {*}
  */
-function getFormattedTask (watchTaskParent: WatchTaskParent, globalOptions: CBWatchOptions) : WatchTask[] {
+function getFormattedTask (watchTaskParent: WatchTask, globalOptions: CBWatchOptions) : Watcher[] {
     /**
      * Look at each key provided to decide if it can
      * be transformed into a watcher obj
@@ -79,7 +79,7 @@ function getFormattedTask (watchTaskParent: WatchTaskParent, globalOptions: CBWa
          * names such as `options` or `before`
          */
         .filter(x => blacklist.indexOf(x) === -1)
-        .reduce((all: WatchTask[], item: string) => {
+        .reduce((all: Watcher[], item: string) => {
             /**
              * Here we assume the long-hand version is being
              * used where the watchers property is provided.
@@ -151,7 +151,7 @@ function getFormattedTask (watchTaskParent: WatchTaskParent, globalOptions: CBWa
         }, []);
 }
 
-function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTaskParent {
+function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTask {
 
     const incoming  = preprocessWatchTask(taskName);
     const selection = trigger.input.watch[incoming.taskName] || {};
@@ -172,12 +172,12 @@ function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): Wat
 }
 
 export interface WatchTasks {
-    valid: WatchTaskParent[]
-    invalid: WatchTaskParent[],
-    all: WatchTaskParent[]
+    valid: WatchTask[]
+    invalid: WatchTask[],
+    all: WatchTask[]
 }
 
-function validateTask (task:WatchTaskParent, trigger: WatchTrigger): boolean {
+function validateTask (task:WatchTask, trigger: WatchTrigger): boolean {
     return task.errors.length === 0;
 }
 

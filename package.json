@@ -18,6 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "archy": "1.0.0",
+    "big-tree-cli": "0.1.6",
     "chokidar": "1.4.2",
     "debug": "2.2.0",
     "eazy-logger": "2.1.2",

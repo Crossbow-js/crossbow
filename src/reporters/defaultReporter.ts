@@ -10,7 +10,12 @@ const modulePredicate = (x) => x.type === cbErrors.TaskErrorTypes.ModuleNotFound
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 import {relative} from 'path';
 import {FlagNotProvidedError} from "../task.errors";
+import {Watcher} from "../watch.resolve";
+import {WatchTask} from "../watch.resolve";
+import {WatchTaskErrorTypes} from "../watch.errors";
+import {WatchTaskNameNotFoundError} from "../watch.errors";
 const l = logger.info;
+import {compile, prefix} from '../logger';
 
 function sectionTitle (title, secondary) {
 
@@ -153,8 +158,52 @@ export function reportTaskErrors (tasks: Task[],
         l('{gray.bold:-----------------------------------------------}');
     });
 }
+export function reportWatchTaskErrors (tasks: WatchTask[],
+                                  cli: Meow,
+                                  input: CrossbowInput,
+                                  config: CrossbowConfiguration) {
 
-export function logErrors(tasks, indent) {
+    l('{gray.bold:------------------------------------------------}');
+    l('{err: } Sorry, there were errors resolving your tasks');
+    l('{err: } So none of them were run.');
+    l('{gray.bold:------------------------------------------------}');
+
+    cli.input.slice(1).forEach(function (n, i) {
+    	l("{gray:+ input: {gray.bold:'%s'}", n);
+        logWatchErrors([tasks[i]], '');
+        l('{gray.bold:-----------------------------------------------}');
+    });
+}
+
+export function logWatchErrors(tasks: WatchTask[], indent: string): void {
+
+    tasks.forEach(function (task) {
+        if (task.errors.length) {
+            /**
+             * If one of the errors is a module not found error, all other errors
+             * don't make sense
+             * @type {boolean}
+             */
+            //logged = true;
+            const logOnlyModuleNotFoundErrors = task.errors.filter(x => x.type === WatchTaskErrorTypes.WatchTaskNameNotFound);
+            //if (logOnlyModuleNotFoundErrors.length === task.errors.length) {
+            //
+            //}
+            logMultipleErrors(task, task.errors, WatchTaskErrorTypes, indent);
+
+        }
+        //if (task.tasks.length) {
+        //    l('{gray.bold:-%s} {bold:[%s]}', indent, task.taskName);
+        //    logErrors(task.tasks, indent += '-');
+        //} else {
+        //    if (!logged) {
+        //        l('{gray.bold:-%s} {ok: } %s', indent, task.taskName);
+        //    }
+        //}
+    })
+}
+
+export function logErrors(tasks: Task[], indent: string): void {
 
     tasks.forEach(function (task) {
         var logged = false;
@@ -168,9 +217,9 @@ export function logErrors(tasks, indent) {
             const logOnlyModuleNotFoundErrors = task.errors.some(modulePredicate);
 
             if (logOnlyModuleNotFoundErrors) {
-                logMultipleErrors(task, task.errors.filter(modulePredicate), indent);
+                logMultipleErrors(task, task.errors.filter(modulePredicate), cbErrors.TaskErrorTypes, indent);
             } else {
-                logMultipleErrors(task, task.errors, indent);
+                logMultipleErrors(task, task.errors, cbErrors.TaskErrorTypes, indent);
             }
         }
         if (task.tasks.length) {
@@ -195,11 +244,37 @@ export function reportTree (tasks, config: CrossbowConfiguration, title) {
     var taskCount = 0;
     var taskErrors = 0;
     var taskValid = 0;
-    sectionTitle(title, '');
-    logTasks(tasks, '');
-    l('');
-    l('{red:%s} error%s found.', taskErrors, (taskErrors > 1 || taskErrors === 0) ? 's' : '');
-    l('');
+    //require('fs').writeFileSync('out.json', JSON.stringify(tasks, null, 2));
+    //logTasks(tasks, '');
+    //l('');
+    //l('{red:%s} error%s found.', taskErrors, (taskErrors > 1 || taskErrors === 0) ? 's' : '');
+    //l('');
+
+    const toLog = getTasks(tasks, []);
+    const archy  = require('archy');
+    const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
+
+    logger.info(o.slice(26));
+
+    function getTasks (tasks, initial) {
+        return tasks.reduce((acc, task) => {
+
+            const label = getLabel(task);
+
+            return acc.concat({
+                label: label,
+                nodes: getTasks(task.tasks, [])
+            });
+        }, initial);
+    }
+
+    function getLabel (task) {
+
+        if (task.tasks.length) {
+            return `{bold:[${task.taskName}]}`;
+        }
+        return `${task.taskName}}`;
+    }
 
     function logTasks(tasks, indent) {
         tasks.forEach(function (task) {
@@ -228,7 +303,7 @@ export function reportTree (tasks, config: CrossbowConfiguration, title) {
             }
             if (task.errors.length) {
                 taskErrors += task.errors.length;
-                logMultipleErrors(task, task.errors, indent);
+                logMultipleErrors(task, task.errors, cbErrors.TaskErrorTypes, indent);
             }
             if (task.tasks.length) {
                 logTasks(task.tasks, indent + '-');
@@ -242,9 +317,9 @@ export function reportTree (tasks, config: CrossbowConfiguration, title) {
  * @param errors
  * @param indent
  */
-function logMultipleErrors (task, errors, indent) {
+function logMultipleErrors (task, errors, lookup, indent) {
     errors.forEach(function (error) {
-        const errorType = cbErrors.TaskErrorTypes[error.type];
+        const errorType = lookup[error.type];
         if (errorHandlers[errorType]) {
             l("{red:-%s} {err: } {bold:Error Type}:  {underline:%s}", indent, errorType);
             errorHandlers[errorType](task, error, indent + '-');
@@ -288,6 +363,9 @@ const errorHandlers = {
     FlagNotProvided: function (task: Task, error: FlagNotProvidedError, indent) {
         l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} is missing a valid flag (such as {yellow:'p'}, for example)", indent, task.rawInput);
         l("{red:%s} {err: } {bold:Description}: Should be something like: {cyan:'%s@p'}", indent, task.taskName);
+    },
+    WatchTaskNameNotFound: function (task: WatchTask, error: WatchTaskNameNotFoundError, indent) {
+        l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Not found in your configuration", indent, task.name);
     }
 };
 

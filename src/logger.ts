@@ -1,6 +1,6 @@
-var prefix = '{magenta.bold:cb {gray::} }';
+var _prefix = '{magenta.bold:cb {gray::} }';
 var logger  = require('eazy-logger').Logger({
-    prefix: prefix,
+    prefix: _prefix,
     useLevelPrefixes: false,
     logLevel: 'info',
     levels: {
@@ -18,7 +18,7 @@ var logger  = require('eazy-logger').Logger({
 
 export default logger;
 export const compile = require('eazy-logger').compile;
+export const prefix = _prefix;
 //export var compile = require('eazy-logger').compile;
 //module.exports.compile    = require('eazy-logger').compile;
-//module.exports.prefix     = prefix;
 //module.exports.infoPrefix = prefix + '{cyan:[info]} ';

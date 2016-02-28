@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {reportTree, reportTaskErrors} from './reporters/defaultReporter';
+import {reportTree, reportTaskErrors, reportWatchTaskErrors} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
@@ -24,13 +24,26 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     /**
      * Check if the user intends to handle running the tasks themselves,
-     * if thats the case we give them the resolved tasks along with
+     * if that's the case we give them the resolved tasks along with
      * the sequence and the primed runner
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
         return {tasks};
     }
+
+    /**
+     * Never continue if any tasks were flagged as invalid and we've not handed
+     * off
+     */
+    if (tasks.invalid.length) {
+        // todo output error summary
+        reportWatchTaskErrors(tasks.all, cli, input, config);
+        return;
+    }
+
+    debug(`Not handing off, will handle watching internally`);
+
 }
 
 function getNextContext(ctx: WatchTrigger): WatchTrigger {
