@@ -10,8 +10,7 @@ module.exports = {
         js: [
             'test/fixtures/tasks/simple.js',
             'test/fixtures/tasks/simple.js',
-            'test/fixtures/tasks/simple.js',
-            'css'
+            'test/fixtures/tasks/simple.js'
         ],
         css: ['crossbow-sass']
     },

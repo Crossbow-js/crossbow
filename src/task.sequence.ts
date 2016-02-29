@@ -165,9 +165,9 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
     const mergedConfigWithQuery = merge({}, config, task.query);
 
     if (imported.tasks && Array.isArray(imported.tasks)) {
-        return imported.tasks.map(function (importedFn) {
+        return imported.tasks.map(function (importedFn, i) {
             return createSequenceTaskItem({
-                fnName: importedFn.name,
+                fnName: getFunctionName(imported, i),
                 factory: importedFn,
                 task: task,
                 config: mergedConfigWithQuery
@@ -183,14 +183,19 @@ function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, impo
      */
     if (typeof imported === 'function') {
         return [createSequenceTaskItem({
-            fnName: imported.name,
+            fnName: getFunctionName(imported, 0),
             factory: imported,
             task: task,
             config: mergedConfigWithQuery,
         })]
     }
 }
-
+function getFunctionName (fn: TaskFactory, count = 0) {
+    if (fn.name === undefined) {
+        return `AnonymousFunction ${count}`;
+    }
+    return fn.name;
+}
 export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger): Runner  {
 
     const flattened = flatten(items, []);

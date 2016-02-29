@@ -127,7 +127,7 @@ export function reportTaskErrors (tasks: Task[],
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
     l('{red:-} So none of them were run.');
-    l('{red:-} To see all errors, run `{cyan:crossbow tree}`');
+    //l('{red:-} To see all errors, run `{cyan:crossbow tree}`');
     l('{gray.bold:------------------------------------------------}');
 
     cli.input.slice(1).forEach(function (n, i) {
@@ -215,10 +215,15 @@ function getSequenceLabel (item: SequenceItem) {
         if (item.fnName) {
             return `${item.task.taskName} (fn: {bold:${item.fnName}})`;
         }
+        if (item.task.origin === TaskOriginTypes.NpmScripts) {
+            return npmScriptLabel(item.task);
+        }
+        if (item.task.type === TaskTypes.Adaptor) {
+            return adaptorLabel(item.task);
+        }
         return item.task.taskName;
     }
-
-    return compile(`{bold:[${item.taskName}]} {gray:[${SequenceItemTypes[item.type]}]}`);
+    return compile(`{bold:[${item.taskName}]} {yellow:[${SequenceItemTypes[item.type]}]}`);
 }
 
 export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
@@ -279,11 +284,16 @@ function getSingleError(error, task) {
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
-
+function adaptorLabel (task) {
+    return `{magenta:[@${task.adaptor}]} {cyan:${task.command}}`;
+}
+function npmScriptLabel(task:Task) {
+    return `{magenta:[npm script]} {cyan:${task.command}}`;
+}
 function getLabel (task) {
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
-        return `{cyan.bold:[npm script]} {cyan:${task.command}}`;
+        return npmScriptLabel(task);
     }
 
     if (task.type === TaskTypes.Group) {
@@ -304,7 +314,7 @@ function getLabel (task) {
         if (task.errors.length) {
             return `{red.bold:x ${task.rawInput}}`;
         }
-        return `{cyan.bold:@${task.adaptor}} {cyan:${task.command}}`;
+        return adaptorLabel(task);
     }
 
     return `${task.taskName}}`;
