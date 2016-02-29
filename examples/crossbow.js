@@ -2,7 +2,7 @@ module.exports = {
     watch: {
         default: {
             before: ['some-tasks'],
-            "**.css": ['some-tasks']
+            "test/fixtures/*.html": ['js']
         }
     },
     tasks: {

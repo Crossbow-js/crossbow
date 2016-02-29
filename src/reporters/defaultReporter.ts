@@ -82,6 +82,11 @@ export function reportNoTasksProvided() {
     l("Entering {bold:interactive mode} as you didn't provide a task to run");
     l("{gray:-------------------------------------------------------------");
 }
+export function reportNoWatchTasksProvided() {
+    l("{gray:-------------------------------------------------------------");
+    l("You didn't provide a watch-task to run");
+    l("{gray:-------------------------------------------------------------");
+}
 
 export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showTimes = false) {
 

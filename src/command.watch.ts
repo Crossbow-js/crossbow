@@ -5,6 +5,7 @@ import {reportTaskTree, reportTaskErrors, reportWatchTaskErrors} from './reporte
 import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
+import {reportNoWatchTasksProvided} from "./reporters/defaultReporter";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -38,12 +39,13 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (tasks.invalid.length) {
         // todo output error summary
-        reportWatchTaskErrors(tasks.all, cli, input, config);
+        reportWatchTaskErrors(tasks.all, cli, input);
         return;
     }
 
     debug(`Not handing off, will handle watching internally`);
 
+    console.log(tasks);
 }
 
 function getNextContext(ctx: WatchTrigger): WatchTrigger {
@@ -119,5 +121,11 @@ export function unwrapShorthand(incoming, i) {
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+    if (cli.input.length === 1 || config.interactive) {
+        if (cli.input.length === 1) {
+            reportNoWatchTasksProvided();
+            return;
+        }
+    }
     return execute(cli, input, config);
 }
