@@ -10,6 +10,7 @@ import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {gatherWatchTaskErrors} from "./watch.errors";
 import {WatchTaskError, WatchTaskErrorTypes} from "./watch.errors";
+import {CrossbowInput} from "./index";
 
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
@@ -201,3 +202,13 @@ export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): 
 
     return output;
 }
+export function resolveBeforeTasks (input:CrossbowInput, watchTasks: WatchTask[]) {
+
+    return [...input.watch.before, ...watchTasks
+        .reduce((acc, item) => {
+            return acc.concat([].concat(item.before).filter(Boolean));
+        }, [])
+        .filter(Boolean)].filter(Boolean);
+
+};
+

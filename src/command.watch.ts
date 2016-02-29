@@ -3,7 +3,7 @@ import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {reportTaskTree, reportTaskErrors, reportWatchTaskErrors} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
-import {resolveWatchTasks} from './watch.resolve';
+import {resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
 import {reportNoWatchTasksProvided} from "./reporters/defaultReporter";
 
@@ -12,6 +12,13 @@ const merge = require('lodash.merge');
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
+}
+
+export interface UnwrappedTask {
+    patterns: string[]
+    tasks: string[]
+    i: number
+    name: string
 }
 
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): WatchTaskRunner {
@@ -38,14 +45,17 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * off
      */
     if (tasks.invalid.length) {
-        // todo output error summary
         reportWatchTaskErrors(tasks.all, cli, input);
         return;
     }
 
     debug(`Not handing off, will handle watching internally`);
 
-    console.log(tasks);
+    // todo: Validate before tasks
+    const beforeTasks = resolveBeforeTasks(moddedCtx.input, tasks.valid);
+    // todo: Get task trees
+    const taskTree    = [];
+    // todo: Validate task tree
 }
 
 function getNextContext(ctx: WatchTrigger): WatchTrigger {
@@ -100,7 +110,7 @@ function getNextContext(ctx: WatchTrigger): WatchTrigger {
  *  patterns: ["*.js"]
  *  tasks: ["lint", "unit"]
  */
-export function unwrapShorthand(incoming, i) {
+export function unwrapShorthand(incoming:string, i:number): UnwrappedTask {
     var patterns = [];
     var tasks = [];
 
@@ -117,7 +127,7 @@ export function unwrapShorthand(incoming, i) {
         }
         return {patterns, tasks, i, name: `_shorthand_${i}`}
     }
-    return {name: incoming, i, patterns, tasks}
+    return {patterns, tasks, i, name: incoming}
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {

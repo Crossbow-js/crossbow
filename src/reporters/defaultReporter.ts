@@ -58,7 +58,7 @@ export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: Cro
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks');
-    l('{err: } So none of them were run.');
+    l('{red:-} So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
 
     cli.input.slice(1).forEach(function (n, i) {
