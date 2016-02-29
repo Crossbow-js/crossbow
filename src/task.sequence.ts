@@ -1,14 +1,14 @@
-import {transformStrings} from "./task.utils";
 const objPath = require('object-path');
-const merge = require('lodash.merge');
-const assign = require('object-assign');
-const Rx = require('rx');
+const merge   = require('lodash.merge');
+const assign  = require('object-assign');
+const Rx      = require('rx');
+const Observable = Rx.Observable;
 
+import {transformStrings} from "./task.utils";
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
-import Seq = Immutable.Seq;
 import handleReturn from './task.return.values';
 import {
     SequenceItemTypes,
@@ -16,7 +16,9 @@ import {
     TaskFactory,
     createSequenceParallelGroup,
     createSequenceSeriesGroup,
-    createSequenceTaskItem} from "./task.sequence.factories";
+    createSequenceTaskItem
+} from "./task.sequence.factories";
+
 import {createObservableFromSequenceItem} from "./task.runner";
 
 export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigger): SequenceItem[] {
@@ -201,8 +203,8 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
     const flattened = flatten(items, []);
 
     return {
-        series: () => Rx.Observable.from(flattened).concatAll(),
-        parallel: () => Rx.Observable.from(flattened).mergeAll()
+        series: () => Observable.from(flattened).concatAll(),
+        parallel: () => Observable.from(flattened).mergeAll()
     };
 
     function flatten(items: SequenceItem[], initial: SequenceItem[]) {
@@ -220,7 +222,7 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
 
-                return all.concat(Rx.Observable.merge(flatten(item.items, [])));
+                return all.concat(Observable.merge(flatten(item.items, [])));
             }
             /**
              * If the current task was marked as `series`, all immediate child tasks
@@ -228,7 +230,7 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
              * one has completed
              */
             if (item.type === SequenceItemTypes.SeriesGroup) {
-                return all.concat(Rx.Observable.concat(flatten(item.items, [])));
+                return all.concat(Observable.concat(flatten(item.items, [])));
             }
             /**
              * Finally is item is a task, create an observable for it.

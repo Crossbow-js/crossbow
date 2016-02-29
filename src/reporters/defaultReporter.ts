@@ -17,127 +17,44 @@ const l = logger.info;
 import {compile, prefix} from '../logger';
 import {TaskErrorTypes} from "../task.errors";
 
-function sectionTitle (title, secondary) {
+export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
-    const lineLength = new Array(secondary.length + title.length).join('-');
-
-    l('');
-    l('{gray:----' + lineLength);
-    l("{yellow:+ %s {cyan:%s}", title, secondary);
-    l('{gray:----' + lineLength);
-}
-export function summary (
-    sequence: SequenceItem[],
-    cli: Meow,
-    input: CrossbowInput,
-    config: CrossbowConfiguration,
-    runtime: number
-) {
-
-    if (config.summary !== 'short') {
+    if (config.summary === 'verbose') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        const lineLength = new Array(cliInput.length).join('-');
-        sectionTitle('Summary from the input', cliInput);
-        logTaskCompletion(sequence, '');
-        l('{gray:---------------------------' + lineLength);
+        reportSequenceTree(sequence, config, `+ Results from {bold:${cliInput}}`, true);
     }
 
-    l('');
     l('{ok: } Total: {yellow:%sms}', runtime);
-    l('');
-}
-
-/**
- * Log all tasks from the sequence
- * @param sequence
- * @param indent
- */
-function logTaskCompletion (sequence: SequenceItem[], indent: string) {
-    const localIndent = indent.length ? indent + ' ': '';
-    sequence.forEach(function (item) {
-        if (item.type === SequenceItemTypes.Task) {
-            if (item.subTaskName) {
-                return l('{gray:%s}{ok: } %s (with config: {bold:%s}) {yellow:%sms}', localIndent, item.task.taskName, item.subTaskName, item.duration);
-            } else {
-
-                if (item.task.origin === TaskOriginTypes.NpmScripts) {
-                    return l('{gray:%s}{ok: } {magenta:[npm script]} %s {yellow:%sms}', localIndent, item.task.command, item.duration);
-                } else {
-                    return l('{gray:%s}{ok: } %s {yellow:%sms}', localIndent, item.task.taskName, item.duration);
-                }
-            }
-        }
-        l('{gray:%s}{white.bold:[%s]} {gray:%s}', localIndent, item.taskName, SequenceItemTypes[item.type]);
-        logTaskCompletion(item.items, indent + '-');
-    });
-}
-
-/**
- * Log the tree of tasks about to be run
- * @param sequence
- * @param indent
- */
-function logTaskTree (sequence: SequenceItem[], indent: string) {
-    const localIndent = indent.length ? indent + ' ': '';
-    sequence.forEach(function (item) {
-        if (item.type === SequenceItemTypes.Task) {
-            let name = item.task.taskName;
-            if (item.fnName !== '') {
-                name = `${name} fn: ${item.fnName}`;
-            }
-            if (item.subTaskName) {
-                l('{gray:%s}%s (with config: {bold:%s})', localIndent, name, item.subTaskName);
-            } else {
-                if (item.task.origin === TaskOriginTypes.NpmScripts) {
-                    return l('{gray:%s}{ok: } {magenta:[npm script]} %s', localIndent, item.task.command);
-                } else {
-                    return l('{gray:%s}{ok: } %s', localIndent, item.task.taskName);
-                }
-            }
-            return;
-        }
-        l('{gray:%s}{white.bold:[%s]} {gray:%s}', localIndent, item.taskName, SequenceItemTypes[item.type]);
-        logTaskTree(item.items, indent + '-');
-    });
 }
 
 /**
  * Log the task list
  */
-export function reportTaskList (sequence: SequenceItem[],
-                                cli: Meow,
-                                input: CrossbowInput,
-                                config: CrossbowConfiguration) {
-
-    l('');
-    l('{yellow:+} {bold:%s}', cli.input.slice(1).join(', '));
+export function reportTaskList (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
     if (config.summary !== 'verbose') {
+        l('{yellow:+} {bold:%s}', cli.input.slice(1).join(', '));
         return;
     }
 
     const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-    reportSequenceTree(sequence, config, ` `);
+
+    reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
 }
-export function reportTaskErrors (tasks: Task[],
-                                  cli: Meow,
-                                  input: CrossbowInput,
-                                  config: CrossbowConfiguration) {
+
+export function reportTaskErrors (tasks: Task[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
     l('{red:-} So none of them were run.');
-    //l('{red:-} To see all errors, run `{cyan:crossbow tree}`');
     l('{gray.bold:------------------------------------------------}');
 
     cli.input.slice(1).forEach(function (n, i) {
         reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
 }
-export function reportWatchTaskErrors (tasks: WatchTask[],
-                                  cli: Meow,
-                                  input: CrossbowInput,
-                                  config: CrossbowConfiguration) {
+
+export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks');
@@ -155,7 +72,6 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
 
     tasks.forEach(function (task) {
         if (task.errors.length) {
-            const logOnlyModuleNotFoundErrors = task.errors.filter(x => x.type === WatchTaskErrorTypes.WatchTaskNameNotFound);
             logMultipleErrors(task, task.errors, WatchTaskErrorTypes, indent);
         }
     })
@@ -167,37 +83,21 @@ export function reportNoTasksProvided() {
     l("{gray:-------------------------------------------------------------");
 }
 
-export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title) {
+export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showTimes = false) {
 
     const toLog = getTasks(sequence, []);
     const archy = require('archy');
-    const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
+    const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
     logger.info(o.slice(26));
 
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task: SequenceItem) => {
             let label = getSequenceLabel(task);
+            if (showTimes && task.duration !== undefined) {
+                label = `{green:✔} ` + label + ` {yellow:(${task.duration}ms)}`;
+            }
             let nodes = getTasks(task.items, []);
-
-            //if (config.summary === 'verbose') {
-            //    return acc.concat({
-            //        label: label,
-            //        nodes: nodes
-            //    });
-            //}
-            //
-            //if (task.type === TaskTypes.Adaptor ||
-            //    task.type === TaskTypes.Runnable) {
-            //    if (task.errors.length) {
-            //        return acc.concat({
-            //            label: label,
-            //            nodes: []
-            //        });
-            //    }
-            //    return acc;
-            //}
-            //
             return acc.concat({
                 label: label,
                 nodes: nodes
@@ -284,12 +184,15 @@ function getSingleError(error, task) {
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
+
 function adaptorLabel (task) {
     return `{magenta:[@${task.adaptor}]} {cyan:${task.command}}`;
 }
+
 function npmScriptLabel(task:Task) {
     return `{magenta:[npm script]} {cyan:${task.command}}`;
 }
+
 function getLabel (task) {
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
