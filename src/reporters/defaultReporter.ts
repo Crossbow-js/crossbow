@@ -49,6 +49,20 @@ export function reportTaskErrors (tasks: Task[], cliInput: string[], input: Cros
     l('{red:-} So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
 
+    reportErrorsFromCliInput(cliInput, tasks, config);
+}
+
+export function reportBeforeWatchTaskErrors (tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
+
+    l('{gray.bold:------------------------------------------------}');
+    l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
+    l('{red:-} So none of them were run.');
+    l('{gray.bold:------------------------------------------------}');
+
+    reportErrorsFromCliInput(cliInput, tasks, config);
+}
+
+function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: CrossbowConfiguration): void {
     cliInput.forEach(function (n, i) {
         reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
@@ -82,6 +96,7 @@ export function reportNoTasksProvided() {
     l("Entering {bold:interactive mode} as you didn't provide a task to run");
     l("{gray:-------------------------------------------------------------");
 }
+
 export function reportNoWatchTasksProvided() {
     l("{gray:-------------------------------------------------------------");
     l("You didn't provide a watch-task to run");
@@ -137,7 +152,8 @@ export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
     const archy = require('archy');
     const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
-    logger.info(o.slice(26));
+    logger.info(o.slice(26, -1));
+    logger.info('{gray:-~-~-~-~-~-~-~-~-~-~-}');
 
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task) => {

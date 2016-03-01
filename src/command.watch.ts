@@ -1,12 +1,11 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {reportTaskTree, reportTaskErrors, reportWatchTaskErrors} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
-import {reportNoWatchTasksProvided} from "./reporters/defaultReporter";
 import {resolveTasks} from "./task.resolve";
+import * as reporter from './reporters/defaultReporter';
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -23,13 +22,18 @@ export interface UnwrappedTask {
 }
 
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): WatchTaskRunner {
-    const ctx: WatchTrigger = {cli, input, config, type: 'watcher'};
-    const moddedCtx = getNextContext(ctx);
+
+    /**
+     * First, allow modifications to the current context
+     * (such as shorthand watchers, for instance)
+     * @type {WatchTrigger}
+     */
+    const ctx = getContext({cli, input, config, type: 'watcher'});
 
     /**
      * First Resolve the task names given in input.
      */
-    const watchTasks = resolveWatchTasks(moddedCtx.cli.input, moddedCtx);
+    const watchTasks = resolveWatchTasks(ctx.cli.input, ctx);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -46,19 +50,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * off
      */
     if (watchTasks.invalid.length) {
-        reportWatchTaskErrors(watchTasks.all, cli, input);
+        reporter.reportWatchTaskErrors(watchTasks.all, cli, input);
         return;
     }
 
     debug(`Not handing off, will handle watching internally`);
 
     // todo: Validate before tasks
-    const beforeTasksAsCliInput = resolveBeforeTasks(moddedCtx.input, watchTasks.valid);
+    const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
 
     /**
      * Now Resolve the before task names given in input.
      */
-    const beforeTasks = resolveTasks(beforeTasksAsCliInput, moddedCtx);
+    const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
 
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
@@ -66,7 +70,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (beforeTasks.invalid.length) {
         // todo output error summary
-        reportTaskErrors(beforeTasks.all, beforeTasksAsCliInput, input, config);
+        reporter.reportBeforeWatchTaskErrors(beforeTasks.all, beforeTasksAsCliInput, input, config);
         return;
     }
 
@@ -76,7 +80,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     // todo: Validate task tree
 }
 
-function getNextContext(ctx: WatchTrigger): WatchTrigger {
+function getContext(ctx: WatchTrigger): WatchTrigger {
     /**
      * First, unwrap each item. If it has a <pattern> -> <task> syntax
      * then we split it, otherwise just return empty arrays for
@@ -151,7 +155,7 @@ export function unwrapShorthand(incoming:string, i:number): UnwrappedTask {
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
     if (cli.input.length === 1 || config.interactive) {
         if (cli.input.length === 1) {
-            reportNoWatchTasksProvided();
+            reporter.reportNoWatchTasksProvided();
             return;
         }
     }
