@@ -16,6 +16,7 @@ import {WatchTaskNameNotFoundError} from "../watch.errors";
 const l = logger.info;
 import {compile, prefix} from '../logger';
 import {TaskErrorTypes} from "../task.errors";
+const archy = require('archy');
 
 export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
@@ -70,13 +71,11 @@ function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: Cro
 
 export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
-    l('{gray.bold:------------------------------------------------}');
-    l('{err: } Sorry, there were errors resolving your tasks');
-    l('{red:-} So none of them were run.');
-    l('{gray.bold:------------------------------------------------}');
+    l('{gray.bold:-----------------------------------------------------}');
+    l('{err: } Sorry, there were errors resolving your watch tasks');
+    l('{gray.bold:-----------------------------------------------------}');
 
     cli.input.slice(1).forEach(function (n, i) {
-    	l("{gray:+ input: {gray.bold:'%s'}", n);
         logWatchErrors([tasks[i]], '');
         l('{gray.bold:-----------------------------------------------}');
     });
@@ -84,9 +83,30 @@ export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: Cro
 
 export function logWatchErrors(tasks: WatchTask[], indent: string): void {
 
-    tasks.forEach(function (task) {
+    tasks.forEach(function (task: WatchTask) {
         if (task.errors.length) {
-            logMultipleErrors(task, task.errors, WatchTaskErrorTypes, indent);
+            const o = archy({
+                label:`{yellow:+ input: '${task.name}}'`, nodes:[
+                    {
+                        label: [
+                            `{red.bold:[${task.name}]}`,
+                            getWatchError(task.errors[0], task)
+                        ].join('\n')
+                    }
+                ]
+            }, prefix);
+            logger.info(o.slice(26, -1));
+        } else {
+            const watchTree = task.watchers.map(w => {
+                return {
+                    label: [
+                        compile(`Patterns: [{cyan:${w.patterns.join(', ')}}]`),
+                        compile(`Tasks: [{magenta:${w.tasks.join(', ')}}]`)
+                    ].join('\n')
+                };
+            });
+            const o = archy({label:`{yellow:+ ${task.name}}`, nodes:watchTree}, prefix);
+            logger.info(o.slice(26, -1));
         }
     })
 }
@@ -106,7 +126,6 @@ export function reportNoWatchTasksProvided() {
 export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showTimes = false) {
 
     const toLog = getTasks(sequence, []);
-    const archy = require('archy');
     const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
     logger.info(o.slice(26));
@@ -202,6 +221,14 @@ function getSingleError(error, task) {
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
         ...errorHandlers[TaskErrorTypes[error.type]].call(null, task, error),
+        compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
+    ].join('\n');
+}
+function getWatchError(error, task) {
+    const type = WatchTaskErrorTypes[error.type];
+    return [
+        compile(`{red:-} {bold:Error Type:}  ${type}`),
+        ...errorHandlers[WatchTaskErrorTypes[error.type]].call(null, task, error),
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
@@ -311,7 +338,9 @@ const errorHandlers = {
         ]
     },
     WatchTaskNameNotFound: function (task: WatchTask, error: WatchTaskNameNotFoundError, indent) {
-        l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Not found in your configuration", indent, task.name);
+        return [
+            compile(`{red:-} {bold:Description}: {cyan:'${task.name}'} Not found in your configuration`)
+        ];
     }
 };
 

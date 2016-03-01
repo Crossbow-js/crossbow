@@ -1,8 +1,8 @@
 watch:
-  before: ['@npm ls']
+  before: ['@npm ls', 'kittie']
   ts:
-    before: ['compile', 'shane']
-    'src': ['compile']
+    before: ['compile']
+    'src': ['compile', 'shane']
 
 tasks:
   compile: >

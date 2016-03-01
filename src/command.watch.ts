@@ -30,10 +30,27 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const ctx = getContext({cli, input, config, type: 'watcher'});
 
+    debug(`Working with input [${ctx.cli.input}]`);
+
     /**
      * First Resolve the task names given in input.
      */
     const watchTasks = resolveWatchTasks(ctx.cli.input, ctx);
+
+    debug(`${watchTasks.valid.length} valid task(s)`);
+    debug(`${watchTasks.invalid.length} invalid task(s)`);
+
+    /**
+     * Get 'before' task list
+     */
+    const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
+
+    debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
+
+    /**
+     * Now Resolve the before task names given in input.
+     */
+    const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -42,38 +59,28 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
-        return {tasks: watchTasks};
+        return {tasks: watchTasks, beforeTasks};
     }
 
+    debug(`Not handing off, will handle watching internally`);
+
     /**
-     * Never continue if any tasks were flagged as invalid and we've not handed
-     * off
+     * Never continue if any tasks were flagged as
      */
     if (watchTasks.invalid.length) {
         reporter.reportWatchTaskErrors(watchTasks.all, cli, input);
         return;
     }
 
-    debug(`Not handing off, will handle watching internally`);
-
-    // todo: Validate before tasks
-    const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
 
     /**
-     * Now Resolve the before task names given in input.
-     */
-    const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
-
-    /**
-     * Never continue if any tasks were flagged as invalid and we've not handed
-     * off
+     * Never continue if any of the BEFORE tasks were flagged as invalid
      */
     if (beforeTasks.invalid.length) {
         // todo output error summary
         reporter.reportBeforeWatchTaskErrors(beforeTasks.all, beforeTasksAsCliInput, input, config);
         return;
     }
-
 
     // todo: Get task trees
     const taskTree    = [];
