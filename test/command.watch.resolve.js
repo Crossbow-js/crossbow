@@ -4,10 +4,7 @@ var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
 
 describe('Resolving watch tasks', function () {
     it('can resolve all watchers when no names given', function () {
-        const runner = cli({
-            input: ['watch', 'shane'],
-            flags: {handoff: true}
-        }, {
+        const runner = cli.getWatcher(['shane'], {
             watch: {
                 shane: {
                     before: ['js'],
@@ -26,10 +23,7 @@ describe('Resolving watch tasks', function () {
         assert.deepEqual(runner.tasks.valid[0].watchers[0].options, defaultWatchOptions);
     });
     it('can maintain personal before tasks even when before given globally too', function () {
-        const runner = cli({
-            input: ['watch', 'default', 'dev'],
-            flags: {handoff: true}
-        }, {
+        const runner = cli.getWatcher(['default', 'dev'], {
             watch: {
                 before: ['js', 'sass'],
                 default: {

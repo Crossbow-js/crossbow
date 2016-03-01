@@ -1,6 +1,6 @@
-var assert = require('chai').assert;
-var cli = require('../');
-var defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
+const assert = require('chai').assert;
+const cli = require('../');
+const defaultWatchOptions = require('../dist/watch.resolve').defaultWatchOptions;
 const yml  = require('js-yaml');
 
 describe('Gathering watch tasks in longer format', function () {

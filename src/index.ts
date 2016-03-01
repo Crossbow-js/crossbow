@@ -47,7 +47,10 @@ function generateInput (incoming: CrossbowInput|any, config: CrossbowConfigurati
 
     return _merge({
         tasks: {},
-        watch: {},
+        watch: {
+            before: [],
+            options: {}
+        },
         config:{},
         npmScripts: npmScriptsAsCrossbowTasks
     }, incoming || {});

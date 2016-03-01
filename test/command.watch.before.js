@@ -1,51 +1,81 @@
 const assert      = require('chai').assert;
-const watch       = require('../lib/command.watch');
-const resolve     = require('../lib/resolve-watch-tasks');
-const gatherTasks = require('../lib/gather-watch-tasks');
-const yml         = require('js-yaml');
+const cli = require('../');
 
 describe('Resolving watch tasks to be run before watchers begin', function () {
     it('returns a single global before task' , function () {
-        const input = {
+        const runner = cli.getWatcher(['default'], {
             watch: {
                 before: ['js'],
-                tasks: {
-                    default: {
-                        "*.css": ["sass", "js"],
-                        "*.js":  ["js"]
-                    },
-                    dev: {
-                        "*.html": "html-min"
-                    }
+                default: {
+                    "*.css": ["sass", "js"],
+                    "*.js":  ["js"]
+                },
+                dev: {
+                    "*.html": "html-min"
                 }
+            },
+            tasks: {
+                js: "test/fixtures/tasks/observable.js"
             }
-        };
-        const gatheredTasks = resolve(['dev'], gatherTasks(input));
-        const beforeTasks   = resolve.resolveBeforeTasks(input, gatheredTasks);
-        assert.deepEqual(beforeTasks, ['js']);
+        });
+
+        assert.equal(runner.beforeTasks.valid.length, 1);
+        assert.equal(runner.beforeTasks.valid[0].taskName, 'js');
+        assert.equal(runner.beforeTasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
     });
     it('returns a single global + one from before task' , function () {
-        const input = {
+        const runner = cli.getWatcher(['dev'], {
             watch: {
                 before: ['js'],
-                tasks: {
-                    default: {
-                        "*.css": ["sass", "js"],
-                        "*.js":  ["js"]
-                    },
-                    dev: {
-                        before: ['css'],
-                        watchers: [
-                            {
-                                "*.html": "html-min"
-                            }
-                        ]
-                    }
+                default: {
+                    "*.css": ["sass", "js"],
+                    "*.js":  ["js"]
+                },
+                dev: {
+                    before: ['css'],
+                    watchers: [
+                        {
+                            "*.html": "html-min"
+                        }
+                    ]
                 }
+            },
+            tasks: {
+                js: "test/fixtures/tasks/observable.js",
+                css: "test/fixtures/tasks/stream.js"
             }
-        };
-        const gatheredTasks = resolve(['dev'], gatherTasks(input));
-        const beforeTasks   = resolve.resolveBeforeTasks(input, gatheredTasks);
-        assert.deepEqual(beforeTasks, ['css', 'js']);
+        });
+        assert.equal(runner.beforeTasks.valid.length, 2);
+        assert.equal(runner.beforeTasks.valid[0].taskName, 'js');
+        assert.equal(runner.beforeTasks.valid[1].taskName, 'css');
+    });
+    it('returns a single global + one from each before task (3 total)' , function () {
+        const runner = cli.getWatcher(['dev', 'default'], {
+            watch: {
+                before: ['js'],
+                default: {
+                    before: ['build'],
+                    "*.css": ["sass", "js"],
+                    "*.js":  ["js"]
+                },
+                dev: {
+                    before: ['css'],
+                    watchers: [
+                        {
+                            "*.html": "html-min"
+                        }
+                    ]
+                }
+            },
+            tasks: {
+                js: "test/fixtures/tasks/observable.js",
+                css: "test/fixtures/tasks/stream.js",
+                build: "test/fixtures/tasks/simple.js"
+            }
+        });
+        assert.equal(runner.beforeTasks.valid.length, 3);
+        assert.equal(runner.beforeTasks.valid[0].taskName, 'js');
+        assert.equal(runner.beforeTasks.valid[1].taskName, 'css');
+        assert.equal(runner.beforeTasks.valid[2].taskName, 'build');
     });
 });

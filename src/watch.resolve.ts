@@ -204,8 +204,9 @@ export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): 
 }
 export function resolveBeforeTasks (input:CrossbowInput, watchTasks: WatchTask[]): string[] {
 
-    return [...input.watch.before, ...watchTasks
-        .reduce((acc, item) => {
+    return [
+        ...input.watch.before,
+        ...watchTasks.reduce((acc, item) => {
             return acc.concat([].concat(item.before).filter(Boolean));
         }, [])
         .filter(Boolean)].filter(Boolean);

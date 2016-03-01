@@ -1,6 +1,5 @@
 const assert = require('chai').assert;
 const cli = require("../");
-const seqTypes = require('../dist/task.sequence.factories').SequenceItemTypes;
 
 describe('Gathering run tasks', function () {
     it('Accepts single string for on-disk file', function () {
