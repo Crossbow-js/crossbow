@@ -6,6 +6,7 @@ import {CrossbowInput, Meow} from './index';
 import {resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
 import {reportNoWatchTasksProvided} from "./reporters/defaultReporter";
+import {resolveTasks} from "./task.resolve";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -28,7 +29,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * First Resolve the task names given in input.
      */
-    const tasks = resolveWatchTasks(moddedCtx.cli.input, moddedCtx);
+    const watchTasks = resolveWatchTasks(moddedCtx.cli.input, moddedCtx);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -37,22 +38,39 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
-        return {tasks};
+        return {tasks: watchTasks};
     }
 
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
      * off
      */
-    if (tasks.invalid.length) {
-        reportWatchTaskErrors(tasks.all, cli, input);
+    if (watchTasks.invalid.length) {
+        reportWatchTaskErrors(watchTasks.all, cli, input);
         return;
     }
 
     debug(`Not handing off, will handle watching internally`);
 
     // todo: Validate before tasks
-    const beforeTasks = resolveBeforeTasks(moddedCtx.input, tasks.valid);
+    const beforeTasksAsCliInput = resolveBeforeTasks(moddedCtx.input, watchTasks.valid);
+
+    /**
+     * Now Resolve the before task names given in input.
+     */
+    const beforeTasks = resolveTasks(beforeTasksAsCliInput, moddedCtx);
+
+    /**
+     * Never continue if any tasks were flagged as invalid and we've not handed
+     * off
+     */
+    if (beforeTasks.invalid.length) {
+        // todo output error summary
+        reportTaskErrors(beforeTasks.all, beforeTasksAsCliInput, input, config);
+        return;
+    }
+
+
     // todo: Get task trees
     const taskTree    = [];
     // todo: Validate task tree

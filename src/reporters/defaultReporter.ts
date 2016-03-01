@@ -42,14 +42,14 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, input: Cros
     reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
 }
 
-export function reportTaskErrors (tasks: Task[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function reportTaskErrors (tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
     l('{red:-} So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
 
-    cli.input.slice(1).forEach(function (n, i) {
+    cliInput.forEach(function (n, i) {
         reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
 }

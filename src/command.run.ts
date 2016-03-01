@@ -64,7 +64,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (tasks.invalid.length) {
         // todo output error summary
-        reportTaskErrors(tasks.all, cli, input, config);
+        reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
         return;
     }
 

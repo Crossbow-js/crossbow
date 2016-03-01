@@ -9,6 +9,8 @@ import * as adaptors from "./adaptors";
 import {RunCommandTrigger} from "./command.run";
 import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
+import {WatchTrigger} from "./command.watch";
+import {CommandTrigger} from "./command.run";
 
 export enum TaskTypes {
     Runnable,
@@ -79,7 +81,7 @@ function createTask(obj: any) : Task {
 /**
  * Entry point for all tasks
  */
-function createFlattenedTask (taskName:string, parents:string[], trigger:RunCommandTrigger): Task {
+function createFlattenedTask (taskName:string, parents:string[], trigger:CommandTrigger): Task {
 
     /**
      * Remove any newlines on incoming task names
@@ -139,7 +141,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:RunComm
     }));
 }
 
-function resolveChildTasks (initialTasks: any[], taskName: string, parents: string[], trigger: RunCommandTrigger): Task[] {
+function resolveChildTasks (initialTasks: any[], taskName: string, parents: string[], trigger: CommandTrigger): Task[] {
 
     const subject = pullTaskFromInput(taskName, trigger.input);
 
@@ -239,7 +241,7 @@ function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWit
  * A task is valid if every child eventually resolves to
  * having a module or has a adaptors helper
  */
-function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
+function validateTask (task:Task, trigger:CommandTrigger):boolean {
     /**
      * Return early if a task has previously
      * been marked as invalid
@@ -293,7 +295,7 @@ function validateTask (task:Task, trigger:RunCommandTrigger):boolean {
     }
 }
 
-export function resolveTasks (taskNames:string[], trigger:RunCommandTrigger): Tasks {
+export function resolveTasks (taskNames:string[], trigger: CommandTrigger): Tasks {
     const taskList = taskNames
         /**
          * Now begin making the nested task tree

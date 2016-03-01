@@ -202,7 +202,7 @@ export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): 
 
     return output;
 }
-export function resolveBeforeTasks (input:CrossbowInput, watchTasks: WatchTask[]) {
+export function resolveBeforeTasks (input:CrossbowInput, watchTasks: WatchTask[]): string[] {
 
     return [...input.watch.before, ...watchTasks
         .reduce((acc, item) => {
