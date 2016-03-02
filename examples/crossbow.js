@@ -1,7 +1,7 @@
 module.exports = {
     watch: {
         default: {
-            before: ['some-tasks'],
+            before: ['js', 'css', 'some-tasks'],
             "test/fixtures/*.html": ['js']
         }
     },

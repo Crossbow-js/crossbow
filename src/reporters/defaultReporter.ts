@@ -59,8 +59,9 @@ export function reportBeforeWatchTaskErrors (tasks: Task[], cliInput: string[], 
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
     l('{red:-} So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
-
-    reportErrorsFromCliInput(cliInput, tasks, config);
+    cliInput.forEach(function (n, i) {
+        reportTaskTree([tasks[i]], config, `+ Before task: '${n}'`);
+    });
 }
 
 function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: CrossbowConfiguration): void {
