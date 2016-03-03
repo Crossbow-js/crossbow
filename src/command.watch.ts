@@ -77,8 +77,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
     if (beforeTasks.invalid.length) {
-        // todo output error summary
-        reporter.reportBeforeWatchTaskErrors(beforeTasks.all, beforeTasksAsCliInput, input, config);
+        reporter.reportBeforeWatchTaskErrors(watchTasks, ctx);
         return;
     }
 

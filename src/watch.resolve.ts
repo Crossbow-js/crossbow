@@ -39,6 +39,12 @@ export interface Watcher {
     watcherUID: any
 }
 
+export interface WatchTasks {
+    valid: WatchTask[]
+    invalid: WatchTask[],
+    all: WatchTask[]
+}
+
 /**
  * Create a single watch task item consisting of
  *  - patterns
@@ -170,12 +176,6 @@ function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): Wat
         watchers: watchers,
         errors:   errors
     }
-}
-
-export interface WatchTasks {
-    valid: WatchTask[]
-    invalid: WatchTask[],
-    all: WatchTask[]
 }
 
 function validateTask (task:WatchTask, trigger: WatchTrigger): boolean {

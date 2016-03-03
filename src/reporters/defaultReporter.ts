@@ -2,20 +2,24 @@ import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve";
-import * as cbErrors from "../task.errors";
 import {Meow, CrossbowInput} from "../index";
-import {SubtaskNotProvidedError} from "../task.errors";
 import {TaskOriginTypes, TaskTypes} from "../task.resolve";
-const baseUrl = 'http://crossbow-cli.io/docs/errors';
 import {relative} from 'path';
-import {FlagNotProvidedError} from "../task.errors";
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
-import {WatchTaskErrorTypes} from "../watch.errors";
-import {WatchTaskNameNotFoundError} from "../watch.errors";
-const l = logger.info;
+
+import * as taskErrors from "../task.errors";
+import * as watchErrors from "../watch.errors";
+
 import {compile, prefix} from '../logger';
-import {TaskErrorTypes} from "../task.errors";
+import {WatchTasks} from "../watch.resolve";
+import {Tasks} from "../task.resolve";
+import {resolveBeforeTasks} from "../watch.resolve";
+import {resolveTasks} from "../task.resolve";
+import {WatchTrigger} from "../command.watch";
+
+const l = logger.info;
+const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
 
 export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
@@ -53,14 +57,26 @@ export function reportTaskErrors (tasks: Task[], cliInput: string[], input: Cros
     reportErrorsFromCliInput(cliInput, tasks, config);
 }
 
-export function reportBeforeWatchTaskErrors (tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
+export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchTrigger ): void {
 
-    l('{gray.bold:------------------------------------------------}');
+    l('{gray.bold:--------------------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
-    l('{red:-} So none of them were run.');
-    l('{gray.bold:------------------------------------------------}');
-    cliInput.forEach(function (n, i) {
-        reportTaskTree([tasks[i]], config, `+ Before task: '${n}'`);
+    l('  So none of them were run, and no watchers have begun either.');
+    l('{gray.bold:--------------------------------------------------------------}');
+
+    watchTasks.all.forEach(function (wt) {
+        const cliInput = resolveBeforeTasks(ctx.input, [wt]);
+        const tasks = resolveTasks(cliInput, ctx);
+
+        if (ctx.config.summary === 'verbose') {
+            return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
+        }
+
+        if (tasks.invalid.length) {
+            reportTaskTree(tasks.invalid, ctx.config, `+ Tasks to run before: '${wt.name}'`)
+        } else {
+            reportTaskTree([], ctx.config, `+ Tasks to run before: '${wt.name}' (no errors)`)
+        }
     });
 }
 
@@ -173,7 +189,6 @@ export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
     const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
     logger.info(o.slice(26, -1));
-    logger.info('{gray:-~-~-~-~-~-~-~-~-~-~-}');
 
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task) => {
@@ -211,25 +226,25 @@ function getErrors (task) {
     if (!task.errors.length) {
         return [];
     }
-    if (task.errors[0].type === TaskErrorTypes.ModuleNotFound) {
+    if (task.errors[0].type === taskErrors.TaskErrorTypes.ModuleNotFound) {
         return [getSingleError(task.errors[0], task)];
     }
     return task.errors.map(error => getSingleError(error, task));
 }
 
 function getSingleError(error, task) {
-    const type = TaskErrorTypes[error.type];
+    const type = taskErrors.TaskErrorTypes[error.type];
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
-        ...errorHandlers[TaskErrorTypes[error.type]].call(null, task, error),
+        ...require('./error.' + [taskErrors.TaskErrorTypes[error.type]]).call(null, task, error),
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
 function getWatchError(error, task) {
-    const type = WatchTaskErrorTypes[error.type];
+    const type = watchErrors.WatchTaskErrorTypes[error.type];
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
-        ...errorHandlers[WatchTaskErrorTypes[error.type]].call(null, task, error),
+        ...require('./error.' + [taskErrors.TaskErrorTypes[error.type]]).call(null, task, error),
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
@@ -271,77 +286,3 @@ function getLabel (task) {
 
     return `${task.taskName}}`;
 }
-
-/**
- * @param task
- * @param errors
- * @param indent
- */
-function logMultipleErrors (task, errors, lookup, indent) {
-    errors.forEach(function (error) {
-        const errorType = lookup[error.type];
-        if (errorHandlers[errorType]) {
-            l("{red:-%s} {err: } {bold:Error Type}:  {underline:%s}", indent, errorType);
-            errorHandlers[errorType](task, error, indent + '-');
-            l("{red:-%s} {err: } {bold:Documentation}: {underline:%s/{bold.underline:%s}}", indent, baseUrl, errorType);
-        } else {
-            console.error('No reporter for error type', errorType);
-        }
-    });
-}
-
-const errorHandlers = {
-    AdaptorNotFound: function (task, error, indent) {
-        return [
-            compile(`{red:-} {bold:Description}: {cyan:'${task.adaptor}'} Not supported.`)
-        ];
-    },
-    ModuleNotFound: function (task: Task, error, indent) {
-        return [
-            compile(`{red:-} {bold:Description}: {cyan:'${task.taskName}'} was not found.`)
-        ];
-    },
-    SubtaskNotFound: function (task: Task, error: cbErrors.SubtaskNotFoundError) {
-        return [
-            compile(`{red:-} {bold:Description}: Configuration under the path {yellow:${task.taskName}} -> {yellow:${error.name}} was not found.`),
-            compile(`  This means {cyan:'${task.rawInput}'} is not a valid way to run a task.`)
-        ];
-    },
-    SubtaskNotProvided: function (task: Task, error: cbErrors.SubtaskNotProvidedError) {
-        return [
-            compile('{red:-} {bold:Description}: Colon used after task, but config key missing.'),
-            compile(`  When you provide a task name, followed by a {cyan::} (colon)`),
-            compile(`  Crossbow expects the next bit to have a key name that matches`),
-            compile(`  something in your config, eg: {cyan:${task.taskName}}:{yellow:dev}`),
-        ];
-    },
-    SubtasksNotInConfig: function (task: Task, error: cbErrors.SubtasksNotInConfigError) {
-        return [
-            compile(`{red:-} {bold:Description}: Configuration not provided for this task!`),
-            compile(`  Your tried to run {cyan:'${task.rawInput}'}, but it wont work because`),
-            compile(`  when you use the {cyan:<task>}:{yellow:<sub-task>} syntax, Crossbow looks in your`),
-            compile(`  configuration for a key that matches the {yellow:sub-task} name.`),
-            compile(`  In this case you would need {cyan:${task.taskName}.${error.name}}`)
-        ]
-    },
-    SubtaskWildcardNotAvailable: function (task: Task, error: cbErrors.SubtaskWildcardNotAvailableError) {
-        return [
-            compile('{red:-} {bold:Description}: Configuration not provided for this task!'),
-            compile(`  Because you dont have any configuration matching this task name`),
-            compile(`  it means you cannot use {cyan:${task.rawInput}} syntax`)
-        ];
-        //l("{red:%s} {err: } {bold:Description}: {cyan:'%s'} Configuration not provided for this task", indent, task.rawInput);
-    },
-    FlagNotProvided: function (task: Task, error: FlagNotProvidedError, indent) {
-        return [
-            compile(`{red:-} {bold:Description}: {cyan:'${task.rawInput}'} is missing a valid flag (such as {yellow:'p'})`),
-            compile(`  Should be something like: {cyan:'${task.taskName}@p'}`)
-        ]
-    },
-    WatchTaskNameNotFound: function (task: WatchTask, error: WatchTaskNameNotFoundError, indent) {
-        return [
-            compile(`{red:-} {bold:Description}: {cyan:'${task.name}'} Not found in your configuration`)
-        ];
-    }
-};
-

@@ -1,0 +1,246 @@
+[
+    {
+        "valid": true,
+        "rawInput": "js",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            },
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            },
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            }
+        ],
+        "parents": [],
+        "errors": [],
+        "runMode": "series",
+        "flags": [],
+        "query": {},
+        "baseTaskName": "js",
+        "taskName": "js",
+        "type": 2
+    },
+    {
+        "valid": true,
+        "rawInput": "css",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [
+            {
+                "valid": true,
+                "rawInput": "crossbow-sass",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/node_modules/crossbow-sass/index.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "css"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "crossbow-sass",
+                "taskName": "crossbow-sass",
+                "type": 0,
+                "origin": 1
+            }
+        ],
+        "parents": [],
+        "errors": [],
+        "runMode": "series",
+        "flags": [],
+        "query": {},
+        "baseTaskName": "css",
+        "taskName": "css",
+        "type": 2
+    },
+    {
+        "valid": true,
+        "rawInput": "js",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            },
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            },
+            {
+                "valid": true,
+                "rawInput": "test/fixtures/tasks/simple.js",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/simple.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "js"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "test/fixtures/tasks/simple.js",
+                "taskName": "test/fixtures/tasks/simple.js",
+                "type": 0,
+                "origin": 1
+            }
+        ],
+        "parents": [],
+        "errors": [],
+        "runMode": "series",
+        "flags": [],
+        "query": {},
+        "baseTaskName": "js",
+        "taskName": "js",
+        "type": 2
+    },
+    {
+        "valid": true,
+        "rawInput": "css",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [
+            {
+                "valid": true,
+                "rawInput": "crossbow-sass",
+                "subTasks": [],
+                "modules": [
+                    "/Users/shakyshane/crossbow/crossbow-cli/node_modules/crossbow-sass/index.js"
+                ],
+                "tasks": [],
+                "parents": [
+                    "css"
+                ],
+                "errors": [],
+                "runMode": "series",
+                "flags": [],
+                "query": {},
+                "baseTaskName": "crossbow-sass",
+                "taskName": "crossbow-sass",
+                "type": 0,
+                "origin": 1
+            }
+        ],
+        "parents": [],
+        "errors": [],
+        "runMode": "series",
+        "flags": [],
+        "query": {},
+        "baseTaskName": "css",
+        "taskName": "css",
+        "type": 2
+    },
+    {
+        "valid": false,
+        "rawInput": "some-fake-task",
+        "subTasks": [],
+        "modules": [],
+        "tasks": [],
+        "parents": [],
+        "errors": [
+            {
+                "type": 0,
+                "taskName": "some-fake-task"
+            }
+        ],
+        "runMode": "series",
+        "flags": [],
+        "query": {},
+        "baseTaskName": "some-fake-task",
+        "taskName": "some-fake-task",
+        "type": 2
+    }
+]

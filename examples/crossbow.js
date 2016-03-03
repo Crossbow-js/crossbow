@@ -1,7 +1,15 @@
 module.exports = {
     watch: {
         default: {
-            before: ['js', 'css', 'some-tasks'],
+            before: ['js', 'css', 'some-fake-task'],
+            "test/fixtures/*.html": ['js']
+        },
+        dev: {
+            before: ['js', 'css'],
+            "test/fixtures/*.html": ['js']
+        },
+        watcher: {
+            before: ['js:s'],
             "test/fixtures/*.html": ['js']
         }
     },
@@ -15,6 +23,9 @@ module.exports = {
         css: ['crossbow-sass']
     },
     config: {
+        css: {
+            name: "kittie"
+        },
         sass: {
             input:  'test/fixtures/scss/main.scss',
             output: 'test/fixtures/css/main.min.css',
