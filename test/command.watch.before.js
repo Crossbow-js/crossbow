@@ -33,11 +33,7 @@ describe('Resolving watch tasks to be run before watchers begin', function () {
                 },
                 dev: {
                     before: ['css'],
-                    watchers: [
-                        {
-                            "*.html": "html-min"
-                        }
-                    ]
+                    "*.html": "html-min"
                 }
             },
             tasks: {
@@ -60,11 +56,7 @@ describe('Resolving watch tasks to be run before watchers begin', function () {
                 },
                 dev: {
                     before: ['css'],
-                    watchers: [
-                        {
-                            "*.html": "html-min"
-                        }
-                    ]
+                    "*.html": "html-min"
                 }
             },
             tasks: {

@@ -1,6 +1,7 @@
 const assert      = require('chai').assert;
 const cli = require('../');
 const watchErrors = require('../dist/watch.errors').WatchTaskErrorTypes;
+const errors = require('../dist/task.errors').TaskErrorTypes;
 
 describe('Resolving watch task errors', function () {
     it('returns the error when the task is missing from the' , function () {
@@ -61,5 +62,19 @@ describe('Resolving watch task errors', function () {
             }
         });
         assert.equal(runner.beforeTasks.invalid.length, 2);
+    });
+    it('returns errors when tasks are invalid' , function () {
+        const runner = cli.getWatcher(["def"], {
+            watch: {
+                def: {
+                    "app/**": ["jss"]
+                }
+            },
+            tasks: {
+                js: 'test/fixtures/tasks/stream.js'
+            }
+        });
+        assert.equal(runner.runners.invalid[0]._tasks.invalid.length, 1);
+        assert.equal(runner.runners.invalid[0]._tasks.invalid[0].errors[0].type, errors.ModuleNotFound);
     });
 });

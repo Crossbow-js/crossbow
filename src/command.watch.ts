@@ -11,6 +11,8 @@ import {createRunner} from "./task.sequence";
 import {reportTaskErrors} from "./reporters/defaultReporter";
 import {reportWatchTaskTasksErrors} from "./reporters/defaultReporter";
 import {reportErrorsFromCliInput} from "./reporters/defaultReporter";
+import {WatchTasks} from "./watch.resolve";
+import {Watcher} from "./watch.resolve";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -18,6 +20,12 @@ const assign = require('object-assign');
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
+}
+
+export interface WatchRunners {
+    all: Watcher[]
+    valid: Watcher[]
+    invalid: Watcher[]
 }
 
 export interface UnwrappedTask {
@@ -58,21 +66,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
 
-    const runners = watchTasks.valid.reduce(function (acc, item) {
-        return acc.concat(item.watchers.map(function (watcher) {
-            const tasks    = resolveTasks(watcher.tasks, ctx);
-            const subject  = assign({}, watcher, {_tasks: tasks});
-            subject.parent = item.name;
-            if (tasks.invalid.length) {
-                return subject;
-            }
-            subject._sequence = createFlattenedSequence(tasks.valid, ctx);
-            subject._runner   = createRunner(subject._sequence, ctx);
-            return subject;
-        }));
-    }, []);
-
-    const hasTaskErrors = runners.reduce((acc, item) => acc + item._tasks.invalid.length, 0);
+    /**
+     * Create runners for watch tasks;
+     */
+    const runners = createRunners(watchTasks, ctx);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -81,7 +78,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
-        return {tasks: watchTasks, beforeTasks};
+        return {tasks: watchTasks, beforeTasks, runners};
     }
 
     debug(`Not handing off, will handle watching internally`);
@@ -102,12 +99,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-    if (hasTaskErrors) {
-        runners.forEach(runner => reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
+    if (runners.invalid.length) {
+        runners.all.forEach(runner => reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
         return;
     }
-
-    console.log('NO ERRORS HERE');
 
     // todo: Validate task tree
     // todo: Run before tasks
@@ -159,6 +154,41 @@ function getContext(ctx: WatchTrigger): WatchTrigger {
     moddedCtx.cli.input = unwrapped.map(x => x.name);
 
     return moddedCtx;
+}
+
+function createRunners (watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunners {
+
+    const runners = watchTasks.valid.reduce(function (acc, item) {
+
+        return acc.concat(item.watchers.map(function (watcher) {
+
+            const tasks    = resolveTasks(watcher.tasks, ctx);
+
+            const subject  = assign({}, watcher, {
+                _tasks: tasks,
+                parent: item.name
+            });
+
+            if (tasks.invalid.length) {
+                return subject;
+            }
+
+            subject._sequence = createFlattenedSequence(tasks.valid, ctx);
+            subject._runner   = createRunner(subject._sequence, ctx);
+
+            return subject;
+        }));
+    }, []);
+
+    return {
+        all: runners,
+        valid: runners.filter(x => validateRunner(x)),
+        invalid: runners.filter(x => !validateRunner(x)),
+    }
+}
+
+function validateRunner (x) {
+    return x._tasks.invalid.length === 0;
 }
 
 /**
