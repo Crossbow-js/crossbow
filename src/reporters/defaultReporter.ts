@@ -22,7 +22,7 @@ const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
 
-export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
+export function reportSummary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countErrors(sequence);
 
@@ -83,6 +83,10 @@ export function reportWatchTaskTasksErrors (tasks: Task[], cliInput: string[], r
             reportErrorsFromCliInput(cliInput, tasks, config);
         }
     }
+}
+
+export function reportNoFilesMatched (runner) {
+    l('{red:x warning} `{cyan:%s}` did not match any files', runner.patterns.join(' '));
 }
 
 export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchTrigger ): void {

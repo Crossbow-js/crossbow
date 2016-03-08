@@ -7,7 +7,7 @@ module.exports = {
         dev: {
             before: ['js', 'css'],
             "test/fixtures/*.html": ['js'],
-            "test/fixtures/*.css:anthier": ['js', 'css']
+            "test/fixtures/**/*.css": ['js', 'css']
         },
         watcher: {
             before: ['js:s'],
@@ -21,7 +21,7 @@ module.exports = {
             'test/fixtures/tasks/simple.js',
             'test/fixtures/tasks/simple.js'
         ],
-        css: ['crossbow-sass']
+        css: ['test/fixtures/tasks/observable.js']
     },
     config: {
         css: {

@@ -8,7 +8,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {createRunner, createFlattenedSequence} from './task.sequence';
-import {summary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
+import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
@@ -63,7 +63,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * off
      */
     if (tasks.invalid.length) {
-        // todo output error summary
         reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
         return;
     }
@@ -108,7 +107,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * The subscription to kick-start everything
      */
     runner$.subscribeOnCompleted(function () {
-        summary(sequence, cli, input, config, new Date().getTime() - timestamp);
+        reportSummary(sequence, cli, input, config, new Date().getTime() - timestamp);
     	// todo: reporter: handle completion here.
     })
 }

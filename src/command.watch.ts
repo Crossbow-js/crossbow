@@ -13,13 +13,26 @@ import {reportWatchTaskTasksErrors} from "./reporters/defaultReporter";
 import {reportErrorsFromCliInput} from "./reporters/defaultReporter";
 import {WatchTasks} from "./watch.resolve";
 import {Watcher} from "./watch.resolve";
+import {reportTaskList} from "./reporters/defaultReporter";
+import {reportSummary} from "./reporters/defaultReporter";
+import {reportNoFilesMatched} from "./reporters/defaultReporter";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
+const Rx = require('rx');
 const assign = require('object-assign');
+const chokidar = require('chokidar');
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
+}
+
+export interface WatchEvent {
+    event:      string
+    path:       string
+    runner:     Watcher
+    watcherUID: string
+    duration?:  number
 }
 
 export interface WatchRunners {
@@ -99,17 +112,98 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
+    /**
+     * Never continue if any runners are invalid
+     */
     if (runners.invalid.length) {
         runners.all.forEach(runner => reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
         return;
     }
 
-    // todo: Validate task tree
-    // todo: Run before tasks
-    //const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
-    //const beforeRunner   = createRunner(beforeSequence, ctx);
+    const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
+    const beforeRunner   = createRunner(beforeSequence, ctx);
+    /**
+     * Report task list that's about to run
+     */
+    reportTaskList(beforeSequence, cli, input, config);
+    const before$ = beforeRunner.series().share();
+
+    /**
+     * A generic timestamp to mark the beginning of the tasks
+     * @type {number}
+     */
+    const timestamp = new Date().getTime();
+
+    before$.subscribeOnError(x => {
+        console.log('ERRROR');
+    });
+
+    before$.subscribeOnCompleted(_ => {
+
+        reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
+
+        runWatchers(runners.valid, ctx)
+            .subscribe((watchEvent: WatchEvent) => {
+                reportSummary(watchEvent.runner._sequence, cli, input, config, watchEvent.duration);
+            });
+    });
 
     // todo: start watchers
+}
+
+function runWatchers (runners, ctx) {
+
+    const watchersAsObservables$ = getWatcherObservables(runners, ctx);
+    return Rx.Observable
+        .merge(watchersAsObservables$)
+        .flatMap((watchEvent: WatchEvent) => {
+            return Rx.Observable.create(obs => {
+
+                const timestamp = new Date().getTime();
+
+                watchEvent.runner._runner
+                    .series()
+                    .subscribe(x => {
+
+                    }, e => {
+                        //console.log('ERROR', e);
+                    }, _ => {
+                        //console.log('done', watchEvent.tasks);
+                        watchEvent.duration = new Date().getTime() - timestamp;
+                        obs.onNext(watchEvent);
+                        obs.onCompleted();
+                    });
+            });
+        });
+}
+
+function getWatcherObservables (runners, ctx) {
+    return runners.map(runner => {
+        return Rx.Observable.create(obs => {
+            debug(`+ [id:${runner.watcherUID}] ${runner.patterns.length} patterns (${runner.patterns})`);
+            debug(` - ${runner.tasks.length} tasks (${runner.tasks})`);
+            const watcher = chokidar.watch(runner.patterns, runner.options)
+                .on('all', function (event, path) {
+                    obs.onNext(<WatchEvent>{
+                        event:      event,
+                        path:       path,
+                        runner:     runner,
+                        watcherUID: runner.watcherUID,
+                        duration: 0
+                    });
+                });
+            watcher.on('ready', () => {
+                debug(`√ [id:${runner.watcherUID}] watcher ready (${runner.patterns})`);
+                if (Object.keys(watcher.getWatched()).length === 0) {
+                    reportNoFilesMatched(runner);
+                }
+            });
+            return () => {
+                debug(`- for ${runner.patterns}`);
+                watcher.close();
+            }
+        });
+    })
 }
 
 function getContext(ctx: WatchTrigger): WatchTrigger {

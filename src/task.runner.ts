@@ -19,8 +19,12 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             observer.done = function () {
                 observer.onCompleted();
             };
-            item.startTime = new Date().getTime();
+
             process.nextTick(function () {
+
+                item.startTime = new Date().getTime();
+                item.duration  = 0;
+                item.completed = false;
 
                 var output;
 
