@@ -61,7 +61,28 @@ export function reportTaskErrors (tasks: Task[], cliInput: string[], input: Cros
     l('{gray.bold:------------------------------------------------}');
 
     reportErrorsFromCliInput(cliInput, tasks, config);
+}
 
+export function reportWatchTaskTasksErrors (tasks: Task[], cliInput: string[], runner: Watcher, config: CrossbowConfiguration) {
+
+    if (runner._tasks.invalid.length) {
+        l('{gray.bold:---------------------------------------------------}');
+        l(`{err: } Sorry, there were errors when resolving the tasks`);
+        l(`  that will be used in the following watcher`);
+        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
+        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
+        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
+        reportErrorsFromCliInput(cliInput, tasks, config);
+    } else {
+        l('{gray.bold:---------------------------------------------------}');
+        l(`{ok: } No errors from`);
+        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
+        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
+        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
+        if (config.summary === 'verbose') {
+            reportErrorsFromCliInput(cliInput, tasks, config);
+        }
+    }
 }
 
 export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchTrigger ): void {
@@ -87,7 +108,7 @@ export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchT
     });
 }
 
-function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: CrossbowConfiguration): void {
+export function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: CrossbowConfiguration): void {
     cliInput.forEach(function (n, i) {
         reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });

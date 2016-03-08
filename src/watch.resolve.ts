@@ -8,9 +8,11 @@ var watcherUID = 1;
 import {WatchOptions} from "chokidar";
 import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
-import {gatherWatchTaskErrors} from "./watch.errors";
-import {WatchTaskError, WatchTaskErrorTypes} from "./watch.errors";
+import {WatchTaskError, WatchTaskErrorTypes, gatherWatchTaskErrors} from "./watch.errors";
 import {CrossbowInput} from "./index";
+import {Tasks} from "./task.resolve";
+import {SequenceItem} from "./task.sequence.factories";
+import {Runner} from "./runner";
 
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
@@ -37,6 +39,10 @@ export interface Watcher {
     tasks: string[]
     options: any
     watcherUID: any
+    _tasks?: Tasks
+    _sequence?: SequenceItem[]
+    _runner?: Runner
+    parent?: string
 }
 
 export interface WatchTasks {

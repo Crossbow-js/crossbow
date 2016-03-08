@@ -3,7 +3,7 @@ const Rx = require('rx');
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
-import {RunCommandTrigger} from './command.run';
+import {RunCommandTrigger, CommandTrigger} from './command.run';
 const debug = require('debug')('cb:task.runner');
 import logger from './logger';
 import handleReturn from './task.return.values';
@@ -14,7 +14,7 @@ export interface TaskRunner {
     runner: Runner
 }
 
-export function createObservableFromSequenceItem(item: SequenceItem, trigger: RunCommandTrigger) {
+export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
     return Rx.Observable.create(observer => {
             observer.done = function () {
                 observer.onCompleted();

@@ -6,9 +6,15 @@ import {resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 import {WatchTaskRunner} from "./watch.runner";
 import {resolveTasks} from "./task.resolve";
 import * as reporter from './reporters/defaultReporter';
+import {createFlattenedSequence} from "./task.sequence";
+import {createRunner} from "./task.sequence";
+import {reportTaskErrors} from "./reporters/defaultReporter";
+import {reportWatchTaskTasksErrors} from "./reporters/defaultReporter";
+import {reportErrorsFromCliInput} from "./reporters/defaultReporter";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
+const assign = require('object-assign');
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
@@ -52,6 +58,22 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
 
+    const runners = watchTasks.valid.reduce(function (acc, item) {
+        return acc.concat(item.watchers.map(function (watcher) {
+            const tasks    = resolveTasks(watcher.tasks, ctx);
+            const subject  = assign({}, watcher, {_tasks: tasks});
+            subject.parent = item.name;
+            if (tasks.invalid.length) {
+                return subject;
+            }
+            subject._sequence = createFlattenedSequence(tasks.valid, ctx);
+            subject._runner   = createRunner(subject._sequence, ctx);
+            return subject;
+        }));
+    }, []);
+
+    const hasTaskErrors = runners.reduce((acc, item) => acc + item._tasks.invalid.length, 0);
+
     /**
      * Check if the user intends to handle running the tasks themselves,
      * if that's the case we give them the resolved tasks along with
@@ -72,7 +94,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
@@ -81,9 +102,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-    // todo: Get task trees
-    const taskTree    = [];
+    if (hasTaskErrors) {
+        runners.forEach(runner => reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
+        return;
+    }
+
+    console.log('NO ERRORS HERE');
+
     // todo: Validate task tree
+    // todo: Run before tasks
+    //const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
+    //const beforeRunner   = createRunner(beforeSequence, ctx);
+
+    // todo: start watchers
 }
 
 function getContext(ctx: WatchTrigger): WatchTrigger {

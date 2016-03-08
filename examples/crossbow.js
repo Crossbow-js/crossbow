@@ -6,7 +6,8 @@ module.exports = {
         },
         dev: {
             before: ['js', 'css'],
-            "test/fixtures/*.html": ['js']
+            "test/fixtures/*.html": ['js'],
+            "test/fixtures/*.css:anthier": ['js', 'css']
         },
         watcher: {
             before: ['js:s'],

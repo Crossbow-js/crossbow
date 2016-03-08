@@ -7,7 +7,7 @@ const Observable = Rx.Observable;
 import {transformStrings} from "./task.utils";
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
-import {RunCommandTrigger} from "./command.run";
+import {RunCommandTrigger, CommandTrigger} from "./command.run";
 import {Runner} from "./runner";
 import handleReturn from './task.return.values';
 import {
@@ -21,7 +21,7 @@ import {
 
 import {createObservableFromSequenceItem} from "./task.runner";
 
-export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigger): SequenceItem[] {
+export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
     return flatten(tasks, []);
 
     function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
@@ -156,7 +156,7 @@ export function createFlattenedSequence (tasks: Task[], trigger: RunCommandTrigg
     }
 }
 
-function getSequenceItemWithConfig (task: Task, trigger: RunCommandTrigger, imported: TaskFactory, config): SequenceItem[] {
+function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -198,7 +198,7 @@ function getFunctionName (fn: TaskFactory, count = 0) {
     }
     return fn.name;
 }
-export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger): Runner  {
+export function createRunner (items: SequenceItem[], trigger: CommandTrigger): Runner  {
 
     const flattened = flatten(items, []);
 
@@ -244,6 +244,6 @@ export function createRunner (items: SequenceItem[], trigger: RunCommandTrigger)
     }
 }
 
-function loadTopLevelConfig(task: Task, trigger: RunCommandTrigger): any {
+function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
     return objPath.get(trigger.input.config, [task.taskName], {});
 }
