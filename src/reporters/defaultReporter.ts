@@ -24,12 +24,18 @@ const archy = require('archy');
 
 export function summary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
-    if (config.summary === 'verbose') {
+    const errorCount = countErrors(sequence);
+
+    if (config.summary === 'verbose' || errorCount > 0) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        reportSequenceTree(sequence, config, `+ Results from {bold:${cliInput}}`, true);
+        reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
     }
 
-    l('{ok: } Total: {yellow:%sms}', runtime);
+    if (errorCount > 0) {
+        l('{red:x} Total: {yellow:%sms}', runtime);
+    } else {
+        l('{ok: } Total: {yellow:%sms}', runtime);
+    }
 }
 
 /**
@@ -51,10 +57,11 @@ export function reportTaskErrors (tasks: Task[], cliInput: string[], input: Cros
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
-    l('{red:-} So none of them were run.');
+    l('  So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
 
     reportErrorsFromCliInput(cliInput, tasks, config);
+
 }
 
 export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchTrigger ): void {
@@ -103,10 +110,10 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
     tasks.forEach(function (task: WatchTask) {
         if (task.errors.length) {
             const o = archy({
-                label:`{yellow:+ input: '${task.name}}'`, nodes:[
+                label:`{yellow:+ input: '${task.name}'}`, nodes:[
                     {
                         label: [
-                            `{red.bold:[${task.name}]}`,
+                            `{red.bold:x [${task.name}]}`,
                             getWatchError(task.errors[0], task)
                         ].join('\n')
                     }
@@ -145,13 +152,17 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     const toLog = getTasks(sequence, []);
     const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
-    logger.info(o.slice(26));
+    logger.info(o.slice(26, -1));
 
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task: SequenceItem) => {
             let label = getSequenceLabel(task);
             if (showTimes && task.duration !== undefined) {
-                label = `{green:✔} ` + label + ` {yellow:(${task.duration}ms)}`;
+                if (task.errored) {
+                    label = `{red:x} ${label} {yellow:(${task.duration}ms)}`;
+                } else {
+                    label = `{green:✔} ` + label + ` {yellow:(${task.duration}ms)}`;
+                }
             }
             let nodes = getTasks(task.items, []);
             return acc.concat({
@@ -233,18 +244,17 @@ function getErrors (task) {
 }
 
 function getSingleError(error, task) {
-    const type = taskErrors.TaskErrorTypes[error.type];
-    return [
-        compile(`{red:-} {bold:Error Type:}  ${type}`),
-        ...require('./error.' + [taskErrors.TaskErrorTypes[error.type]]).call(null, task, error),
-        compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
-    ].join('\n');
+    return getExternalError(taskErrors.TaskErrorTypes[error.type], error, task);
 }
+
 function getWatchError(error, task) {
-    const type = watchErrors.WatchTaskErrorTypes[error.type];
+    return getExternalError(watchErrors.WatchTaskErrorTypes[error.type], error, task);
+}
+
+function getExternalError (type, error, task) {
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
-        ...require('./error.' + [taskErrors.TaskErrorTypes[error.type]]).call(null, task, error),
+        ...require('./error.' + type).apply(null, [task, error]),
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
@@ -285,4 +295,18 @@ function getLabel (task) {
     }
 
     return `${task.taskName}}`;
+}
+
+function countErrors (items) {
+
+    return items.reduce((acc, item) => {
+        if (item.type === SequenceItemTypes.Task) {
+            if (item.errored) {
+                return acc + 1;
+            } else {
+                return acc;
+            }
+        }
+        return countErrors(item.items);
+    }, 0);
 }
