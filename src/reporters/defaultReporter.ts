@@ -17,6 +17,7 @@ import {Tasks} from "../task.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {WatchTrigger} from "../command.watch";
+import {CommandTrigger} from "../command.run";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -51,6 +52,20 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, input: Cros
     const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
 
     reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
+}
+/**
+ * Log the task list
+ */
+export function reportTaskList2 (sequence: SequenceItem[], cliInput: string[], ctx: CommandTrigger) {
+
+    if (ctx.config.summary !== 'verbose') {
+        l('{yellow:+} {bold:%s}', cliInput.join(', '));
+        return;
+    }
+
+    const cliInputOutput = cliInput.slice(1).map(x => `'${x}'`).join(' ');
+
+    reportSequenceTree(sequence, ctx.config, `+ Task Tree for ${cliInputOutput}`);
 }
 
 export function reportTaskErrors (tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {

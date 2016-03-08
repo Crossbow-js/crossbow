@@ -16,6 +16,7 @@ import {Watcher} from "./watch.resolve";
 import {reportTaskList} from "./reporters/defaultReporter";
 import {reportSummary} from "./reporters/defaultReporter";
 import {reportNoFilesMatched} from "./reporters/defaultReporter";
+import {reportTaskList2} from "./reporters/defaultReporter";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -143,38 +144,52 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
 
         runWatchers(runners.valid, ctx)
-            .subscribe((watchEvent: WatchEvent) => {
-                reportSummary(watchEvent.runner._sequence, cli, input, config, watchEvent.duration);
+            .subscribe((msg) => {
+                if (msg.type === 'begin') {
+                    reportTaskList2(msg.watchEvent.runner._sequence, msg.watchEvent.runner.tasks, ctx);
+                }
+                if (msg.type === 'end') {
+                    reportSummary(msg.watchEvent.runner._sequence, cli, input, config, msg.watchEvent.duration);
+                }
             });
     });
-
-    // todo: start watchers
 }
 
 function runWatchers (runners, ctx) {
-
     const watchersAsObservables$ = getWatcherObservables(runners, ctx);
     return Rx.Observable
         .merge(watchersAsObservables$)
+        .debounce(200)
         .flatMap((watchEvent: WatchEvent) => {
-            return Rx.Observable.create(obs => {
-
-                const timestamp = new Date().getTime();
-
-                watchEvent.runner._runner
-                    .series()
-                    .subscribe(x => {
-
-                    }, e => {
-                        //console.log('ERROR', e);
-                    }, _ => {
-                        //console.log('done', watchEvent.tasks);
-                        watchEvent.duration = new Date().getTime() - timestamp;
-                        obs.onNext(watchEvent);
-                        obs.onCompleted();
-                    });
-            });
+            return createWatchRunner(watchEvent, ctx);
         });
+}
+
+function createWatchRunner (watchEvent: WatchEvent, ctx: CommandTrigger) {
+    return Rx.Observable.create(obs => {
+        const timestamp = new Date().getTime();
+        obs.onNext({type: 'begin', watchEvent});
+        watchEvent.runner._runner
+            .series()
+            .subscribe(x => {
+
+            }, e => {
+                if (e._cbStack) {
+                    console.log(e._cbStack);
+                } else {
+                    if (e.stack) {
+                        console.log(e.stack);
+                    } else {
+                        console.log(e);
+                    }
+                }
+            }, _ => {
+                //console.log('done', watchEvent.tasks);
+                watchEvent.duration = new Date().getTime() - timestamp;
+                obs.onNext({type: 'end', watchEvent});
+                obs.onCompleted();
+            });
+    });
 }
 
 function getWatcherObservables (runners, ctx) {
