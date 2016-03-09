@@ -42,17 +42,16 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
 /**
  * Log the task list
  */
-export function reportTaskList (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix = '', config: CrossbowConfiguration) {
 
-    if (config.summary !== 'verbose') {
-        l('{yellow:+} {bold:%s}', cli.input.slice(1).join(', '));
-        return;
+    if (config.summary === 'verbose') {
+        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+        reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
+    } else {
+        l('{yellow:+} %s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
     }
-
-    const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-
-    reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
 }
+
 /**
  * Log the task list
  */

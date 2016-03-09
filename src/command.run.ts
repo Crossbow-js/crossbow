@@ -72,7 +72,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Report task list that's about to run
      */
-    reportTaskList(sequence, cli, input, config);
+    reportTaskList(sequence, cli, '', config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks

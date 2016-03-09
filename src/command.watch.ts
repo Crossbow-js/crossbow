@@ -2,21 +2,14 @@
 import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
-import {resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
-import {WatchTaskRunner} from "./watch.runner";
 import {resolveTasks} from "./task.resolve";
+
+import {createFlattenedSequence, createRunner} from "./task.sequence";
+
+import {WatchTaskRunner} from "./watch.runner";
+import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
+
 import * as reporter from './reporters/defaultReporter';
-import {createFlattenedSequence} from "./task.sequence";
-import {createRunner} from "./task.sequence";
-import {reportTaskErrors} from "./reporters/defaultReporter";
-import {reportWatchTaskTasksErrors} from "./reporters/defaultReporter";
-import {reportErrorsFromCliInput} from "./reporters/defaultReporter";
-import {WatchTasks} from "./watch.resolve";
-import {Watcher} from "./watch.resolve";
-import {reportTaskList} from "./reporters/defaultReporter";
-import {reportSummary} from "./reporters/defaultReporter";
-import {reportNoFilesMatched} from "./reporters/defaultReporter";
-import {reportTaskList2} from "./reporters/defaultReporter";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -117,7 +110,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * Never continue if any runners are invalid
      */
     if (runners.invalid.length) {
-        runners.all.forEach(runner => reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
+        runners.all.forEach(runner => reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
         return;
     }
 
@@ -126,7 +119,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Report task list that's about to run
      */
-    reportTaskList(beforeSequence, cli, input, config);
+    reporter.reportTaskList(beforeSequence, cli, 'Before tasks for watcher:', config);
     const before$ = beforeRunner.series().share();
 
     /**
@@ -139,23 +132,23 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         console.log('ERRROR');
     });
 
-    before$.subscribeOnCompleted(_ => {
+    before$.subscribeOnCompleted(function () {
 
-        reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
+        reporter.reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
 
         runWatchers(runners.valid, ctx)
             .subscribe((msg) => {
                 if (msg.type === 'begin') {
-                    reportTaskList2(msg.watchEvent.runner._sequence, msg.watchEvent.runner.tasks, ctx);
+                    reporter.reportTaskList2(msg.watchEvent.runner._sequence, msg.watchEvent.runner.tasks, ctx);
                 }
                 if (msg.type === 'end') {
-                    reportSummary(msg.watchEvent.runner._sequence, cli, input, config, msg.watchEvent.duration);
+                    reporter.reportSummary(msg.watchEvent.runner._sequence, cli, input, config, msg.watchEvent.duration);
                 }
             });
     });
 }
 
-function runWatchers (runners, ctx) {
+function runWatchers (runners, ctx): any {
     const watchersAsObservables$ = getWatcherObservables(runners, ctx);
     return Rx.Observable
         .merge(watchersAsObservables$)
@@ -210,7 +203,7 @@ function getWatcherObservables (runners, ctx) {
             watcher.on('ready', () => {
                 debug(`√ [id:${runner.watcherUID}] watcher ready (${runner.patterns})`);
                 if (Object.keys(watcher.getWatched()).length === 0) {
-                    reportNoFilesMatched(runner);
+                    reporter.reportNoFilesMatched(runner);
                 }
             });
             return () => {
