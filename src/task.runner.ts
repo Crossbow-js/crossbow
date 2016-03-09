@@ -25,6 +25,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 item.startTime = new Date().getTime();
                 item.duration  = 0;
                 item.completed = false;
+                item.errored   = false;
 
                 var output;
 
