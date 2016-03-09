@@ -10,6 +10,7 @@ import {WatchTaskRunner} from "./watch.runner";
 import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 
 import * as reporter from './reporters/defaultReporter';
+import {Runner} from "./runner";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -135,6 +136,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     before$.subscribeOnCompleted(function () {
 
         reporter.reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
+        reporter.reportWatchers(watchTasks.valid, config);
 
         runWatchers(runners.valid, ctx)
             .subscribe((msg) => {

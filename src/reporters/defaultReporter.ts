@@ -52,6 +52,23 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix
     }
 }
 
+export function reportWatchers (watchTasks: WatchTask[], config: CrossbowConfiguration) {
+    l(`Starting the follwing watchers:`);
+    watchTasks.forEach(function (watchTask) {
+        const o = archy({
+            label:`{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
+        }, prefix);
+        logger.info(o.slice(26, -1));
+    });
+}
+
+export function getWatcherNode (watcher: Watcher) {
+    return [
+        `{bold:Patterns:} {cyan:${watcher.patterns.join(', ')}}`,
+        `{bold:Tasks:} {cyan:${watcher.tasks.join(', ')}}`,
+    ].join('\n');
+}
+
 /**
  * Log the task list
  */
