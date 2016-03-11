@@ -233,7 +233,11 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
 function getSequenceLabel (item: SequenceItem) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
-            return `${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
+            if (item.fnName) {
+                return `${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
+            } else {
+                return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
+            }
         }
         if (item.fnName) {
             return `${item.task.taskName} (fn: {bold:${item.fnName}})`;
