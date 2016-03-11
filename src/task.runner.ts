@@ -5,6 +5,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {RunCommandTrigger, CommandTrigger} from './command.run';
 const debug = require('debug')('cb:task.runner');
+const assign = require('object-assign');
 import logger from './logger';
 import handleReturn from './task.return.values';
 
@@ -14,18 +15,72 @@ export interface TaskRunner {
     runner: Runner
 }
 
+export interface TaskStats {
+    startTime: number
+    endTime: number
+    duration: number
+    completed: boolean
+    errored: boolean
+    item: SequenceItem
+    taskUID: number
+}
+
+export interface TaskReport {
+    stats: TaskStats
+    type: string
+}
+
+var taskUID = 0;
+
+/**
+ * This creates a wrapper around the actual function that will be run.
+ * This done to allow the before/after reporting to work as expected for consumers
+ */
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
+
+    return Rx.Observable.create(outerObserver => {
+
+        const stats = <TaskStats>{
+            startTime: new Date().getTime(),
+            endTime: 0,
+            duration: 0,
+            completed: false,
+            errored: false,
+            item: item,
+            taskUID: taskUID++
+        };
+
+        outerObserver.onNext(<TaskReport>{type: 'start', stats: stats});
+
+        getInnerTaskRunnerAsObservable(item, trigger)
+            .subscribe(function () {
+                // todo: What to do with tasks that produce vales through given observer.onNext()?
+            }, err => {
+                outerObserver.onError(err);
+            }, _ => {
+                outerObserver.onNext(<TaskReport>{type: 'end', stats: getEndStats(stats)});
+                outerObserver.onCompleted();
+            })
+    });
+}
+
+function getEndStats(stats: TaskStats) {
+    const now = new Date().getTime();
+    return assign({}, stats, {
+        endTime: now,
+        duration: now - stats.startTime,
+        completed: true
+    })
+}
+
+function getInnerTaskRunnerAsObservable (item, trigger) {
     return Rx.Observable.create(observer => {
+
             observer.done = function () {
                 observer.onCompleted();
             };
 
             process.nextTick(function () {
-
-                item.startTime = new Date().getTime();
-                item.duration  = 0;
-                item.completed = false;
-                item.errored   = false;
 
                 var output;
 
@@ -58,16 +113,10 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                  */
 
             });
-
-            return () => {
-                item.endTime   = new Date().getTime();
-                item.duration  = item.endTime - item.startTime;
-                item.completed = true;
-            }
         })
         .catch(function (e) {
             item.errored = true;
-            const msg = ('The following error is from the task'  +  item.task.taskName).length;
+            const msg = ('The following error is from the task' + item.task.taskName).length;
             const lineLength = new Array(msg).join('-');
             logger.info('{gray: ----' + lineLength);
             logger.info('{err: } The following error is from the task', item.task.taskName);

@@ -7,6 +7,7 @@ import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
+import {TaskReport} from "./task.runner";
 import {createRunner, createFlattenedSequence} from './task.sequence';
 import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
@@ -104,12 +105,48 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         }).share();
 
     /**
-     * The subscription to kick-start everything
+     * Here, we start the tasks
      */
-    runner$.subscribeOnCompleted(function () {
-        reportSummary(sequence, cli, input, config, new Date().getTime() - timestamp);
-    	// todo: reporter: handle completion here.
-    })
+    runner$
+        /**
+         * This is the opportunity to capture every single event
+         * that could possibly come from a task:
+         *   eg: start, end, log, file etc etc etc
+         */
+        .do((tr: TaskReport) => {
+            console.log('event', tr.type, 'TASK UID', tr.stats.taskUID)
+        })
+        /**
+         * but now, we only care about task events that single a task has ended
+         */
+        .where((tr: TaskReport) => tr.type === 'end')
+        /**
+         * ... and then we aggregate of those together into an array. This is done
+         * to allow the 'onNext' callback to instead be used as a completion handler,
+         * with the added benefit being that we'll receive all events as as an array
+         * without having to use any external array and pushing items into it.
+         */
+        .toArray()
+        /**
+         * Now we subscribe, which starts the task sequence
+         * Because we used toArray() above, the subscribe method
+         * below will only ever receive a single event - which
+         * is ok because we've had the opportunity above to do
+         * things such as logging etc
+         */
+        .subscribe((trs: TaskReport[]) => {
+            console.log(trs);
+        }, (err) => {
+            console.log('err');
+        }); // completion callback not needed - if the onNext callback fires, everything completed
+
+    ///**
+    // * The subscription to kick-start everything
+    // */
+    //runner$.subscribeOnCompleted(function () {
+    //    reportSummary(sequence, cli, input, config, new Date().getTime() - timestamp);
+    //	// todo: reporter: handle completion here.
+    //})
 }
 
 export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
