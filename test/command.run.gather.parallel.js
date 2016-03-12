@@ -87,20 +87,16 @@ describe('Gathering run tasks, grouped by runMode', function () {
 
         const stream$  = runner.runner.series().share();
         const messages = [];
-        const now = new Date().getTime();
-        stream$.subscribeOnNext(function (val) {
-        	messages.push(val);
-        });
-        stream$.subscribeOnCompleted(function () {
-            assert.deepEqual(messages, [
-                'simple multi 1',
-                'simple multi 2',
-                'simple multi 1',
-                'simple multi 2',
-                'simple 1',
-                'simple 1' ]);
+        const now      = new Date().getTime();
+
+        stream$.subscribe(x => {
+            messages.push(x);
+        }, e => {
+            done(e);
+        }, _ => {
+            assert.equal(messages.length, 12);
             assert.ok(new Date().getTime() - now > 60, '6 tasks at 10ms each should take longer than 60ms');
-        	done();
+            done();
         });
     });
     it('can run in parallel', function (done) {
@@ -129,7 +125,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             messages.push(val);
         });
         stream$.subscribeOnCompleted(function () {
-            assert.equal(messages.length, 6);
+            assert.equal(messages.length, 12);
             done();
         });
     });
