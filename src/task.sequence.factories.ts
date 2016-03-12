@@ -6,6 +6,7 @@ import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
 import Seq = Immutable.Seq;
+import {TaskStats} from "./task.runner";
 
 export enum SequenceItemTypes {
     SeriesGroup,
@@ -19,14 +20,11 @@ export interface SequenceItem {
     task?: Task
     items: SequenceItem[]
     factory?: (obs: any, opts: any, ctx: RunCommandTrigger) => any
-    startTime?: number
-    endTime?: number
-    duration?: number
-    completed?: boolean
     fnName?: string
     config?: any
     subTaskName?: string
-    errored?: boolean
+    stats?: TaskStats
+    seqUID: number
 }
 
 export interface SequenceSeriesGroup {
@@ -48,9 +46,9 @@ export interface TaskFactory {
     tasks?: TaskFactory[]
     name?: string
 }
-
+var seqUID = 0;
 export function createSequenceTaskItem(incoming: SequenceTask): SequenceItem {
-    return assign({type: SequenceItemTypes.Task, items: []}, incoming);
+    return assign({type: SequenceItemTypes.Task, items: [], seqUID: seqUID++}, incoming);
 }
 
 export function createSequenceSeriesGroup(incoming: SequenceSeriesGroup): SequenceItem {

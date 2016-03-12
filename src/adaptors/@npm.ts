@@ -21,7 +21,7 @@ if (process.platform === 'win32') {
 export interface CommandOptions {
     cwd: string,
     env: any,
-    stdio: number[]
+    stdio: any
 }
 
 interface CrossbowSpawnError extends Error {
@@ -98,13 +98,18 @@ export default function (task: Task, trigger: RunCommandTrigger) {
 
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const env = getEnv(process.env, trigger.config);
+        const stdio = trigger.config.suppressOutput
+            ? ['pipe', 'pipe', 'pipe']
+            : 'inherit';
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
+
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,
             env: env,
-            stdio: [0, 1, 2]
+            stdio: stdio // [process.stdin, process.stdout, process.stderr]
+            //stdio: [0, 1, 2] // [process.stdin, process.stdout, process.stderr]
         });
 
         emitter.on('close', function (code) {

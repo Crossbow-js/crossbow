@@ -8,7 +8,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {TaskReport} from "./task.runner";
-import {createRunner, createFlattenedSequence} from './task.sequence';
+import {createRunner, createFlattenedSequence, decorateCompletedSequenceItems} from './task.sequence';
 import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
@@ -135,7 +135,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          * things such as logging etc
          */
         .subscribe((trs: TaskReport[]) => {
-            console.log(trs);
+            //require('fs').writeFileSync('out.json', JSON.stringify(trs, null, 4));
+            //console.log('Completed %s individual tasks', trs.length);
+            //console.log(sequence);
+            const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
         }, (err) => {
             console.log('err');
         }); // completion callback not needed - if the onNext callback fires, everything completed

@@ -12,8 +12,9 @@ export interface CrossbowConfiguration {
     stack: boolean
     reporter: string
     handoff: boolean
-    config: string|void,
+    config: string|void
     interactive: boolean
+    suppressOutput: boolean
 }
 
 /**
@@ -56,6 +57,10 @@ const defaults = <CrossbowConfiguration>{
      */
     reporter: 'default',
     /**
+     *
+     */
+    suppressOutput: false,
+    /**
      * should the resolved workload be handed off
      * to the caller?
      */
@@ -80,18 +85,6 @@ const flagTransforms = {
         return assign({}, opts, {runMode: 'parallel'});
     },
     /**
-     * -s sets Strict Mode
-     */
-    s: (opts) => {
-        return assign({}, opts, {strict: true});
-    },
-    /**
-     * -e sets exitOnError => true
-     */
-    e: (opts) => {
-        return assign({}, opts, {exitOnError: opts.e});
-    },
-    /**
      * -c specifies a config file
      */
     c: (opts) => {
@@ -105,12 +98,6 @@ const flagTransforms = {
      */
     v: (opts) => {
         return assign({}, opts, {summary: 'verbose'});
-    },
-    /**
-     * -c specifies a config file
-     */
-    i: (opts) => {
-        return assign({}, opts, {interactive: opts.i});
     }
 };
 

@@ -65,7 +65,14 @@ const availableCommands = {
 };
 
 if (!module.parent) {
-    const cli = <Meow>meow();
+    const cli = <Meow>meow('', {
+        alias: {
+            q: 'suppressOutput',
+            i: 'interactive',
+            e: 'exitOnError',
+            s: 'strict'
+        }
+    });
     handleIncoming(cli);
 }
 

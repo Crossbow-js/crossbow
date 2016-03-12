@@ -213,11 +213,11 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     function getTasks (tasks, initial) {
         return tasks.reduce((acc, task: SequenceItem) => {
             let label = getSequenceLabel(task);
-            if (showTimes && task.duration !== undefined) {
-                if (task.errored) {
-                    label = `{red:x} ${label} {yellow:(${task.duration}ms)}`;
+            if (showTimes && task.stats.duration !== undefined) {
+                if (task.stats.errored) {
+                    label = `{red:x} ${label} {yellow:(${task.stats.duration}ms)}`;
                 } else {
-                    label = `{green:✔} ` + label + ` {yellow:(${task.duration}ms)}`;
+                    label = `{green:✔} ` + label + ` {yellow:(${task.stats.duration}ms)}`;
                 }
             }
             let nodes = getTasks(task.items, []);

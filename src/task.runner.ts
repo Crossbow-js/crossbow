@@ -46,8 +46,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             duration: 0,
             completed: false,
             errored: false,
-            item: item,
-            taskUID: taskUID++
+            item: item
         };
 
         outerObserver.onNext(<TaskReport>{type: 'start', stats: stats});
@@ -64,6 +63,9 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
     });
 }
 
+/**
+ * Create a new stats object with completed/duration flags etc
+ */
 function getEndStats(stats: TaskStats) {
     const now = new Date().getTime();
     return assign({}, stats, {

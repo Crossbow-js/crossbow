@@ -1,3 +1,4 @@
+import {TaskStats} from "./task.runner";
 const objPath = require('object-path');
 const merge   = require('lodash.merge');
 const assign  = require('object-assign');
@@ -20,8 +21,10 @@ import {
 } from "./task.sequence.factories";
 
 import {createObservableFromSequenceItem} from "./task.runner";
+import {TaskReport} from "./task.runner";
 
 export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
+
     return flatten(tasks, []);
 
     function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
@@ -155,7 +158,7 @@ export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger)
         return items.reduce(reducer, initial);
     }
 }
-
+var seqUID = 0;
 function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
@@ -246,4 +249,11 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
 
 function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
     return objPath.get(trigger.input.config, [task.taskName], {});
+}
+
+export function decorateCompletedSequenceItems (sequence: SequenceItem[], stats: TaskReport[]) {
+    //console.log(stats);
+    // todo - hook up sequence with results
+    console.log(JSON.stringify(sequence, null, 4));
+
 }
