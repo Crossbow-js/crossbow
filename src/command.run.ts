@@ -114,7 +114,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          *   eg: start, end, log, file etc etc etc
          */
         .do((tr: TaskReport) => {
-            console.log('event', tr.type, 'TASK UID', tr.stats.taskUID)
+            console.log('event', tr.type, 'TASK UID', tr.item.seqUID);
         })
         /**
          * but now, we only care about task events that single a task has ended
@@ -140,7 +140,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             //console.log(sequence);
             const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
         }, (err) => {
-            console.log('err');
+            throw err;
         }); // completion callback not needed - if the onNext callback fires, everything completed
 
     ///**

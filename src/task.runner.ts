@@ -22,15 +22,13 @@ export interface TaskStats {
     completed: boolean
     errored: boolean
     item: SequenceItem
-    taskUID: number
 }
 
 export interface TaskReport {
+    item: SequenceItem
     stats: TaskStats
     type: string
 }
-
-var taskUID = 0;
 
 /**
  * This creates a wrapper around the actual function that will be run.
@@ -45,11 +43,10 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             endTime: 0,
             duration: 0,
             completed: false,
-            errored: false,
-            item: item
+            errored: false
         };
 
-        outerObserver.onNext(<TaskReport>{type: 'start', stats: stats});
+        outerObserver.onNext(getTaskReport('start', item, stats));
 
         getInnerTaskRunnerAsObservable(item, trigger)
             .subscribe(function () {
@@ -57,10 +54,17 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             }, err => {
                 outerObserver.onError(err);
             }, _ => {
-                outerObserver.onNext(<TaskReport>{type: 'end', stats: getEndStats(stats)});
+                outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
                 outerObserver.onCompleted();
             })
     });
+}
+
+/**
+ * Factory for TaskReports
+ */
+function getTaskReport(type: string, item: SequenceItem, stats: TaskStats): TaskReport {
+    return {type, item, stats};
 }
 
 /**

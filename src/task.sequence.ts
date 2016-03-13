@@ -158,7 +158,6 @@ export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger)
         return items.reduce(reducer, initial);
     }
 }
-var seqUID = 0;
 function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
@@ -210,21 +209,19 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
         parallel: () => Observable.from(flattened).mergeAll()
     };
 
+    /**
+     * If the current task has child tasks, we build a tree of
+     * nested observables for it (a task with children cannot itself
+     * be a task that should be run)
+     */
     function flatten(items: SequenceItem[], initial: SequenceItem[]) {
 
         function reducer(all, item: SequenceItem) {
-
-            /**
-             * If the current task has child tasks, we build a tree of
-             * nested observables for it (a task with children cannot itself
-             * be a task that should be run)
-             */
             /**
              * If the current task was marked as `parallel`, all immediate children
              * of (this task) will be run in `parallel`
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
-
                 return all.concat(Observable.merge(flatten(item.items, [])));
             }
             /**
@@ -254,6 +251,5 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
 export function decorateCompletedSequenceItems (sequence: SequenceItem[], stats: TaskReport[]) {
     //console.log(stats);
     // todo - hook up sequence with results
-    console.log(JSON.stringify(sequence, null, 4));
-
+    //console.log(JSON.stringify(sequence, null, 4));
 }
