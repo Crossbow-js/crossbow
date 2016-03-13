@@ -21,11 +21,9 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
         });
 
         emitter.on('close', function (code) {
-            if (trigger.config.fail) {
-                if (code !== 0) {
-                    const e = new Error(`Command ${args.cmd.join(' ')} failed with exit code ${code}`);
-                    return observer.onError(e);
-                }
+            if (code !== 0) {
+                const e = new Error(`Command ${args.cmd.join(' ')} failed with exit code ${code}`);
+                return observer.onError(e);
             }
             observer.done();
         }).on('error', function (err) {

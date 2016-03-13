@@ -23,20 +23,54 @@ const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
 
+function nl () {
+    l(`{gray:-}`);
+}
+
 export function reportSummary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countErrors(sequence);
 
-    if (config.summary === 'verbose' || errorCount > 0) {
+    if (config.summary === 'verbose') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+        nl();
         reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
     }
 
     if (errorCount > 0) {
-        l(`{red:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+        nl();
+        cli.input.slice(1).forEach(function (input) {
+            const match = getSequenceItemThatMatchesCliInput(sequence, input);
+            const errors = countErrors(match);
+            if (errors > 0) {
+                l(`{red:x} input: {yellow:${input}} caused an error`);
+            }
+        });
+        if (config.summary !== 'verbose') {
+            l(`  (use the -v flag for more information)`);
+        }
+        nl();
+        if (config.fail) {
+            l(`{red:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+        } else {
+            l(`{yellow:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+        }
     } else {
+        nl();
         l('{ok: } Total: {yellow:%sms}', runtime);
     }
+}
+
+function getSequenceItemThatMatchesCliInput (sequence: SequenceItem[], input: string): SequenceItem[] {
+    return sequence.filter(function (item) {
+        if (item.taskName) {
+            if (item.taskName === input) {
+                return true;
+            }
+        } else {
+            return item.task.rawInput === input;
+        }
+    });
 }
 
 /**
@@ -46,6 +80,7 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix
 
     if (config.summary === 'verbose') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+        nl()
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
     } else {
         l('{yellow:+} %s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
@@ -203,7 +238,7 @@ export function reportNoWatchTasksProvided() {
     l("{gray:-------------------------------------------------------------");
 }
 
-export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showTimes = false) {
+export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
     const toLog = getItems(sequence, []);
     const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
@@ -212,18 +247,16 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
 
     function getItems (items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
-            let label = getSequenceLabel(item);
+            let label = getSequenceLabel(item, config);
             const stats = item.stats;
-            if (item.type === SequenceItemTypes.Task) {
-                if (showTimes && stats.duration !== undefined) {
-                    if (stats.errors.length) {
-                        label = `{red:x} ${label} {yellow:(${stats.duration}ms)}`;
+            if (showStats && item.type === SequenceItemTypes.Task) {
+                if (stats.errors.length) {
+                    label = `{red:x} ${label} {yellow:(${stats.duration}ms)}`;
+                } else {
+                    if (!stats.started) {
+                        label = `{yellow:x (didn't start)} ` + label;
                     } else {
-                        if (!stats.started) {
-                            label = `{yellow:x (didn't start)} ` + label;
-                        } else {
-                            label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
-                        }
+                        label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
                     }
                 }
             }
@@ -236,7 +269,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     }
 }
 
-function getSequenceLabel (item: SequenceItem) {
+function getSequenceLabel (item: SequenceItem, config: CrossbowConfiguration) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {
@@ -256,7 +289,11 @@ function getSequenceLabel (item: SequenceItem) {
         }
         return item.task.taskName;
     }
-    return compile(`{bold:[${item.taskName}]} {yellow:[${SequenceItemTypes[item.type]}]}`);
+    if (item.items.length === 1) {
+        return compile(`{bold:[${item.taskName}]}`);
+    } else {
+        return compile(`{bold:[${item.taskName}]} {yellow:${SequenceItemTypes[item.type]}}`);
+    }
 }
 
 export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {

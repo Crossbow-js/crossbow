@@ -104,20 +104,18 @@ export default function (task: Task, trigger: RunCommandTrigger) {
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
 
+        // todo close all child tasks following the exit of the main process
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,
             env: env,
             stdio: stdio // [process.stdin, process.stdout, process.stderr]
-            //stdio: [0, 1, 2] // [process.stdin, process.stdout, process.stderr]
         });
 
         emitter.on('close', function (code) {
-            if (trigger.config.fail) {
-                if (code !== 0) {
-                    const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
-                    return observer.onError(e);
-                }
+            if (code !== 0) {
+                const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
+                return observer.onError(e);
             }
             observer.done();
         }).on('error', function (err) {

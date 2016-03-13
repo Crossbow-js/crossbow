@@ -45,11 +45,13 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         getInnerTaskRunnerAsObservable(item, trigger)
             .catch(function (e) {
-                const msg = ('The following error is from the task' + item.task.taskName).length;
-                const lineLength = new Array(msg).join('-');
-                logger.info('{gray: ----' + lineLength);
-                logger.info('{err: } The following error is from the task', item.task.taskName);
-                logger.info('{gray: ----' + lineLength);
+                if (trigger.config.summary === 'verbose') {
+                    const msg = ('The following error is from the task' + item.task.taskName).length;
+                    const lineLength = new Array(msg).join('-');
+                    logger.info('{gray: ----' + lineLength);
+                    logger.info('{err: } The following error is from the task', item.task.taskName);
+                    logger.info('{gray: ----' + lineLength);
+                }
 
                 if (!e) {
                     e = new Error(`Error Message not provided for ${item.task.taskName}`);
