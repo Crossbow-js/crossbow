@@ -19,9 +19,9 @@ export interface TaskStats {
     startTime: number
     endTime: number
     duration: number
+    started: boolean
     completed: boolean
-    errored: boolean
-    item: SequenceItem
+    errors: Error[]
 }
 
 export interface TaskReport {
@@ -38,21 +38,54 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
     return Rx.Observable.create(outerObserver => {
 
-        const stats = <TaskStats>{
-            startTime: new Date().getTime(),
-            endTime: 0,
-            duration: 0,
-            completed: false,
-            errored: false
-        };
+        const stats = getStartStats(new Date().getTime());
 
         outerObserver.onNext(getTaskReport('start', item, stats));
 
         getInnerTaskRunnerAsObservable(item, trigger)
+            .catch(function (e) {
+                const msg = ('The following error is from the task' + item.task.taskName).length;
+                const lineLength = new Array(msg).join('-');
+                logger.info('{gray: ----' + lineLength);
+                logger.info('{err: } The following error is from the task', item.task.taskName);
+                logger.info('{gray: ----' + lineLength);
+
+                if (!e) {
+                    e = new Error(`Error Message not provided for ${item.task.taskName}`);
+                    e._cbStack = [`Task: ${item.task.taskName}`, ` msg: No message was provided`].join('\n');
+                }
+
+                if (typeof e === 'string') {
+                    const msg = e;
+                    e = new Error(e);
+                    e._cbStack = [`Task: ${item.task.taskName}`, ` msg: ${msg}`].join('\n');
+                }
+
+                return Rx.Observable.throw(e);
+            })
             .subscribe(function () {
                 // todo: What to do with tasks that produce vales through given observer.onNext()?
-            }, err => {
-                outerObserver.onError(err);
+            }, error => {
+                const errorReport = getTaskReport('end', item, getErrorStats(stats, error));
+                if (trigger.config.fail === true) {
+                    debug('Exiting because exitOnError === true');
+                    outerObserver.onNext(errorReport);
+                    return outerObserver.onError(error);
+                } else {
+                    debug('Reporting error but continuing as exitOnError === false');
+                    if (error._cbStack) {
+                        console.log(error._cbStack);
+                    } else {
+                        if (error.stack) {
+                            console.log(error.stack)
+                        } else {
+                            console.log(error);
+                        }
+                    }
+                    outerObserver.onNext(errorReport);
+                    outerObserver.onCompleted();
+                    return Rx.Observable.empty();
+                }
             }, _ => {
                 outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
                 outerObserver.onCompleted();
@@ -67,6 +100,28 @@ function getTaskReport(type: string, item: SequenceItem, stats: TaskStats): Task
     return {type, item, stats};
 }
 
+function getErrorStats (stats, e) {
+    const now = new Date().getTime();
+    return assign({}, stats, {
+        endTime: now,
+        duration: now - stats.startTime,
+        completed: false,
+        errors: [e]
+    })
+}
+/**
+ * Create a new stats object with startTime
+ */
+export function getStartStats (startTime: number): TaskStats {
+    return {
+        startTime,
+        started: true,
+        endTime: 0,
+        duration: 0,
+        completed: false,
+        errors: []
+    }
+}
 /**
  * Create a new stats object with completed/duration flags etc
  */
@@ -119,34 +174,5 @@ function getInnerTaskRunnerAsObservable (item, trigger) {
                  */
 
             });
-        })
-        .catch(function (e) {
-            item.errored = true;
-            const msg = ('The following error is from the task' + item.task.taskName).length;
-            const lineLength = new Array(msg).join('-');
-            logger.info('{gray: ----' + lineLength);
-            logger.info('{err: } The following error is from the task', item.task.taskName);
-            logger.info('{gray: ----' + lineLength);
-
-            if (!e) {
-                e = new Error(`Error Message not provided for ${item.task.taskName}`);
-                e._cbStack = [`Task: ${item.task.taskName}`, ` msg: No message was provided`].join('\n');
-            }
-
-            if (typeof e === 'string') {
-                const msg = e;
-                e = new Error(e);
-                e._cbStack = [`Task: ${item.task.taskName}`, ` msg: ${msg}`].join('\n');
-            }
-
-            // todo: reporter: allow logging here
-            if (trigger.config.exitOnError === true) {
-                debug('Exiting because exitOnError === true');
-                return Rx.Observable.throw(e);
-            } else {
-                debug('Displaying error but continuing as exitOnError === false');
-                console.log(e.stack);
-                return Rx.Observable.empty();
-            }
         });
 }

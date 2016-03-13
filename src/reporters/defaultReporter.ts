@@ -214,7 +214,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
         return tasks.reduce((acc, task: SequenceItem) => {
             let label = getSequenceLabel(task);
             if (showTimes && task.stats.duration !== undefined) {
-                if (task.stats.errored) {
+                if (task.stats.errors.length) {
                     label = `{red:x} ${label} {yellow:(${task.stats.duration}ms)}`;
                 } else {
                     label = `{green:✔} ` + label + ` {yellow:(${task.stats.duration}ms)}`;

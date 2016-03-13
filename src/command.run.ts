@@ -98,7 +98,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             } else {
                 console.log(e.stack);
             }
-            if (config.exitOnError === true) {
+            if (config.fail === true) {
                 return process.exit(1);
             }
             return Rx.Observable.empty(e);
@@ -139,7 +139,9 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             //console.log('Completed %s individual tasks', trs.length);
             //console.log(sequence);
             const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
+            //console.log(JSON.stringify(decoratedSequence, null, 4));
         }, (err) => {
+            console.log('GOT ERROR');
             throw err;
         }); // completion callback not needed - if the onNext callback fires, everything completed
 

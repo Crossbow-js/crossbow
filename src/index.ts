@@ -69,7 +69,6 @@ if (!module.parent) {
         alias: {
             q: 'suppressOutput',
             i: 'interactive',
-            e: 'exitOnError',
             s: 'strict'
         }
     });

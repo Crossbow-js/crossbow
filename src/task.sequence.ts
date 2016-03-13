@@ -22,6 +22,7 @@ import {
 
 import {createObservableFromSequenceItem} from "./task.runner";
 import {TaskReport} from "./task.runner";
+import {getStartStats} from "./task.runner";
 
 export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
@@ -248,8 +249,39 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
     return objPath.get(trigger.input.config, [task.taskName], {});
 }
 
-export function decorateCompletedSequenceItems (sequence: SequenceItem[], stats: TaskReport[]) {
-    //console.log(stats);
-    // todo - hook up sequence with results
-    //console.log(JSON.stringify(sequence, null, 4));
+/**
+ * After a bunch of tasks have run, we need to link up task-ended reports
+ * with their original position in the sequence. This will allow us to
+ * reconstruct the task render-tree but also show any tasks that errored
+ * or did not complete
+ * @param sequence
+ * @param reports
+ * @returns {*}
+ */
+export function decorateCompletedSequenceItems (sequence: SequenceItem[], reports: TaskReport[]) {
+    return getAll(sequence, []);
+    function getAll (items, initial) {
+        return items.reduce(function (acc, item) {
+            const i: SequenceItem = assign({}, item);
+            if (item.type === SequenceItemTypes.Task) {
+                i.stats = findOneStat(item.seqUID);
+                return acc.concat(i);
+            } else {
+                i.items = getAll(item.items, []);
+                return acc.concat(i);
+            }
+        }, initial);
+    }
+    function findOneStat (id) {
+        const match = reports.filter((x: TaskReport) => {
+            return x.item.seqUID === id;
+        }).map(x => x.stats);
+        if (match.length) {
+            return match[0];
+        } else {
+            const stats = getStartStats(0);
+            stats.started = false;
+            return stats;
+        }
+    }
 }

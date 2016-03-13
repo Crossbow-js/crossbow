@@ -6,7 +6,7 @@ export interface CrossbowConfiguration {
     cwd: string
     runMode: string
     resumeOnError: boolean
-    exitOnError: boolean
+    fail: boolean
     summary: string
     strict: boolean
     stack: boolean
@@ -33,11 +33,6 @@ const defaults = <CrossbowConfiguration>{
      */
     runMode: 'series',
     resumeOnError: false,
-    /**
-     * CI mode - will exit if any shell/npm scripts
-     * return a non-zero exit code
-     */
-    exitOnError: true,
     /**
      * How much task information should be output
      * following task completion/setup
@@ -68,7 +63,15 @@ const defaults = <CrossbowConfiguration>{
     /**
      * Show the prompt for selecting tasks?
      */
-    interactive: false
+    interactive: false,
+    /**
+     *
+     * CI mode - will exit if any shell/npm scripts
+     * return a non-zero exit code
+     *
+     * Should a failing task be allowed to quit the process?
+     */
+    fail: true
 };
 
 /**

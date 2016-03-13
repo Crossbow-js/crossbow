@@ -113,7 +113,7 @@ export default function (task: Task, trigger: RunCommandTrigger) {
         });
 
         emitter.on('close', function (code) {
-            if (trigger.config.exitOnError) {
+            if (trigger.config.fail) {
                 if (code !== 0) {
                     const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
                     return observer.onError(e);
