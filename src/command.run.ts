@@ -86,9 +86,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * the tasks! We use the `config.runMode` flag to select a top-level
      * parallel or series runner
      */
-    const runner$ = runner[config.runMode].call()
+    const runner$ = runner[config.runMode]
+        .call()
         /**
-         * We look at every error received from any task - if 'exitOnError'
+         * We look at every error received from any task - if 'config.fail'
          * is true, then we can simply exit the process (as the stack
          * will have already been printed)
          */
@@ -99,7 +100,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                 console.log(e.stack);
             }
             if (config.fail === true) {
-                return process.exit(1);
+                //return process.exit(1);
             }
             return Rx.Observable.empty(e);
         }).share();
@@ -114,21 +115,21 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          *   eg: start, end, log, file etc etc etc
          */
         .do((tr: TaskReport) => {
-            console.log('event', tr.type, 'TASK UID', tr.item.seqUID);
+            //console.log('event', tr.type, 'TASK UID', tr.item.seqUID);
         })
         /**
-         * but now, we only care about task events that single a task has ended
+         * but now, we only care about task events that signal a task has ended
          */
         .where((tr: TaskReport) => tr.type === 'end')
         /**
-         * ... and then we aggregate of those together into an array. This is done
-         * to allow the 'onNext' callback to instead be used as a completion handler,
+         * ... and then we aggregate all of those together into an array. This is done
+         * to allow the 'onNext' callback to instead be used as a completion handler -
          * with the added benefit being that we'll receive all events as as an array
          * without having to use any external array and pushing items into it.
          */
         .toArray()
         /**
-         * Now we subscribe, which starts the task sequence
+         * Now we subscribe, which starts the task sequence.
          * Because we used toArray() above, the subscribe method
          * below will only ever receive a single event - which
          * is ok because we've had the opportunity above to do
@@ -138,10 +139,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             //require('fs').writeFileSync('out.json', JSON.stringify(trs, null, 4));
             //console.log('Completed %s individual tasks', trs.length);
             //console.log(sequence);
+            //console.log('GOT HERE');
+            //console.log(trs[trs.length-1]);
+            //if ()
             const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
+            reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
+
+            if (trs[trs.length-1].stats.errors.length && config.fail) {
+                debug('Exiting with exit code 1 because the last task that ran did an error');
+                return process.exit(1);
+            }
             //console.log(JSON.stringify(decoratedSequence, null, 4));
         }, (err) => {
-            console.log('GOT ERROR');
+            //console.log('GOT ERROR');
             throw err;
         }); // completion callback not needed - if the onNext callback fires, everything completed
 

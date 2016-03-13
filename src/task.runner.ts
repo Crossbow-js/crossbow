@@ -40,6 +40,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         const stats = getStartStats(new Date().getTime());
 
+        debug(`> seqUID ${item.seqUID} started`);
         outerObserver.onNext(getTaskReport('start', item, stats));
 
         getInnerTaskRunnerAsObservable(item, trigger)
@@ -66,9 +67,10 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             .subscribe(function () {
                 // todo: What to do with tasks that produce vales through given observer.onNext()?
             }, error => {
+                debug(`x seqUID ${item.seqUID} errored`);
                 const errorReport = getTaskReport('end', item, getErrorStats(stats, error));
                 if (trigger.config.fail === true) {
-                    debug('Exiting because exitOnError === true');
+                    debug(`xxx Exiting because config.fail === true and seqUID ${item.seqUID} errored`);
                     outerObserver.onNext(errorReport);
                     return outerObserver.onError(error);
                 } else {
@@ -87,6 +89,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     return Rx.Observable.empty();
                 }
             }, _ => {
+                debug(`✔ seqUID ${item.seqUID} completed`);
                 outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
                 outerObserver.onCompleted();
             })

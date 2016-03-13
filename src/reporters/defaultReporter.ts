@@ -33,7 +33,7 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
     }
 
     if (errorCount > 0) {
-        l('{red:x} Total: {yellow:%sms}', runtime);
+        l(`{red:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
     } else {
         l('{ok: } Total: {yellow:%sms}', runtime);
     }
@@ -205,27 +205,33 @@ export function reportNoWatchTasksProvided() {
 
 export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showTimes = false) {
 
-    const toLog = getTasks(sequence, []);
+    const toLog = getItems(sequence, []);
     const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
 
     logger.info(o.slice(26, -1));
 
-    function getTasks (tasks, initial) {
-        return tasks.reduce((acc, task: SequenceItem) => {
-            let label = getSequenceLabel(task);
-            if (showTimes && task.stats.duration !== undefined) {
-                if (task.stats.errors.length) {
-                    label = `{red:x} ${label} {yellow:(${task.stats.duration}ms)}`;
-                } else {
-                    label = `{green:✔} ` + label + ` {yellow:(${task.stats.duration}ms)}`;
+    function getItems (items, initial) {
+        return items.reduce((acc, item: SequenceItem) => {
+            let label = getSequenceLabel(item);
+            const stats = item.stats;
+            if (item.type === SequenceItemTypes.Task) {
+                if (showTimes && stats.duration !== undefined) {
+                    if (stats.errors.length) {
+                        label = `{red:x} ${label} {yellow:(${stats.duration}ms)}`;
+                    } else {
+                        if (!stats.started) {
+                            label = `{yellow:x (didn't start)} ` + label;
+                        } else {
+                            label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                        }
+                    }
                 }
             }
-            let nodes = getTasks(task.items, []);
+            let nodes = getItems(item.items, []);
             return acc.concat({
                 label: label,
                 nodes: nodes
             });
-
         }, initial);
     }
 }
@@ -357,16 +363,15 @@ function getLabel (task) {
     return `${task.taskName}}`;
 }
 
-function countErrors (items) {
-
+function countErrors (items: SequenceItem[]) {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
-            if (item.errored) {
+            if (item.stats.errors.length) {
                 return acc + 1;
             } else {
                 return acc;
             }
         }
-        return countErrors(item.items);
+        return acc + countErrors(item.items);
     }, 0);
 }
