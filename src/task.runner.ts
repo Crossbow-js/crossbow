@@ -159,28 +159,29 @@ function getInnerTaskRunnerAsObservable (item, trigger) {
          * type of it's value to work out how to handle to complete the task
          */
         if (output !== undefined) {
-
             if (output.type) {
                 if (output.type === 'child_process') {
+                    debug('child process returned');
                     const child = output.child;
-                    return Rx.Disposable.create(function () {
-                        var disp = this;
+                    var single = new Rx.SingleAssignmentDisposable();
+                    var dis = Rx.Disposable.create(function () {
                         if ((typeof output.child.raw.exitCode) !== 'number') {
-                            console.log('tearing down a child_process because exitCode is missing');
+                            debug('tearing down a child_process because exitCode is missing');
                             child.removeAllListeners('close');
                             child.kill('SIGINT');
                             child.on('close', function () {
-                                console.log('close');
-                                disp.dispose();
+                                debug('close method on child encountered');
+                                single.dispose();
                             });
                         } else {
-                            console.log('Child already exited');
-                            disp.dispose();
+                            debug('child process already completed, not disposing');
+                            single.dispose();
                         }
                     });
+                    single.setDisposable(dis);
+                    return single
                 }
             }
-
             return handleReturn(output, observer);
         }
 
@@ -192,12 +193,5 @@ function getInnerTaskRunnerAsObservable (item, trigger) {
         if (item.factory.length < 3) {
             return observer.onCompleted();
         }
-
-        /**
-         * At this point, the user has asked for access to the observer (the 3rd arg)
-         * so we need to assume the user is going to call done on it.
-         */
-
     });
-
 }
