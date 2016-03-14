@@ -71,11 +71,11 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 // todo: What to do with tasks that produce vales through given observer.onNext()?
             }, error => {
                 debug(`x seqUID ${item.seqUID} errored`);
-                const errorReport = getTaskReport('end', item, getErrorStats(stats, error));
+                const errorReport = getTaskReport('error', item, getErrorStats(stats, error));
                 if (trigger.config.fail === true) {
-                    debug(`xxx Exiting because config.fail === true and seqUID ${item.seqUID} errored`);
                     outerObserver.onNext(errorReport);
-                    return outerObserver.onError(error);
+                    outerObserver.onCompleted();
+                    return Rx.Observable.empty();
                 } else {
                     debug('Reporting error but continuing as exitOnError === false');
                     if (error._cbStack) {

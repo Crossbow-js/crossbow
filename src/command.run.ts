@@ -102,7 +102,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             if (config.fail === true) {
                 //return process.exit(1);
             }
-            return Rx.Observable.empty(e);
+            return Rx.Observable.empty();
         }).share();
 
     /**
