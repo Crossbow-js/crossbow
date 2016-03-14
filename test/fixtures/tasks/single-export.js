@@ -1,5 +1,4 @@
-module.exports = function singleExport(obs, opts, ctx) {
-    obs.log.info('HERE', opts);
+module.exports = function singleExport(opts, ctx, obs) {
     obs.onNext('Sup bro');
     obs.done();
 };

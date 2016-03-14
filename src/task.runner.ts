@@ -142,42 +142,62 @@ function getEndStats(stats: TaskStats) {
 function getInnerTaskRunnerAsObservable (item, trigger) {
     return Rx.Observable.create(observer => {
 
-            observer.done = function () {
-                observer.onCompleted();
-            };
+        observer.done = function () {
+            observer.onCompleted();
+        };
 
-            process.nextTick(function () {
+        var output;
 
-                var output;
+        try {
+            output = item.factory(item.config, trigger, observer);
+        } catch (e) {
+            return observer.onError(e);
+        }
 
-                try {
-                    output = item.factory(item.config, trigger, observer);
-                } catch (e) {
-                    return observer.onError(e);
+        /**
+         * If the task did return something, we can look at the
+         * type of it's value to work out how to handle to complete the task
+         */
+        if (output !== undefined) {
+
+            if (output.type) {
+                if (output.type === 'child_process') {
+                    const child = output.child;
+                    return Rx.Disposable.create(function () {
+                        var disp = this;
+                        if ((typeof output.child.raw.exitCode) !== 'number') {
+                            console.log('tearing down a child_process because exitCode is missing');
+                            child.removeAllListeners('close');
+                            child.kill('SIGINT');
+                            child.on('close', function () {
+                                console.log('close');
+                                disp.dispose();
+                            });
+                        } else {
+                            console.log('Child already exited');
+                            disp.dispose();
+                        }
+                    });
                 }
+            }
 
-                /**
-                 * If the task did return something, we can look at the
-                 * type of it's value to work out how to handle to complete the task
-                 */
-                if (output !== undefined) {
-                    return handleReturn(output, observer);
-                }
+            return handleReturn(output, observer);
+        }
 
-                /**
-                 * If the argument length is less than 3, it means the user
-                 * has not asked for access to the observer - which means
-                 * we can complete the task immediately
-                 */
-                if (item.factory.length < 3) {
-                    return observer.onCompleted();
-                }
+        /**
+         * If the argument length is less than 3, it means the user
+         * has not asked for access to the observer - which means
+         * we can complete the task immediately
+         */
+        if (item.factory.length < 3) {
+            return observer.onCompleted();
+        }
 
-                /**
-                 * At this point, the user has asked for access to the observer (the 3rd arg)
-                 * so we need to assume the user is going to call done on it.
-                 */
+        /**
+         * At this point, the user has asked for access to the observer (the 3rd arg)
+         * so we need to assume the user is going to call done on it.
+         */
 
-            });
-        });
+    });
+
 }

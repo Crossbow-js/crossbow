@@ -51,10 +51,11 @@ function runCommand(args: string[], options: CommandOptions) {
         }
     });
 
-    cooked.stdin = raw.stdin;
+    cooked.stdin  = raw.stdin;
     cooked.stdout = raw.stdout;
     cooked.stderr = raw.stderr;
-    cooked.kill = function (sig) {
+    cooked.raw    = raw;
+    cooked.kill   = function (sig) {
         return raw.kill(sig);
     };
 
@@ -121,6 +122,11 @@ export default function (task: Task, trigger: RunCommandTrigger) {
         }).on('error', function (err) {
             observer.onError(err);
         });
+
+        return {
+            type: 'child_process',
+            child: emitter
+        };
     };
 };
 
