@@ -120,7 +120,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         /**
          * but now, we only care about task events that signal a task has ended
          */
-        .where((tr: TaskReport) => tr.type === 'end')
+        //.where((tr: TaskReport) => tr.type === 'end')
         /**
          * ... and then we aggregate all of those together into an array. This is done
          * to allow the 'onNext' callback to instead be used as a completion handler -
@@ -136,20 +136,15 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          * things such as logging etc
          */
         .subscribe((trs: TaskReport[]) => {
-            //require('fs').writeFileSync('out.json', JSON.stringify(trs, null, 4));
-            //console.log('Completed %s individual tasks', trs.length);
-            //console.log(sequence);
-            //console.log('GOT HERE');
-            //console.log(trs[trs.length-1]);
-            //if ()
+            /**
+             * Link the stats to the sequence item
+             */
             const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
             reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
-
             if (trs[trs.length-1].stats.errors.length && config.fail) {
                 debug('Exiting with exit code 1 because the last task that ran did an error');
                 return process.exit(1);
             }
-            //console.log(JSON.stringify(decoratedSequence, null, 4));
         }, (err) => {
             //console.log('GOT ERROR');
             throw err;

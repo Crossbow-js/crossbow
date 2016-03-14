@@ -264,7 +264,7 @@ export function decorateCompletedSequenceItems (sequence: SequenceItem[], report
         return items.reduce(function (acc, item) {
             const i: SequenceItem = assign({}, item);
             if (item.type === SequenceItemTypes.Task) {
-                i.stats = findOneStat(item.seqUID);
+                i.stats = getMergedStats(item.seqUID);
                 return acc.concat(i);
             } else {
                 i.items = getAll(item.items, []);
@@ -272,16 +272,16 @@ export function decorateCompletedSequenceItems (sequence: SequenceItem[], report
             }
         }, initial);
     }
-    function findOneStat (id) {
+    function getMergedStats (id) {
         const match = reports.filter((x: TaskReport) => {
             return x.item.seqUID === id;
-        }).map(x => x.stats);
-        if (match.length) {
-            return match[0];
+        });
+        if (match.length === 1) {
+            return match[0].stats;
         } else {
-            const stats = getStartStats(0);
-            stats.started = false;
-            return stats;
+            const start = match.filter(x => x.type === 'start')[0];
+            const end = match.filter(x => x.type === 'end')[0];
+            return assign({}, start.stats, end.stats || {});
         }
     }
 }

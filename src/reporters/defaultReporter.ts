@@ -253,10 +253,14 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
                 if (stats.errors.length) {
                     label = `{red:x} ${label} {yellow:(${stats.duration}ms)}`;
                 } else {
-                    if (!stats.started) {
-                        label = `{yellow:x (didn't start)} ` + label;
+                    if (stats.started) {
+                        if (stats.completed) {
+                            label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                        } else {
+                            label = `{yellow:x (didn't complete)} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                        }
                     } else {
-                        label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                        label = `{yellow:x (didn't start)} ` + label;
                     }
                 }
             }
@@ -403,7 +407,7 @@ function getLabel (task) {
 function countErrors (items: SequenceItem[]) {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
-            if (item.stats.errors.length) {
+            if (item.stats && item.stats.errors.length) {
                 return acc + 1;
             } else {
                 return acc;

@@ -41,6 +41,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         const stats = getStartStats(new Date().getTime());
 
         debug(`> seqUID ${item.seqUID} started`);
+
         outerObserver.onNext(getTaskReport('start', item, stats));
 
         getInnerTaskRunnerAsObservable(item, trigger)
@@ -94,7 +95,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 debug(`✔ seqUID ${item.seqUID} completed`);
                 outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
                 outerObserver.onCompleted();
-            })
+            });
     });
 }
 
@@ -112,8 +113,9 @@ function getErrorStats (stats, e) {
         duration: now - stats.startTime,
         completed: false,
         errors: [e]
-    })
+    });
 }
+
 /**
  * Create a new stats object with startTime
  */
@@ -127,6 +129,7 @@ export function getStartStats (startTime: number): TaskStats {
         errors: []
     }
 }
+
 /**
  * Create a new stats object with completed/duration flags etc
  */
