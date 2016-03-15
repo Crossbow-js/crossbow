@@ -141,10 +141,11 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
              */
             const decoratedSequence = decorateCompletedSequenceItems(sequence, trs);
             reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
-            if (trs[trs.length-1].stats.errors.length && config.fail) {
-                debug('Exiting with exit code 1 because the last task that ran did an error');
-                return process.exit(1);
-            }
+
+            //if (trs[trs.length-1].stats.errors.length && config.fail) {
+            //    debug('Exiting with exit code 1 because the last task that ran did an error');
+            //    return process.exit(1);
+            //}
         }, (err) => {
             //console.log('GOT ERROR');
             throw err;

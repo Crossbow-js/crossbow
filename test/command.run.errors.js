@@ -23,12 +23,12 @@ describe('Running with task stats', function () {
             .subscribe(trs => {
                 assert.equal(trs.length, 2);
                 assert.equal(trs[0].type, 'start');
-                assert.equal(trs[1].type, 'end');
+                assert.equal(trs[1].type, 'error');
                 assert.equal(trs[1].stats.errors.length, 1);
                 done();
             });
     });
-    it('does not continue running sibling tasks when one fails', function (done) {
+    it.only('does not continue running sibling tasks when one fails', function (done) {
         const runner = cli.runner(['test/fixtures/tasks/error.js', '@npm sleep 0']);
         runner.series()
             .catch(x => Rx.Observable.empty())
@@ -37,12 +37,12 @@ describe('Running with task stats', function () {
                 assert.equal(trs.length, 2); // should not run next task
                 assert.equal(trs[0].type, 'start');
                 assert.equal(trs[0].item.seqUID, 0);
-                assert.equal(trs[1].type, 'end');
+                assert.equal(trs[1].type, 'error');
                 assert.equal(trs[1].item.seqUID, 0);
                 done();
             });
     });
-    it.only('DOES continue running sibling tasks when one fails but runMode is parallel', function (done) {
+    it.skip('DOES continue running sibling tasks when one fails but runMode is parallel', function (done) {
 
         const runner = cli.getRunner(['js', 'npm'], {
             tasks: {

@@ -281,7 +281,7 @@ export function decorateCompletedSequenceItems (sequence: SequenceItem[], report
         } else {
             const start = match.filter(x => x.type === 'start')[0];
             const end = match.filter(x => x.type === 'end')[0];
-            return assign({}, start.stats, end.stats || {});
+            return assign({}, start.stats, end ? end.stats : {});
         }
     }
 }

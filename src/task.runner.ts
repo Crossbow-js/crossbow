@@ -39,6 +39,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
     return Rx.Observable.create(outerObserver => {
 
         const stats = getStartStats(new Date().getTime());
+        let errored = false;
 
         debug(`> seqUID ${item.seqUID} started`);
 
@@ -65,7 +66,12 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     e._cbStack = [`Task: ${item.task.taskName}`, ` msg: ${msg}`].join('\n');
                 }
 
-                return Rx.Observable.throw(e);
+                const errorReport = getTaskReport('error', item, getErrorStats(stats, e));
+                debug(`x seqUID ${item.seqUID} errored`);
+                outerObserver.onNext(errorReport);
+                errored = true;
+
+                return Rx.Observable.empty();
             })
             .subscribe(function () {
                 // todo: What to do with tasks that produce vales through given observer.onNext()?
@@ -75,7 +81,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 if (trigger.config.fail === true) {
                     outerObserver.onNext(errorReport);
                     outerObserver.onCompleted();
-                    return Rx.Observable.empty();
                 } else {
                     debug('Reporting error but continuing as exitOnError === false');
                     if (error._cbStack) {
@@ -89,11 +94,12 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     }
                     outerObserver.onNext(errorReport);
                     outerObserver.onCompleted();
-                    return Rx.Observable.empty();
                 }
             }, _ => {
-                debug(`✔ seqUID ${item.seqUID} completed`);
-                outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
+                if (!errored) {
+                    debug(`✔ seqUID ${item.seqUID} completed`);
+                    outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
+                }
                 outerObserver.onCompleted();
             });
     });
