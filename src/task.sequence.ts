@@ -280,7 +280,7 @@ export function decorateCompletedSequenceItems (sequence: SequenceItem[], report
             return match[0].stats;
         } else {
             const start = match.filter(x => x.type === 'start')[0];
-            const end = match.filter(x => x.type === 'end')[0];
+            const end = match.filter(x => x.type === 'end' || x.type === 'error')[0];
             return assign({}, start.stats, end ? end.stats : {});
         }
     }
