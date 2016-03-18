@@ -6,12 +6,14 @@ interface Observable {}
 
 export interface Runner {
     series: () => any
-    parallel: () => any
+    parallel: () => any,
+    sequence: SequenceItem[]
 }
 
 export function createRunner (tasks: Task[], sequence: SequenceItem[], ctx: RunCommandTrigger): Runner {
     return {
         series: () => {},
-        parallel: () => {}
+        parallel: () => {},
+        sequence: []
     }
 }

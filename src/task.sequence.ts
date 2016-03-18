@@ -206,6 +206,7 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
     const flattened = flatten(items, []);
 
     return {
+        sequence: flattened,
         series: () => Observable.from(flattened).concatAll(),
         parallel: () => Observable.from(flattened).mergeAll()
     };
@@ -233,6 +234,7 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             if (item.type === SequenceItemTypes.SeriesGroup) {
                 return all.concat(Observable.concat(flatten(item.items, [])));
             }
+
             /**
              * Finally is item is a task, create an observable for it.
              */

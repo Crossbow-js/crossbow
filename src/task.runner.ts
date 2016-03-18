@@ -3,7 +3,7 @@ const Rx = require('rx');
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
-import {RunCommandTrigger, CommandTrigger} from './command.run';
+import {CommandTrigger} from './command.run';
 const debug = require('debug')('cb:task.runner');
 const assign = require('object-assign');
 import logger from './logger';
