@@ -43,6 +43,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const sequence = createFlattenedSequence(tasks.valid, ctx);
 
+    // require('fs').writeFileSync('sequence.json', JSON.stringify(sequence, null, 4));
+
     /**
      * With the flattened sequence, we can create nested collections
      * of Rx Observables

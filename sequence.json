@@ -1,0 +1,64 @@
+[
+    {
+        "type": 2,
+        "items": [],
+        "seqUID": 62,
+        "fnName": "singleExport",
+        "task": {
+            "valid": true,
+            "rawInput": "test/fixtures/tasks/single-export.js:*",
+            "subTasks": [
+                "*"
+            ],
+            "modules": [
+                "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/single-export.js"
+            ],
+            "tasks": [],
+            "parents": [],
+            "errors": [],
+            "runMode": "series",
+            "flags": [],
+            "query": {},
+            "baseTaskName": "test/fixtures/tasks/single-export.js",
+            "taskName": "test/fixtures/tasks/single-export.js",
+            "type": 0
+        },
+        "config": {
+            "input": [
+                "css/core.scss"
+            ]
+        },
+        "subTaskName": "site"
+    },
+    {
+        "type": 2,
+        "items": [],
+        "seqUID": 63,
+        "fnName": "singleExport",
+        "task": {
+            "valid": true,
+            "rawInput": "test/fixtures/tasks/single-export.js:*",
+            "subTasks": [
+                "*"
+            ],
+            "modules": [
+                "/Users/shakyshane/crossbow/crossbow-cli/test/fixtures/tasks/single-export.js"
+            ],
+            "tasks": [],
+            "parents": [],
+            "errors": [],
+            "runMode": "series",
+            "flags": [],
+            "query": {},
+            "baseTaskName": "test/fixtures/tasks/single-export.js",
+            "taskName": "test/fixtures/tasks/single-export.js",
+            "type": 0
+        },
+        "config": {
+            "input": [
+                "css/ie.scss"
+            ]
+        },
+        "subTaskName": "ie"
+    }
+]

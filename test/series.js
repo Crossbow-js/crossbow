@@ -1,11 +1,10 @@
 const Rx     = require('rx');
-const assert = require('assert');
 const O      = Rx.Observable;
-const concat = O.concat;
 
 /**
- * Function under test - handle a concat stream of tasks
- * @returns {ReplaySubject<T>}
+ * Run a group of tasks in series.
+ * Any error in any group will cause the entire process
+ * to exit
  */
 module.exports = function handleConcat (tasks) {
     const subject = new Rx.ReplaySubject(2000);
@@ -24,8 +23,11 @@ module.exports = function handleConcat (tasks) {
             // report('from catch', subject);
             return O.never();
         })
+        /**
+         * Push any messages into the subject
+         */
         .do(subject)
-        .subscribe(x => {}, e=>{}, _=> {
+        .subscribe(x=>{}, e=>{}, _=> {
             console.log('All done');
         });
     return subject;

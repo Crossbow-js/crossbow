@@ -84,7 +84,8 @@ var noFailStream = [
  */
 function handleParallelStream(items) {
     var subject = new Rx.ReplaySubject(2000);
-    Rx.Observable.merge(items)
+    Rx.Observable
+        .merge(items)
         .subscribe(x => {
             subject.onNext(x);
         }, e => {
@@ -110,8 +111,8 @@ function handleConcatStream(items) {
             console.log('Error', 'but got these dope messages before it errored!');
             report('from catch', subject);
             return O.never();
-        })
-        3000.556 // push messages into replay subject
+        });
+        //3000.556 // push messages into replay subject
         .subscribe(function () {}, e => {}, _ => {
             report('All done', subject);
         });
