@@ -203,28 +203,53 @@ function getFunctionName (fn: TaskFactory, count = 0) {
 }
 export function createRunner (items: SequenceItem[], trigger: CommandTrigger): Runner  {
 
-    const flattened = flatten(items, []);
-
     return {
-        sequence: flattened,
-        series: () => Observable.from(flattened).concatAll(),
-        parallel: () => Observable.from(flattened).mergeAll()
+        series: () => {
+            const flattened = flatten(items, []);
+            const subject = new Rx.ReplaySubject(2000);
+            Observable.from(flattened)
+                .concatAll()
+                /**
+                 * Push any messages into the subject
+                 */
+                .do(subject)
+                .subscribe(x=>{}, e=>{}, _=> {
+                    console.log('\nINTERNAL::::All done');
+                });
+            return subject;
+        },
+        parallel: () => {
+            const flattened = flatten(items, [], true);
+            const subject = new Rx.ReplaySubject(2000);
+            Observable.from(flattened)
+                .mergeAll()
+                .do(subject)
+                .subscribe(x => {}, e=>{}, _=> {
+                    console.log('All done');
+                });
+            return subject;
+        }
     };
+
+    function shouldCatch(trigger) {
+        return trigger.config.runMode === 'parallel';
+    }
 
     /**
      * If the current task has child tasks, we build a tree of
      * nested observables for it (a task with children cannot itself
      * be a task that should be run)
      */
-    function flatten(items: SequenceItem[], initial: SequenceItem[]) {
+    function flatten(items: SequenceItem[], initial: SequenceItem[], addCatch = false) {
 
         function reducer(all, item: SequenceItem) {
+            let output;
             /**
              * If the current task was marked as `parallel`, all immediate children
              * of (this task) will be run in `parallel`
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
-                return all.concat(Observable.merge(flatten(item.items, [])));
+                output = Observable.merge(flatten(item.items, [], shouldCatch(trigger)));
             }
             /**
              * If the current task was marked as `series`, all immediate child tasks
@@ -232,15 +257,25 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
              * one has completed
              */
             if (item.type === SequenceItemTypes.SeriesGroup) {
-                return all.concat(Observable.concat(flatten(item.items, [])));
+                output = Observable.concat(flatten(item.items, []));
             }
 
             /**
              * Finally is item is a task, create an observable for it.
              */
             if (item.type === SequenceItemTypes.Task && item.factory) {
-                return all.concat(createObservableFromSequenceItem(item, trigger));
+                output = createObservableFromSequenceItem(item, trigger);
             }
+
+            /**
+             * Should we add a catch clause to this item to enable
+             * siblings to continue when a task errors
+             */
+            if (addCatch) {
+                return all.concat(output.catch(x => Rx.Observable.empty()));
+            }
+
+            return all.concat(output);
         }
 
         return items.reduce(reducer, initial);

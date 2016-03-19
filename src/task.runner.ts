@@ -39,6 +39,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
     return Rx.Observable.create(outerObserver => {
 
         const stats = getStartStats(new Date().getTime());
+        
         let errored = false;
 
         debug(`> seqUID ${item.seqUID} started`);
@@ -47,59 +48,19 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         getInnerTaskRunnerAsObservable(item, trigger)
             .catch(function (e) {
-                if (trigger.config.summary === 'verbose') {
-                    const msg = ('The following error is from the task' + item.task.taskName).length;
-                    const lineLength = new Array(msg).join('-');
-                    logger.info('{gray: ----' + lineLength);
-                    logger.info('{err: } The following error is from the task', item.task.taskName);
-                    logger.info('{gray: ----' + lineLength);
-                }
-
-                if (!e) {
-                    e = new Error(`Error Message not provided for ${item.task.taskName}`);
-                    e._cbStack = [`Task: ${item.task.taskName}`, ` msg: No message was provided`].join('\n');
-                }
-
-                if (typeof e === 'string') {
-                    const msg = e;
-                    e = new Error(e);
-                    e._cbStack = [`Task: ${item.task.taskName}`, ` msg: ${msg}`].join('\n');
-                }
-
                 const errorReport = getTaskReport('error', item, getErrorStats(stats, e));
                 debug(`x seqUID ${item.seqUID} errored`);
                 outerObserver.onNext(errorReport);
-                errored = true;
-
-                return Rx.Observable.empty();
+                outerObserver.onError(e);
+                return Rx.Observable.never();
             })
             .subscribe(function () {
                 // todo: What to do with tasks that produce vales through given observer.onNext()?
             }, error => {
-                debug(`x seqUID ${item.seqUID} errored`);
-                const errorReport = getTaskReport('error', item, getErrorStats(stats, error));
-                if (trigger.config.fail === true) {
-                    outerObserver.onNext(errorReport);
-                    outerObserver.onCompleted();
-                } else {
-                    debug('Reporting error but continuing as exitOnError === false');
-                    if (error._cbStack) {
-                        console.log(error._cbStack);
-                    } else {
-                        if (error.stack) {
-                            console.log(error.stack)
-                        } else {
-                            console.log(error);
-                        }
-                    }
-                    outerObserver.onNext(errorReport);
-                    outerObserver.onCompleted();
-                }
+                // NEVER GUNNA GET HERE
             }, _ => {
-                if (!errored) {
-                    debug(`✔ seqUID ${item.seqUID} completed`);
-                    outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
-                }
+                debug(`✔ seqUID ${item.seqUID} completed`);
+                outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
                 outerObserver.onCompleted();
             });
     });
