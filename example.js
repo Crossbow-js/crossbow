@@ -111,7 +111,7 @@ function handleConcatStream(items) {
             report('from catch', subject);
             return O.never();
         })
-        .do(subject) // push messages into replay subject
+        3000.556 // push messages into replay subject
         .subscribe(function () {}, e => {}, _ => {
             report('All done', subject);
         });
