@@ -16,6 +16,12 @@ export interface TaskRunner {
     runner: Runner
 }
 
+export interface TaskErrorStats {
+    endTime: number
+    completed: boolean
+    errors: Error[]
+}
+
 export interface TaskStats {
     startTime: number
     endTime: number
@@ -25,10 +31,17 @@ export interface TaskStats {
     errors: Error[]
 }
 
-export interface TaskReport {
+export interface Report {
     item: SequenceItem
-    stats: TaskStats
     type: string
+}
+
+export interface TaskReport extends Report {
+    stats: TaskStats
+}
+
+export interface TaskErrorReport extends Report {
+    stats: TaskErrorStats
 }
 
 /**
@@ -89,25 +102,11 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             return observer.onCompleted();
         }
 
-        // getInnerTaskRunnerAsObservable(item, trigger)
-        //     .catch(function (e) {
-        //         const errorReport = getTaskReport('error', item, getErrorStats(stats, e));
-        //         debug(`x seqUID ${item.seqUID} errored`);
-        //         outerObserver.onNext(errorReport);
-        //         outerObserver.onError(e);
-        //         return Rx.Observable.empty();
-        //     })
-        //     .subscribe(function () {
-        //         // todo: What to do with tasks that produce vales through given observer.onNext()?
-        //     }, error => {
-        //         // NEVER GUNNA GET HERE
-        //     }, _ => {
-        //         debug(`✔ seqUID ${item.seqUID} completed`);
-        //         outerObserver.onNext(getTaskReport('end', item, getEndStats(stats)));
-        //         outerObserver.onCompleted();
-        //     });
-    }).catch(x => {
-        return Rx.Observable.concat(Rx.Observable.just({type: 'error', item: item, error: x}), Rx.Observable.throw(x));
+    }).catch(error => {
+        return Rx.Observable.concat(
+            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error))),
+            Rx.Observable.throw(error)
+        );
     });
 }
 
@@ -116,16 +115,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
  */
 function getTaskReport(type: string, item: SequenceItem, stats: TaskStats): TaskReport {
     return {type, item, stats};
-}
-
-function getErrorStats (stats, e) {
-    const now = new Date().getTime();
-    return assign({}, stats, {
-        endTime: now,
-        duration: now - stats.startTime,
-        completed: false,
-        errors: [e]
-    });
 }
 
 /**
@@ -152,4 +141,23 @@ function getEndStats(stats: TaskStats) {
         duration: now - stats.startTime,
         completed: true
     })
+}
+
+/**
+ * Factory for TaskReports that errored
+ */
+function getTaskErrorReport(item: SequenceItem, stats: TaskErrorStats): TaskErrorReport {
+    return {type: 'error', item, stats};
+}
+
+/**
+ * Get basic stats for a task error
+ */
+function getErrorStats (error: Error): TaskErrorStats {
+    const now = new Date().getTime();
+    return {
+        endTime: now,
+        completed: false,
+        errors: [error]
+    }
 }

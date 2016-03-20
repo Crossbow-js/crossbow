@@ -17,11 +17,9 @@ module.exports = {
     tasks: {
         buildall: ['js', 'css'],
         js: [
-            'test/fixtures/tasks/simple.js',
-            'test/fixtures/tasks/simple.js',
             'test/fixtures/tasks/simple.js'
         ],
-        css: ['test/fixtures/tasks/observable.js']
+        css: ['test/fixtures/tasks/simple.multi.js']
     },
     config: {
         css: {

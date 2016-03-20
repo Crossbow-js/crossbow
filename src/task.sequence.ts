@@ -224,7 +224,7 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             const flattened = flatten(items, [], true);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
-                .mergeDelayError()
+                .mergeAll()
                 // .catch(function () {
                 //     subject.onCompleted();
                 //     return Rx.Observable.empty();
@@ -321,9 +321,9 @@ function getMergedStats (id, reports) {
     const match = reports.filter((x: TaskReport) => {
         return x.item.seqUID === id;
     });
-    console.log(match);
+    console.log('--match',match);
     // console.log('oh now');
-    // throw new Error('Some bad ting happedned');
+    // throw new Error('Some bad ting happenez');
     // if (match.l)
     // console.log('--match', match);
     // if (match.length === 1) {
