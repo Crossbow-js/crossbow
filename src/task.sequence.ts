@@ -209,20 +209,26 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .concatAll()
+                .catch(x =>{
+                    subject.onCompleted();
+                    return Rx.Observable.empty();
+                })
                 /**
                  * Push any messages into the subject
                  */
                 .do(subject)
-                .subscribe(x=>{}, e=>{}, _=> {
-                    console.log('\nINTERNAL::::All done');
-                });
+                .subscribe();
             return subject;
         },
         parallel: () => {
             const flattened = flatten(items, [], true);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
-                .mergeAll()
+                .mergeDelayError()
+                // .catch(function () {
+                //     subject.onCompleted();
+                //     return Rx.Observable.empty();
+                // })
                 .do(subject)
                 .subscribe(x => {}, e=>{}, _=> {
                     console.log('All done');
@@ -295,30 +301,36 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
  * @param reports
  * @returns {*}
  */
-export function decorateCompletedSequenceItems (sequence: SequenceItem[], reports: TaskReport[]) {
-    return getAll(sequence, []);
-    function getAll (items, initial) {
-        return items.reduce(function (acc, item) {
-            const i: SequenceItem = assign({}, item);
+export function decorateCompletedSequenceItemsWithReports (sequence: SequenceItem[], reports: TaskReport[]) {
+    addMany(sequence);
+    function addMany(sequence) {
+        sequence.forEach(function (item) {
             if (item.type === SequenceItemTypes.Task) {
-                i.stats = getMergedStats(item.seqUID);
-                return acc.concat(i);
+                console.log(SequenceItemTypes[item.type]);
+                getMergedStats(item.seqUID, reports);
             } else {
-                i.items = getAll(item.items, []);
-                return acc.concat(i);
+                console.log(SequenceItemTypes[item.type]);
+                addMany(item.items);
             }
-        }, initial);
+        })
     }
-    function getMergedStats (id) {
-        const match = reports.filter((x: TaskReport) => {
-            return x.item.seqUID === id;
-        });
-        if (match.length === 1) {
-            return match[0].stats;
-        } else {
-            const start = match.filter(x => x.type === 'start')[0];
-            const end = match.filter(x => x.type === 'end' || x.type === 'error')[0];
-            return assign({}, start.stats, end ? end.stats : {});
-        }
-    }
+}
+
+function getMergedStats (id, reports) {
+    console.log('--called');
+    const match = reports.filter((x: TaskReport) => {
+        return x.item.seqUID === id;
+    });
+    console.log(match);
+    // console.log('oh now');
+    // throw new Error('Some bad ting happedned');
+    // if (match.l)
+    // console.log('--match', match);
+    // if (match.length === 1) {
+    //     return match[0].stats;
+    // } else {
+    //     const start = match.filter(x => x.type === 'start')[0];
+    //     const end = match.filter(x => x.type === 'end' || x.type === 'error')[0];
+    //     return assign({}, start.stats, end ? end.stats : {});
+    // }
 }

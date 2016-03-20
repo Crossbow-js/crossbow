@@ -8,7 +8,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {TaskReport} from "./task.runner";
-import {createRunner, createFlattenedSequence, decorateCompletedSequenceItems} from './task.sequence';
+import {createRunner, createFlattenedSequence, decorateCompletedSequenceItemsWithReports} from './task.sequence';
 import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
@@ -87,7 +87,21 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * If we've reached this point, we're going to handle running
      * the tasks! We use the `config.runMode` flag to select a top-level
      * parallel or series runner
-     */        
+     */
+    runner[config.runMode]
+        .call()
+        .toArray()
+        .subscribe((reports: TaskReport[]) => {
+            // console.log(reports.map(x => x.type));
+            const decoratedSequence = decorateCompletedSequenceItemsWithReports(sequence, reports);
+            // console.log(reports);
+            // reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
+        }, e => {
+            // never gunna get here baby
+        }, _ => {
+            debug('All tasks finished');
+        })
+
 }
 
 export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {

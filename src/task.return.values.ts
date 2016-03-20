@@ -52,7 +52,7 @@ function handleNodeStream(output, obs) {
         }, function (err) {
             obs.onError(err);
         }, function () {
-            obs.onCompleted();
+            obs.done();
         });
 }
 
@@ -64,7 +64,7 @@ function handlePromise(output, obs) {
         }, e => {
             obs.onError(e);
         }, () => {
-            obs.onCompleted();
+            obs.done();
         });
 }
 
@@ -75,7 +75,7 @@ function handleObs (output, obs) {
         }, e => {
             obs.onError(e);
         }, () => {
-            obs.onCompleted();
+            obs.done();
         });
 }
 
@@ -85,5 +85,5 @@ function handleEventEmitter (output, obs) {
         .subscribe();
 
     o.onError(x => obs.onError(x));
-    o.onCompleted(x => obs.onCompleted(x));
+    o.onCompleted(x => obs.done());
 }
