@@ -12,7 +12,7 @@ describe('Running in series', function () {
                 return {type: x.type, seqUID: x.item.seqUID};
             })
             .subscribe(function (report) {
-                console.log('>', report);
+                // console.log('>', report);
             }, function () {
                 // errors
             }, function () {

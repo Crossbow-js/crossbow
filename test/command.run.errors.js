@@ -30,7 +30,6 @@ describe.skip('Running with task stats', function () {
     });
     it.skip('does not continue running sibling tasks when one fails', function (done) {
         const runner = cli.runner(['test/fixtures/tasks/error.js', '@npm sleep 0']);
-        console.log(runner.sequence.length);
         // runner.series()
         //     .catch(x => Rx.Observable.empty())
         //     .toArray()
@@ -58,7 +57,6 @@ describe.skip('Running with task stats', function () {
         tasks$
             .toArray()
             .subscribe(trs => {
-                console.log(state.getValue());
                 //console.log(trs);
                 //assert.equal(trs[0].type, 'start');
                 //assert.equal(trs[1].type, 'start');

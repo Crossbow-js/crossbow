@@ -204,6 +204,7 @@ function getFunctionName (fn: TaskFactory, count = 0) {
 export function createRunner (items: SequenceItem[], trigger: CommandTrigger): Runner  {
 
     return {
+        sequence: items,
         series: () => {
             const flattened = flatten(items, []);
             const subject = new Rx.ReplaySubject(2000);
@@ -302,35 +303,41 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
  * @returns {*}
  */
 export function decorateCompletedSequenceItemsWithReports (sequence: SequenceItem[], reports: TaskReport[]) {
-    addMany(sequence);
-    function addMany(sequence) {
-        sequence.forEach(function (item) {
+    return addMany(sequence, []);
+    function addMany(sequence, initial) {
+        return sequence.reduce(function (all, item) {
+            const c = assign({}, item);
             if (item.type === SequenceItemTypes.Task) {
-                console.log(SequenceItemTypes[item.type]);
-                getMergedStats(item.seqUID, reports);
+                c.stats = getMergedStats(item, reports);
+                return all.concat(c);
             } else {
-                console.log(SequenceItemTypes[item.type]);
-                addMany(item.items);
+                c.items = addMany(item.items, []);
+                return all.concat(c);
             }
-        })
+        }, initial);
     }
 }
 
-function getMergedStats (id, reports) {
-    console.log('--called');
+function getMergedStats (item, reports) {
+    // console.log('--called');
     const match = reports.filter((x: TaskReport) => {
-        return x.item.seqUID === id;
+        return x.item.seqUID === item.seqUID;
     });
-    console.log('--match',match);
-    // console.log('oh now');
-    // throw new Error('Some bad ting happenez');
-    // if (match.l)
-    // console.log('--match', match);
-    // if (match.length === 1) {
-    //     return match[0].stats;
-    // } else {
-    //     const start = match.filter(x => x.type === 'start')[0];
-    //     const end = match.filter(x => x.type === 'end' || x.type === 'error')[0];
-    //     return assign({}, start.stats, end ? end.stats : {});
-    // }
+    const start = match.filter(x => x.type === 'start')[0];
+    const end   = match.filter(x => x.type === 'end')[0];
+    const error = match.filter(x => x.type === 'error')[0];
+
+    if (start && end) {
+        return assign({}, start.stats, end.stats, {type: 'complete'});
+    }
+
+    if (start && error) {
+        return assign({}, start.stats, error.stats);
+    }
+
+    if (start) {
+        return assign({}, start.stats, {type: 'not-completed'});
+    }
+
+    return {type: 'not-started', item: item};
 }
