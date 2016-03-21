@@ -13,10 +13,10 @@ import {WatchTrigger} from "./command.watch";
 import {CommandTrigger} from "./command.run";
 
 export enum TaskTypes {
-    Runnable,
-    Adaptor,
-    Group,
-    NpmScript
+    Runnable = <any>"Runnable",
+    Adaptor = <any>"Adaptor",
+    Group = <any>"Group",
+    NpmScript = <any>"NpmScript"
 }
 
 export interface Task {
@@ -52,10 +52,10 @@ const defaultTask = <Task>{
 };
 
 export enum TaskOriginTypes {
-    NpmScripts,
-    CrossbowConfig,
-    FileSystem,
-    Adaptor
+    CrossbowConfig = <any>"CrossbowConfig",
+    NpmScripts = <any>"NpmScripts",
+    FileSystem = <any>"FileSystem",
+    Adaptor = <any>"Adaptor"
 }
 
 export interface TasknameWithOrigin {

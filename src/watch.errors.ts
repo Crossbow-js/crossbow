@@ -2,7 +2,7 @@ import {CrossbowInput} from "./index";
 import {OutgoingWatchTask} from "./watch.preprocess";
 
 export enum WatchTaskErrorTypes {
-    WatchTaskNameNotFound
+    WatchTaskNameNotFound = <any>"WatchTaskNameNotFound"
 }
 
 export interface WatchTaskError {

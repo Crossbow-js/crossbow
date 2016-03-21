@@ -85,7 +85,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     /**
      * If we've reached this point, we're going to handle running
-     * the tasks! We use the `config.runMode` flag to select a top-level
+     * the tasks! This api should be exactly what we expect users
+     * to consume. We use the `config.runMode` flag to select a top-level
      * parallel or series runner
      */
     runner[config.runMode]

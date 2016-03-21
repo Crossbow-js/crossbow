@@ -71,7 +71,7 @@ function createOne (item, itemOptions, globalOptions) : Watcher {
                 watcherUID: watcherUID++
             };
         }
-        // todo: Add error handling for incorrect formats ie: user error
+        // todo: Add error handling for incorrect watcher formats ie: user syntax error
     }
     return item;
 }

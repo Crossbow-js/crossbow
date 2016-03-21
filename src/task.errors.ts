@@ -3,14 +3,14 @@ import {CrossbowInput} from "./index";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
-    ModuleNotFound,
-    SubtasksNotInConfig,
-    SubtaskNotProvided,
-    SubtaskNotFound,
-    SubtaskWildcardNotAvailable,
-    AdaptorNotFound,
-    FlagNotFound,
-    FlagNotProvided
+    ModuleNotFound = <any>"ModuleNotFound",
+    SubtasksNotInConfig = <any>"SubtasksNotInConfig",
+    SubtaskNotProvided = <any>"SubtaskNotProvided",
+    SubtaskNotFound = <any>"SubtaskNotFound",
+    SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
+    AdaptorNotFound = <any>"AdaptorNotFound",
+    FlagNotFound = <any>"FlagNotFound",
+    FlagNotProvided = <any>"FlagNotProvided"
 }
 
 export interface TaskError {

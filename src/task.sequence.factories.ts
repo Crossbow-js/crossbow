@@ -5,13 +5,12 @@ import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
 import {Runner} from "./runner";
-import Seq = Immutable.Seq;
 import {TaskStats} from "./task.runner";
 
 export enum SequenceItemTypes {
-    SeriesGroup,
-    ParallelGroup,
-    Task
+    SeriesGroup   = <any>"SeriesGroup",
+    ParallelGroup = <any>"ParallelGroup",
+    Task          = <any>"Task"
 }
 
 export interface SequenceItem {
