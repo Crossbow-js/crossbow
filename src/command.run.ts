@@ -91,12 +91,25 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     runner[config.runMode]
         .call()
+        .filter(x => {
+            return typeof x.type === 'string';
+        })
+        .do(x => {
+            // todo - provide per-task logging
+            if (x.type === 'start') {
+                // console.log('Starting');
+            }
+            if (x.type === 'end') {
+                // console.log('Starting');
+            }
+            if (x.type === 'error') {
+                // console.log('Starting');
+            }
+        })
         .toArray()
         .subscribe((reports: TaskReport[]) => {
-            // console.log(reports.map(x => x.type));
             const decoratedSequence = decorateCompletedSequenceItemsWithReports(sequence, reports);
-            // console.log(reports);
-            // reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
+            reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
         }, e => {
             // never gunna get here baby
         }, _ => {

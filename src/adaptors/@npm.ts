@@ -114,6 +114,7 @@ export default function (task: Task, trigger: RunCommandTrigger) {
         });
 
         emitter.on('close', function (code) {
+            // todo: Make pretty errors that originate from child processes
             if (code !== 0) {
                 const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
                 return observer.onError(e);

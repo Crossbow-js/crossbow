@@ -22,6 +22,7 @@ import {CommandTrigger} from "../command.run";
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
+const objPath = require('object-path');
 
 function nl () {
     l(`{gray:-}`);
@@ -251,7 +252,11 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
                 if (stats.errors.length) {
-                    label = `{red:x} ${label} {yellow:(${stats.duration}ms)}`;
+                    label = [
+                        `{red:x} ${label} {yellow:(${stats.duration}ms)}`,
+                        `{red.bold:${stats.errors[0].stack.split('\n').slice(0,1)}}`,
+                        `${stats.errors[0].stack.split('\n').slice(1).join('\n')}`
+                    ].join('\n');
                 } else {
                     if (stats.started) {
                         if (stats.completed) {
@@ -407,11 +412,11 @@ function getLabel (task) {
 function countErrors (items: SequenceItem[]) {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
-            if (item.stats && item.stats.errors.length) {
+            const errors = objPath.get(item, 'stats.errors', []);
+            if (errors.length) {
                 return acc + 1;
-            } else {
-                return acc;
             }
+            return acc;
         }
         return acc + countErrors(item.items);
     }, 0);

@@ -226,13 +226,10 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .mergeAll()
-                // .catch(function () {
-                //     subject.onCompleted();
-                //     return Rx.Observable.empty();
-                // })
                 .do(subject)
                 .subscribe(x => {}, e=>{}, _=> {
-                    console.log('All done');
+                    subject.onCompleted();
+                    // debug('Parallel sequence complete');
                 });
             return subject;
         }
@@ -339,5 +336,5 @@ function getMergedStats (item, reports) {
         return assign({}, start.stats, {type: 'not-completed'});
     }
 
-    return {type: 'not-started', item: item};
+    return {type: 'not-started', item: item, errors: []};
 }
