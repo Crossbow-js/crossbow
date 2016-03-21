@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const cli = require("../");
-const types = require("../dist/task.sequence.factories").types;
+const types = require("../dist/task.sequence.factories").SequenceItemTypes;
 const logerrors = require("../dist/reporters/defaultReporter").logErrors;
 
 function handoff(cmd, input, cb) {
@@ -34,7 +34,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        assert.equal(runner.sequence[0].type, 0);
+        assert.equal(runner.sequence[0].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 4);
         assert.equal(runner.sequence[0].items[0].config.name, 'shane');
         assert.equal(runner.sequence[0].items[1].config.name, 'shane');
@@ -61,7 +61,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
         assert.equal(runner.sequence[0].items.length, 2);
-        assert.equal(runner.sequence[0].items[0].type, 0);
+        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items[0].items.length, 4);
         assert.equal(runner.sequence[0].items[1].items.length, 2);
     });

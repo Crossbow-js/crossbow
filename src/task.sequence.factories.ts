@@ -1,10 +1,7 @@
-import {transformStrings} from "./task.utils";
 const assign = require('object-assign');
 
-import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
 import {RunCommandTrigger} from "./command.run";
-import {Runner} from "./runner";
 import {TaskStats} from "./task.runner";
 
 export enum SequenceItemTypes {

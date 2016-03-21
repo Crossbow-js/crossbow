@@ -5,7 +5,7 @@ const errorTypes = require('../dist/task.errors').TaskErrorTypes;
 describe('Gathering run tasks with errors', function () {
     it('reports single missing module', function () {
     	const runner = cli.getRunner(['list']);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, 0);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
     });
     it('reports multiple missing modules', function () {
     	const runner = cli.getRunner(['list', 'otheraswell']);
