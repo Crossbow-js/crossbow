@@ -48,9 +48,6 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
                 l(`{red:x} input: {yellow:${input}} caused an error`);
             }
         });
-        if (config.summary !== 'verbose') {
-            l(`  (use the -v flag for more information)`);
-        }
         nl();
         if (config.fail) {
             l(`{red:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
@@ -244,6 +241,11 @@ export interface CrossbowError extends Error{
 }
 
 function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string {
+
+    if (!err.stack) {
+        console.log(err.toString());
+        return err;
+    }
     const head = [
         `{red:x} ${sequenceLabel} {yellow:(${stats.duration}ms)}`,
         `{red.bold:${err.stack.split('\n').slice(0,1)}}`
