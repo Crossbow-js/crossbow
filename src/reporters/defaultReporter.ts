@@ -32,7 +32,8 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
 
     const errorCount = countErrors(sequence);
 
-    if (config.summary === 'verbose') {
+    // todo - show a reduced tree showing only errors
+    if (config.summary === 'verbose' || errorCount > 0) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         nl();
         reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
