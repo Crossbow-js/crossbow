@@ -239,6 +239,20 @@ export function reportNoWatchTasksProvided() {
     l("You didn't provide a watch-task to run");
     l("{gray:-------------------------------------------------------------");
 }
+export interface CrossbowError extends Error{
+    _cbError?: boolean
+}
+
+function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string {
+    const head = [
+        `{red:x} ${sequenceLabel} {yellow:(${stats.duration}ms)}`,
+        `{red.bold:${err.stack.split('\n').slice(0,1)}}`
+    ];
+    const body = err._cbError ? [] : err.stack.split('\n').slice(1);
+    const tail = [`- Please see above for any output that occured`];
+
+    return [...head, ...body, ...tail].join('\n');
+}
 
 export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
@@ -253,11 +267,8 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
                 if (stats.errors.length) {
-                    label = [
-                        `{red:x} ${label} {yellow:(${stats.duration}ms)}`,
-                        `{red.bold:${stats.errors[0].stack.split('\n').slice(0,1)}}`,
-                        `${stats.errors[0].stack.split('\n').slice(1).join('\n')}`
-                    ].join('\n');
+                    const err = stats.errors[0];
+                    label = getErrorText(label, stats, err);
                 } else {
                     if (stats.started) {
                         if (stats.completed) {

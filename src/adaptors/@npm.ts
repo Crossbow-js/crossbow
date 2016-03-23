@@ -9,6 +9,7 @@ const assign       = require('object-assign');
 
 import {transformStrings} from '../task.utils';
 import {join} from "path";
+import {CrossbowError} from "../reporters/defaultReporter";
 
 var sh             = 'sh';
 var shFlag         = '-c';
@@ -116,7 +117,8 @@ export default function (task: Task, trigger: RunCommandTrigger) {
         emitter.on('close', function (code) {
             // todo: Make pretty errors that originate from child processes
             if (code !== 0) {
-                const e = new Error(`Command ${commandArgs.cmd.join(' ')} failed with exit code ${code}`);
+                const e: CrossbowError = new Error(`Command '${commandArgs.cmd.slice(1).join(' ')}' failed with exit code ${code}`);
+                e._cbError = true;
                 return observer.onError(e);
             }
             observer.done();
