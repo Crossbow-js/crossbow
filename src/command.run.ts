@@ -9,7 +9,7 @@ import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {TaskReport} from "./task.runner";
 import {createRunner, createFlattenedSequence, decorateCompletedSequenceItemsWithReports} from './task.sequence';
-import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided} from './reporters/defaultReporter';
+import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided, taskReport} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
@@ -94,17 +94,9 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         .filter(x => {
             return typeof x.type === 'string';
         })
-        .do(x => {
+        .do((x: TaskReport) => {
             // todo - provide per-task logging
-            if (x.type === 'start') {
-                // console.log('Starting');
-            }
-            if (x.type === 'end') {
-                // console.log('Starting');
-            }
-            if (x.type === 'error') {
-                // console.log('Starting');
-            }
+            taskReport(x);
         })
         .toArray()
         .subscribe((reports: TaskReport[]) => {

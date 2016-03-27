@@ -18,6 +18,7 @@ import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {WatchTrigger} from "../command.watch";
 import {CommandTrigger} from "../command.run";
+import {TaskReport, TaskReportType} from "../task.runner";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -57,6 +58,20 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
     } else {
         nl();
         l('{ok: } Total: {yellow:%sms}', runtime);
+    }
+}
+
+export function taskReport(report: TaskReport) {
+    switch(report.type) {
+        case TaskReportType.start:
+            l(`{yellow:+} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            break;
+        case TaskReportType.end:
+            l(`{green:✔} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            break;
+        case TaskReportType.error:
+            l(`{red:x} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            break;
     }
 }
 
@@ -264,7 +279,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
 
     function getItems (items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
-            let label = getSequenceLabel(item, config);
+            let label = getSequenceLabel(item);
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
                 if (stats.errors.length) {
@@ -291,7 +306,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     }
 }
 
-function getSequenceLabel (item: SequenceItem, config: CrossbowConfiguration) {
+function getSequenceLabel (item: SequenceItem) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {

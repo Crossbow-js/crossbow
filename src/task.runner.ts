@@ -33,7 +33,13 @@ export interface TaskStats {
 
 export interface Report {
     item: SequenceItem
-    type: string
+    type: TaskReportType
+}
+
+export enum TaskReportType {
+    start = <any>"start",
+    end = <any>"end",
+    error = <any>"error"
 }
 
 export interface TaskReport extends Report {
@@ -55,10 +61,10 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         debug(`> seqUID ${item.seqUID} started`);
 
-        observer.onNext(getTaskReport('start', item, stats));
+        observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         observer.done = function () {
-            observer.onNext(getTaskReport('end', item, getEndStats(stats)));
+            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
             observer.onCompleted();
         };
 
@@ -113,7 +119,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 /**
  * Factory for TaskReports
  */
-function getTaskReport(type: string, item: SequenceItem, stats: TaskStats): TaskReport {
+function getTaskReport(type: TaskReportType, item: SequenceItem, stats: TaskStats): TaskReport {
     return {type, item, stats};
 }
 
@@ -147,7 +153,7 @@ function getEndStats(stats: TaskStats) {
  * Factory for TaskReports that errored
  */
 function getTaskErrorReport(item: SequenceItem, stats: TaskErrorStats): TaskErrorReport {
-    return {type: 'error', item, stats};
+    return {type: TaskReportType.error, item, stats};
 }
 
 /**
