@@ -243,8 +243,7 @@ export interface CrossbowError extends Error{
 function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string {
 
     if (!err.stack) {
-        console.log(err.toString());
-        return err;
+        return err.toString();
     }
     const head = [
         `{red:x} ${sequenceLabel} {yellow:(${stats.duration}ms)}`,

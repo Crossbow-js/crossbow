@@ -1,6 +1,7 @@
 import {RunCommandTrigger} from "../command.run";
 import {getArgs, runCommand} from './@npm';
 import {Task} from "../task.resolve";
+import {CrossbowError} from "../reporters/defaultReporter";
 const debug = require('debug')('cb:@shell');
 
 module.exports = function (task: Task, trigger: RunCommandTrigger) {
@@ -22,7 +23,8 @@ module.exports = function (task: Task, trigger: RunCommandTrigger) {
 
         emitter.on('close', function (code) {
             if (code !== 0) {
-                const e = new Error(`Command ${args.cmd.join(' ')} failed with exit code ${code}`);
+                const e: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+                e._cbError = true;
                 return observer.onError(e);
             }
             observer.done();
