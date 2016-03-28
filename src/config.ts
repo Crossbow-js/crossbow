@@ -15,6 +15,7 @@ export interface CrossbowConfiguration {
     config: string|void
     interactive: boolean
     suppressOutput: boolean
+    progress: boolean
 }
 
 /**
@@ -42,7 +43,6 @@ const defaults = <CrossbowConfiguration>{
      * Force config file etc
      */
     strict: false,
-
     /**
      * Should logged errors produce a stack trace
      */
@@ -55,6 +55,10 @@ const defaults = <CrossbowConfiguration>{
      *
      */
     suppressOutput: false,
+    /**
+     * Log when tasks start/end
+     */
+    progress: false,
     /**
      * should the resolved workload be handed off
      * to the caller?

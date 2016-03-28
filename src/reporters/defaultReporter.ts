@@ -62,15 +62,16 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
 }
 
 export function taskReport(report: TaskReport) {
+    const label = getSequenceLabel(report.item);
     switch(report.type) {
         case TaskReportType.start:
-            l(`{yellow:+} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
             break;
         case TaskReportType.end:
-            l(`{green:✔} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            l(`{green:✔ [${report.item.seqUID}]} ${label}`);
             break;
         case TaskReportType.error:
-            l(`{red:x} [${report.item.seqUID}]: ${getSequenceLabel(report.item)}`);
+            l(`{red:x [${report.item.seqUID}]} ${label}`);
             break;
     }
 }
@@ -324,6 +325,9 @@ function getSequenceLabel (item: SequenceItem) {
         if (item.task.type === TaskTypes.Adaptor) {
             return adaptorLabel(item.task);
         }
+        if (item.task.modules.length) {
+            return moduleLabel(item.task);
+        }
         return item.task.taskName;
     }
     if (item.items.length === 1) {
@@ -399,8 +403,13 @@ function getExternalError (type, error, task) {
     ].join('\n');
 }
 
-function adaptorLabel (task) {
+function adaptorLabel (task: Task) {
     return `{magenta:[@${task.adaptor}]} {cyan:${task.command}}`;
+}
+
+function moduleLabel (task: Task) {
+    const filepath = relative(process.cwd(), task.modules[0]);
+    return `{cyan:${task.taskName} ${filepath}}`;
 }
 
 function npmScriptLabel(task:Task) {

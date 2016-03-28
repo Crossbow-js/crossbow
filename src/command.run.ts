@@ -96,7 +96,9 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         })
         .do((x: TaskReport) => {
             // todo - provide per-task logging
-            taskReport(x);
+            if (ctx.config.progress) {
+                taskReport(x);
+            }
         })
         .toArray()
         .subscribe((reports: TaskReport[]) => {
