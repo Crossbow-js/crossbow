@@ -95,7 +95,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             return typeof x.type === 'string';
         })
         .do((x: TaskReport) => {
-            // todo - provide per-task logging
             if (ctx.config.progress) {
                 taskReport(x);
             }

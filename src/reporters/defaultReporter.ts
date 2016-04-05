@@ -19,11 +19,11 @@ import {resolveTasks} from "../task.resolve";
 import {WatchTrigger} from "../command.watch";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
+import {countSequenceErrors} from "../task.sequence";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
-const objPath = require('object-path');
 
 function nl () {
     l(`{gray:-}`);
@@ -31,7 +31,7 @@ function nl () {
 
 export function reportSummary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
 
-    const errorCount = countErrors(sequence);
+    const errorCount = countSequenceErrors(sequence);
 
     // todo - show a reduced tree showing only errors
     if (config.summary === 'verbose' || errorCount > 0) {
@@ -44,7 +44,7 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
         nl();
         cli.input.slice(1).forEach(function (input) {
             const match = getSequenceItemThatMatchesCliInput(sequence, input);
-            const errors = countErrors(match);
+            const errors = countSequenceErrors(match);
             if (errors > 0) {
                 l(`{red:x} input: {yellow:${input}} caused an error`);
             }
@@ -68,7 +68,7 @@ export function taskReport(report: TaskReport) {
             l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
             break;
         case TaskReportType.end:
-            l(`{green:✔ [${report.item.seqUID}]} ${label}`);
+            l(`{green:✔ [${report.item.seqUID}]} ${label} {yellow:(${report.stats.duration}ms)}`);
             break;
         case TaskReportType.error:
             l(`{red:x [${report.item.seqUID}]} ${label}`);
@@ -95,11 +95,28 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix
 
     if (config.summary === 'verbose') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        nl()
+        nl();
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
     } else {
         l('{yellow:+} %s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
     }
+}
+
+export function reportBeforeTaskList (sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
+
+    l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.slice(1).join(', '));
+
+    if (config.summary === 'verbose') {
+        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+        nl();
+        reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
+        nl();
+    }
+}
+
+export function reportBeforeTasksDidNotComplete (error: Error) {
+    l('{red:x} %s', error.message);
+    l('{red:-} so none of the watchers started');
 }
 
 export function reportWatchers (watchTasks: WatchTask[], config: CrossbowConfiguration) {
@@ -444,17 +461,4 @@ function getLabel (task) {
     }
 
     return `${task.taskName}}`;
-}
-
-function countErrors (items: SequenceItem[]) {
-    return items.reduce((acc, item) => {
-        if (item.type === SequenceItemTypes.Task) {
-            const errors = objPath.get(item, 'stats.errors', []);
-            if (errors.length) {
-                return acc + 1;
-            }
-            return acc;
-        }
-        return acc + countErrors(item.items);
-    }, 0);
 }

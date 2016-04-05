@@ -1,16 +1,13 @@
-import {TaskStats} from "./task.runner";
 const objPath = require('object-path');
 const merge   = require('lodash.merge');
 const assign  = require('object-assign');
 const Rx      = require('rx');
 const Observable = Rx.Observable;
 
-import {transformStrings} from "./task.utils";
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
-import {RunCommandTrigger, CommandTrigger} from "./command.run";
+import {CommandTrigger} from "./command.run";
 import {Runner} from "./runner";
-import handleReturn from './task.return.values';
 import {
     SequenceItemTypes,
     SequenceItem,
@@ -22,7 +19,6 @@ import {
 
 import {createObservableFromSequenceItem} from "./task.runner";
 import {TaskReport} from "./task.runner";
-import {getStartStats} from "./task.runner";
 
 export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
@@ -313,6 +309,19 @@ export function decorateCompletedSequenceItemsWithReports (sequence: SequenceIte
             }
         }, initial);
     }
+}
+
+export function countSequenceErrors (items: SequenceItem[]) {
+    return items.reduce((acc, item) => {
+        if (item.type === SequenceItemTypes.Task) {
+            const errors = objPath.get(item, 'stats.errors', []);
+            if (errors.length) {
+                return acc + 1;
+            }
+            return acc;
+        }
+        return acc + countSequenceErrors(item.items);
+    }, 0);
 }
 
 function getMergedStats (item, reports) {

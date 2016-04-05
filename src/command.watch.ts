@@ -4,13 +4,19 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
 import {resolveTasks} from "./task.resolve";
 
-import {createFlattenedSequence, createRunner} from "./task.sequence";
+import {
+    createFlattenedSequence, createRunner, decorateCompletedSequenceItemsWithReports,
+    countSequenceErrors
+} from "./task.sequence";
 
 import {WatchTaskRunner} from "./watch.runner";
 import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 
 import * as reporter from './reporters/defaultReporter';
 import {Runner} from "./runner";
+import {TaskReport, TaskReportType} from "./task.runner";
+import {SequenceItem} from "./task.sequence.factories";
+import {TaskErrorTypes} from "./task.errors";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -117,74 +123,74 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
     const beforeRunner   = createRunner(beforeSequence, ctx);
+    
     /**
      * Report task list that's about to run
      */
-    reporter.reportTaskList(beforeSequence, cli, 'Before tasks for watcher:', config);
-    const before$ = beforeRunner.series().share();
+    reporter.reportBeforeTaskList(beforeSequence, cli, config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
      * @type {number}
      */
-    const timestamp = new Date().getTime();
+    const beforeTimestamp = new Date().getTime();
+    reporter.reportWatchers(watchTasks.valid, config);
 
-    before$.subscribeOnError(x => {
-        console.log('ERRROR');
-    });
+    interface Reports {
+        reports: TaskReport[]
+        decoratedSequence: SequenceItem[]
+    }
 
-    before$.subscribeOnCompleted(function () {
+    const before$ = beforeRunner
+        .series()
+        .filter(x => {
+            return typeof x.type === 'string';
+        })
+        .do((x: TaskReport) => {
+            if (ctx.config.progress) {
+                reporter.taskReport(x);
+            }
+        })
+        .toArray()
+        .map((reports: TaskReport[]) => {
+            return <Reports>{
+                reports,
+                decoratedSequence: decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
+            };
+        })
+        .do(function (incoming: Reports) {
+            reporter.reportSummary(incoming.decoratedSequence, cli, input, config, new Date().getTime() - beforeTimestamp);
+        })
+        .share();
 
-        reporter.reportSummary(beforeSequence, cli, input, config, new Date().getTime() - timestamp);
-        reporter.reportWatchers(watchTasks.valid, config);
-
-        runWatchers(runners.valid, ctx)
-            .subscribe((msg) => {
-                if (msg.type === 'begin') {
-                    reporter.reportTaskList2(msg.watchEvent.runner._sequence, msg.watchEvent.runner.tasks, ctx);
-                }
-                if (msg.type === 'end') {
-                    reporter.reportSummary(msg.watchEvent.runner._sequence, cli, input, config, msg.watchEvent.duration);
-                }
-            });
-    });
-}
-
-function runWatchers (runners, ctx): any {
-    const watchersAsObservables$ = getWatcherObservables(runners, ctx);
-    return Rx.Observable
-        .merge(watchersAsObservables$)
-        .debounce(200)
-        .flatMap((watchEvent: WatchEvent) => {
-            return createWatchRunner(watchEvent, ctx);
+    before$
+        .flatMap((incoming: Reports) => {
+            const errorCount = countSequenceErrors(incoming.decoratedSequence);
+            if (errorCount > 0) {
+                return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+            }
+            return runWatchers(runners.valid, ctx);
+        })
+        .filter(x => {
+            return typeof x.type === 'string';
+        })
+        .subscribe(x => {
+            reporter.taskReport(x); // always log start/end of tasks
+        }, error => {
+            reporter.reportBeforeTasksDidNotComplete(error);
+        }, () => {
+            // console.log('BEFORE TASKS WERE COMPLETED');
         });
 }
 
-function createWatchRunner (watchEvent: WatchEvent, ctx: CommandTrigger) {
-    return Rx.Observable.create(obs => {
-        const timestamp = new Date().getTime();
-        obs.onNext({type: 'begin', watchEvent});
-        watchEvent.runner._runner
-            .series()
-            .subscribe(x => {
-
-            }, e => {
-                if (e._cbStack) {
-                    console.log(e._cbStack);
-                } else {
-                    if (e.stack) {
-                        console.log(e.stack);
-                    } else {
-                        console.log(e);
-                    }
-                }
-            }, _ => {
-                //console.log('done', watchEvent.tasks);
-                watchEvent.duration = new Date().getTime() - timestamp;
-                obs.onNext({type: 'end', watchEvent});
-                obs.onCompleted();
-            });
-    });
+function runWatchers (runners: Watcher[], trigger: CommandTrigger): any {
+    const watchersAsObservables$ = getWatcherObservables(runners, trigger);
+    return Rx.Observable
+        .merge(watchersAsObservables$)
+        .debounce(500)
+        .flatMap((watchEvent: WatchEvent) => {
+            return watchEvent.runner._runner.series();
+        });
 }
 
 function getWatcherObservables (runners, ctx) {
