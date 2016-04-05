@@ -141,8 +141,9 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     }
 
     const before$ = beforeRunner
-        .series()
+        .series() // todo - should this support parallel run mode also?
         .filter(x => {
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
         .do((x: TaskReport) => {
@@ -151,8 +152,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             }
         })
         .toArray()
-        .map((reports: TaskReport[]) => {
-            return <Reports>{
+        .map((reports: TaskReport[]): Reports => {
+            return {
                 reports,
                 decoratedSequence: decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
             };
@@ -175,10 +176,11 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             return runWatchers(runners.valid, ctx);
         })
         .filter(x => {
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
         .subscribe(x => {
-            // todo - simpler/shorter format for task reports on wathchers
+            // todo - simpler/shorter format for task reports on watchers
             reporter.taskReport(x); // always log start/end of tasks
         }, error => {
             reporter.reportBeforeTasksDidNotComplete(error);
