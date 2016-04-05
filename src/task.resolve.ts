@@ -1,6 +1,7 @@
 import {AdaptorNotFoundError} from "./task.errors";
 const merge   = require('lodash.merge');
 const assign  = require('object-assign');
+const debug   = require('debug')('cb:task.resolve');
 
 import {TaskErrorTypes, TaskError, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
@@ -119,10 +120,13 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:Command
     incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
 
     /**
-     * Next resolve any child tasks, this is the core of how the recursive
+     * Resolve any child tasks if no modules were found, this is the core of how the recursive
      * alias's work
      */
-    incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+    // todo unit test this logic - or even better make it obsolete
+    if (!incoming.modules.length) {
+        incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+    }
 
     const errors = gatherTaskErrors(
         incoming,
@@ -164,7 +168,10 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
     return subject.items.map(item => {
         const flat  = createFlattenedTask(item, parents.concat(taskName), trigger);
         flat.origin = subject.origin;
-        flat.tasks  = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
+        // todo unit test this logic
+        if (!flat.modules.length) {
+            flat.tasks  = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
+        }
         return flat;
     });
 }
@@ -223,7 +230,11 @@ function createAdaptorTask (taskName, parents) : Task {
     };
 }
 
-
+/**
+ * @param taskName
+ * @param input
+ * @returns {any}
+ */
 function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWithOrigin {
 
     if (input.tasks[taskName] !== undefined) {
