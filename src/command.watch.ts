@@ -134,7 +134,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * @type {number}
      */
     const beforeTimestamp = new Date().getTime();
-    reporter.reportWatchers(watchTasks.valid, config);
 
     interface Reports {
         reports: TaskReport[]
@@ -159,11 +158,15 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             };
         })
         .do(function (incoming: Reports) {
-            reporter.reportSummary(incoming.decoratedSequence, cli, input, config, new Date().getTime() - beforeTimestamp);
+            reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', config, new Date().getTime() - beforeTimestamp);
         })
         .share();
 
     before$
+        .do(x => {
+            // todo nicer patterns/tasks output
+            reporter.reportWatchers(watchTasks.valid, config);
+        })
         .flatMap((incoming: Reports) => {
             const errorCount = countSequenceErrors(incoming.decoratedSequence);
             if (errorCount > 0) {
@@ -175,6 +178,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             return typeof x.type === 'string';
         })
         .subscribe(x => {
+            // todo - simpler/shorter format for task reports on wathchers
             reporter.taskReport(x); // always log start/end of tasks
         }, error => {
             reporter.reportBeforeTasksDidNotComplete(error);

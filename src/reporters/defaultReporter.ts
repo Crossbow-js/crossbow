@@ -29,7 +29,7 @@ function nl () {
     l(`{gray:-}`);
 }
 
-export function reportSummary (sequence: SequenceItem[], cli: Meow, input: CrossbowInput, config: CrossbowConfiguration, runtime: number) {
+export function reportSummary (sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
 
@@ -51,13 +51,13 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, input: Cross
         });
         nl();
         if (config.fail) {
-            l(`{red:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+            l(`{red:x} ${title} {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
         } else {
-            l(`{yellow:x} Total: {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+            l(`{yellow:x} ${title} {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
         }
     } else {
         nl();
-        l('{ok: } Total: {yellow:%sms}', runtime);
+        l(`{ok: } ${title} {yellow:%sms}`, runtime);
     }
 }
 

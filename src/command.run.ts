@@ -102,7 +102,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         .toArray()
         .subscribe((reports: TaskReport[]) => {
             const decoratedSequence = decorateCompletedSequenceItemsWithReports(sequence, reports);
-            reportSummary(decoratedSequence, cli, input, config, new Date().getTime() - timestamp);
+            reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
         }, e => {
             // never gunna get here baby
         }, _ => {
