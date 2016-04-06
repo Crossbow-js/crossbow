@@ -179,9 +179,12 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
-        .subscribe(x => {
+        .subscribe((x: TaskReport) => {
             // todo - simpler/shorter format for task reports on watchers
             reporter.taskReport(x); // always log start/end of tasks
+            if (x.type === TaskReportType.error) {
+                console.log(x.stats.errors[0].stack);
+            }
         }, error => {
             reporter.reportBeforeTasksDidNotComplete(error);
         }, () => {
