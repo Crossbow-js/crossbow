@@ -71,14 +71,14 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Get 'before' task list
      */
-    const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
+    // const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
 
-    debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
+    // debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
 
     /**
      * Now Resolve the before task names given in input.
      */
-    const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
+    // const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
 
     /**
      * Create runners for watch tasks;
@@ -92,7 +92,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
-        return {tasks: watchTasks, beforeTasks, runners};
+        return {tasks: watchTasks, runners};
     }
 
     debug(`Not handing off, will handle watching internally`);
@@ -108,10 +108,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
-    if (beforeTasks.invalid.length) {
-        reporter.reportBeforeWatchTaskErrors(watchTasks, ctx);
-        return;
-    }
+    // if (beforeTasks.invalid.length) {
+    //     reporter.reportBeforeWatchTaskErrors(watchTasks, ctx);
+    //     return;
+    // }
 
     /**
      * Never continue if any runners are invalid
@@ -121,13 +121,13 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-    const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
-    const beforeRunner   = createRunner(beforeSequence, ctx);
-    
+    // const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
+    // const beforeRunner   = createRunner(beforeSequence, ctx);
+
     /**
      * Report task list that's about to run
      */
-    reporter.reportBeforeTaskList(beforeSequence, cli, config);
+    // reporter.reportBeforeTaskList(beforeSequence, cli, config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -140,41 +140,31 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         decoratedSequence: SequenceItem[]
     }
 
-    const before$ = beforeRunner
-        .series() // todo - should this support parallel run mode also?
-        .filter(x => {
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            return typeof x.type === 'string';
-        })
-        .do((x: TaskReport) => {
-            if (ctx.config.progress) {
-                reporter.taskReport(x);
-            }
-        })
-        .toArray()
-        .map((reports: TaskReport[]): Reports => {
-            return {
-                reports,
-                decoratedSequence: decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
-            };
-        })
-        .do(function (incoming: Reports) {
-            reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', config, new Date().getTime() - beforeTimestamp);
-        })
-        .share();
+    // const before$ = beforeRunner
+    //     .series() // todo - should this support parallel run mode also?
+    //     .filter(x => {
+    //         // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+    //         return typeof x.type === 'string';
+    //     })
+    //     .do((tr: TaskReport) => {
+    //         if (ctx.config.progress) {
+    //             reporter.taskReport(tr);
+    //         }
+    //     })
+    //     .toArray()
+    //     .map((reports: TaskReport[]): Reports => {
+    //         return {
+    //             reports,
+    //             decoratedSequence: decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
+    //         };
+    //     })
+    //     .do(function (incoming: Reports) {
+    //         reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', config, new Date().getTime() - beforeTimestamp);
+    //     })
+    //     .share();
 
-    before$
-        .do(x => {
-            // todo nicer patterns/tasks output
-            reporter.reportWatchers(watchTasks.valid, config);
-        })
-        .flatMap((incoming: Reports) => {
-            const errorCount = countSequenceErrors(incoming.decoratedSequence);
-            if (errorCount > 0) {
-                return Rx.Observable.throw(new Error('Before tasks did not complete!'));
-            }
-            return runWatchers(runners.valid, ctx);
-        })
+    reporter.reportWatchers(watchTasks.valid, config);
+    runWatchers(runners.valid, ctx)
         .filter(x => {
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
@@ -190,6 +180,17 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         }, () => {
             // console.log('BEFORE TASKS WERE COMPLETED');
         });
+    // before$
+    //     .do(x => {
+    //         // todo nicer patterns/tasks output
+    //     })
+    //     .flatMap((incoming: Reports) => {
+    //         const errorCount = countSequenceErrors(incoming.decoratedSequence);
+    //         if (errorCount > 0) {
+    //             return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+    //         }
+    //         return ;
+    //     })
 }
 
 function runWatchers (runners: Watcher[], trigger: CommandTrigger): any {

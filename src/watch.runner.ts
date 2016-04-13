@@ -6,6 +6,6 @@ const debug = require('debug')('cb:watch.runner');
 
 export interface WatchTaskRunner {
     tasks: WatchTasks,
-    beforeTasks: Tasks
+    // beforeTasks: Tasks
     runners: WatchRunners
 }
