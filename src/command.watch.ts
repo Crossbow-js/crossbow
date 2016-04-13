@@ -4,10 +4,7 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
 import {resolveTasks} from "./task.resolve";
 
-import {
-    createFlattenedSequence, createRunner, decorateCompletedSequenceItemsWithReports,
-    countSequenceErrors
-} from "./task.sequence";
+import * as seq  from "./task.sequence";
 
 import {WatchTaskRunner} from "./watch.runner";
 import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
@@ -69,18 +66,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     debug(`${watchTasks.invalid.length} invalid task(s)`);
 
     /**
-     * Get 'before' task list
-     */
-    // const beforeTasksAsCliInput = resolveBeforeTasks(ctx.input, watchTasks.valid);
-
-    // debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
-
-    /**
-     * Now Resolve the before task names given in input.
-     */
-    // const beforeTasks = resolveTasks(beforeTasksAsCliInput, ctx);
-
-    /**
      * Create runners for watch tasks;
      */
     const runners = createRunners(watchTasks, ctx);
@@ -108,10 +93,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
-    // if (beforeTasks.invalid.length) {
-    //     reporter.reportBeforeWatchTaskErrors(watchTasks, ctx);
-    //     return;
-    // }
+    const beforeRunner = getBeforeTaskRunner(cli, ctx, watchTasks);
 
     /**
      * Never continue if any runners are invalid
@@ -121,13 +103,60 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-    // const beforeSequence = createFlattenedSequence(beforeTasks.valid, ctx);
-    // const beforeRunner   = createRunner(beforeSequence, ctx);
+    Rx.Observable.concat(
+        beforeRunner.do(() => reporter.reportWatchers(watchTasks.valid, config)),
+        runWatchers(runners.valid, ctx)
+            .filter(x => {
+                // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+                return typeof x.type === 'string';
+            })
+            .do((x: TaskReport) => {
+                // todo - simpler/shorter format for task reports on watchers
+                reporter.taskReport(x); // always log start/end of tasks
+                if (x.type === TaskReportType.error) {
+                    console.log(x.stats.errors[0].stack);
+                }
+            })).subscribe(x => {
+                // console.log('value', x);
+            }, error => {
+                reporter.reportBeforeTasksDidNotComplete(error);
+            }, () => {
+                // console.log('BEFORE TASKS WERE COMPLETED');
+            })
+
+}
+
+function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks) {
+    /**
+     * Get 'before' task list
+     */
+    const beforeTasksAsCliInput = resolveBeforeTasks(trigger.input, watchTasks.valid);
+
+    if (!beforeTasksAsCliInput.length) {
+        return Rx.Observable.just(true);
+    }
+
+    // console.log(beforeTasksAsCliInput);
+
+    debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
+
+    /**
+     * Now Resolve the before task names given in input.
+     */
+    const beforeTasks = resolveTasks(beforeTasksAsCliInput, trigger);
+
+    if (beforeTasks.invalid.length) {
+        reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
+        return Rx.Observable.throw(new Error('Before task resolution failed'));
+    }
+
+    const beforeSequence = seq.createFlattenedSequence(beforeTasks.valid, trigger);
+    const beforeRunner   = seq.createRunner(beforeSequence, trigger);
 
     /**
      * Report task list that's about to run
      */
-    // reporter.reportBeforeTaskList(beforeSequence, cli, config);
+    reporter.reportBeforeTaskList(beforeSequence, cli, trigger.config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -140,57 +169,36 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         decoratedSequence: SequenceItem[]
     }
 
-    // const before$ = beforeRunner
-    //     .series() // todo - should this support parallel run mode also?
-    //     .filter(x => {
-    //         // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-    //         return typeof x.type === 'string';
-    //     })
-    //     .do((tr: TaskReport) => {
-    //         if (ctx.config.progress) {
-    //             reporter.taskReport(tr);
-    //         }
-    //     })
-    //     .toArray()
-    //     .map((reports: TaskReport[]): Reports => {
-    //         return {
-    //             reports,
-    //             decoratedSequence: decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
-    //         };
-    //     })
-    //     .do(function (incoming: Reports) {
-    //         reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', config, new Date().getTime() - beforeTimestamp);
-    //     })
-    //     .share();
-
-    reporter.reportWatchers(watchTasks.valid, config);
-    runWatchers(runners.valid, ctx)
+    return beforeRunner
+        .series() // todo - should this support parallel run mode also?
         .filter(x => {
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
-        .subscribe((x: TaskReport) => {
-            // todo - simpler/shorter format for task reports on watchers
-            reporter.taskReport(x); // always log start/end of tasks
-            if (x.type === TaskReportType.error) {
-                console.log(x.stats.errors[0].stack);
+        .do((tr: TaskReport) => {
+            if (trigger.config.progress) {
+                reporter.taskReport(tr);
             }
-        }, error => {
-            reporter.reportBeforeTasksDidNotComplete(error);
-        }, () => {
-            // console.log('BEFORE TASKS WERE COMPLETED');
-        });
-    // before$
-    //     .do(x => {
-    //         // todo nicer patterns/tasks output
-    //     })
-    //     .flatMap((incoming: Reports) => {
-    //         const errorCount = countSequenceErrors(incoming.decoratedSequence);
-    //         if (errorCount > 0) {
-    //             return Rx.Observable.throw(new Error('Before tasks did not complete!'));
-    //         }
-    //         return ;
-    //     })
+        })
+        .toArray()
+        .map((reports: TaskReport[]): Reports => {
+            return {
+                reports,
+                decoratedSequence: seq.decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
+            };
+        })
+        .flatMap((incoming: Reports) => {
+            const errorCount = seq.countSequenceErrors(incoming.decoratedSequence);
+            if (errorCount > 0) {
+                return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+            }
+            return Rx.Observable.just(incoming);
+        })
+        .do(function (incoming: Reports) {
+            reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', trigger.config, new Date().getTime() - beforeTimestamp);
+        })
+        .share();
+
 }
 
 function runWatchers (runners: Watcher[], trigger: CommandTrigger): any {
@@ -293,8 +301,8 @@ function createRunners (watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunne
                 return subject;
             }
 
-            subject._sequence = createFlattenedSequence(tasks.valid, ctx);
-            subject._runner   = createRunner(subject._sequence, ctx);
+            subject._sequence = seq.createFlattenedSequence(tasks.valid, ctx);
+            subject._runner   = seq.createRunner(subject._sequence, ctx);
 
             return subject;
         }));
@@ -346,5 +354,6 @@ export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, con
             return;
         }
     }
+
     return execute(cli, input, config);
 }
