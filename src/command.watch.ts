@@ -90,10 +90,18 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
+    const tracker = new Rx.Subject();
+    const tracker$ = tracker
+        .filter(x => {
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+            return typeof x.type === 'string';
+        })
+        .share();
+
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
-    const beforeRunner = getBeforeTaskRunner(cli, ctx, watchTasks);
+    const beforeRunner = getBeforeTaskRunner(cli, ctx, watchTasks, tracker$);
 
     /**
      * Never continue if any runners are invalid
@@ -103,13 +111,15 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
+
     Rx.Observable.concat(
         beforeRunner.do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        runWatchers(runners.valid, ctx)
+        runWatchers(runners.valid, ctx, tracker$)
             .filter(x => {
                 // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
                 return typeof x.type === 'string';
             })
+            .do(tracker)
             .do((x: TaskReport) => {
                 // todo - simpler/shorter format for task reports on watchers
                 reporter.taskReport(x); // always log start/end of tasks
@@ -126,7 +136,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
 }
 
-function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks) {
+function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks, tracker$) {
     /**
      * Get 'before' task list
      */
@@ -168,7 +178,7 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
     }
 
     return beforeRunner
-        .series() // todo - should this support parallel run mode also?
+        .series(tracker$) // todo - should this support parallel run mode also?
         .filter(x => {
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
@@ -197,13 +207,13 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
         });
 }
 
-function runWatchers (runners: Watcher[], trigger: CommandTrigger): any {
+function runWatchers (runners: Watcher[], trigger: CommandTrigger, tracker$): any {
     const watchersAsObservables$ = getWatcherObservables(runners, trigger);
     return Rx.Observable
         .merge(watchersAsObservables$)
         .debounce(500)
         .flatMap((watchEvent: WatchEvent) => {
-            return watchEvent.runner._runner.series();
+            return watchEvent.runner._runner.series(tracker$);
         });
 }
 

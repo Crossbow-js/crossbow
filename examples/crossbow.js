@@ -5,7 +5,7 @@ module.exports = {
             "test/fixtures/*.html": ['js']
         },
         dev: {
-            before: ['js', 'css'],
+            before: ['bs'],
             "test/fixtures/*.html": ['js'],
             "test/fixtures/**/*.css": ['js', 'css']
         },
@@ -19,7 +19,8 @@ module.exports = {
         js: [
             'test/fixtures/tasks/simple.js'
         ],
-        css: ['test/fixtures/tasks/simple.multi.js']
+        css: ['test/fixtures/tasks/simple.multi.js'],
+        bs: ["test/fixtures/tasks/bs.js"]
     },
     config: {
         css: {

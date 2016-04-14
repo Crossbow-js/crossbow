@@ -54,7 +54,8 @@ export interface TaskErrorReport extends Report {
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
-export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
+export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, tracker$) {
+
     return Rx.Observable.create(observer => {
 
         const stats = getStartStats(new Date().getTime());
@@ -70,7 +71,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         var output;
 
-        output = item.factory(item.config, trigger, observer);
+        output = item.factory(item.config, trigger, observer, tracker$);
 
         if (output !== undefined) {
             if (output.type) {

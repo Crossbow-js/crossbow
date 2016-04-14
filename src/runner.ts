@@ -5,7 +5,7 @@ import {Task} from "./task.resolve";
 interface Observable {}
 
 export interface Runner {
-    series: () => any
-    parallel: () => any,
+    series: (tracker$:any) => any
+    parallel: (tracker$:any) => any,
     sequence: SequenceItem[]
 }
