@@ -2,5 +2,4 @@ node_modules
 .idea
 npm-debug.log
 /ts
-/typings
 /dist
