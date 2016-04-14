@@ -118,7 +118,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-
     Rx.Observable.concat(
         beforeRunner.do(() => reporter.reportWatchers(watchTasks.valid, config)),
         runWatchers(runners.valid, ctx, tracker$)
@@ -133,6 +132,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                 if (x.type === TaskReportType.error) {
                     console.log(x.stats.errors[0].stack);
                 }
+                console.log(x.shane);
             })).subscribe(x => {
                 // console.log('value', x);
             }, error => {
@@ -143,7 +143,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
 }
 
-function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks, tracker$: Rx.Observable<any>): Rx.Observable<any> {
+function getBeforeTaskRunner (cli: Meow,
+                              trigger: WatchTrigger,
+                              watchTasks: WatchTasks,
+                              tracker$: Rx.Observable<any>): Rx.Observable<any> {
     /**
      * Get 'before' task list
      */
@@ -185,19 +188,19 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
-        .do((tr: TaskReport) => {
+        .do(report => {
             if (trigger.config.progress) {
-                reporter.taskReport(tr);
+                reporter.taskReport(report);
             }
         })
         .toArray()
-        .map((reports: TaskReport[]): Reports => {
+        .map((reports): Reports => {
             return {
                 reports,
                 decoratedSequence: seq.decorateCompletedSequenceItemsWithReports(beforeSequence, reports)
             };
         })
-        .flatMap((incoming: Reports) => {
+        .flatMap((incoming) => {
             const errorCount = seq.countSequenceErrors(incoming.decoratedSequence);
             if (errorCount > 0) {
                 return Rx.Observable.throw(new Error('Before tasks did not complete!'));
@@ -209,7 +212,9 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
         });
 }
 
-function runWatchers (runners: Watcher[], trigger: CommandTrigger, tracker$): Rx.Observable<TaskReport> {
+function runWatchers (runners: Watcher[],
+                      trigger: CommandTrigger,
+                      tracker$: Rx.Observable<any>): Rx.Observable<TaskReport> {
     const watchersAsObservables$ = getWatcherObservables(runners, trigger);
     return Rx.Observable
         .merge(watchersAsObservables$)
@@ -219,7 +224,7 @@ function runWatchers (runners: Watcher[], trigger: CommandTrigger, tracker$): Rx
         });
 }
 
-function getWatcherObservables (runners, ctx) {
+function getWatcherObservables (runners, ctx): Rx.Observable<WatchEvent>[] {
     return runners.map(runner => {
         return Rx.Observable.create(obs => {
             debug(`+ [id:${runner.watcherUID}] ${runner.patterns.length} patterns (${runner.patterns})`);
@@ -248,7 +253,7 @@ function getWatcherObservables (runners, ctx) {
     })
 }
 
-function getContext(ctx: WatchTrigger): WatchTrigger {
+function getContext<T extends WatchTrigger>(ctx: T): T {
     /**
      * First, unwrap each item. If it has a <pattern> -> <task> syntax
      * then we split it, otherwise just return empty arrays for
@@ -277,7 +282,7 @@ function getContext(ctx: WatchTrigger): WatchTrigger {
      * Now merge the fake watch config with original
      * @type {WatchTrigger}
      */
-    const moddedCtx = <WatchTrigger>merge({}, ctx, {
+    const moddedCtx = <T>merge({}, ctx, {
         input: {
             watch: fakeWatchConfig
         }
