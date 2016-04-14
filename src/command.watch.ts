@@ -1,10 +1,11 @@
 /// <reference path="../typings/main.d.ts" />
+
 import {CommandTrigger} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
 import {resolveTasks} from "./task.resolve";
 
-import * as seq  from "./task.sequence";
+import * as seq from "./task.sequence";
 
 import {WatchTaskRunner} from "./watch.runner";
 import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
@@ -17,9 +18,15 @@ import {TaskErrorTypes} from "./task.errors";
 
 const debug  = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
-const Rx = require('rx');
 const assign = require('object-assign');
 const chokidar = require('chokidar');
+
+import Rx = require('rx');
+
+interface Reports {
+    reports: TaskReport[]
+    decoratedSequence: SequenceItem[]
+}
 
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
@@ -92,7 +99,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     const tracker = new Rx.Subject();
     const tracker$ = tracker
-        .filter(x => {
+        .filter((x: TaskReport) => {
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
         })
@@ -136,7 +143,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
 }
 
-function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks, tracker$) {
+function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: WatchTasks, tracker$: Rx.Observable<any>): Rx.Observable<any> {
     /**
      * Get 'before' task list
      */
@@ -172,11 +179,6 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
      */
     const beforeTimestamp = new Date().getTime();
 
-    interface Reports {
-        reports: TaskReport[]
-        decoratedSequence: SequenceItem[]
-    }
-
     return beforeRunner
         .series(tracker$) // todo - should this support parallel run mode also?
         .filter(x => {
@@ -207,7 +209,7 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
         });
 }
 
-function runWatchers (runners: Watcher[], trigger: CommandTrigger, tracker$): any {
+function runWatchers (runners: Watcher[], trigger: CommandTrigger, tracker$): Rx.Observable<TaskReport> {
     const watchersAsObservables$ = getWatcherObservables(runners, trigger);
     return Rx.Observable
         .merge(watchersAsObservables$)
