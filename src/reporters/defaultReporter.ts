@@ -116,7 +116,7 @@ export function reportBeforeTaskList (sequence: SequenceItem[], cli: Meow, confi
 
 export function reportBeforeTasksDidNotComplete (error: Error) {
     l('{red:x} %s', error.message);
-    l('{red:-} so none of the watchers started');
+    l('  so none of the watchers started');
 }
 
 export function reportWatchers (watchTasks: WatchTask[], config: CrossbowConfiguration) {
@@ -283,7 +283,7 @@ function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string
         `{red.bold:${err.stack.split('\n').slice(0,1)}}`
     ];
     const body = err._cbError ? [] : err.stack.split('\n').slice(1);
-    const tail = [`- Please see above for any output that occured`];
+    const tail = [`- Please see above for any output that occurred`];
 
     return [...head, ...body, ...tail].join('\n');
 }
@@ -311,7 +311,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
                             label = `{yellow:x (didn't complete)} ` + label + ` {yellow:(${stats.duration}ms)}`;
                         }
                     } else {
-                        label = `{yellow:x (didn't start)} ` + label;
+                        label = `{yellow:x} ${label} {yellow:(didn't start)}`;
                     }
                 }
             }

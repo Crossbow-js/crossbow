@@ -168,7 +168,7 @@ function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, importe
     if (imported.tasks && Array.isArray(imported.tasks)) {
         return imported.tasks.map(function (importedFn, i) {
             return createSequenceTaskItem({
-                fnName: getFunctionName(imported, i),
+                fnName: getFunctionName(imported, i + 1),
                 factory: importedFn,
                 task: task,
                 config: mergedConfigWithQuery
@@ -193,7 +193,7 @@ function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, importe
 }
 function getFunctionName (fn: TaskFactory, count = 0) {
     if (fn.name === undefined) {
-        return `AnonymousFunction ${count}`;
+        return `Anonymous Function ${count}`;
     }
     return fn.name;
 }

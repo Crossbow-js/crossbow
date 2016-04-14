@@ -136,8 +136,6 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
         return Rx.Observable.just(true);
     }
 
-    // console.log(beforeTasksAsCliInput);
-
     debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
 
     /**
@@ -196,9 +194,7 @@ function getBeforeTaskRunner (cli: Meow, trigger: WatchTrigger, watchTasks: Watc
         })
         .do(function (incoming: Reports) {
             reporter.reportSummary(incoming.decoratedSequence, cli, 'Before tasks Total: ', trigger.config, new Date().getTime() - beforeTimestamp);
-        })
-        .share();
-
+        });
 }
 
 function runWatchers (runners: Watcher[], trigger: CommandTrigger): any {
