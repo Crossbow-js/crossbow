@@ -126,7 +126,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             .do(tracker)
             .do((x: TaskReport) => {
                 // todo - simpler/shorter format for task reports on watchers
-                reporter.taskReport(x); // always log start/end of tasks
+                reporter.watchTaskReport(x, trigger); // always log start/end of tasks
                 if (x.type === TaskReportType.error) {
                     console.log(x.stats.errors[0].stack);
                 }
@@ -184,7 +184,7 @@ function getBeforeTaskRunner (cli: Meow,
         })
         .do(report => {
             if (trigger.config.progress) {
-                reporter.taskReport(report);
+                reporter.taskReport(report, trigger);
             }
         })
         .toArray()

@@ -17,7 +17,7 @@ import {Tasks} from "../task.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {WatchTrigger} from "../command.watch";
-import {CommandTrigger} from "../command.run";
+import {CommandTrigger, RunCommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 
@@ -61,8 +61,12 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, title: strin
     }
 }
 
-export function taskReport(report: TaskReport) {
-    const label = getSequenceLabel(report.item);
+export function taskReport(report: TaskReport, trigger: RunCommandTrigger|WatchTrigger) {
+    const label = getSequenceLabel(report.item, trigger.config);
+    _taskReport(report, label);
+}
+
+function _taskReport (report: TaskReport, label: string) {
     switch(report.type) {
         case TaskReportType.start:
             l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
@@ -74,6 +78,13 @@ export function taskReport(report: TaskReport) {
             l(`{red:x [${report.item.seqUID}]} ${label}`);
             break;
     }
+}
+
+export function watchTaskReport(report: TaskReport, trigger: WatchTrigger) {
+    const label = getSequenceLabel(report.item, trigger.config);
+    // todo make loglevel an enum
+    console.log(trigger.config.summary);
+    _taskReport(report, label);
 }
 
 function getSequenceItemThatMatchesCliInput (sequence: SequenceItem[], input: string): SequenceItem[] {
@@ -297,7 +308,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
 
     function getItems (items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
-            let label = getSequenceLabel(item);
+            let label = getSequenceLabel(item, config);
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
                 if (stats.errors.length) {
@@ -324,11 +335,11 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     }
 }
 
-function getSequenceLabel (item: SequenceItem) {
+function getSequenceLabel (item: SequenceItem, config: CrossbowConfiguration) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {
-                return `${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
+                return `${item.task.rawInput} - ${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
             } else {
                 return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
             }

@@ -96,7 +96,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         })
         .do((x: TaskReport) => {
             if (ctx.config.progress) {
-                taskReport(x);
+                taskReport(x, ctx);
             }
         })
         .toArray()
