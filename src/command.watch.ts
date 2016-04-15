@@ -11,14 +11,12 @@ import {WatchTaskRunner} from "./watch.runner";
 import {WatchTasks, Watcher, resolveWatchTasks, resolveBeforeTasks} from './watch.resolve';
 
 import * as reporter from './reporters/defaultReporter';
-import {Runner} from "./runner";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {SequenceItem} from "./task.sequence.factories";
-import {TaskErrorTypes} from "./task.errors";
 
-const debug  = require('debug')('cb:command.watch');
-const merge = require('lodash.merge');
-const assign = require('object-assign');
+const debug    = require('debug')('cb:command.watch');
+const merge    = require('lodash.merge');
+const assign   = require('object-assign');
 const chokidar = require('chokidar');
 
 import Rx = require('rx');
@@ -120,7 +118,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     Rx.Observable.concat(
         beforeRunner.do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        runWatchers(runners.valid, ctx, tracker$)
+        createObservablesForWatchers(runners.valid, ctx, tracker$)
             .filter(x => {
                 // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
                 return typeof x.type === 'string';
@@ -132,7 +130,6 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                 if (x.type === TaskReportType.error) {
                     console.log(x.stats.errors[0].stack);
                 }
-                console.log(x.shane);
             })).subscribe(x => {
                 // console.log('value', x);
             }, error => {
@@ -212,54 +209,79 @@ function getBeforeTaskRunner (cli: Meow,
         });
 }
 
-function runWatchers (runners: Watcher[],
-                      trigger: CommandTrigger,
-                      tracker$: Rx.Observable<any>): Rx.Observable<TaskReport> {
-    const watchersAsObservables$ = getWatcherObservables(runners, trigger);
+/**
+ * Create a stream that is the combination of all file-watcher
+ * events.
+ */
+function createObservablesForWatchers (watchers: Watcher[],
+                                       trigger: CommandTrigger,
+                                       tracker$: Rx.Observable<any>): Rx.Observable<TaskReport> {
     return Rx.Observable
-        .merge(watchersAsObservables$)
+        /**
+         * Take each <Watcher> and create an observable stream for it,
+         * merging them all together
+         */
+        .merge(watchers.map(createObservableForWatcher))
+        /**
+         * Discard repeated file-change events that happend within the theshold
+         */
         .debounce(500)
+        /**
+         * Map each file-change event into a stream of Rx.Observable<TaskReport>
+         * todo - allow parallel + series running here
+         */
         .flatMap((watchEvent: WatchEvent) => {
             return watchEvent.runner._runner.series(tracker$);
         });
 }
 
-function getWatcherObservables (runners, ctx): Rx.Observable<WatchEvent>[] {
-    return runners.map(runner => {
-        return Rx.Observable.create(obs => {
-            debug(`+ [id:${runner.watcherUID}] ${runner.patterns.length} patterns (${runner.patterns})`);
-            debug(` - ${runner.tasks.length} tasks (${runner.tasks})`);
-            const watcher = chokidar.watch(runner.patterns, runner.options)
-                .on('all', function (event, path) {
-                    obs.onNext(<WatchEvent>{
-                        event:      event,
-                        path:       path,
-                        runner:     runner,
-                        watcherUID: runner.watcherUID,
-                        duration: 0
-                    });
+/**
+ * Create a file-system watcher that will emit <WatchEvent>
+ */
+function createObservableForWatcher (watcher: Watcher): Rx.Observable<WatchEvent> {
+    return Rx.Observable.create((observer: Rx.Observer<WatchEvent>) => {
+
+        /** DEBUG **/
+        debug(`+ [id:${watcher.watcherUID}] ${watcher.patterns.length} patterns (${watcher.patterns})`);
+        debug(` - ${watcher.tasks.length} tasks (${watcher.tasks})`);
+        /** DEBUG END **/
+
+        const chokidarWatcher = chokidar.watch(watcher.patterns, watcher.options)
+            .on('all', function (event, path) {
+                observer.onNext({
+                    event:      event,
+                    path:       path,
+                    runner:     watcher,
+                    watcherUID: watcher.watcherUID,
+                    duration:   0
                 });
-            watcher.on('ready', () => {
-                debug(`√ [id:${runner.watcherUID}] watcher ready (${runner.patterns})`);
-                if (Object.keys(watcher.getWatched()).length === 0) {
-                    reporter.reportNoFilesMatched(runner);
-                }
             });
-            return () => {
-                debug(`- for ${runner.patterns}`);
-                watcher.close();
+
+        chokidarWatcher.on('ready', () => {
+
+            /** DEBUG **/
+            debug(`√ [id:${watcher.watcherUID}] watcher ready (${watcher.patterns})`);
+            /** DEBUG END **/
+
+            if (Object.keys(chokidarWatcher.getWatched()).length === 0) {
+                reporter.reportNoFilesMatched(watcher);
             }
         });
-    })
+
+        return () => {
+            debug(`- for ${watcher.patterns}`);
+            chokidarWatcher.close();
+        }
+    });
 }
 
-function getContext<T extends WatchTrigger>(ctx: T): T {
+function getContext<T extends WatchTrigger>(trigger: T): T {
     /**
      * First, unwrap each item. If it has a <pattern> -> <task> syntax
      * then we split it, otherwise just return empty arrays for
      * both patterns and tasks
      */
-    const unwrapped = ctx.cli.input.slice(1).map(unwrapShorthand);
+    const unwrapped = trigger.cli.input.slice(1).map(unwrapShorthand);
 
     /**
      * Next take any items that were split and
@@ -282,7 +304,7 @@ function getContext<T extends WatchTrigger>(ctx: T): T {
      * Now merge the fake watch config with original
      * @type {WatchTrigger}
      */
-    const moddedCtx = <T>merge({}, ctx, {
+    const moddedCtx = <T>merge({}, trigger, {
         input: {
             watch: fakeWatchConfig
         }
