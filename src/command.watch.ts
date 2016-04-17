@@ -7,10 +7,11 @@ import * as reporter from './reporters/defaultReporter';
 import {TaskReport, TaskReportType} from "./task.runner";
 import {resolveWatchTasks} from './watch.resolve';
 import {getContext} from "./watch.shorthand";
-import {getBeforeTaskRunner} from "./watch.before";
-
+import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
+import * as seq from "./task.sequence";
 import Rx = require('rx');
 import {createObservablesForWatchers} from "./watch.file-watcher";
+import {SequenceItem} from "./task.sequence.factories";
 
 const debug    = require('debug')('cb:command.watch');
 const merge    = require('lodash.merge');
@@ -100,8 +101,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
+    /**
+     * To begin the watchers, we first create a runner for the 'before' tasks.
+     * If this completes (tasks complete or return true) then we continue
+     * to create the file-watchers and hook up the tasks
+     */
     Rx.Observable.concat(
-        before.runner$.do(() => reporter.reportWatchers(watchTasks.valid, config)),
+        /**
+         * The 'before' runner can be `true`, complete, or throw.
+         * If it throws, the loggin in the `do` block below will not run
+         * and the watchers will not begin
+         */
+        createBeforeRunner(before)
+            .do(() => reporter.reportWatchers(watchTasks.valid, config)),
         createObservablesForWatchers(runners.valid, trigger, tracker$)
             .filter(x => {
                 // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
@@ -118,6 +130,55 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         // don't accept/catch any errors here as they may
         // belong to an outsider
     ).subscribe();
+
+    /**
+     * Return an Observable that's either
+     * 1. a simple boolean (no before tasks),
+     * 2. a throw (which means there was some error, so watchers should not begin)
+     * 3. a sequence representing a runner (which will then wait until complete)
+     */
+    function createBeforeRunner (before: BeforeTasks): Rx.Observable<any> {
+
+        if (!before.beforeTasksAsCliInput.length) {
+            return Rx.Observable.just(true);
+        }
+
+        if (before.tasks.invalid.length) {
+            return Rx.Observable.throw(new Error('Before task resolution failed'));
+        }
+
+        /**
+         * A generic timestamp to mark the beginning of the tasks
+         * @type {number}
+         */
+        const beforeTimestamp = new Date().getTime();
+        const report = (seq: SequenceItem[]) => reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
+
+        return before
+            .runner
+            .series(tracker$) // todo - should this support parallel run mode also?
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+            .filter(x => typeof x.type === 'string')
+            .do(report => {
+                if (trigger.config.progress) {
+                    reporter.taskReport(report, trigger);
+                }
+            })
+            .toArray()
+            .flatMap((reports: TaskReport[]) => {
+                const incoming = seq.decorateCompletedSequenceItemsWithReports(before.sequence, reports);
+                const errorCount = seq.countSequenceErrors(incoming);
+                report(incoming);
+                if (errorCount > 0) {
+                    /**
+                     * If we reach here, the 'before' task sequence did not complete
+                     * so we `throw` here to ensure the upstream fails
+                     */
+                    return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+                }
+                return Rx.Observable.just(incoming);
+            });
+    }
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
