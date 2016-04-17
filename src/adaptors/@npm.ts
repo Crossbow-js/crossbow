@@ -1,6 +1,6 @@
 import {RunCommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 
 const spawn        = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;

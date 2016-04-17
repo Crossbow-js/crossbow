@@ -8,9 +8,9 @@ var watcherUID = 1;
 import {WatchOptions} from "chokidar";
 import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
-import {WatchTaskError, WatchTaskErrorTypes, gatherWatchTaskErrors} from "./watch.errors";
+import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
 import {CrossbowInput} from "./index";
-import {Tasks} from "./task.resolve";
+import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 

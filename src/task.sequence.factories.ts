@@ -1,6 +1,6 @@
 const assign = require('object-assign');
 
-import {Task} from "./task.resolve";
+import {Task} from "./task.resolve.d";
 import {RunCommandTrigger} from "./command.run";
 import {TaskStats} from "./task.runner";
 

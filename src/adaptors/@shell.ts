@@ -1,6 +1,6 @@
 import {RunCommandTrigger} from "../command.run";
 import {getArgs, runCommand} from './@npm';
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
 const debug = require('debug')('cb:@shell');
 

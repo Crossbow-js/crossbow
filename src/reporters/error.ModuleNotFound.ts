@@ -1,4 +1,4 @@
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 import {ModuleNotFoundError} from "../task.errors";
 
 module.exports = (task: Task, error: ModuleNotFoundError) =>

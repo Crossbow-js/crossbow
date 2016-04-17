@@ -1,7 +1,7 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 import {Meow, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes} from "../task.resolve";
 import {relative} from 'path';
@@ -13,7 +13,6 @@ import * as watchErrors from "../watch.errors";
 
 import {compile, prefix} from '../logger';
 import {WatchTasks} from "../watch.resolve";
-import {Tasks} from "../task.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {WatchTrigger} from "../command.watch";

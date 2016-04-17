@@ -2,9 +2,7 @@
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
-import {Map} from 'immutable';
 import {TaskRunner} from './task.runner';
-import {Task} from './task.resolve';
 import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";

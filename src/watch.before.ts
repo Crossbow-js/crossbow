@@ -1,7 +1,8 @@
 import {Meow} from "./index";
 import {WatchTrigger} from "./command.watch";
 import {WatchTasks, resolveBeforeTasks} from "./watch.resolve";
-import {resolveTasks, Tasks} from "./task.resolve";
+import {resolveTasks} from "./task.resolve";
+import {Tasks} from "./task.resolve.d";
 import * as seq from "./task.sequence";
 import {SequenceItem} from "./task.sequence.factories";
 const debug = require("debug");

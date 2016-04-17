@@ -1,5 +1,5 @@
 import {RunCommandTrigger} from "../command.run";
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 import {resolve} from 'path';
 
 module.exports = function (task: Task, trigger: RunCommandTrigger) {

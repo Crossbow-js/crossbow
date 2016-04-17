@@ -185,14 +185,16 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('crossbow-sass --output here'),
             {
-                cbflags: ['p'],
-                flags: {},
+                cbflags: [],
+                flags: {
+                    output: 'here'
+                },
                 baseTaskName: 'crossbow-sass',
-                subTasks: ['shane', 'kittie'],
-                runMode: 'parallel',
-                rawInput: 'crossbow-sass:shane:kittie?input=core.min.css@p',
+                subTasks: [],
+                runMode: 'series',
+                rawInput: 'crossbow-sass --output here',
                 taskName: 'crossbow-sass',
-                query: {input: 'core.min.css'},
+                query: {},
                 tasks: []
             }
         );

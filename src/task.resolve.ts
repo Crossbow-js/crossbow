@@ -3,15 +3,14 @@ const merge   = require('lodash.merge');
 const assign  = require('object-assign');
 const debug   = require('debug')('cb:task.resolve');
 
-import {TaskErrorTypes, TaskError, gatherTaskErrors} from "./task.errors";
+import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {RunCommandTrigger} from "./command.run";
 import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
-import {WatchTrigger} from "./command.watch";
 import {CommandTrigger} from "./command.run";
+import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
 
 export enum TaskTypes {
     Runnable = <any>"Runnable",
@@ -20,24 +19,11 @@ export enum TaskTypes {
     NpmScript = <any>"NpmScript"
 }
 
-export interface Task {
-    valid: boolean
-    taskName: string
-    subTasks: string[]
-    modules: string[]
-    tasks: Task[]
-    rawInput: string
-    parents: string[]
-    errors: TaskError[]
-    adaptor?: string
-    command?: string
-    runMode: string
-    startTime?: number
-    endTime?: number
-    duration?: number
-    query: any
-    origin: TaskOriginTypes
-    type: TaskTypes
+export enum TaskOriginTypes {
+    CrossbowConfig = <any>"CrossbowConfig",
+    NpmScripts = <any>"NpmScripts",
+    FileSystem = <any>"FileSystem",
+    Adaptor = <any>"Adaptor"
 }
 
 const defaultTask = <Task>{
@@ -52,23 +38,6 @@ const defaultTask = <Task>{
     runMode: 'series'
 };
 
-export enum TaskOriginTypes {
-    CrossbowConfig = <any>"CrossbowConfig",
-    NpmScripts = <any>"NpmScripts",
-    FileSystem = <any>"FileSystem",
-    Adaptor = <any>"Adaptor"
-}
-
-export interface TasknameWithOrigin {
-    items: string[]
-    origin: TaskOriginTypes
-}
-
-export interface Tasks {
-    valid: Task[]
-    invalid: Task[],
-    all: Task[]
-}
 
 /**
  * Factory for creating a new Task Item
@@ -326,4 +295,5 @@ export function resolveTasks (taskNames:string[], trigger: CommandTrigger): Task
     };
 
     return output;
+
 }

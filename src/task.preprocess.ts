@@ -1,6 +1,4 @@
-import {RunCommandTrigger} from "./command.run";
-import {TaskError} from "./task.errors";
-import {Task} from "./task.resolve";
+import {Task} from "./task.resolve.d";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -77,7 +75,7 @@ export function preprocessTask(taskName: string): OutgoingTask {
 export interface SplitTaskAndFlags {
     taskName: string
     cbflags: string[]
-    flags: any
+    flags: {}
     query: any
 }
 
@@ -86,7 +84,7 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      * Split tasks based on whether or not they have flags
      *    eg: crossbow run '@npm run webpack@p'
      *    ->  taskName: '@npm run webpack'
-     *    ->  flags: ['p']
+     *    ->  cbflags: ['p']
      * @type {RegExpMatchArray}
      */
     const splitFlags = taskName.match(flagRegex);

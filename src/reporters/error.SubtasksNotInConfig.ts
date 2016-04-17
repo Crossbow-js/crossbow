@@ -1,5 +1,5 @@
 import {SubtasksNotInConfigError} from "../task.errors";
-import {Task} from "../task.resolve";
+import {Task} from "../task.resolve.d";
 
 module.exports = (task: Task, error: SubtasksNotInConfigError) =>
 
