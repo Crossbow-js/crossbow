@@ -35,40 +35,6 @@ export function getBeforeTaskRunner (cli: Meow,
     const beforeSequence = seq.createFlattenedSequence(beforeTasks.valid, trigger);
     const beforeRunner   = seq.createRunner(beforeSequence, trigger);
 
-    /**
-     * A generic timestamp to mark the beginning of the tasks
-     * @type {number}
-     */
-    const beforeTimestamp = new Date().getTime();
-    const report = (seq: SequenceItem[]) => reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
-
-    const runner$ = beforeRunner
-        .series(tracker$) // todo - should this support parallel run mode also?
-        .filter(x => {
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            return typeof x.type === 'string';
-        })
-        .do(report => {
-            if (trigger.config.progress) {
-                reporter.taskReport(report, trigger);
-            }
-        })
-        .toArray()
-        .map((reports): SequenceItem[] => {
-            return seq.decorateCompletedSequenceItemsWithReports(beforeSequence, reports);
-        })
-        .flatMap((incoming: SequenceItem[]) => {
-            const errorCount = seq.countSequenceErrors(incoming);
-            if (errorCount > 0) {
-                report(incoming);
-                return Rx.Observable.throw(new Error('Before tasks did not complete!'));
-            }
-            return Rx.Observable.just(incoming);
-        })
-        .do(function (incoming: SequenceItem[]) {
-            report(incoming);
-        });
-
     return {
         tasks: beforeTasks,
         sequence: beforeSequence,
@@ -83,7 +49,40 @@ export function getBeforeTaskRunner (cli: Meow,
                 return Rx.Observable.throw(new Error('Before task resolution failed'));
             }
 
-        	return runner$;
+            /**
+             * A generic timestamp to mark the beginning of the tasks
+             * @type {number}
+             */
+            const beforeTimestamp = new Date().getTime();
+            const report = (seq: SequenceItem[]) => reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
+
+            // todo - pull this into separate function
+            return beforeRunner
+                .series(tracker$) // todo - should this support parallel run mode also?
+                .filter(x => {
+                    // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+                    return typeof x.type === 'string';
+                })
+                .do(report => {
+                    if (trigger.config.progress) {
+                        reporter.taskReport(report, trigger);
+                    }
+                })
+                .toArray()
+                .map((reports): SequenceItem[] => {
+                    return seq.decorateCompletedSequenceItemsWithReports(beforeSequence, reports);
+                })
+                .flatMap((incoming: SequenceItem[]) => {
+                    const errorCount = seq.countSequenceErrors(incoming);
+                    if (errorCount > 0) {
+                        report(incoming);
+                        return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+                    }
+                    return Rx.Observable.just(incoming);
+                })
+                .do(function (incoming: SequenceItem[]) {
+                    report(incoming);
+                });
         })()
     }
 
