@@ -2,6 +2,7 @@ import {Watcher} from "./watch.resolve";
 import * as reporter from './reporters/defaultReporter';
 import {CommandTrigger} from "./command.run";
 import {TaskReport} from "./task.runner";
+import Rx = require("rx");
 
 const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');

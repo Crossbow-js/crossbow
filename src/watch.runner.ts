@@ -3,6 +3,7 @@ import {Watcher} from "./watch.resolve";
 import {CommandTrigger} from "./command.run";
 import {resolveTasks} from "./task.resolve";
 import * as seq from "./task.sequence";
+import {BeforeTasks} from "./watch.before";
 const debug = require('debug')('cb:watch.runner');
 const assign   = require('object-assign');
 
@@ -13,8 +14,9 @@ export interface WatchRunners {
 }
 
 export interface WatchTaskRunner {
-    tasks: WatchTasks,
+    tasks: WatchTasks
     runners: WatchRunners
+    before: BeforeTasks
 }
 
 export function createWatchRunners (watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunners {

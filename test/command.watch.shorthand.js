@@ -1,6 +1,6 @@
 var assert  = require('chai').assert;
 var resolve = require('../dist/watch.resolve').resolveWatchTasks;
-var unwrapShorthand = require('../dist/command.watch').unwrapShorthand;
+var unwrapShorthand = require('../dist/watch.shorthand').unwrapShorthand;
 
 describe('Resolving shorthand watch tasks', function () {
     it('can handle single pattern + single task', function () {

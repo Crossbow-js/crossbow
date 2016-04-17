@@ -4,10 +4,10 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npm run lint && npm run unit",
+    "test": "npm run ts && npm run unit",
     "unit": "mocha test",
     "lint": "eslint lib",
-    "ts": "node cli watch ts"
+    "ts": "tsc src/**/*.ts --module commonjs --outDir dist"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [

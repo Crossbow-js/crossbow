@@ -1,24 +1,29 @@
 import {Meow} from "./index";
 import {WatchTrigger} from "./command.watch";
 import {WatchTasks, resolveBeforeTasks} from "./watch.resolve";
-import {resolveTasks} from "./task.resolve";
+import {resolveTasks, Tasks} from "./task.resolve";
 import * as reporter from './reporters/defaultReporter';
 import * as seq from "./task.sequence";
 import {SequenceItem} from "./task.sequence.factories";
-const debug = require("typings/dist/utils/debug");
+import {Runner} from "./runner";
+const debug = require("debug");
+import Rx = require("rx");
+
+export interface BeforeTasks {
+    runner: any
+    runner$: Rx.Observable<any>
+    tasks: Tasks
+    sequence: SequenceItem[]
+}
 
 export function getBeforeTaskRunner (cli: Meow,
                                      trigger: WatchTrigger,
                                      watchTasks: WatchTasks,
-                                     tracker$: Rx.Observable<any>): Rx.Observable<any> {
+                                     tracker$: Rx.Observable<any>): BeforeTasks {
     /**
      * Get 'before' task list
      */
     const beforeTasksAsCliInput = resolveBeforeTasks(trigger.input, watchTasks.valid);
-
-    if (!beforeTasksAsCliInput.length) {
-        return Rx.Observable.just(true);
-    }
 
     debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
 
@@ -27,18 +32,8 @@ export function getBeforeTaskRunner (cli: Meow,
      */
     const beforeTasks = resolveTasks(beforeTasksAsCliInput, trigger);
 
-    if (beforeTasks.invalid.length) {
-        reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
-        return Rx.Observable.throw(new Error('Before task resolution failed'));
-    }
-
     const beforeSequence = seq.createFlattenedSequence(beforeTasks.valid, trigger);
     const beforeRunner   = seq.createRunner(beforeSequence, trigger);
-
-    /**
-     * Report task list that's about to run
-     */
-    reporter.reportBeforeTaskList(beforeSequence, cli, trigger.config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -47,7 +42,7 @@ export function getBeforeTaskRunner (cli: Meow,
     const beforeTimestamp = new Date().getTime();
     const report = (seq: SequenceItem[]) => reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
 
-    return beforeRunner
+    const runner$ = beforeRunner
         .series(tracker$) // todo - should this support parallel run mode also?
         .filter(x => {
             // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
@@ -73,4 +68,23 @@ export function getBeforeTaskRunner (cli: Meow,
         .do(function (incoming: SequenceItem[]) {
             report(incoming);
         });
+
+    return {
+        tasks: beforeTasks,
+        sequence: beforeSequence,
+        runner: beforeRunner,
+        runner$: (function () {
+
+            if (!beforeTasksAsCliInput.length) {
+                return Rx.Observable.just(true);
+            }
+
+            if (beforeTasks.invalid.length) {
+                return Rx.Observable.throw(new Error('Before task resolution failed'));
+            }
+
+        	return runner$;
+        })()
+    }
+
 }

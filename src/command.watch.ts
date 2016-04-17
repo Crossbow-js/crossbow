@@ -44,6 +44,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const runners = createWatchRunners(watchTasks, trigger);
 
+    const tracker = new Rx.Subject();
+    const tracker$ = tracker
+        .filter((x: TaskReport) => {
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+            return typeof x.type === 'string';
+        })
+        .share();
+
+    /**
+     * Never continue if any of the BEFORE tasks were flagged as invalid
+     */
+    const before = getBeforeTaskRunner(cli, trigger, watchTasks, tracker$);
+
     /**
      * Check if the user intends to handle running the tasks themselves,
      * if that's the case we give them the resolved tasks along with
@@ -51,7 +64,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     if (config.handoff) {
         debug(`Handing off Watchers`);
-        return {tasks: watchTasks, runners};
+        return {tasks: watchTasks, runners, before};
     }
 
     debug(`Not handing off, will handle watching internally`);
@@ -64,18 +77,20 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return;
     }
 
-    const tracker = new Rx.Subject();
-    const tracker$ = tracker
-        .filter((x: TaskReport) => {
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            return typeof x.type === 'string';
-        })
-        .share();
+    /**
+     *
+     */
+    if (before.tasks.invalid.length) {
+        reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
+        return;
+    }
 
     /**
-     * Never continue if any of the BEFORE tasks were flagged as invalid
+     *
      */
-    const beforeRunner = getBeforeTaskRunner(cli, trigger, watchTasks, tracker$);
+    if (before.tasks.valid.length) {
+        reporter.reportBeforeTaskList(before.sequence, cli, trigger.config);
+    }
 
     /**
      * Never continue if any runners are invalid
@@ -86,7 +101,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     }
 
     Rx.Observable.concat(
-        beforeRunner.do(() => reporter.reportWatchers(watchTasks.valid, config)),
+        before.runner$.do(() => reporter.reportWatchers(watchTasks.valid, config)),
         createObservablesForWatchers(runners.valid, trigger, tracker$)
             .filter(x => {
                 // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)

@@ -27,7 +27,7 @@ describe('Resolving watch task errors', function () {
                 js: 'test/fixtures/tasks/stream.js'
             }
         });
-        assert.equal(runner.beforeTasks.invalid.length, 1);
+        assert.equal(runner.before.tasks.invalid.length, 1);
     });
     it('returns errors about global before task that is invalid + local before task that is invalid' , function () {
         const runner = cli.getWatcher(["def"], {
@@ -42,7 +42,7 @@ describe('Resolving watch task errors', function () {
                 js: 'test/fixtures/tasks/stream.js'
             }
         });
-        assert.equal(runner.beforeTasks.invalid.length, 2);
+        assert.equal(runner.before.tasks.invalid.length, 2);
     });
     it('returns errors when others are valid' , function () {
         const runner = cli.getWatcher(["def", "shane"], {
@@ -61,7 +61,7 @@ describe('Resolving watch task errors', function () {
                 js: 'test/fixtures/tasks/stream.js'
             }
         });
-        assert.equal(runner.beforeTasks.invalid.length, 2);
+        assert.equal(runner.before.tasks.invalid.length, 2);
     });
     it('returns errors when tasks are invalid' , function () {
         const runner = cli.getWatcher(["def"], {
