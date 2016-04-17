@@ -15,15 +15,11 @@ Crossbow allows mix'n'match of various systems, the following examples show this
 **crossbow.yaml**
 ```yaml
 tasks:
-
   build:
     - clean
     - crossbow
     - htmlmin
-
-  # mix shell commands
   clean: '@shell rm -rf ./public'
-  # mix npm scripts (this shows multiline)
   htmlmin: >
     @npm html-minifier
     --input-dir dist
