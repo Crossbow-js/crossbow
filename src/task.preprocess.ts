@@ -58,8 +58,8 @@ export function preprocessTask(taskName: string): OutgoingTask {
     const incomingTask = <IncomingTask>{
         cbflags: split.cbflags,
         query: split.query,
+        flags: split.flags,
         baseTaskName,
-        flags: {},
         subTasks,
         taskName: baseTaskName,
         rawInput: taskName,
@@ -79,7 +79,18 @@ export interface SplitTaskAndFlags {
     query: any
 }
 
+/**
+ * @param taskName
+ * @returns {any}
+ */
 function getSplitFlags (taskName: string): SplitTaskAndFlags {
+
+    /**
+     * Split up the task name from any flags/queries/cbflags etc
+     * @type {{baseName: string, flags: {}}}
+     */
+    const baseNameAndFlags = getBaseNameAndFlags(taskName);
+
     /**
      * Split tasks based on whether or not they have flags
      *    eg: crossbow run '@npm run webpack@p'
@@ -87,25 +98,25 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      *    ->  cbflags: ['p']
      * @type {RegExpMatchArray}
      */
-    const splitFlags = taskName.match(flagRegex);
+    const splitCBFlags = baseNameAndFlags.baseName.match(flagRegex);
 
     /**
      * If splitFlags is falsey, there was no flag so return
      * an empty array and the full task name
      */
-    if (!splitFlags) {
-        const splitQuery = taskName.split('?');
+    if (!splitCBFlags) {
+        const splitQuery = baseNameAndFlags.baseName.split('?');
         const query = splitQuery.length > 1
             ?  qs.parse(splitQuery[1])
             : {};
-        return {taskName: splitQuery[0], query, cbflags:[], flags:{}};
+        return {taskName: splitQuery[0], query, cbflags:[], flags: baseNameAndFlags.flags};
     }
 
     /**
      * At this point, there was at LEAST an @ at the end of the task name
      * @type {string}
      */
-    const base = splitFlags[1];
+    const base = splitCBFlags[1];
     const splitQuery = base.split('?');
     const query = splitQuery.length > 1
         ?  qs.parse(splitQuery[1])
@@ -118,17 +129,28 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      * to kick in later
      * @type {string[]}
      */
-    const cbflags = splitFlags[2] === undefined
+    const cbflags = splitCBFlags[2] === undefined
         ? ['']
         /**
          * Default case is where there are chars after the @, so we split them up
          *   eg: crossbow run '@npm run webpack@pas'
          *   ->  flags: ['p', 'a', 's']
          */
-        : splitFlags[2].split('');
-    return {taskName: splitQuery[0], query, cbflags, flags: {}};
+        : splitCBFlags[2].split('');
+    return {
+        taskName: splitQuery[0],
+        query,
+        cbflags,
+        flags: baseNameAndFlags.flags
+    };
 }
 
+/**
+ * Apply any transformations to options based on
+ * CB flags
+ * @param incoming
+ * @returns {any}
+ */
 function processFlags (incoming: IncomingTask): OutgoingTask {
 
     const runMode = incoming.cbflags.indexOf('p') > -1
@@ -138,4 +160,42 @@ function processFlags (incoming: IncomingTask): OutgoingTask {
     return assign({}, incoming, {
         runMode
     });
+}
+
+/**
+ * Strip any underscore commands from parsed args
+ * @param obj
+ * @returns {{}}
+ */
+function withoutCommand (obj: {}) {
+    if (!Object.keys(obj).length) {
+        return {};
+    }
+    return Object.keys(obj).reduce(function (acc, key) {
+        if (key !== "_") {
+            acc[key] = obj[key];
+        }
+    	return acc;
+    }, {});
+}
+
+/**
+ * Split basename + opts
+ * @param taskName
+ * @returns {{baseName: any, flags: {}}}
+ */
+function getBaseNameAndFlags (taskName: string): {baseName: string, flags: {}} {
+    const splitFlags = taskName.trim().split(/^(.+?) /);
+    var baseName;
+    var flags = {};
+    if (splitFlags.length === 1) {
+        baseName = splitFlags[0];
+    } else {
+        baseName = splitFlags[1];
+        if (splitFlags.length === 3) {
+            const mini = require('yargs-parser');
+            flags = withoutCommand(mini(splitFlags[2]));
+        }
+    }
+    return {baseName, flags};
 }
