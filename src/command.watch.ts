@@ -20,6 +20,9 @@ const assign   = require('object-assign');
 export interface WatchTrigger extends CommandTrigger {
     type: 'watcher'
 }
+export interface CrossbowError extends Error {
+    _cb: boolean
+}
 
 export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): WatchTaskRunner {
 
@@ -109,7 +112,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     Rx.Observable.concat(
         /**
          * The 'before' runner can be `true`, complete, or throw.
-         * If it throws, the loggin in the `do` block below will not run
+         * If it throws, the login in the `do` block below will not run
          * and the watchers will not begin
          */
         createBeforeRunner(before)
@@ -127,9 +130,16 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                     console.log(x.stats.errors[0].stack);
                 }
             })
-        // don't accept/catch any errors here as they may
-        // belong to an outsider
-    ).subscribe();
+    )
+        .catch(err => {
+            // Only intercept Crossbow errors
+            // otherwise just allow it to be thrown
+            if (err._cb) {
+                return Rx.Observable.empty();
+            }
+            return Rx.Observable.throw(err);
+        })
+        .subscribe();
 
     /**
      * Return an Observable that's either
@@ -170,11 +180,15 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                 const errorCount = seq.countSequenceErrors(incoming);
                 report(incoming);
                 if (errorCount > 0) {
+
                     /**
                      * If we reach here, the 'before' task sequence did not complete
                      * so we `throw` here to ensure the upstream fails
                      */
-                    return Rx.Observable.throw(new Error('Before tasks did not complete!'));
+                    const cberror = <CrossbowError>new Error('Before tasks did not complete!');
+                    reporter.reportBeforeTasksDidNotComplete(cberror);
+                    cberror._cb = true;
+                    return Rx.Observable.throw(cberror);
                 }
                 return Rx.Observable.just(incoming);
             });

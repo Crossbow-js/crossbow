@@ -131,7 +131,8 @@ export function reportBeforeTasksDidNotComplete (error: Error) {
 }
 
 export function reportWatchers (watchTasks: WatchTask[], config: CrossbowConfiguration) {
-    l(`Starting the follwing watchers:`);
+    nl();
+    l(`{yellow:+} Watching...`);
     watchTasks.forEach(function (watchTask) {
         const o = archy({
             label:`{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
