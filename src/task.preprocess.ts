@@ -3,7 +3,7 @@ import {TaskError} from "./task.errors";
 import {Task} from "./task.resolve";
 
 const assign = require('object-assign');
-const qs = require('query-string');
+const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
 export const removeNewlines = (x: string) => x.replace(/\n|\r/g, '').trim();
 const e = (x) => x
