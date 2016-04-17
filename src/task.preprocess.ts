@@ -16,7 +16,8 @@ export interface IncomingTask {
     subTasks: string[]
     rawInput: string
     taskName: string
-    flags: string[]
+    flags: {}
+    cbflags: string[]
     modules?: string[]
     tasks?: Task[]
     query: any
@@ -30,7 +31,7 @@ export interface OutgoingTask extends IncomingTask {
 export function preprocessTask(taskName: string): OutgoingTask {
 
     /**
-     * Split any end flags from the main task name
+     * Split any end cbflags from the main task name
      * @type {SplitTaskAndFlags}
      */
     var split      = getSplitFlags(taskName);
@@ -57,9 +58,10 @@ export function preprocessTask(taskName: string): OutgoingTask {
      * @type {IncomingTask}
      */
     const incomingTask = <IncomingTask>{
-        flags: split.flags,
+        cbflags: split.cbflags,
         query: split.query,
         baseTaskName,
+        flags: {},
         subTasks,
         taskName: baseTaskName,
         rawInput: taskName,
@@ -74,7 +76,8 @@ export function preprocessTask(taskName: string): OutgoingTask {
 
 export interface SplitTaskAndFlags {
     taskName: string
-    flags: string[]
+    cbflags: string[]
+    flags: any
     query: any
 }
 
@@ -97,7 +100,7 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
         const query = splitQuery.length > 1
             ?  qs.parse(splitQuery[1])
             : {};
-        return {taskName: splitQuery[0], query, flags:[]};
+        return {taskName: splitQuery[0], query, cbflags:[], flags:{}};
     }
 
     /**
@@ -117,7 +120,7 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
      * to kick in later
      * @type {string[]}
      */
-    const flags = splitFlags[2] === undefined
+    const cbflags = splitFlags[2] === undefined
         ? ['']
         /**
          * Default case is where there are chars after the @, so we split them up
@@ -125,12 +128,12 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
          *   ->  flags: ['p', 'a', 's']
          */
         : splitFlags[2].split('');
-    return {taskName: splitQuery[0], query, flags};
+    return {taskName: splitQuery[0], query, cbflags, flags: {}};
 }
 
 function processFlags (incoming: IncomingTask): OutgoingTask {
 
-    const runMode = incoming.flags.indexOf('p') > -1
+    const runMode = incoming.cbflags.indexOf('p') > -1
         ? 'parallel'
         : 'series';
 

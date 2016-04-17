@@ -2,12 +2,12 @@ const assert = require('chai').assert;
 const preprocess = require('../dist/task.preprocess').preprocessTask;
 
 describe('can pre-process incoming task names', function () {
-
     it('can handle adaptor tasks', function () {
         assert.deepEqual(
             preprocess('@npm run shane'),
             {
-                flags: [],
+                cbflags: [],
+                flags: {},
                 baseTaskName: '@npm run shane',
                 subTasks: [],
                 runMode: 'series',
@@ -22,7 +22,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js'),
             {
-                flags: [],
+                cbflags: [],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
                 runMode: 'series',
@@ -37,7 +38,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js:dev'),
             {
-                flags: [],
+                cbflags: [],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: ['dev'],
                 runMode: 'series',
@@ -52,7 +54,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js:dev:site'),
             {
-                flags: [],
+                cbflags: [],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: ['dev', 'site'],
                 runMode: 'series',
@@ -68,7 +71,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js@p'),
             {
-                flags: ['p'],
+                cbflags: ['p'],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
                 runMode: 'parallel',
@@ -84,7 +88,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js@psa'),
             {
-                flags: ['p', 's', 'a'],
+                cbflags: ['p', 's', 'a'],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
                 runMode: 'parallel',
@@ -100,7 +105,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js@'),
             {
-                flags: [''],
+                cbflags: [''],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
                 runMode: 'series',
@@ -115,7 +121,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('file.js:dev:site@p'),
             {
-                flags: ['p'],
+                cbflags: ['p'],
+                flags: {},
                 baseTaskName: 'file.js',
                 subTasks: ['dev', 'site'],
                 runMode: 'parallel',
@@ -130,7 +137,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('crossbow-sass?input=shane'),
             {
-                flags: [],
+                cbflags: [],
+                flags: {},
                 baseTaskName: 'crossbow-sass',
                 subTasks: [],
                 runMode: 'series',
@@ -145,7 +153,8 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('crossbow-sass?input=shane@p'),
             {
-                flags: ['p'],
+                cbflags: ['p'],
+                flags: {},
                 baseTaskName: 'crossbow-sass',
                 subTasks: [],
                 runMode: 'parallel',
@@ -160,7 +169,24 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(
             preprocess('crossbow-sass:shane:kittie?input=core.min.css@p'),
             {
-                flags: ['p'],
+                cbflags: ['p'],
+                flags: {},
+                baseTaskName: 'crossbow-sass',
+                subTasks: ['shane', 'kittie'],
+                runMode: 'parallel',
+                rawInput: 'crossbow-sass:shane:kittie?input=core.min.css@p',
+                taskName: 'crossbow-sass',
+                query: {input: 'core.min.css'},
+                tasks: []
+            }
+        );
+    });
+    it.skip('can handle taskname + cli flags', function () {
+        assert.deepEqual(
+            preprocess('crossbow-sass --output here'),
+            {
+                cbflags: ['p'],
+                flags: {},
                 baseTaskName: 'crossbow-sass',
                 subTasks: ['shane', 'kittie'],
                 runMode: 'parallel',

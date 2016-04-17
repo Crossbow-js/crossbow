@@ -23,13 +23,13 @@ export interface SubtaskNotProvidedError  extends TaskError { name: string }
 export interface SubtaskWildcardNotAvailableError extends TaskError { name: string }
 export interface SubtaskNotFoundError     extends TaskError { name: string }
 export interface AdaptorNotFoundError     extends TaskError { taskName: string }
-export interface FlagNotFoundError        extends TaskError { taskName: string }
-export interface FlagNotProvidedError     extends TaskError { taskName: string }
+export interface CBFlagNotFoundError      extends TaskError { taskName: string }
+export interface CBFlagNotProvidedError   extends TaskError { taskName: string }
 
 export function gatherTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskError[] {
     return [
         getModuleErrors,
-        getFlagErrors,
+        getCBFlagErrors,
         getSubTaskErrors
     ].reduce((all, fn) => all.concat(fn(outgoing, input)), []);
 }
@@ -45,8 +45,8 @@ function getModuleErrors (outgoing: OutgoingTask): TaskError[] {
     return errors;
 }
 
-function getFlagErrors (outgoing: OutgoingTask): TaskError[] {
-    return outgoing.flags.reduce((all, flag) => {
+function getCBFlagErrors (outgoing: OutgoingTask): TaskError[] {
+    return outgoing.cbflags.reduce((all, flag) => {
         /**
          * if `flag` is an empty string, the user provided an @ after a task
          * name, but without the right-hand part.
@@ -58,7 +58,7 @@ function getFlagErrors (outgoing: OutgoingTask): TaskError[] {
          *
          */
         if (flag === '') {
-            return all.concat(<FlagNotProvidedError>{
+            return all.concat(<CBFlagNotProvidedError>{
                 type: TaskErrorTypes.FlagNotProvided,
                 taskName: outgoing.taskName
             });
