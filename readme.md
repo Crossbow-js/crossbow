@@ -49,3 +49,67 @@ module.exports = function (options) {
 ```shell
 crossbow run build
 ```
+
+# Advanced file-watching system
+
+
+**short-hand example**
+```yaml
+watch:
+  # default is the name of the watcher group
+  default:
+    # patterns are colon separated keys
+    # tasks are any valid Crossbow tasks
+    './scss:_scss': ['sass', 'cssmin']
+	'/src/*.hbs': ['@shell rm -rf dist', 'handlebars', 'htmlmin', 'manifest:dev']
+```
+
+**long-form example**
+```yaml
+watch:
+  default:
+    # you can define watchers like this if 
+    # you prefer for readability
+    watchers:
+	  - patterns: ['./scss']
+	    tasks:    ['sass', 'cssmin']
+	  - patterns: ['/src/*.hbs']
+	    tasks:    ['handlebars', 'htmlmin', 'manifest']
+
+tasks: 
+	# Configure tasks as above
+```
+
+**short-hand example with options**
+```yaml
+watch:
+  default:
+    # `Options` can be set per-watcher.
+    # This is especially useful when some types of
+    # files need debouncing, but others do not
+    options:
+      debounce: 2000
+      usePolling: true
+    # Short-hand syntax is also fine here
+    './scss': ['sass', 'cssmin']
+	'/src/*.hbs': ['handlebars', 'htmlmin', 'manifest']
+```
+
+**short-hand example with options + before tasks**
+```yaml
+watch:
+  default:
+    options:
+      debounce: 2000
+      usePolling: true
+    # Giving multiple 'before' tasks will ensure
+    # that all are run + completed before any watchers 
+    # begin. They can be task names, shell scripts, js files etc
+    before:
+  	  - '@shell rm -rf dist'
+  	  - '@npm browser-sync start -s'
+    './scss': ['sass', 'cssmin']
+	'/src/*.hbs': ['handlebars', 'htmlmin', 'manifest']
+```
+
+
