@@ -163,7 +163,7 @@ function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, importe
      * eg:
      *  module.exports.tasks [sass, cssmin, version-rev]
      */
-    const mergedConfigWithQuery = merge({}, config, task.query);
+    const mergedConfigWithQuery = merge({}, config, task.query, task.flags);
 
     if (imported.tasks && Array.isArray(imported.tasks)) {
         return imported.tasks.map(function (importedFn, i) {

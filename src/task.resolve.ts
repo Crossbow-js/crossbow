@@ -194,6 +194,7 @@ function createAdaptorTask (taskName, parents) : Task {
         command: commandInput,
         runMode: 'series',
         query: {},
+        flags: {},
         origin: TaskOriginTypes.Adaptor,
         type: TaskTypes.Adaptor
     };

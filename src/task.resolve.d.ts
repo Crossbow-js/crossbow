@@ -17,6 +17,7 @@ export interface Task {
     endTime?: number
     duration?: number
     query: any
+    flags: any
     origin: TaskOriginTypes
     type: TaskTypes
 }
