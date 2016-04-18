@@ -115,23 +115,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          * If it throws, the login in the `do` block below will not run
          * and the watchers will not begin
          */
-        createBeforeRunner(before)
-            .do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        createObservablesForWatchers(runners.valid, trigger, tracker$)
-            .filter(x => {
-                // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-                return typeof x.type === 'string';
-            })
-            .do(tracker)
-            .do((x: TaskReport) => {
-                // todo - simpler/shorter format for task reports on watchers
-                // reporter.watchTaskReport(x, trigger); // always log start/end of tasks
-                if (x.type === TaskReportType.error) {
-                    console.log(x.stats.errors[0].stack);
-                }
-            })
-    )
-        .catch(err => {
+        createBeforeRunner(before).do(() => reporter.reportWatchers(watchTasks.valid, config)),
+        createObservablesForWatchers(runners.valid, trigger, tracker$, tracker).catch(err => {
             // Only intercept Crossbow errors
             // otherwise just allow it to be thrown
             // For example, 'before' runner may want
@@ -140,7 +125,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
                 return Rx.Observable.empty();
             }
             return Rx.Observable.throw(err);
-        })
+        }))
         .subscribe();
 
     /**
@@ -178,11 +163,10 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             })
             .toArray()
             .flatMap((reports: TaskReport[]) => {
-                const incoming = seq.decorateCompletedSequenceItemsWithReports(before.sequence, reports);
+                const incoming   = seq.decorateCompletedSequenceItemsWithReports(before.sequence, reports);
                 const errorCount = seq.countSequenceErrors(incoming);
                 report(incoming);
                 if (errorCount > 0) {
-
                     /**
                      * If we reach here, the 'before' task sequence did not complete
                      * so we `throw` here to ensure the upstream fails

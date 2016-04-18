@@ -110,6 +110,12 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         }
 
     }).catch(error => {
+        /**
+         * **--**--MAGIC--**--**
+         * If a task throws an error of any kind, we want that error to propagate as normal,
+         * but we want tp prepend an error report so that the error report can be observed
+         * before the sequence ends.
+         */
         return Rx.Observable.concat(
             Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error))),
             Rx.Observable.throw(error)

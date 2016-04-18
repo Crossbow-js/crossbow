@@ -1,8 +1,10 @@
 import {Watcher, CBWatchOptions} from "./watch.resolve";
 import * as reporter from './reporters/defaultReporter';
+import * as seq from './task.sequence';
 import {CommandTrigger} from "./command.run";
-import {TaskReport} from "./task.runner";
+import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
+import {WatchTrigger} from "./command.watch";
 
 const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
@@ -19,8 +21,9 @@ export interface WatchEvent {
  * Create a stream that is the combination of all watchers
  */
 export function createObservablesForWatchers (watchers: Watcher[],
-                                       trigger: CommandTrigger,
-                                       tracker$: Rx.Observable<any>): Rx.Observable<TaskReport> {
+                                       trigger: WatchTrigger,
+                                       tracker$: Rx.Observable<any>,
+                                       tracker): Rx.Observable<TaskReport> {
     return Rx.Observable
         /**
          * Take each <Watcher> and create an observable stream for it,
@@ -32,8 +35,35 @@ export function createObservablesForWatchers (watchers: Watcher[],
          * todo - allow parallel + series running here
          */
         .flatMap((watchEvent:WatchEvent) => {
-            console.log(watchEvent.runner.tasks);
-            return watchEvent.runner._runner.series(tracker$);
+            reporter.reportWatcherTriggeredTasks(watchEvent.runner.tasks);
+            const timer = new Date().getTime();
+            const upcoming = watchEvent.runner._runner.series(tracker$)
+                .filter(x => {
+                    // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
+                    return typeof x.type === 'string';
+                })
+                .do(tracker)
+                .do((x: TaskReport) => {
+                    // todo - simpler/shorter format for task reports on watchers
+                    if (trigger.config.progress) {
+                        reporter.watchTaskReport(x, trigger); // always log start/end of tasks
+                    }
+                    if (x.type === TaskReportType.error) {
+                        console.log(x.stats.errors[0].stack);
+                    }
+                })
+                .toArray()
+                .flatMap((reports: TaskReport[]) => {
+                    const incoming   = seq.decorateCompletedSequenceItemsWithReports(watchEvent.runner._sequence, reports);
+                    const errorCount = seq.countSequenceErrors(incoming);
+                    if (errorCount > 0) {
+                        reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
+                    } else {
+                        reporter.reportWatcherTriggeredTasksCompleted(watchEvent.runner.tasks);
+                    }
+                    return Rx.Observable.just(incoming);
+                });
+            return upcoming;
         });
 }
 
@@ -65,11 +95,16 @@ export function createObservableForWatcher(watcher:Watcher): Rx.Observable<Watch
 }
 
 function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
-    return Rx.Observable.create((observer:Rx.Observer<WatchEvent>) => {
+
+    /** DEBUG **/
+    debug(`[id:${watcher.watcherUID}] options: ${JSON.stringify(watcher.options, null, 2)}`);
+    /** DEBUG END **/
+
+    return Rx.Observable.create((observer: Rx.Observer<WatchEvent>) => {
 
         /** DEBUG **/
         debug(`+ [id:${watcher.watcherUID}] ${watcher.patterns.length} patterns (${watcher.patterns})`);
-        debug(` - ${watcher.tasks.length} tasks (${watcher.tasks})`);
+        debug(`└─ ${watcher.tasks.length} tasks (${watcher.tasks})`);
         /** DEBUG END **/
 
         const chokidarWatcher = chokidar.watch(watcher.patterns, watcher.options)

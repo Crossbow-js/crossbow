@@ -97,6 +97,13 @@ function getSequenceItemThatMatchesCliInput (sequence: SequenceItem[], input: st
     });
 }
 
+export function reportWatcherTriggeredTasksCompleted(tasks: string[]) {
+    l(`{green:✔} ${tasks.join(', ')}`);
+}
+export function reportWatcherTriggeredTasks(tasks: string[]) {
+    l(`{yellow:+} ${tasks.join(', ')}`);
+}
+
 /**
  * Log the task list
  */
