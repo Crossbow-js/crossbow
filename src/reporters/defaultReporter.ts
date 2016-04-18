@@ -97,11 +97,11 @@ function getSequenceItemThatMatchesCliInput (sequence: SequenceItem[], input: st
     });
 }
 
-export function reportWatcherTriggeredTasksCompleted(tasks: string[]) {
-    l(`{green:✔} ${tasks.join(', ')}`);
+export function reportWatcherTriggeredTasksCompleted(index: number, tasks: string[], time: number) {
+    l(`{green:✔} [${index}] ${tasks.join(', ')} {yellow:(${time}ms)}`);
 }
-export function reportWatcherTriggeredTasks(tasks: string[]) {
-    l(`{yellow:+} ${tasks.join(', ')}`);
+export function reportWatcherTriggeredTasks(index: number, tasks: string[]) {
+    l(`{yellow:+} [${index}] ${tasks.join(', ')}`);
 }
 
 /**

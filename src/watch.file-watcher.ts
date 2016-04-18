@@ -34,8 +34,8 @@ export function createObservablesForWatchers (watchers: Watcher[],
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
          */
-        .flatMap((watchEvent:WatchEvent) => {
-            reporter.reportWatcherTriggeredTasks(watchEvent.runner.tasks);
+        .flatMap((watchEvent:WatchEvent, i) => {
+            reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner.series(tracker$)
                 .filter(x => {
@@ -59,7 +59,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
                     if (errorCount > 0) {
                         reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
                     } else {
-                        reporter.reportWatcherTriggeredTasksCompleted(watchEvent.runner.tasks);
+                        reporter.reportWatcherTriggeredTasksCompleted(i, watchEvent.runner.tasks, new Date().getTime() - timer);
                     }
                     return Rx.Observable.just(incoming);
                 });
