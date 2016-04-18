@@ -18,11 +18,15 @@ export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
     ignoreInitial: true,
     block: true,
-    throttle: 0
+    throttle: 0,
+    delay: 0,
+    debounce: 0
 };
 
 export interface CBWatchOptions extends WatchOptions {
     throttle: number
+    debounce: number
+    delay: number
     block: boolean
 }
 

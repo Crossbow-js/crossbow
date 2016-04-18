@@ -186,8 +186,8 @@ function withoutCommand (obj: {}) {
  */
 function getBaseNameAndFlags (taskName: string): {baseName: string, flags: {}} {
     const splitFlags = taskName.trim().split(/^(.+?) /);
-    var baseName;
-    var flags = {};
+    let baseName;
+    let flags = {};
     if (splitFlags.length === 1) {
         baseName = splitFlags[0];
     } else {

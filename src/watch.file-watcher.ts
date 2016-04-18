@@ -1,4 +1,4 @@
-import {Watcher} from "./watch.resolve";
+import {Watcher, CBWatchOptions} from "./watch.resolve";
 import * as reporter from './reporters/defaultReporter';
 import {CommandTrigger} from "./command.run";
 import {TaskReport} from "./task.runner";
@@ -8,11 +8,11 @@ const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
 
 export interface WatchEvent {
-    event: string
-    path: string
-    runner: Watcher
-    watcherUID: string
-    duration?: number
+    event:string
+    path:string
+    runner:Watcher
+    watcherUID:string
+    duration?:number
 }
 
 /**
@@ -28,14 +28,11 @@ export function createObservablesForWatchers (watchers: Watcher[],
          */
         .merge(watchers.map(createObservableForWatcher))
         /**
-         * Discard repeated file-change events that happend within the theshold
-         */
-        .debounce(500)
-        /**
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
          */
-        .flatMap((watchEvent: WatchEvent) => {
+        .flatMap((watchEvent:WatchEvent) => {
+            console.log(watchEvent.runner.tasks);
             return watchEvent.runner._runner.series(tracker$);
         });
 }
@@ -43,8 +40,32 @@ export function createObservablesForWatchers (watchers: Watcher[],
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher (watcher: Watcher): Rx.Observable<WatchEvent> {
-    return Rx.Observable.create((observer: Rx.Observer<WatchEvent>) => {
+export function createObservableForWatcher(watcher:Watcher): Rx.Observable<WatchEvent> {
+
+    /**
+     * First create a stream of file-watcher events for this Watcher
+     */
+    const output$ = getRawOutputStream(watcher);
+
+    /**
+     * Specify a mapping from option name -> Rx.Observable operator name
+     */
+    const additionalOperators = [
+        {
+            option: 'debounce',
+            fnName: 'debounce'
+        },
+        {
+            option: 'throttle',
+            fnName: 'throttle'
+        }
+    ];
+
+    return applyOperators(output$, additionalOperators, watcher.options);
+}
+
+function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
+    return Rx.Observable.create((observer:Rx.Observer<WatchEvent>) => {
 
         /** DEBUG **/
         debug(`+ [id:${watcher.watcherUID}] ${watcher.patterns.length} patterns (${watcher.patterns})`);
@@ -54,11 +75,11 @@ export function createObservableForWatcher (watcher: Watcher): Rx.Observable<Wat
         const chokidarWatcher = chokidar.watch(watcher.patterns, watcher.options)
             .on('all', function (event, path) {
                 observer.onNext({
-                    event:      event,
-                    path:       path,
-                    runner:     watcher,
+                    event: event,
+                    path: path,
+                    runner: watcher,
                     watcherUID: watcher.watcherUID,
-                    duration:   0
+                    duration: 0
                 });
             });
 
@@ -78,4 +99,17 @@ export function createObservableForWatcher (watcher: Watcher): Rx.Observable<Wat
             chokidarWatcher.close();
         }
     });
+}
+
+/**
+ *
+ */
+function applyOperators (source: Rx.Observable<any>, items: {option:string, fnName:string}[], options: CBWatchOptions): Rx.Observable<any> {
+    return items.reduce((stream$, item) => {
+        const value = options[item.option];
+        if (value !== undefined && value > 0) {
+            return stream$[item.fnName].call(stream$, value);
+        }
+        return stream$;
+    }, source);
 }

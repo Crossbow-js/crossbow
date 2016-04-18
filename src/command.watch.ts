@@ -125,7 +125,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             .do(tracker)
             .do((x: TaskReport) => {
                 // todo - simpler/shorter format for task reports on watchers
-                reporter.watchTaskReport(x, trigger); // always log start/end of tasks
+                // reporter.watchTaskReport(x, trigger); // always log start/end of tasks
                 if (x.type === TaskReportType.error) {
                     console.log(x.stats.errors[0].stack);
                 }
@@ -134,6 +134,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         .catch(err => {
             // Only intercept Crossbow errors
             // otherwise just allow it to be thrown
+            // For example, 'before' runner may want
+            // to terminate the stream, but not with a throwable
             if (err._cb) {
                 return Rx.Observable.empty();
             }

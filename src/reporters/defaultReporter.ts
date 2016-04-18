@@ -82,7 +82,6 @@ function _taskReport (report: TaskReport, label: string) {
 export function watchTaskReport(report: TaskReport, trigger: WatchTrigger) {
     const label = getSequenceLabel(report.item, trigger.config);
     // todo make loglevel an enum
-    console.log(trigger.config.summary);
     _taskReport(report, label);
 }
 
