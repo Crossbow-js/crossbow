@@ -182,11 +182,14 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 }
 
 export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
-    if (cli.input.length === 1 || config.interactive) {
-        if (cli.input.length === 1) {
-            reporter.reportNoWatchTasksProvided();
-            return;
+    if (cli.input.length === 1) {
+        if (input.watch.default !== undefined) {
+            const moddedCliInput = cli.input.slice();
+            cli.input = moddedCliInput.concat('default');
+            return execute(cli, input, config);
         }
+        reporter.reportNoWatchTasksProvided();
+        return;
     }
 
     return execute(cli, input, config);
