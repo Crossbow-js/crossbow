@@ -2,6 +2,7 @@ import {resolve, extname, basename} from 'path';
 import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
+import {TaskReportType} from "./task.runner";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -162,4 +163,11 @@ function testType (com:string, val:any): boolean {
 
 export function isPlainObject (val:any): boolean {
     return testType(toStringTypes['obj'], val);
+}
+
+export function isReport (report: any) {
+    return typeof report.type === 'string' &&
+        report.type === TaskReportType.start ||
+        report.type === TaskReportType.end   ||
+        report.type === TaskReportType.error
 }

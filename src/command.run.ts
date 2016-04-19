@@ -1,4 +1,5 @@
 /// <reference path="../typings/main.d.ts" />
+import {isReport} from "./task.utils";
 const debug  = require('debug')('cb:command.run');
 const Rx     = require('rx');
 const merge  = require('lodash.merge');
@@ -89,11 +90,19 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * to consume. We use the `config.runMode` flag to select a top-level
      * parallel or series runner
      */
-    runner[config.runMode]
-        .call()
-        .filter(x => {
+    const tracker = new Rx.Subject();
+    const tracker$ = tracker
+        .filter((x: TaskReport) => {
+            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
             return typeof x.type === 'string';
-        })
+        }).share();
+
+    runner[config.runMode]
+        .call(null, tracker$)
+        /**
+         * Now dicard anything that is not a start/error/begin event
+         */
+        .filter(isReport)
         .do((x: TaskReport) => {
             if (ctx.config.progress) {
                 taskReport(x, ctx);
