@@ -12,6 +12,7 @@ import * as seq from "./task.sequence";
 import Rx = require('rx');
 import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
+import {isReport} from "./task.utils";
 
 const debug    = require('debug')('cb:command.watch');
 const merge    = require('lodash.merge');
@@ -50,10 +51,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
 
     const tracker = new Rx.Subject();
     const tracker$ = tracker
-        .filter((x: TaskReport) => {
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            return typeof x.type === 'string';
-        })
+        .filter(isReport)
         .share();
 
     /**
@@ -154,8 +152,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         return before
             .runner
             .series(tracker$) // todo - should this support parallel run mode also?
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            .filter(x => typeof x.type === 'string')
+            .filter(isReport)
             .do(report => {
                 if (trigger.config.progress) {
                     reporter.taskReport(report, trigger);

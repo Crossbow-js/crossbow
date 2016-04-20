@@ -92,10 +92,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const tracker = new Rx.Subject();
     const tracker$ = tracker
-        .filter((x: TaskReport) => {
-            // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-            return typeof x.type === 'string';
-        }).share();
+        .filter(isReport)
+        .share();
 
     runner[config.runMode]
         .call(null, tracker$)

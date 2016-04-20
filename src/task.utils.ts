@@ -165,8 +165,12 @@ export function isPlainObject (val:any): boolean {
     return testType(toStringTypes['obj'], val);
 }
 
+export function isString (val:any): boolean {
+    return testType(toStringTypes['string'], val);
+}
+
 export function isReport (report: any) {
-    return typeof report.type === 'string' &&
+    return report && isString(report.type) &&
         report.type === TaskReportType.start ||
         report.type === TaskReportType.end   ||
         report.type === TaskReportType.error

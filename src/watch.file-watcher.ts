@@ -5,6 +5,7 @@ import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
 import {WatchTrigger} from "./command.watch";
+import {isReport} from './task.utils';
 
 const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
@@ -38,10 +39,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner.series(tracker$)
-                .filter(x => {
-                    // todo more robust way of determining if the current value was a report from crossbow (could be a task produced value)
-                    return typeof x.type === 'string';
-                })
+                .filter(isReport)
                 .do(tracker)
                 .do((x: TaskReport) => {
                     // todo - simpler/shorter format for task reports on watchers
