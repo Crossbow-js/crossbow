@@ -137,7 +137,14 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
     return subject.items.map(item => {
         const flat  = createFlattenedTask(item, parents.concat(taskName), trigger);
         flat.origin = subject.origin;
-        // todo unit test this logic
+
+        /**
+         * Never try to resolve children tasks if this is an adaptor
+         */
+        if (flat.type === TaskTypes.Adaptor) {
+            return flat;
+        }
+
         if (!flat.modules.length) {
             flat.tasks  = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
         }
@@ -201,9 +208,8 @@ function createAdaptorTask (taskName, parents) : Task {
 }
 
 /**
- * @param taskName
- * @param input
- * @returns {any}
+ * Attempt to match a task-name from within the various 'inputs'
+ * given
  */
 function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWithOrigin {
 
