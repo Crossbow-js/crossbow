@@ -1,10 +1,5 @@
 tasks:
-    webpack: >
-        $bgShell watchify {{watchify.input}}
+    watchify: >
+        @bg watchify app/bundle.js
         -v -d
-        -o {{watchify.output}}
-
-config:
-    watchify:
-        input: 'test/fixtures/js/app.js'
-        output: 'test/fixtures/js/app.watchify.js'
+        -o dist/bundle.js
