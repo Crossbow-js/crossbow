@@ -65,7 +65,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].items.length, 4);
         assert.equal(runner.sequence[0].items[1].items.length, 2);
     });
-    it.only('can gather groups in parallel when @p in task name', function () {
+    it('can gather groups in parallel when @p in task name', function () {
         this.timeout(10000);
         var runner = handoff(['build-all'], {
             tasks: {
@@ -85,9 +85,8 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
         assert.equal(runner.sequence[0].items.length, 2);
-        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].type, types.ParallelGroup);
         assert.equal(runner.sequence[0].items[0].items.length, 4);
-        assert.equal(runner.sequence[0].items[1].items.length, 2);
     });
     it('can run in series', function (done) {
         this.timeout(10000);

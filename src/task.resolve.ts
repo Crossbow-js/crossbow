@@ -75,7 +75,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:Command
      * Do basic processing on each task such as splitting out flags/sub-tasks
      * @type {OutgoingTask}
      */
-    const incoming = preprocessTask(taskName);
+    const incoming = preprocessTask(taskName, trigger.input);
 
     /**
      * Try to locate modules/files using the cwd + the current
@@ -213,6 +213,22 @@ function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWit
 
     if (input.npmScripts[taskName] !== undefined) {
         return {items: [].concat(input.npmScripts[taskName]), origin: TaskOriginTypes.NpmScripts}
+    }
+
+    /**
+     * Next, look at the top-level input,
+     * is this taskname going to match, and if so, does it contain any flags?
+     */
+    const maybes = Object.keys(input.tasks).reduce(function (all, key) {
+        const match = key.match(new RegExp(`^${taskName}@(.+)`));
+        if (match) {
+            return input.tasks[key];
+        }
+        return all;
+    }, []);
+
+    if (maybes.length) {
+        return {items: maybes, origin: TaskOriginTypes.CrossbowConfig};
     }
 
     return {items: [], origin: TaskOriginTypes.CrossbowConfig};

@@ -1,4 +1,5 @@
 import {Task} from "./task.resolve.d";
+import {CrossbowInput} from "./index";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -26,13 +27,13 @@ export interface OutgoingTask extends IncomingTask {
     tasks: Task[]
 }
 
-export function preprocessTask(taskName: string): OutgoingTask {
+export function preprocessTask(taskName: string, input: CrossbowInput): OutgoingTask {
 
     /**
      * Split any end cbflags from the main task name
      * @type {SplitTaskAndFlags}
      */
-    var split      = getSplitFlags(taskName);
+    var split      = getSplitFlags(taskName, input);
 
     /**
      * Split the incoming taskname on colons
@@ -80,10 +81,9 @@ export interface SplitTaskAndFlags {
 }
 
 /**
- * @param taskName
- * @returns {any}
+ *
  */
-function getSplitFlags (taskName: string): SplitTaskAndFlags {
+function getSplitFlags (taskName: string, input: CrossbowInput): SplitTaskAndFlags {
 
     /**
      * Split up the task name from any flags/queries/cbflags etc
@@ -109,7 +109,20 @@ function getSplitFlags (taskName: string): SplitTaskAndFlags {
         const query = splitQuery.length > 1
             ?  qs.parse(splitQuery[1])
             : {};
-        return {taskName: splitQuery[0], query, cbflags:[], flags: baseNameAndFlags.flags};
+
+        /**
+         * Next, look at the top-level input,
+         * is this taskname going to match, and if so, does it contain any flags?
+         */
+        const cbflags = Object.keys(input.tasks).reduce(function (all, key) {
+            const match = key.match(new RegExp(`^${taskName}@(.+)`));
+            if (match) {
+                return all.concat(match[1].split(''));
+            }
+            return all;
+        }, []);
+
+        return {taskName: splitQuery[0], query, cbflags: cbflags, flags: baseNameAndFlags.flags};
     }
 
     /**

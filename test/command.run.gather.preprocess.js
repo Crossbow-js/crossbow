@@ -4,7 +4,7 @@ const preprocess = require('../dist/task.preprocess').preprocessTask;
 describe('can pre-process incoming task names', function () {
     it('can handle simple tasks tasks', function () {
         assert.deepEqual(
-            preprocess('file.js'),
+            preprocess('file.js', {tasks:{}}),
             {
                 cbflags: [],
                 flags: {},
@@ -20,51 +20,57 @@ describe('can pre-process incoming task names', function () {
     });
     it('can handle single subtask', function () {
 
-        const proc = preprocess('file.js:dev');
+        const proc = preprocess('file.js:dev', {tasks:{}});
         assert.equal(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.subTasks, ['dev']);
         assert.deepEqual(proc.rawInput, 'file.js:dev');
         assert.deepEqual(proc.taskName, 'file.js');
     });
     it('can handle multi subtask', function () {
-        const proc = preprocess('file.js:dev:site');
+        const proc = preprocess('file.js:dev:site', {tasks:{}});
         assert.equal(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.subTasks, ['dev', 'site']);
         assert.deepEqual(proc.rawInput, 'file.js:dev:site');
         assert.deepEqual(proc.taskName, 'file.js');
     });
     it('can handle single handle @p flag', function () {
-        const proc = preprocess('file.js@p');
+        const proc = preprocess('file.js@p', {tasks:{}});
         assert.deepEqual(proc.cbflags, ['p']);
         assert.deepEqual(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.rawInput, 'file.js@p');
     });
+    it('can handle single handle @p flag on task definition', function () {
+        const proc = preprocess('file.js', {tasks:{'file.js@p': []}});
+        assert.deepEqual(proc.cbflags, ['p']);
+        assert.deepEqual(proc.baseTaskName, 'file.js');
+        assert.deepEqual(proc.rawInput, 'file.js');
+    });
     it('can handle multiple flags', function () {
-        const proc = preprocess('file.js@pa');
+        const proc = preprocess('file.js@pa', {tasks:{}});
         assert.deepEqual(proc.cbflags, ['p', 'a']);
         assert.deepEqual(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.rawInput, 'file.js@pa');
     });
     it('can handle missing flag', function () {
-        const proc = preprocess('file.js@');
+        const proc = preprocess('file.js@', {tasks:{}});
         assert.deepEqual(proc.cbflags, ['']);
     });
     it('can handle @p flag with subtasks', function () {
-        const proc = preprocess('file.js:dev:site@pa');
+        const proc = preprocess('file.js:dev:site@pa', {tasks:{}});
         assert.deepEqual(proc.cbflags, ['p', 'a']);
         assert.deepEqual(proc.subTasks, ['dev', 'site']);
         assert.deepEqual(proc.rawInput, 'file.js:dev:site@pa');
         assert.deepEqual(proc.taskName, 'file.js');
     });
     it('can handle query params', function () {
-        const proc = preprocess('crossbow-sass?input=shane');
+        const proc = preprocess('crossbow-sass?input=shane', {tasks:{}});
         assert.deepEqual(proc.baseTaskName, 'crossbow-sass');
         assert.deepEqual(proc.rawInput, 'crossbow-sass?input=shane');
         assert.deepEqual(proc.taskName, 'crossbow-sass');
         assert.deepEqual(proc.query, {input: 'shane'});
     });
     it('can handle query params with flags', function () {
-        const proc = preprocess('crossbow-sass?input=shane@p');
+        const proc = preprocess('crossbow-sass?input=shane@p', {tasks:{}});
         assert.deepEqual(proc.cbflags, ['p']);
         assert.deepEqual(proc.baseTaskName, 'crossbow-sass');
         assert.deepEqual(proc.rawInput, 'crossbow-sass?input=shane@p');
@@ -72,7 +78,7 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(proc.query, {input: 'shane'});
     });
     it('can handle query params with flags and sub-tasks', function () {
-        const proc = preprocess('crossbow-sass:shane:kittie?input=core.min.css@p');
+        const proc = preprocess('crossbow-sass:shane:kittie?input=core.min.css@p', {tasks:{}});
         assert.deepEqual(proc.query, {input: 'core.min.css'});
         assert.deepEqual(proc.cbflags, ['p']);
         assert.deepEqual(proc.baseTaskName, 'crossbow-sass');
@@ -81,13 +87,13 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(proc.taskName, 'crossbow-sass');
     });
     it('can single handle cli flags', function () {
-        const proc = preprocess('crossbow-sass --env=dev');
+        const proc = preprocess('crossbow-sass --env=dev', {tasks:{}});
         assert.deepEqual(proc.flags, {env: 'dev'});
         assert.deepEqual(proc.rawInput, 'crossbow-sass --env=dev');
         assert.deepEqual(proc.taskName, 'crossbow-sass');
     });
     it('can single handle cli flags with dots', function () {
-        const proc = preprocess('crossbow-sass --my.env=dev');
+        const proc = preprocess('crossbow-sass --my.env=dev', {tasks:{}});
         assert.deepEqual(proc.flags, {
             my: {env: 'dev'}
         });
@@ -95,7 +101,7 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(proc.taskName, 'crossbow-sass');
     });
     it('can single handle cli flags with dots', function () {
-        const proc = preprocess('crossbow-sass --my.array=shane --my.array=kittie');
+        const proc = preprocess('crossbow-sass --my.array=shane --my.array=kittie', {tasks:{}});
         console.log(proc.flags);
         assert.deepEqual(proc.flags, {
             my: {array: ['shane', 'kittie']}
