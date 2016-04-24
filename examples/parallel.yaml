@@ -1,0 +1,7 @@
+tasks:
+  # Notice the '@p' in the task name - this indicates all child-tasks
+  # should be run in parallel, so both webpack and docker here can begin together
+  # and neither will be halted if one errors
+  run-all@p:
+    - '@npm webpack -w'
+    - '@shell docker-compose up'

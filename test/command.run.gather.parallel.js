@@ -65,6 +65,29 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].items.length, 4);
         assert.equal(runner.sequence[0].items[1].items.length, 2);
     });
+    it('can gather groups in parallel when @p in task name', function () {
+        this.timeout(10000);
+        var runner = handoff(['build-all'], {
+            tasks: {
+                'build-all@p': ['js', 'css'],
+                'js':        ['test/fixtures/tasks/simple.multi.js:*'],
+                'css':       'test/fixtures/tasks/simple.js:first:second'
+            },
+            config: {
+                'test/fixtures/tasks/simple.multi.js': {
+                    first: {name: 'shane'},
+                    second: {name: 'kittie'}
+                },
+                'test/fixtures/tasks/simple.js': {
+                    first: {name: 'shane'},
+                    second: {name: 'kittie'}
+                }
+            }
+        });
+        assert.equal(runner.sequence[0].items.length, 2);
+        assert.equal(runner.sequence[0].type, types.ParallelGroup);
+        assert.equal(runner.sequence[0].items[0].items.length, 4);
+    });
     it('can run in series', function (done) {
         this.timeout(10000);
         var runner = handoff(['js', 'css'], {
