@@ -3,7 +3,7 @@
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
+import {retrieveDefaultInputFiles, createCrossbowTasksFromNpmScripts, readFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
@@ -90,13 +90,23 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
 
         if (mergedConfig.config) {
             debug(`Config flag provided ${mergedConfig.config}`);
+            const userConfig = readFiles([<string>mergedConfig.config], mergedConfig.cwd);
+            if (userConfig.invalid.length) {
+                console.log('There were errors resolving the following input file(s):');
+                userConfig.invalid.forEach(function (input) {
+                	console.log(`Your input: '${input.path}'`);
+                	console.log(`Attempted:  '${input.resolved}'`);
+                });
+                // console.log(`Could not resolve config file '${mergedConfig.config}'`);
+                return;
+            }
         } else {
             if (input === undefined) {
                debug('No input provided');
             }
         }
 
-        const externalInputs = retrieveExternalInputFiles(mergedConfig);
+        const externalInputs = retrieveDefaultInputFiles(mergedConfig);
         if (externalInputs.length) {
             debug(`Using external input from ${externalInputs[0].path}`);
             return processInput(cli, generateInput(externalInputs[0].input, mergedConfig), mergedConfig);

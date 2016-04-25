@@ -63,44 +63,70 @@ function replaceOne(item, root) {
 
 export interface ExternalFileInput {
     path: string
+    resolved: string
     input: CrossbowInput|any
 }
+
+export interface InputFiles {
+    all: ExternalFileInput[]
+    valid: ExternalFileInput[]
+    invalid: ExternalFileInput[]
+}
+
 /**
  * Try to auto-load configuration
  * @param flags
  * @param config
  * @returns {*}
  */
-export function retrieveExternalInputFiles (config: CrossbowConfiguration): ExternalFileInput[] {
-
+export function retrieveDefaultInputFiles (config: CrossbowConfiguration): InputFiles {
     const maybes     = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
     const cwd        = config.cwd;
-    const configFlag = config.config;
-
-    const configFiles = readFiles([configFlag, ...maybes], cwd);
-    return configFiles;
+    return readFiles(maybes, cwd);
 }
 
 /**
- * @param paths
- * @param cwd
- * @returns {any}
+ * Utility for reading files from disk
  */
-function readFiles (paths, cwd) {
+export function readFiles (paths: string[], cwd: string): InputFiles {
+    const inputs  = getFileInputs(paths, cwd);
+    const invalid = inputs.filter(x => x.input === undefined);
+    const valid   = inputs.filter(x => x.input !== undefined);
+
+    return {
+        all: inputs,
+        valid,
+        invalid
+    };
+}
+
+/**
+ *
+ */
+function getFileInputs (paths, cwd): ExternalFileInput[] {
     return paths
-        .filter(x => x)
-        .map(x => resolve(cwd, x))
-        .filter(existsSync)
-        .map(x => {
-            if (x.match(/\.ya?ml$/)) {
-                return <ExternalFileInput> {
-                    path: x,
-                    input: yml.safeLoad(readFileSync(x))
+        .map(path => ({path: path, resolved: resolve(cwd, path)}))
+        .map(incoming => {
+            const resolved = incoming.resolved;
+            const path = incoming.path;
+            if (!existsSync(resolved)) {
+                return {
+                    input: undefined,
+                    path,
+                    resolved
                 }
             }
-            return <ExternalFileInput> {
-                path: x,
-                input: require(x)
+            if (resolved.match(/\.ya?ml$/)) {
+                return {
+                    input: yml.safeLoad(readFileSync(incoming.resolved)),
+                    path,
+                    resolved
+                }
+            }
+            return {
+                input: require(incoming.resolved),
+                path,
+                resolved
             }
         });
 }
