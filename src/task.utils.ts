@@ -7,6 +7,7 @@ import {TaskReportType} from "./task.runner";
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
 const objPath  = require('object-path');
+const debug = require('debug')('cb:task-utils');
 
 export function locateModule (cwd: string, name: string): string[] {
 
@@ -22,16 +23,6 @@ export function locateModule (cwd: string, name: string): string[] {
             var stat = lstatSync(x);
             return stat.isFile();
         });
-
-    if (files.length === 0) {
-        try {
-            files.push(require.resolve(name));
-        } catch (e) {
-            if (e.code !== 'MODULE_NOT_FOUND') {
-                throw e;
-            }
-        }
-    }
 
     return files;
 }
