@@ -9,6 +9,29 @@ const readPkgUp = require('read-pkg-up');
 const objPath  = require('object-path');
 const debug = require('debug')('cb:task-utils');
 
+export interface ExternalFileInput {
+    path: string
+    resolved: string
+    input: CrossbowInput|any,
+    errors: InputError[]
+}
+
+export enum InputErrorTypes {
+    InputFileMissing = <any>"InputFileMissing"
+}
+
+export interface InputError {
+    type: InputErrorTypes
+}
+
+export interface InputFileMissingError extends InputError {}
+
+export interface InputFiles {
+    all: ExternalFileInput[]
+    valid: ExternalFileInput[]
+    invalid: ExternalFileInput[]
+}
+
 export function locateModule (cwd: string, name: string): string[] {
 
     const files = [
@@ -61,46 +84,61 @@ function replaceOne(item, root) {
     });
 }
 
-export interface ExternalFileInput {
-    path: string
-    input: CrossbowInput|any
-}
 /**
  * Try to auto-load configuration
  * @param flags
  * @param config
  * @returns {*}
  */
-export function retrieveExternalInputFiles (config: CrossbowConfiguration): ExternalFileInput[] {
-
+export function retrieveDefaultInputFiles (config: CrossbowConfiguration): InputFiles {
     const maybes     = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
     const cwd        = config.cwd;
-    const configFlag = config.config;
+    return readFiles(maybes, cwd);
+}
 
-    const configFiles = readFiles([configFlag, ...maybes], cwd);
-    return configFiles;
+
+export function readFiles (paths: string[], cwd: string): InputFiles {
+    const inputs  = getFileInputs(paths, cwd);
+    const invalid = inputs.filter(x => x.input === undefined);
+    const valid   = inputs.filter(x => x.input !== undefined);
+
+    return {
+        all: inputs,
+        valid,
+        invalid
+    };
 }
 
 /**
- * @param paths
- * @param cwd
- * @returns {any}
+ *
  */
-function readFiles (paths, cwd) {
+function getFileInputs (paths, cwd): ExternalFileInput[] {
     return paths
-        .filter(x => x)
-        .map(x => resolve(cwd, x))
-        .filter(existsSync)
-        .map(x => {
-            if (x.match(/\.ya?ml$/)) {
-                return <ExternalFileInput> {
-                    path: x,
-                    input: yml.safeLoad(readFileSync(x))
+        .map(path => ({path: path, resolved: resolve(cwd, path)}))
+        .map((incoming): ExternalFileInput => {
+            const resolved = incoming.resolved;
+            const path = incoming.path;
+            if (!existsSync(resolved)) {
+                return {
+                    errors: [{type: InputErrorTypes.InputFileMissing}],
+                    input: undefined,
+                    path,
+                    resolved
                 }
             }
-            return <ExternalFileInput> {
-                path: x,
-                input: require(x)
+            if (resolved.match(/\.ya?ml$/)) {
+                return {
+                    errors: [],
+                    input: yml.safeLoad(readFileSync(incoming.resolved)),
+                    path,
+                    resolved
+                }
+            }
+            return {
+                errors: [],
+                input: require(incoming.resolved),
+                path,
+                resolved
             }
         });
 }

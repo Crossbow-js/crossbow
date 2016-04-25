@@ -1,35 +1,36 @@
 #!/usr/bin/env node
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
+import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {retrieveExternalInputFiles, createCrossbowTasksFromNpmScripts, ExternalFileInput} from './task.utils';
+import {retrieveDefaultInputFiles, createCrossbowTasksFromNpmScripts, readFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 
-const meow   = require('meow');
+const meow = require('meow');
 const assign = require('object-assign');
 const _merge = require('lodash.merge');
-const debug  = require('debug')('cb:init');
+const debug = require('debug')('cb:init');
 
 export interface Meow {
-    input: string[]
-    flags: any
-    help?: string
+    input:string[]
+    flags:any
+    help?:string
 }
 
-function generateMeowInput (incoming: Meow|any) : Meow {
-    return assign({input: [], flags:{}}, incoming || {});
+function generateMeowInput(incoming:Meow|any):Meow {
+    return assign({input: [], flags: {}}, incoming || {});
 }
 
 export interface CrossbowInput {
-    tasks: any
-    watch: any
-    config: any
-    gruntfile?: string
-    npmScripts: any
-    mergedTasks: any
+    tasks:any
+    watch:any
+    config:any
+    gruntfile?:string
+    npmScripts:any
+    mergedTasks:any
 }
 
 /**
@@ -39,7 +40,7 @@ export interface CrossbowInput {
  * @param config
  * @returns {any}
  */
-function generateInput (incoming: CrossbowInput|any, config: CrossbowConfiguration) : CrossbowInput {
+function generateInput(incoming:CrossbowInput|any, config:CrossbowConfiguration):CrossbowInput {
 
     const npmScriptsAsCrossbowTasks = createCrossbowTasksFromNpmScripts(config.cwd);
 
@@ -49,7 +50,7 @@ function generateInput (incoming: CrossbowInput|any, config: CrossbowConfigurati
             before: [],
             options: {}
         },
-        config:{},
+        config: {},
         npmScripts: npmScriptsAsCrossbowTasks
     }, incoming || {});
 }
@@ -73,7 +74,7 @@ if (!module.parent) {
     handleIncoming(cli);
 }
 
-function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
+function handleIncoming(cli:Meow, input?:CrossbowInput|any):TaskRunner {
     cli = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
 
@@ -90,16 +91,20 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
 
         if (mergedConfig.config) {
             debug(`Config flag provided ${mergedConfig.config}`);
+            const userConfig = readFiles([<string>mergedConfig.config], mergedConfig.cwd);
+            if (userConfig.invalid.length) {
+                console.log('There were errors resolving the following input file(s):');
+                reporter.reportMissingConfigFile(userConfig);
+                return;
+            }
+            if (userConfig.valid.length) {
+                debug(`Using external input from ${userConfig.valid[0].resolved}`);
+                return processInput(cli, generateInput(userConfig.valid[0].input, mergedConfig), mergedConfig);
+            }
         } else {
             if (input === undefined) {
-               debug('No input provided');
+                debug('No external input provided');
             }
-        }
-
-        const externalInputs = retrieveExternalInputFiles(mergedConfig);
-        if (externalInputs.length) {
-            debug(`Using external input from ${externalInputs[0].path}`);
-            return processInput(cli, generateInput(externalInputs[0].input, mergedConfig), mergedConfig);
         }
     }
 
@@ -109,7 +114,7 @@ function handleIncoming (cli: Meow, input?: CrossbowInput|any): TaskRunner {
 /**
  * Now decide who should handle the current command
  */
-function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) : any {
+function processInput(cli:Meow, input:CrossbowInput, config:CrossbowConfiguration):any {
     const firstArg = cli.input[0];
     return availableCommands[firstArg].call(null, cli, input, config);
 }
@@ -118,21 +123,21 @@ export default handleIncoming;
 
 module.exports = handleIncoming;
 
-module.exports.getRunner = function getRunner (tasks: string[], input?: any, config?: any) {
+module.exports.getRunner = function getRunner(tasks:string[], input?:any, config?:any) {
     return handleIncoming({
         input: ['run', ...tasks],
         flags: assign({handoff: true}, config)
     }, input || {});
 };
 
-module.exports.getWatcher = function getWatcher (tasks: string[], input?: any, config?: any) {
+module.exports.getWatcher = function getWatcher(tasks:string[], input?:any, config?:any) {
     return handleIncoming({
         input: ['watch', ...tasks],
         flags: assign({handoff: true}, config)
     }, input || {});
 };
 
-module.exports.runner = function getRunner (tasks: string[], input?: any, config?: any) {
+module.exports.runner = function getRunner(tasks:string[], input?:any, config?:any) {
     const result = handleIncoming({
         input: ['run', ...tasks],
         flags: assign({handoff: true}, config)
@@ -140,7 +145,7 @@ module.exports.runner = function getRunner (tasks: string[], input?: any, config
     return result.runner;
 };
 
-module.exports.run = function run (tasks: string[], input?: any, config?: any) {
+module.exports.run = function run(tasks:string[], input?:any, config?:any) {
     handleIncoming({
         input: ['run', ...tasks],
         flags: config || {}

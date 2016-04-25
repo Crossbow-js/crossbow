@@ -19,6 +19,7 @@ import {WatchTrigger} from "../command.watch";
 import {CommandTrigger, RunCommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
+import {InputFiles} from "../task.utils";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -26,6 +27,27 @@ const archy = require('archy');
 
 function nl () {
     l(`{gray:-}`);
+}
+
+export function reportMissingConfigFile (inputs: InputFiles) {
+    if (inputs.invalid.length) {
+        l('{gray.bold:-----------------------------------------------------}');
+        l('{err: } Sorry, there were errors resolving your input files');
+        l('{gray.bold:-----------------------------------------------------}');
+        inputs.invalid.forEach(function (item) {
+            const o = archy({
+                label:`{yellow:+ input: '${item.path}'}`, nodes: [
+                    {
+                        label: [
+                            `{red.bold:x} {cyan:${item.path}} could not be found`,
+                            getExternalError(item.errors[0].type, item.errors[0], item)
+                        ].join('\n')
+                    }
+                ]
+            }, prefix);
+            logger.info(o.slice(26, -1));
+        });
+    }
 }
 
 export function reportSummary (sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
@@ -429,10 +451,10 @@ function getWatchError(error, task) {
     return getExternalError(watchErrors.WatchTaskErrorTypes[error.type], error, task);
 }
 
-function getExternalError (type, error, task) {
+function getExternalError<A, B>(type, error: A, val2: B) {
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
-        ...require('./error.' + type).apply(null, [task, error]),
+        ...require('./error.' + type).apply(null, [error, val2]),
         compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
     ].join('\n');
 }
