@@ -9,6 +9,29 @@ const readPkgUp = require('read-pkg-up');
 const objPath  = require('object-path');
 const debug = require('debug')('cb:task-utils');
 
+export interface ExternalFileInput {
+    path: string
+    resolved: string
+    input: CrossbowInput|any,
+    errors: InputError[]
+}
+
+export enum InputErrorTypes {
+    InputFileMissing = <any>"InputFileMissing"
+}
+
+export interface InputError {
+    type: InputErrorTypes
+}
+
+export interface InputFileMissingError extends InputError {}
+
+export interface InputFiles {
+    all: ExternalFileInput[]
+    valid: ExternalFileInput[]
+    invalid: ExternalFileInput[]
+}
+
 export function locateModule (cwd: string, name: string): string[] {
 
     const files = [
@@ -61,18 +84,6 @@ function replaceOne(item, root) {
     });
 }
 
-export interface ExternalFileInput {
-    path: string
-    resolved: string
-    input: CrossbowInput|any
-}
-
-export interface InputFiles {
-    all: ExternalFileInput[]
-    valid: ExternalFileInput[]
-    invalid: ExternalFileInput[]
-}
-
 /**
  * Try to auto-load configuration
  * @param flags
@@ -85,9 +96,7 @@ export function retrieveDefaultInputFiles (config: CrossbowConfiguration): Input
     return readFiles(maybes, cwd);
 }
 
-/**
- * Utility for reading files from disk
- */
+
 export function readFiles (paths: string[], cwd: string): InputFiles {
     const inputs  = getFileInputs(paths, cwd);
     const invalid = inputs.filter(x => x.input === undefined);
@@ -106,11 +115,12 @@ export function readFiles (paths: string[], cwd: string): InputFiles {
 function getFileInputs (paths, cwd): ExternalFileInput[] {
     return paths
         .map(path => ({path: path, resolved: resolve(cwd, path)}))
-        .map(incoming => {
+        .map((incoming): ExternalFileInput => {
             const resolved = incoming.resolved;
             const path = incoming.path;
             if (!existsSync(resolved)) {
                 return {
+                    errors: [{type: InputErrorTypes.InputFileMissing}],
                     input: undefined,
                     path,
                     resolved
@@ -118,12 +128,14 @@ function getFileInputs (paths, cwd): ExternalFileInput[] {
             }
             if (resolved.match(/\.ya?ml$/)) {
                 return {
+                    errors: [],
                     input: yml.safeLoad(readFileSync(incoming.resolved)),
                     path,
                     resolved
                 }
             }
             return {
+                errors: [],
                 input: require(incoming.resolved),
                 path,
                 resolved
