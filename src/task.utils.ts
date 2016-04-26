@@ -17,7 +17,8 @@ export interface ExternalFileInput {
 }
 
 export enum InputErrorTypes {
-    InputFileMissing = <any>"InputFileMissing"
+    InputFileMissing = <any>"InputFileMissing",
+    NoTasksAvailable = <any>"NoTasksAvailable"
 }
 
 export interface InputError {
@@ -25,6 +26,7 @@ export interface InputError {
 }
 
 export interface InputFileNotFoundError extends InputError {}
+export interface NoTasksAvailableError extends InputError {}
 
 export interface InputFiles {
     all: ExternalFileInput[]

@@ -15,7 +15,7 @@ export default function prompt (cli: Meow, input: CrossbowInput, config: Crossbo
         type: "checkbox",
         message: "Select Tasks to run with <space>",
         name: "tasks",
-        choices: buildPrompt(input, config),
+        choices: buildPrompt(input.tasks),
         validate: function( answer: string[] ): any {
             if ( answer.length < 1 ) {
                 return "You must choose at least one task";
@@ -59,22 +59,6 @@ export default function prompt (cli: Meow, input: CrossbowInput, config: Crossbo
         });
 }
 
-
-export function buildPrompt (input, config) {
-
-    const extract  = (x) => Object.keys(x).map(x => ({name:x, value: x}));
-    const cbTasks  = extract(input.tasks);
-
-    const npmTasks = extract(input.npmScripts);
-
-    if (npmTasks.length) {
-        return [
-            new inquirer.Separator(compile("{underline:NPM Scripts (from your package.json}")),
-            ...npmTasks,
-            new inquirer.Separator(compile("{underline:Other tasks from config")),
-            ...cbTasks
-        ];
-    }
-
-    return cbTasks;
+export function buildPrompt (input) {
+    return Object.keys(input).map(key => ({name:key, value: key}));
 }

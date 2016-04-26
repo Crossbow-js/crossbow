@@ -15,6 +15,7 @@ module.exports = {
         }
     },
     tasks: {
+        unit: "@npm sleep 1",
         buildall: ['js', 'css'],
         js: [
             'test/fixtures/tasks/simple.js'

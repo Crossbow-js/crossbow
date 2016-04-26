@@ -217,10 +217,6 @@ function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWit
         return {items: [].concat(input.tasks[taskName]), origin: TaskOriginTypes.CrossbowConfig}
     }
 
-    if (input.npmScripts[taskName] !== undefined) {
-        return {items: [].concat(input.npmScripts[taskName]), origin: TaskOriginTypes.NpmScripts}
-    }
-
     /**
      * Next, look at the top-level input,
      * is this taskname going to match, and if so, does it contain any flags?

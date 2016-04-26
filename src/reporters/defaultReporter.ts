@@ -19,7 +19,7 @@ import {WatchTrigger} from "../command.watch";
 import {CommandTrigger, RunCommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles} from "../task.utils";
+import {InputFiles, InputErrorTypes} from "../task.utils";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -31,9 +31,7 @@ function nl () {
 
 export function reportMissingConfigFile (inputs: InputFiles) {
     if (inputs.invalid.length) {
-        l('{gray.bold:-----------------------------------------------------}');
-        l('{err: } Sorry, there were errors resolving your input files');
-        l('{gray.bold:-----------------------------------------------------}');
+        heading(`Sorry, there were errors resolving your input files`);
         inputs.invalid.forEach(function (item) {
             const o = archy({
                 label:`{yellow:+ input: '${item.path}'}`, nodes: [
@@ -136,7 +134,7 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix
         nl();
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
     } else {
-        l('{yellow:+} %s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
+        l('{yellow:+}%s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
     }
 }
 
@@ -257,9 +255,7 @@ export function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], conf
 
 export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
-    l('{gray.bold:-----------------------------------------------------}');
-    l('{err: } Sorry, there were errors resolving your watch tasks');
-    l('{gray.bold:-----------------------------------------------------}');
+    heading(`Sorry, there were errors resolving your watch tasks`);
 
     cli.input.slice(1).forEach(function (n, i) {
         logWatchErrors([tasks[i]], '');
@@ -298,16 +294,34 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
 }
 
 export function reportNoTasksProvided() {
-    l("{gray:-------------------------------------------------------------");
-    l("Entering {bold:interactive mode} as you didn't provide a task to run");
-    l("{gray:-------------------------------------------------------------");
+    heading(`Entering interactive mode as you didn't provide a task to run`)
+}
+
+function heading(title) {
+    l('{gray.bold:-' + new Array(title.length).join('-') + "-:");
+    l(`${title} {gray.bold::}`);
+    l('{gray.bold:-' + new Array(title.length).join('-') + "-:");
+}
+
+export function reportNoTasksAvailable () {
+    heading('Sorry, there were no tasks available to run');
+    const o = archy({
+        label:`{yellow:+ input: ''}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x Input: ''}`,
+                    getExternalError(InputErrorTypes.NoTasksAvailable, {}),
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
 }
 
 export function reportNoWatchTasksProvided() {
-    l("{gray:-------------------------------------------------------------");
-    l("You didn't provide a watch-task to run");
-    l("{gray:-------------------------------------------------------------");
+    heading("You didn't provide a watch-task to run");
 }
+
 export interface CrossbowError extends Error{
     _cbError?: boolean
 }
@@ -451,7 +465,7 @@ function getWatchError(error, task) {
     return getExternalError(watchErrors.WatchTaskErrorTypes[error.type], error, task);
 }
 
-function getExternalError<A, B>(type, error: A, val2: B) {
+function getExternalError<A, B>(type, error: A, val2?: B) {
     return [
         compile(`{red:-} {bold:Error Type:}  ${type}`),
         ...require('./error.' + type).apply(null, [error, val2]),
@@ -460,7 +474,7 @@ function getExternalError<A, B>(type, error: A, val2: B) {
 }
 
 function adaptorLabel (task: Task) {
-    return `{magenta:[@${task.adaptor}]} {cyan:${task.command}}`;
+    return `{magenta:[@${task.adaptor}]} ${task.command}`;
 }
 
 function moduleLabel (task: Task) {
@@ -469,7 +483,7 @@ function moduleLabel (task: Task) {
 }
 
 function npmScriptLabel(task:Task) {
-    return `{magenta:[npm script]} {cyan:${task.command}}`;
+    return `{magenta:[npm script]} ${task.command}`;
 }
 
 function getLabel (task) {

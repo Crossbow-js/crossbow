@@ -4,13 +4,13 @@ const debug  = require('debug')('cb:command.run');
 const Rx     = require('rx');
 const merge  = require('lodash.merge');
 
-import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
-import {TaskReport} from "./task.runner";
-import {createRunner, createFlattenedSequence, decorateSequenceWithReports} from './task.sequence';
-import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided, taskReport} from './reporters/defaultReporter';
+import {TaskRunner, TaskReport} from './task.runner';
+
+import * as seq from "./task.sequence";
+import * as reporter from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
@@ -44,7 +44,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * to either modules on disk, or @adaptor tasks, so we can
      * go ahead and create a flattened run-sequence
      */
-    const sequence = createFlattenedSequence(tasks.valid, ctx);
+    const sequence = seq.createFlattenedSequence(tasks.valid, ctx);
 
     // require('fs').writeFileSync('sequence.json', JSON.stringify(sequence, null, 4));
 
@@ -52,7 +52,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * With the flattened sequence, we can create nested collections
      * of Rx Observables
      */
-    const runner = createRunner(sequence, ctx);
+    const runner = seq.createRunner(sequence, ctx);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -69,7 +69,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * off
      */
     if (tasks.invalid.length) {
-        reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
+        reporter.reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
         return;
     }
 
@@ -78,7 +78,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
     /**
      * Report task list that's about to run
      */
-    reportTaskList(sequence, cli, '', config);
+    reporter.reportTaskList(sequence, cli, '', config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -105,13 +105,13 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         .filter(isReport)
         .do((x: TaskReport) => {
             if (ctx.config.progress) {
-                taskReport(x, ctx);
+                reporter.taskReport(x, ctx);
             }
         })
         .toArray()
         .subscribe((reports: TaskReport[]) => {
-            const decoratedSequence = decorateSequenceWithReports(sequence, reports);
-            reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
+            const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+            reporter.reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
         }, e => {
             // never gunna get here baby
         }, _ => {
@@ -126,15 +126,18 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
      * show the UI for task selection
      */
     if (cli.input.length === 1 || config.interactive) {
-        if (cli.input.length === 1) {
-            reportNoTasksProvided();
+        if (cli.input.length === 1 && Object.keys(input.tasks).length) {
+            reporter.reportNoTasksProvided();
+            return promptForRunCommand(cli, input, config)
+                .subscribe(answers => {
+                    const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
+                    const configMerged = merge({}, config, {runMode: answers.runMode});
+                    return execute(cliMerged, input, configMerged);
+                });
+        } else {
+            reporter.reportNoTasksAvailable();
+            return;
         }
-        return promptForRunCommand(cli, input, config)
-            .subscribe(answers => {
-                const cliMerged       = merge({}, cli, {input: ['run', ...answers.tasks]});
-                const configMerged    = merge({}, config, {runMode: answers.runMode});
-                return execute(cliMerged, input, configMerged);
-            });
     }
 
     return execute(cli, input, config);
