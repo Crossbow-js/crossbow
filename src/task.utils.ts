@@ -98,7 +98,6 @@ export function retrieveDefaultInputFiles (config: CrossbowConfiguration): Input
     return readFiles(maybes, cwd);
 }
 
-
 export function readFiles (paths: string[], cwd: string): InputFiles {
     const inputs  = getFileInputs(paths, cwd);
     const invalid = inputs.filter(x => x.input === undefined);

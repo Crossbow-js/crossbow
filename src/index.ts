@@ -29,7 +29,6 @@ export interface CrossbowInput {
     watch:any
     config:any
     gruntfile?:string
-    npmScripts:any
     mergedTasks:any
 }
 
@@ -42,16 +41,13 @@ export interface CrossbowInput {
  */
 function generateInput(incoming:CrossbowInput|any, config:CrossbowConfiguration):CrossbowInput {
 
-    const npmScriptsAsCrossbowTasks = createCrossbowTasksFromNpmScripts(config.cwd);
-
     return _merge({
         tasks: {},
         watch: {
             before: [],
             options: {}
         },
-        config: {},
-        npmScripts: npmScriptsAsCrossbowTasks
+        config: {}
     }, incoming || {});
 }
 
@@ -104,6 +100,10 @@ function handleIncoming(cli:Meow, input?:CrossbowInput|any):TaskRunner {
         } else {
             if (input === undefined) {
                 debug('No external input provided');
+            }
+            const defaultInputFiles = retrieveDefaultInputFiles(mergedConfig);
+            if (defaultInputFiles.valid.length) {
+                return processInput(cli, generateInput(defaultInputFiles.valid[0].input, mergedConfig), mergedConfig);
             }
         }
     }

@@ -4,10 +4,8 @@ const Rx       = require('rx');
 const merge    = require('lodash.merge');
 const inquirer = require('inquirer');
 
-import {TaskRunner} from './task.runner';
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
-import {compile} from './logger';
 
 export default function prompt (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
