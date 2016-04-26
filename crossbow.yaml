@@ -1,4 +1,8 @@
 watch:
+  default:
+    before:
+      - compile
+    'src': ['compile']
   ts:
     before:
       - compile

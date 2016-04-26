@@ -139,10 +139,10 @@ export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix 
 
 export function reportBeforeTaskList(sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
 
-    l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.slice(1).join(', '));
+    l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
 
     if (config.summary === 'verbose') {
-        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+        const cliInput = cli.input.map(x => `'${x}'`).join(' ');
         nl();
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
         nl();

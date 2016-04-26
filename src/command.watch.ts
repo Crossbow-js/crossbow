@@ -6,7 +6,7 @@ import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
 import * as reporter from './reporters/defaultReporter';
 import {TaskReport} from "./task.runner";
 import {resolveWatchTasks} from './watch.resolve';
-import {getContext} from "./watch.shorthand";
+import {getModifiedWatchContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
 import * as seq from "./task.sequence";
 import Rx = require('rx');
@@ -175,11 +175,11 @@ export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, conf
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
             cli.input = moddedCliInput.concat('default');
-            return execute(getContext({cli, input, config, type: 'watcher'}));
+            return execute(getModifiedWatchContext({cli, input, config, type: 'watcher'}));
         }
         reporter.reportNoWatchTasksProvided();
         return;
     }
 
-    return execute(getContext({cli, input, config, type: 'watcher'}));
+    return execute(getModifiedWatchContext({cli, input, config, type: 'watcher'}));
 }

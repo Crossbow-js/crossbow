@@ -8,7 +8,7 @@ export interface UnwrappedTask {
     name: string
 }
 
-export function getContext(trigger: CommandTrigger): CommandTrigger {
+export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger {
     /**
      * First, unwrap each item. If it has a <pattern> -> <task> syntax
      * then we split it, otherwise just return empty arrays for
