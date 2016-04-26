@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
-const assign  = require('object-assign');
+const assign = require('object-assign');
 
 export interface CrossbowConfiguration {
     logLevel: string
@@ -113,7 +113,7 @@ const flagTransforms = {
  * Also deal with single char flag
  * @returns {*}
  */
-export function merge (opts: CrossbowConfiguration|any) : CrossbowConfiguration {
+export function merge(opts: CrossbowConfiguration|any): CrossbowConfiguration {
 
     const newOpts = assign({}, defaults, opts);
 

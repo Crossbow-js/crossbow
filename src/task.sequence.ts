@@ -1,7 +1,7 @@
 const objPath = require('object-path');
-const merge   = require('lodash.merge');
-const assign  = require('object-assign');
-const Rx      = require('rx');
+const merge = require('lodash.merge');
+const assign = require('object-assign');
+const Rx = require('rx');
 const Observable = Rx.Observable;
 
 import * as adaptors from "./adaptors";
@@ -20,7 +20,7 @@ import {
 import {createObservableFromSequenceItem} from "./task.runner";
 import {TaskReport} from "./task.runner";
 
-export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
+export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
     return flatten(tasks, []);
 
@@ -82,7 +82,7 @@ export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger)
             /**
              * Next we load the module
              */
-            const imported    = require(task.modules[0]);
+            const imported = require(task.modules[0]);
 
             /**
              * If the current item has no sub-tasks, we can return early
@@ -152,10 +152,11 @@ export function createFlattenedSequence (tasks: Task[], trigger: CommandTrigger)
                 }, [])
             );
         }
+
         return items.reduce(reducer, initial);
     }
 }
-function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
+function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -192,14 +193,14 @@ function getSequenceItemWithConfig (task: Task, trigger: CommandTrigger, importe
     }
 }
 
-function getFunctionName (fn: TaskFactory, count = 0) {
+function getFunctionName(fn: TaskFactory, count = 0) {
     if (fn.name === undefined) {
         return `Anonymous Function ${count}`;
     }
     return fn.name;
 }
 
-export function createRunner (items: SequenceItem[], trigger: CommandTrigger): Runner  {
+export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Runner {
 
     return {
         sequence: items,
@@ -208,7 +209,7 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .concatAll()
-                .catch(x =>{
+                .catch(x => {
                     subject.onCompleted();
                     return Rx.Observable.empty();
                 })
@@ -225,7 +226,9 @@ export function createRunner (items: SequenceItem[], trigger: CommandTrigger): R
             Observable.from(flattened)
                 .mergeAll()
                 .do(subject)
-                .subscribe(x => {}, e=>{}, _=> {
+                .subscribe(x => {
+                }, e=> {
+                }, _=> {
                     subject.onCompleted();
                     // debug('Parallel sequence complete');
                 });
@@ -297,7 +300,7 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
  * @param reports
  * @returns {*}
  */
-export function decorateSequenceWithReports (sequence: SequenceItem[], reports: TaskReport[]) {
+export function decorateSequenceWithReports(sequence: SequenceItem[], reports: TaskReport[]) {
     return addMany(sequence, []);
     function addMany(sequence, initial) {
         return sequence.reduce(function (all, item) {
@@ -313,7 +316,7 @@ export function decorateSequenceWithReports (sequence: SequenceItem[], reports: 
     }
 }
 
-export function countSequenceErrors (items: SequenceItem[]) {
+export function countSequenceErrors(items: SequenceItem[]) {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
             const errors = objPath.get(item, 'stats.errors', []);
@@ -326,13 +329,13 @@ export function countSequenceErrors (items: SequenceItem[]) {
     }, 0);
 }
 
-function getMergedStats (item, reports) {
+function getMergedStats(item, reports) {
     // console.log('--called');
     const match = reports.filter((x: TaskReport) => {
         return x.item.seqUID === item.seqUID;
     });
     const start = match.filter(x => x.type === 'start')[0];
-    const end   = match.filter(x => x.type === 'end')[0];
+    const end = match.filter(x => x.type === 'end')[0];
     const error = match.filter(x => x.type === 'error')[0];
 
     if (start && end) {

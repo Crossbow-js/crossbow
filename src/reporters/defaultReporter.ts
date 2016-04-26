@@ -24,16 +24,16 @@ const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
 
-function nl () {
+function nl() {
     l(`{gray:-}`);
 }
 
-export function reportMissingConfigFile (inputs: InputFiles) {
+export function reportMissingConfigFile(inputs: InputFiles) {
     if (inputs.invalid.length) {
         heading(`Sorry, there were errors resolving your input files`);
         inputs.invalid.forEach(function (item) {
             const o = archy({
-                label:`{yellow:+ input: '${item.path}'}`, nodes: [
+                label: `{yellow:+ input: '${item.path}'}`, nodes: [
                     {
                         label: [
                             `{red.bold:x ${item.path}}`,
@@ -47,7 +47,7 @@ export function reportMissingConfigFile (inputs: InputFiles) {
     }
 }
 
-export function reportSummary (sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
+export function reportSummary(sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
 
@@ -84,8 +84,8 @@ export function taskReport(report: TaskReport, trigger: CommandTrigger) {
     _taskReport(report, label);
 }
 
-function _taskReport (report: TaskReport, label: string) {
-    switch(report.type) {
+function _taskReport(report: TaskReport, label: string) {
+    switch (report.type) {
         case TaskReportType.start:
             l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
             break;
@@ -104,7 +104,7 @@ export function watchTaskReport(report: TaskReport, trigger: CommandTrigger) {
     _taskReport(report, label);
 }
 
-function getSequenceItemThatMatchesCliInput (sequence: SequenceItem[], input: string): SequenceItem[] {
+function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: string): SequenceItem[] {
     return sequence.filter(function (item) {
         if (item.taskName) {
             if (item.taskName === input) {
@@ -126,7 +126,7 @@ export function reportWatcherTriggeredTasks(index: number, tasks: string[]) {
 /**
  * Log the task list
  */
-export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix = '', config: CrossbowConfiguration) {
+export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix = '', config: CrossbowConfiguration) {
 
     if (config.summary === 'verbose') {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
@@ -137,7 +137,7 @@ export function reportTaskList (sequence: SequenceItem[], cli: Meow, titlePrefix
     }
 }
 
-export function reportBeforeTaskList (sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
+export function reportBeforeTaskList(sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
 
     l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.slice(1).join(', '));
 
@@ -149,23 +149,23 @@ export function reportBeforeTaskList (sequence: SequenceItem[], cli: Meow, confi
     }
 }
 
-export function reportBeforeTasksDidNotComplete (error: Error) {
+export function reportBeforeTasksDidNotComplete(error: Error) {
     l('{red:x} %s', error.message);
     l('  so none of the watchers started');
 }
 
-export function reportWatchers (watchTasks: WatchTask[], config: CrossbowConfiguration) {
+export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfiguration) {
     nl();
     l(`{yellow:+} Watching...`);
     watchTasks.forEach(function (watchTask) {
         const o = archy({
-            label:`{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
+            label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
         }, prefix);
         logger.info(o.slice(26, -1));
     });
 }
 
-export function getWatcherNode (watcher: Watcher) {
+export function getWatcherNode(watcher: Watcher) {
     return [
         `{bold:Patterns:} {cyan:${watcher.patterns.join(', ')}}`,
         `{bold:Tasks:} {cyan:${watcher.tasks.join(', ')}}`,
@@ -175,7 +175,7 @@ export function getWatcherNode (watcher: Watcher) {
 /**
  * Log the task list
  */
-export function reportTaskList2 (sequence: SequenceItem[], cliInput: string[], ctx: CommandTrigger) {
+export function reportTaskList2(sequence: SequenceItem[], cliInput: string[], ctx: CommandTrigger) {
 
     if (ctx.config.summary !== 'verbose') {
         l('{yellow:+} {bold:%s}', cliInput.join(', '));
@@ -187,7 +187,7 @@ export function reportTaskList2 (sequence: SequenceItem[], cliInput: string[], c
     reportSequenceTree(sequence, ctx.config, `+ Task Tree for ${cliInputOutput}`);
 }
 
-export function reportTaskErrors (tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
+export function reportTaskErrors(tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
@@ -197,7 +197,7 @@ export function reportTaskErrors (tasks: Task[], cliInput: string[], input: Cros
     reportErrorsFromCliInput(cliInput, tasks, config);
 }
 
-export function reportWatchTaskTasksErrors (tasks: Task[], cliInput: string[], runner: Watcher, config: CrossbowConfiguration) {
+export function reportWatchTaskTasksErrors(tasks: Task[], cliInput: string[], runner: Watcher, config: CrossbowConfiguration) {
 
     if (runner._tasks.invalid.length) {
         l('{gray.bold:---------------------------------------------------}');
@@ -219,11 +219,11 @@ export function reportWatchTaskTasksErrors (tasks: Task[], cliInput: string[], r
     }
 }
 
-export function reportNoFilesMatched (runner) {
+export function reportNoFilesMatched(runner) {
     l('{red:x warning} `{cyan:%s}` did not match any files', runner.patterns.join(' '));
 }
 
-export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: CommandTrigger ): void {
+export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: CommandTrigger): void {
 
     l('{gray.bold:--------------------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
@@ -252,7 +252,7 @@ export function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], conf
     });
 }
 
-export function reportWatchTaskErrors (tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
+export function reportWatchTaskErrors(tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
     heading(`Sorry, there were errors resolving your watch tasks`);
 
@@ -267,7 +267,7 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
     tasks.forEach(function (task: WatchTask) {
         if (task.errors.length) {
             const o = archy({
-                label:`{yellow:+ input: '${task.name}'}`, nodes:[
+                label: `{yellow:+ input: '${task.name}'}`, nodes: [
                     {
                         label: [
                             `{red.bold:x [${task.name}]}`,
@@ -286,7 +286,7 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
                     ].join('\n')
                 };
             });
-            const o = archy({label:`{yellow:+ ${task.name}}`, nodes:watchTree}, prefix);
+            const o = archy({label: `{yellow:+ ${task.name}}`, nodes: watchTree}, prefix);
             logger.info(o.slice(26, -1));
         }
     })
@@ -302,10 +302,10 @@ function heading(title) {
     l('{gray.bold:-' + new Array(title.length).join('-') + "-:");
 }
 
-export function reportNoTasksAvailable () {
+export function reportNoTasksAvailable() {
     heading('Sorry, there were no tasks available to run');
     const o = archy({
-        label:`{yellow:+ input: ''}`, nodes: [
+        label: `{yellow:+ input: ''}`, nodes: [
             {
                 label: [
                     `{red.bold:x Input: ''}`,
@@ -321,18 +321,18 @@ export function reportNoWatchTasksProvided() {
     heading("You didn't provide a watch-task to run");
 }
 
-export interface CrossbowError extends Error{
+export interface CrossbowError extends Error {
     _cbError?: boolean
 }
 
-function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string {
+function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string {
 
     if (!err.stack) {
         return err.toString();
     }
     const head = [
         `{red:x} ${sequenceLabel} {yellow:(${stats.duration}ms)}`,
-        `{red.bold:${err.stack.split('\n').slice(0,1)}}`
+        `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
     const body = err._cbError ? [] : err.stack.split('\n').slice(1);
     const tail = [`- Please see above for any output that occurred`];
@@ -340,14 +340,14 @@ function getErrorText (sequenceLabel: string, stats, err: CrossbowError): string
     return [...head, ...body, ...tail].join('\n');
 }
 
-export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
+export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
     const toLog = getItems(sequence, []);
-    const o     = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
+    const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
     logger.info(o.slice(26, -1));
 
-    function getItems (items, initial) {
+    function getItems(items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
             let label = getSequenceLabel(item, config);
             const stats = item.stats;
@@ -376,7 +376,7 @@ export function reportSequenceTree (sequence: SequenceItem[], config: CrossbowCo
     }
 }
 
-function getSequenceLabel (item: SequenceItem, config: CrossbowConfiguration) {
+function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {
@@ -406,15 +406,15 @@ function getSequenceLabel (item: SequenceItem, config: CrossbowConfiguration) {
     }
 }
 
-export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
+export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
 
     const toLog = getTasks(tasks, []);
     const archy = require('archy');
-    const o = archy({label:`{yellow:${title}}`, nodes:toLog}, prefix);
+    const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
     logger.info(o.slice(26, -1));
 
-    function getTasks (tasks, initial) {
+    function getTasks(tasks, initial) {
         return tasks.reduce((acc, task) => {
             let label = [getLabel(task), ...getErrors(task)].join('\n');
             let nodes = getTasks(task.tasks, []);
@@ -446,7 +446,7 @@ export function reportTaskTree (tasks, config: CrossbowConfiguration, title) {
     }
 }
 
-function getErrors (task) {
+function getErrors(task) {
     if (!task.errors.length) {
         return [];
     }
@@ -472,20 +472,20 @@ function getExternalError<A, B>(type, error: A, val2?: B) {
     ].join('\n');
 }
 
-function adaptorLabel (task: Task) {
+function adaptorLabel(task: Task) {
     return `{magenta:[@${task.adaptor}]} ${task.command}`;
 }
 
-function moduleLabel (task: Task) {
+function moduleLabel(task: Task) {
     const filepath = relative(process.cwd(), task.modules[0]);
     return `{cyan:${task.taskName} ${filepath}}`;
 }
 
-function npmScriptLabel(task:Task) {
+function npmScriptLabel(task: Task) {
     return `{magenta:[npm script]} ${task.command}`;
 }
 
-function getLabel (task) {
+function getLabel(task) {
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
         return npmScriptLabel(task);

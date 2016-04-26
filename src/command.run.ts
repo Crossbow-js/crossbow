@@ -1,8 +1,8 @@
 /// <reference path="../typings/main.d.ts" />
 import {isReport} from "./task.utils";
-const debug  = require('debug')('cb:command.run');
-const Rx     = require('rx');
-const merge  = require('lodash.merge');
+const debug = require('debug')('cb:command.run');
+const Rx = require('rx');
+const merge = require('lodash.merge');
 
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
@@ -24,7 +24,7 @@ if (process.env.DEBUG) {
     Rx.config.longStackSupport = true;
 }
 
-export default function execute (trigger: CommandTrigger): TaskRunner {
+export default function execute(trigger: CommandTrigger): TaskRunner {
     const cliInput = trigger.cli.input.slice(1);
     const {cli, input, config} = trigger;
 
@@ -116,7 +116,7 @@ export default function execute (trigger: CommandTrigger): TaskRunner {
 
 }
 
-export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
     /**
      * If no task given, or if user has selected interactive mode,
      * show the UI for task selection

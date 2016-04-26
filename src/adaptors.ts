@@ -1,6 +1,5 @@
-const gruntAdaptor   = require('./adaptors/@grunt');
-const shellAdaptor   = require('./adaptors/@shell');
-//const bgShellAdaptor = require('./adaptors/@bgShell.js');
+const gruntAdaptor = require('./adaptors/@grunt');
+const shellAdaptor = require('./adaptors/@shell');
 import npmAdaptor from './adaptors/@npm';
 
 const adaptors = {

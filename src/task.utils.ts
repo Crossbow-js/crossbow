@@ -6,7 +6,7 @@ import {TaskReportType} from "./task.runner";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
-const objPath  = require('object-path');
+const objPath = require('object-path');
 const debug = require('debug')('cb:task-utils');
 
 export interface ExternalFileInput {
@@ -25,8 +25,10 @@ export interface InputError {
     type: InputErrorTypes
 }
 
-export interface InputFileNotFoundError extends InputError {}
-export interface NoTasksAvailableError extends InputError {}
+export interface InputFileNotFoundError extends InputError {
+}
+export interface NoTasksAvailableError extends InputError {
+}
 
 export interface InputFiles {
     all: ExternalFileInput[]
@@ -34,7 +36,7 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule (cwd: string, name: string): string[] {
+export function locateModule(cwd: string, name: string): string[] {
 
     const files = [
         ['tasks', name + '.js'],
@@ -92,16 +94,16 @@ function replaceOne(item, root) {
  * @param config
  * @returns {*}
  */
-export function retrieveDefaultInputFiles (config: CrossbowConfiguration): InputFiles {
-    const maybes     = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
-    const cwd        = config.cwd;
+export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
+    const maybes = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
+    const cwd = config.cwd;
     return readFiles(maybes, cwd);
 }
 
-export function readFiles (paths: string[], cwd: string): InputFiles {
-    const inputs  = getFileInputs(paths, cwd);
+export function readFiles(paths: string[], cwd: string): InputFiles {
+    const inputs = getFileInputs(paths, cwd);
     const invalid = inputs.filter(x => x.input === undefined);
-    const valid   = inputs.filter(x => x.input !== undefined);
+    const valid = inputs.filter(x => x.input !== undefined);
 
     return {
         all: inputs,
@@ -113,7 +115,7 @@ export function readFiles (paths: string[], cwd: string): InputFiles {
 /**
  *
  */
-function getFileInputs (paths, cwd): ExternalFileInput[] {
+function getFileInputs(paths, cwd): ExternalFileInput[] {
     return paths
         .map(path => ({path: path, resolved: resolve(cwd, path)}))
         .map((incoming): ExternalFileInput => {
@@ -148,7 +150,7 @@ function getFileInputs (paths, cwd): ExternalFileInput[] {
  * @param cwd
  * @returns {{}}
  */
-export function createCrossbowTasksFromNpmScripts (cwd:string): any {
+export function createCrossbowTasksFromNpmScripts(cwd: string): any {
     /**
      * Ready package.json from current project
      */
@@ -187,21 +189,21 @@ const toStringTypes = {
     'array': '[object Array]'
 };
 
-function testType (com:string, val:any): boolean {
+function testType(com: string, val: any): boolean {
     return Object.prototype.toString.call(val) === com;
 }
 
-export function isPlainObject (val:any): boolean {
+export function isPlainObject(val: any): boolean {
     return testType(toStringTypes['obj'], val);
 }
 
-export function isString (val:any): boolean {
+export function isString(val: any): boolean {
     return testType(toStringTypes['string'], val);
 }
 
-export function isReport (report: any) {
+export function isReport(report: any) {
     return report && isString(report.type) &&
         report.type === TaskReportType.start ||
-        report.type === TaskReportType.end   ||
+        report.type === TaskReportType.end ||
         report.type === TaskReportType.error
 }

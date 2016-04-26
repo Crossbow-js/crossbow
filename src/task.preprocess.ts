@@ -33,7 +33,7 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      * Split any end cbflags from the main task name
      * @type {SplitTaskAndFlags}
      */
-    var split      = getSplitFlags(taskName, input);
+    var split = getSplitFlags(taskName, input);
 
     /**
      * Split the incoming taskname on colons
@@ -50,7 +50,7 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      * @type {string}
      */
     const baseTaskName = splitTask[0];
-    const subTasks     = splitTask.slice(1);
+    const subTasks = splitTask.slice(1);
 
     /**
      * Create the base task
@@ -83,7 +83,7 @@ export interface SplitTaskAndFlags {
 /**
  *
  */
-function getSplitFlags (taskName: string, input: CrossbowInput): SplitTaskAndFlags {
+function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlags {
 
     /**
      * Split up the task name from any flags/queries/cbflags etc
@@ -107,7 +107,7 @@ function getSplitFlags (taskName: string, input: CrossbowInput): SplitTaskAndFla
     if (!splitCBFlags) {
         const splitQuery = baseNameAndFlags.baseName.split('?');
         const query = splitQuery.length > 1
-            ?  qs.parse(splitQuery[1])
+            ? qs.parse(splitQuery[1])
             : {};
 
         /**
@@ -132,7 +132,7 @@ function getSplitFlags (taskName: string, input: CrossbowInput): SplitTaskAndFla
     const base = splitCBFlags[1];
     const splitQuery = base.split('?');
     const query = splitQuery.length > 1
-        ?  qs.parse(splitQuery[1])
+        ? qs.parse(splitQuery[1])
         : {};
 
     /**
@@ -164,7 +164,7 @@ function getSplitFlags (taskName: string, input: CrossbowInput): SplitTaskAndFla
  * @param incoming
  * @returns {any}
  */
-function processFlags (incoming: IncomingTask): OutgoingTask {
+function processFlags(incoming: IncomingTask): OutgoingTask {
 
     const runMode = incoming.cbflags.indexOf('p') > -1
         ? 'parallel'
@@ -180,7 +180,7 @@ function processFlags (incoming: IncomingTask): OutgoingTask {
  * @param obj
  * @returns {{}}
  */
-function withoutCommand (obj: {}) {
+function withoutCommand(obj: {}) {
     if (!Object.keys(obj).length) {
         return {};
     }
@@ -188,7 +188,7 @@ function withoutCommand (obj: {}) {
         if (key !== "_") {
             acc[key] = obj[key];
         }
-    	return acc;
+        return acc;
     }, {});
 }
 
@@ -197,7 +197,7 @@ function withoutCommand (obj: {}) {
  * @param taskName
  * @returns {{baseName: any, flags: {}}}
  */
-function getBaseNameAndFlags (taskName: string): {baseName: string, flags: {}} {
+function getBaseNameAndFlags(taskName: string): {baseName: string, flags: {}} {
     const splitFlags = taskName.trim().split(/^(.+?) /);
     let baseName;
     let flags = {};

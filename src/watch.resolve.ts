@@ -1,6 +1,6 @@
 /// <reference path="../typings/main.d.ts" />
 import {isPlainObject} from './task.utils';
-const merge     = require('lodash.merge');
+const merge = require('lodash.merge');
 const blacklist = ['options', 'bs-config', 'before'];
 
 var watcherUID = 1;
@@ -65,13 +65,13 @@ export interface WatchTasks {
  * @param {object} globalOptions
  * @returns {*}
  */
-function createOne (item, itemOptions, globalOptions) : Watcher {
+function createOne(item, itemOptions, globalOptions): Watcher {
     if (isPlainObject(item)) {
         if (item.patterns && item.tasks) {
             return {
-                patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
-                tasks:      [].concat(item.tasks),
-                options:    merge({}, defaultWatchOptions, globalOptions, itemOptions),
+                patterns: [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
+                tasks: [].concat(item.tasks),
+                options: merge({}, defaultWatchOptions, globalOptions, itemOptions),
                 watcherUID: watcherUID++
             };
         }
@@ -85,7 +85,7 @@ function createOne (item, itemOptions, globalOptions) : Watcher {
  * @param globalOptions
  * @returns {*}
  */
-function getFormattedTask (watchTaskParent: WatchTask, globalOptions: CBWatchOptions) : Watcher[] {
+function getFormattedTask(watchTaskParent: WatchTask, globalOptions: CBWatchOptions): Watcher[] {
     /**
      * Look at each key provided to decide if it can
      * be transformed into a watcher obj
@@ -168,31 +168,31 @@ function getFormattedTask (watchTaskParent: WatchTask, globalOptions: CBWatchOpt
         }, []);
 }
 
-function createFlattenedWatchTask (taskName: string, trigger: CommandTrigger): WatchTask {
+function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): WatchTask {
 
-    const incoming  = preprocessWatchTask(taskName);
+    const incoming = preprocessWatchTask(taskName);
     const selection = trigger.input.watch[incoming.taskName] || {};
-    const watchers  = getFormattedTask(selection, trigger.input.watch.options || {});
+    const watchers = getFormattedTask(selection, trigger.input.watch.options || {});
 
-    const errors    = gatherWatchTaskErrors(
+    const errors = gatherWatchTaskErrors(
         incoming,
         trigger.input
     );
 
     return {
-        name:     taskName,
-        before:   selection.before   || [],
-        options:  selection.options || {},
+        name: taskName,
+        before: selection.before || [],
+        options: selection.options || {},
         watchers: watchers,
-        errors:   errors
+        errors: errors
     }
 }
 
-function validateTask (task:WatchTask, trigger: CommandTrigger): boolean {
+function validateTask(task: WatchTask, trigger: CommandTrigger): boolean {
     return task.errors.length === 0;
 }
 
-export function resolveWatchTasks (taskNames: string[], trigger: CommandTrigger): WatchTasks {
+export function resolveWatchTasks(taskNames: string[], trigger: CommandTrigger): WatchTasks {
 
     const taskList = taskNames
         .map(taskName => {
@@ -212,14 +212,14 @@ export function resolveWatchTasks (taskNames: string[], trigger: CommandTrigger)
 
     return output;
 }
-export function resolveBeforeTasks (input:CrossbowInput, watchTasks: WatchTask[]): string[] {
+export function resolveBeforeTasks(input: CrossbowInput, watchTasks: WatchTask[]): string[] {
 
     return [
         ...[].concat(input.watch.before), // allow string or array for watch.before
         ...watchTasks.reduce((acc, item) => {
-            return acc.concat([].concat(item.before).filter(Boolean));
-        }, [])
-        .filter(Boolean)].filter(Boolean);
+                return acc.concat([].concat(item.before).filter(Boolean));
+            }, [])
+            .filter(Boolean)].filter(Boolean);
 
 };
 

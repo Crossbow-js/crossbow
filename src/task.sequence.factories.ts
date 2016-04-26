@@ -5,9 +5,9 @@ import {CommandTrigger} from "./command.run";
 import {TaskStats} from "./task.runner";
 
 export enum SequenceItemTypes {
-    SeriesGroup   = <any>"SeriesGroup",
+    SeriesGroup = <any>"SeriesGroup",
     ParallelGroup = <any>"ParallelGroup",
-    Task          = <any>"Task"
+    Task = <any>"Task"
 }
 
 export interface SequenceItem {
@@ -28,7 +28,8 @@ export interface SequenceSeriesGroup {
     items: any[]
 }
 
-export interface SequenceParallelGroup extends SequenceSeriesGroup {}
+export interface SequenceParallelGroup extends SequenceSeriesGroup {
+}
 
 export interface SequenceTask {
     fnName: string,

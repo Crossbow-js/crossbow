@@ -60,7 +60,7 @@ export function getContext(trigger: CommandTrigger): CommandTrigger {
  *  patterns: ["*.js"]
  *  tasks: ["lint", "unit"]
  */
-export function unwrapShorthand(incoming:string, i:number): UnwrappedTask {
+export function unwrapShorthand(incoming: string, i: number): UnwrappedTask {
     var patterns = [];
     var tasks = [];
 

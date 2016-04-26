@@ -15,10 +15,10 @@ export interface BeforeTasks {
     sequence: SequenceItem[]
 }
 
-export function getBeforeTaskRunner (cli: Meow,
-                                     trigger: CommandTrigger,
-                                     watchTasks: WatchTasks,
-                                     tracker$: Rx.Observable<any>): BeforeTasks {
+export function getBeforeTaskRunner(cli: Meow,
+                                    trigger: CommandTrigger,
+                                    watchTasks: WatchTasks,
+                                    tracker$: Rx.Observable<any>): BeforeTasks {
     /**
      * Get 'before' task list
      */
@@ -32,7 +32,7 @@ export function getBeforeTaskRunner (cli: Meow,
     const beforeTasks = resolveTasks(beforeTasksAsCliInput, trigger);
 
     const beforeSequence = seq.createFlattenedSequence(beforeTasks.valid, trigger);
-    const beforeRunner   = seq.createRunner(beforeSequence, trigger);
+    const beforeRunner = seq.createRunner(beforeSequence, trigger);
 
     return {
         tasks: beforeTasks,

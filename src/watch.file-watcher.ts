@@ -10,20 +10,20 @@ const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
 
 export interface WatchEvent {
-    event:string
-    path:string
-    runner:Watcher
-    watcherUID:string
-    duration?:number
+    event: string
+    path: string
+    runner: Watcher
+    watcherUID: string
+    duration?: number
 }
 
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers (watchers: Watcher[],
-                                       trigger: CommandTrigger,
-                                       tracker$: Rx.Observable<any>,
-                                       tracker): Rx.Observable<TaskReport> {
+export function createObservablesForWatchers(watchers: Watcher[],
+                                             trigger: CommandTrigger,
+                                             tracker$: Rx.Observable<any>,
+                                             tracker): Rx.Observable<TaskReport> {
     return Rx.Observable
         /**
          * Take each <Watcher> and create an observable stream for it,
@@ -34,7 +34,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
          */
-        .flatMap((watchEvent:WatchEvent, i) => {
+        .flatMap((watchEvent: WatchEvent, i) => {
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner.series(tracker$)
@@ -51,7 +51,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
                 })
                 .toArray()
                 .flatMap((reports: TaskReport[]) => {
-                    const incoming   = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
+                    const incoming = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
                     const errorCount = seq.countSequenceErrors(incoming);
                     if (errorCount > 0) {
                         reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
@@ -67,7 +67,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher(watcher:Watcher): Rx.Observable<WatchEvent> {
+export function createObservableForWatcher(watcher: Watcher): Rx.Observable<WatchEvent> {
 
     /**
      * First create a stream of file-watcher events for this Watcher
@@ -136,7 +136,7 @@ function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
 /**
  *
  */
-function applyOperators (source: Rx.Observable<any>, items: {option:string, fnName:string}[], options: CBWatchOptions): Rx.Observable<any> {
+function applyOperators(source: Rx.Observable<any>, items: {option: string, fnName: string}[], options: CBWatchOptions): Rx.Observable<any> {
     return items.reduce((stream$, item) => {
         const value = options[item.option];
         if (value !== undefined && value > 0) {

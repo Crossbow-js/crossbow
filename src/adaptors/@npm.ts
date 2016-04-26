@@ -2,17 +2,17 @@ import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {Task} from "../task.resolve.d";
 
-const spawn        = require('child_process').spawn;
+const spawn = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
-const debug        = require('debug')('cb:adaptors.npm');
-const assign       = require('object-assign');
+const debug = require('debug')('cb:adaptors.npm');
+const assign = require('object-assign');
 
 import {transformStrings} from '../task.utils';
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
 
-var sh             = 'sh';
-var shFlag         = '-c';
+var sh = 'sh';
+var shFlag = '-c';
 
 if (process.platform === 'win32') {
     sh = process.env.comspec || 'cmd';
@@ -33,7 +33,7 @@ interface CrossbowSpawnError extends Error {
 }
 
 function runCommand(args: string[], options: CommandOptions) {
-    const raw    = spawn(sh, args, options);
+    const raw = spawn(sh, args, options);
     const cooked = new EventEmitter();
 
     raw.on('error', function (er) {
@@ -52,11 +52,11 @@ function runCommand(args: string[], options: CommandOptions) {
         }
     });
 
-    cooked.stdin  = raw.stdin;
+    cooked.stdin = raw.stdin;
     cooked.stdout = raw.stdout;
     cooked.stderr = raw.stderr;
-    cooked.raw    = raw;
-    cooked.kill   = function (sig) {
+    cooked.raw = raw;
+    cooked.kill = function (sig) {
         return raw.kill(sig);
     };
 
@@ -70,10 +70,10 @@ function runCommand(args: string[], options: CommandOptions) {
  * @param {Immutable.Map} config
  * @returns {object}
  */
-function getEnv (env: any, config: CrossbowConfiguration) {
-    const localEnv  = assign({}, env);
-    const envpath   = join(config.cwd, 'node_modules', '.bin');
-    localEnv.PATH   = [envpath].concat(localEnv.PATH).join(':');
+function getEnv(env: any, config: CrossbowConfiguration) {
+    const localEnv = assign({}, env);
+    const envpath = join(config.cwd, 'node_modules', '.bin');
+    localEnv.PATH = [envpath].concat(localEnv.PATH).join(':');
     return localEnv;
 }
 
@@ -82,7 +82,7 @@ export interface CommandArgs {
     cmd: string[]
 }
 
-function getArgs (task: Task, trigger: CommandTrigger) : CommandArgs {
+function getArgs(task: Task, trigger: CommandTrigger): CommandArgs {
     const stringInput = transformStrings(task.command, trigger.config);
     return {
         stringInput: stringInput,

@@ -1,4 +1,4 @@
-import {TaskError} from "./task.errors";
+import {TaskError} from "./task.errors.d";
 import {TaskOriginTypes, TaskTypes} from "./task.resolve";
 
 export interface Task {

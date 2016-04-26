@@ -1,5 +1,14 @@
 import {OutgoingTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
+import {
+    TaskError,
+    ModuleNotFoundError,
+    CBFlagNotProvidedError,
+    SubtaskNotProvidedError,
+    SubtasksNotInConfigError,
+    SubtaskNotFoundError,
+    SubtaskWildcardNotAvailableError
+} from "./task.errors.d";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
@@ -13,20 +22,7 @@ export enum TaskErrorTypes {
     FlagNotProvided = <any>"FlagNotProvided"
 }
 
-export interface TaskError {
-    type: TaskErrorTypes
-}
-
-export interface ModuleNotFoundError      extends TaskError { taskName: string }
-export interface SubtasksNotInConfigError extends TaskError { name: string }
-export interface SubtaskNotProvidedError  extends TaskError { name: string }
-export interface SubtaskWildcardNotAvailableError extends TaskError { name: string }
-export interface SubtaskNotFoundError     extends TaskError { name: string }
-export interface AdaptorNotFoundError     extends TaskError { taskName: string }
-export interface CBFlagNotFoundError      extends TaskError { taskName: string }
-export interface CBFlagNotProvidedError   extends TaskError { taskName: string }
-
-export function gatherTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskError[] {
+export function gatherTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskError[] {
     return [
         getModuleErrors,
         getCBFlagErrors,
@@ -34,7 +30,7 @@ export function gatherTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): 
     ].reduce((all, fn) => all.concat(fn(outgoing, input)), []);
 }
 
-function getModuleErrors (outgoing: OutgoingTask): TaskError[] {
+function getModuleErrors(outgoing: OutgoingTask): TaskError[] {
     /**
      * If a module was not located, and there are 0 child tasks,
      * this can be classified as a `module not found error`
@@ -45,7 +41,7 @@ function getModuleErrors (outgoing: OutgoingTask): TaskError[] {
     return errors;
 }
 
-function getCBFlagErrors (outgoing: OutgoingTask): TaskError[] {
+function getCBFlagErrors(outgoing: OutgoingTask): TaskError[] {
     return outgoing.cbflags.reduce((all, flag) => {
         /**
          * if `flag` is an empty string, the user provided an @ after a task
@@ -68,7 +64,7 @@ function getCBFlagErrors (outgoing: OutgoingTask): TaskError[] {
     }, []);
 }
 
-function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskError[] {
+function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskError[] {
     /**
      * Now validate any subtasks given with colon syntax
      *  eg: sass:dev
@@ -130,9 +126,9 @@ function getSubTaskErrors (outgoing: OutgoingTask, input:CrossbowInput): TaskErr
     }, []);
 }
 
-function handleWildcardSubtask (configKeys: string[], name: string): SubtaskWildcardNotAvailableError[] {
+function handleWildcardSubtask(configKeys: string[], name: string): SubtaskWildcardNotAvailableError[] {
 
-    if (configKeys.length ) {
+    if (configKeys.length) {
         return [];
     }
 

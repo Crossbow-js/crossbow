@@ -4,7 +4,7 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
 import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
 import * as reporter from './reporters/defaultReporter';
-import {TaskReport, TaskReportType} from "./task.runner";
+import {TaskReport} from "./task.runner";
 import {resolveWatchTasks} from './watch.resolve';
 import {getContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
@@ -14,16 +14,16 @@ import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import {isReport} from "./task.utils";
 
-const debug    = require('debug')('cb:command.watch');
-const merge    = require('lodash.merge');
-const assign   = require('object-assign');
+const debug = require('debug')('cb:command.watch');
+const merge = require('lodash.merge');
+const assign = require('object-assign');
 
 export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-export default function execute (trigger: CommandTrigger): WatchTaskRunner {
-    
+export default function execute(trigger: CommandTrigger): WatchTaskRunner {
+
     const {cli, input, config} = trigger;
 
     debug(`Working with input [${trigger.cli.input}]`);
@@ -124,7 +124,7 @@ export default function execute (trigger: CommandTrigger): WatchTaskRunner {
      * 2. a throw (which means there was some error, so watchers should not begin)
      * 3. a sequence representing a runner (which will then wait until complete)
      */
-    function createBeforeRunner (before: BeforeTasks): Rx.Observable<any> {
+    function createBeforeRunner(before: BeforeTasks): Rx.Observable<any> {
 
         if (!before.beforeTasksAsCliInput.length) {
             return Rx.Observable.just(true);
@@ -152,7 +152,7 @@ export default function execute (trigger: CommandTrigger): WatchTaskRunner {
             })
             .toArray()
             .flatMap((reports: TaskReport[]) => {
-                const incoming   = seq.decorateSequenceWithReports(before.sequence, reports);
+                const incoming = seq.decorateSequenceWithReports(before.sequence, reports);
                 const errorCount = seq.countSequenceErrors(incoming);
                 report(incoming);
                 if (errorCount > 0) {
@@ -170,7 +170,7 @@ export default function execute (trigger: CommandTrigger): WatchTaskRunner {
     }
 }
 
-export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
     if (cli.input.length === 1) {
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();

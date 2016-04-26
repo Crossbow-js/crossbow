@@ -1,7 +1,7 @@
-import {AdaptorNotFoundError} from "./task.errors";
-const merge   = require('lodash.merge');
-const assign  = require('object-assign');
-const debug   = require('debug')('cb:task.resolve');
+import {AdaptorNotFoundError} from "./task.errors.d";
+const merge = require('lodash.merge');
+const assign = require('object-assign');
+const debug = require('debug')('cb:task.resolve');
 
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
@@ -15,8 +15,7 @@ import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
 export enum TaskTypes {
     Runnable = <any>"Runnable",
     Adaptor = <any>"Adaptor",
-    Group = <any>"Group",
-    NpmScript = <any>"NpmScript"
+    Group = <any>"Group"
 }
 
 export enum TaskOriginTypes {
@@ -44,14 +43,14 @@ const defaultTask = <Task>{
  * @param {object} obj
  * @returns {object}
  */
-function createTask(obj: any) : Task {
+function createTask(obj: any): Task {
     return merge({}, defaultTask, obj);
 }
 
 /**
  * Entry point for all tasks
  */
-function createFlattenedTask (taskName:string, parents:string[], trigger:CommandTrigger): Task {
+function createFlattenedTask(taskName: string, parents: string[], trigger: CommandTrigger): Task {
 
     /**
      * Remove any newlines on incoming task names
@@ -114,7 +113,7 @@ function createFlattenedTask (taskName:string, parents:string[], trigger:Command
     }));
 }
 
-function resolveChildTasks (initialTasks: any[], taskName: string, parents: string[], trigger: CommandTrigger): Task[] {
+function resolveChildTasks(initialTasks: any[], taskName: string, parents: string[], trigger: CommandTrigger): Task[] {
 
     const subject = pullTaskFromInput(taskName, trigger.input);
 
@@ -135,7 +134,7 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
      * resolved recursively
      */
     return subject.items.map(item => {
-        const flat  = createFlattenedTask(item, parents.concat(taskName), trigger);
+        const flat = createFlattenedTask(item, parents.concat(taskName), trigger);
         flat.origin = subject.origin;
 
         /**
@@ -146,13 +145,13 @@ function resolveChildTasks (initialTasks: any[], taskName: string, parents: stri
         }
 
         if (!flat.modules.length) {
-            flat.tasks  = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
+            flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
         }
         return flat;
     });
 }
 
-function createAdaptorTask (taskName, parents) : Task {
+function createAdaptorTask(taskName, parents): Task {
 
     /**
      * Strip the first part of the task name.
@@ -211,7 +210,7 @@ function createAdaptorTask (taskName, parents) : Task {
  * Attempt to match a task-name from within the various 'inputs'
  * given
  */
-function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWithOrigin {
+function pullTaskFromInput(taskName: string, input: CrossbowInput): TasknameWithOrigin {
 
     if (input.tasks[taskName] !== undefined) {
         return {items: [].concat(input.tasks[taskName]), origin: TaskOriginTypes.CrossbowConfig}
@@ -240,7 +239,7 @@ function pullTaskFromInput (taskName: string, input: CrossbowInput): TasknameWit
  * A task is valid if every child eventually resolves to
  * having a module or has a adaptors helper
  */
-function validateTask (task:Task, trigger:CommandTrigger):boolean {
+function validateTask(task: Task, trigger: CommandTrigger): boolean {
     /**
      * Return early if a task has previously
      * been marked as invalid
@@ -294,11 +293,11 @@ function validateTask (task:Task, trigger:CommandTrigger):boolean {
     }
 }
 
-export function resolveTasks (taskNames:string[], trigger: CommandTrigger): Tasks {
+export function resolveTasks(taskNames: string[], trigger: CommandTrigger): Tasks {
     const taskList = taskNames
-        /**
-         * Now begin making the nested task tree
-         */
+    /**
+     * Now begin making the nested task tree
+     */
         .map(taskName => {
             return createFlattenedTask(taskName, [], trigger)
         });

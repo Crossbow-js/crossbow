@@ -133,7 +133,7 @@ function getTaskReport(type: TaskReportType, item: SequenceItem, stats: TaskStat
 /**
  * Create a new stats object with startTime
  */
-export function getStartStats (startTime: number): TaskStats {
+export function getStartStats(startTime: number): TaskStats {
     return {
         startTime,
         started: true,
@@ -166,7 +166,7 @@ function getTaskErrorReport(item: SequenceItem, stats: TaskErrorStats): TaskErro
 /**
  * Get basic stats for a task error
  */
-function getErrorStats (error: Error): TaskErrorStats {
+function getErrorStats(error: Error): TaskErrorStats {
     const now = new Date().getTime();
     return {
         endTime: now,

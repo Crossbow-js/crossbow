@@ -68,7 +68,7 @@ function handlePromise(output, obs) {
         });
 }
 
-function handleObs (output, obs) {
+function handleObs(output, obs) {
     return output
         .subscribe(val => {
             obs.onNext(val);
@@ -79,7 +79,7 @@ function handleObs (output, obs) {
         });
 }
 
-function handleEventEmitter (output, obs) {
+function handleEventEmitter(output, obs) {
     const o = Rx.Observable
         .fromEvent(output)
         .subscribe();

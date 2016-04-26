@@ -5,7 +5,7 @@ import {resolveTasks} from "./task.resolve";
 import * as seq from "./task.sequence";
 import {BeforeTasks} from "./watch.before";
 const debug = require('debug')('cb:watch.runner');
-const assign   = require('object-assign');
+const assign = require('object-assign');
 
 export interface WatchRunners {
     all: Watcher[]
@@ -19,15 +19,15 @@ export interface WatchTaskRunner {
     before: BeforeTasks
 }
 
-export function createWatchRunners (watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunners {
+export function createWatchRunners(watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunners {
 
     const runners = watchTasks.valid.reduce(function (acc, item) {
 
         return acc.concat(item.watchers.map(function (watcher) {
 
-            const tasks    = resolveTasks(watcher.tasks, ctx);
+            const tasks = resolveTasks(watcher.tasks, ctx);
 
-            const subject  = assign({}, watcher, {
+            const subject = assign({}, watcher, {
                 _tasks: tasks,
                 parent: item.name
             });
@@ -37,7 +37,7 @@ export function createWatchRunners (watchTasks: WatchTasks, ctx: CommandTrigger)
             }
 
             subject._sequence = seq.createFlattenedSequence(tasks.valid, ctx);
-            subject._runner   = seq.createRunner(subject._sequence, ctx);
+            subject._runner = seq.createRunner(subject._sequence, ctx);
 
             return subject;
         }));
@@ -50,6 +50,6 @@ export function createWatchRunners (watchTasks: WatchTasks, ctx: CommandTrigger)
     }
 }
 
-function validateRunner (x) {
+function validateRunner(x) {
     return x._tasks.invalid.length === 0;
 }
