@@ -1,12 +1,27 @@
 watch:
-  tasks:
-    ts:
-      before: ['compile']
-      'src': ['compile']
+  ts:
+    before:
+      - compile
+    'src': ['compile']
 
 tasks:
+
+  test:
+    - compile
+    - ci
+
+  ci@p:
+    - lint
+    - unit
+
   compile: >
     @npm tsc
     src/**/*.ts
     --module commonjs
     --outDir dist
+
+  lint:   '@npm eslint lib'
+  unit:   '@npm mocha test'
+
+  sleep1: '@npm sleep 1'
+  sleep2: '@npm sleep 1'

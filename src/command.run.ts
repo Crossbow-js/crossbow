@@ -128,12 +128,11 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
     if (cli.input.length === 1 || config.interactive) {
         if (cli.input.length === 1 && Object.keys(input.tasks).length) {
             reporter.reportNoTasksProvided();
-            return promptForRunCommand(cli, input, config)
-                .subscribe(answers => {
-                    const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
-                    const configMerged = merge({}, config, {runMode: answers.runMode});
-                    return execute(cliMerged, input, configMerged);
-                });
+            return promptForRunCommand(cli, input, config).then(function (answers) {
+                const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
+                const configMerged = merge({}, config, {runMode: 'parallel'});
+                return execute(cliMerged, input, configMerged);
+            });
         } else {
             reporter.reportNoTasksAvailable();
             return;
