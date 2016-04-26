@@ -37,6 +37,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      */
     const tasks = resolveTasks(cliInput, ctx);
 
+    // require('fs').writeFileSync('tasks.json', JSON.stringify(tasks, null, 4));
+
     /**
      * All this point, all given task names have been resolved
      * to either modules on disk, or @adaptor tasks, so we can
