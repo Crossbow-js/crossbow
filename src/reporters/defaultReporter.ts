@@ -39,7 +39,7 @@ export function reportMissingConfigFile (inputs: InputFiles) {
                 label:`{yellow:+ input: '${item.path}'}`, nodes: [
                     {
                         label: [
-                            `{red.bold:x} {cyan:${item.path}} could not be found`,
+                            `{red.bold:x ${item.path}}`,
                             getExternalError(item.errors[0].type, item.errors[0], item)
                         ].join('\n')
                     }

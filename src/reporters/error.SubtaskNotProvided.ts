@@ -1,7 +1,7 @@
 import {Task} from "../task.resolve.d";
 import {SubtaskNotProvidedError} from "../task.errors";
 
-module.exports = (task: Task, error: SubtaskNotProvidedError) =>
+module.exports = (error: SubtaskNotProvidedError, task: Task) =>
 
 `{red:-} {bold:Description}: Colon used after task, but config key missing.
   When you provide a task name, followed by a {cyan::} (colon)

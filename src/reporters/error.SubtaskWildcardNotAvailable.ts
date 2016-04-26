@@ -1,7 +1,7 @@
 import {Task} from "../task.resolve.d";
 import {SubtaskWildcardNotAvailableError} from "../task.errors";
 
-module.exports = (task: Task, error: SubtaskWildcardNotAvailableError) =>
+module.exports = (error: SubtaskWildcardNotAvailableError, task: Task) =>
 
 `{red:-} {bold:Description}: Configuration not provided for this task!'
   Because you dont have any configuration matching this task name

@@ -24,7 +24,7 @@ export interface InputError {
     type: InputErrorTypes
 }
 
-export interface InputFileMissingError extends InputError {}
+export interface InputFileNotFoundError extends InputError {}
 
 export interface InputFiles {
     all: ExternalFileInput[]

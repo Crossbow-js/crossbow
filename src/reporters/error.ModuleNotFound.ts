@@ -1,6 +1,6 @@
 import {Task} from "../task.resolve.d";
 import {ModuleNotFoundError} from "../task.errors";
 
-module.exports = (task: Task, error: ModuleNotFoundError) =>
+module.exports = (error: ModuleNotFoundError, task: Task) =>
 
 `{red:-} {bold:Description}: {cyan:'${task.taskName}'} was not found.`;
