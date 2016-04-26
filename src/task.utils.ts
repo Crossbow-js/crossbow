@@ -21,6 +21,13 @@ export enum InputErrorTypes {
     NoTasksAvailable = <any>"NoTasksAvailable"
 }
 
+export function _e(x) {
+    return x
+        .replace(/\n|\r/g, '')
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
+}
+
 export interface InputError {
     type: InputErrorTypes
 }

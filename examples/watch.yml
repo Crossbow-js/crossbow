@@ -1,0 +1,4 @@
+watch:
+  default:
+    '*.{js,json}':
+      - '@npm sleep 2'

@@ -5,10 +5,6 @@ const assign = require('object-assign');
 const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
 export const removeNewlines = (x: string) => x.replace(/\n|\r/g, '').trim();
-const e = (x) => x
-    .replace(/\n|\r/g, '')
-    .replace(/\{/g, '\\\{')
-    .replace(/}/g, '\\\}');
 
 export interface IncomingTask {
     baseTaskName: string

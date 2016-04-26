@@ -18,7 +18,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles, InputErrorTypes} from "../task.utils";
+import {InputFiles, InputErrorTypes, _e} from "../task.utils";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -167,24 +167,9 @@ export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfigur
 
 export function getWatcherNode(watcher: Watcher) {
     return [
-        `{bold:Patterns:} {cyan:${watcher.patterns.join(', ')}}`,
-        `{bold:Tasks:} {cyan:${watcher.tasks.join(', ')}}`,
+        `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(', ')}}`,
+        `{bold:Tasks:} {cyan:${watcher.tasks.map(x => _e(x)).join(', ')}}`,
     ].join('\n');
-}
-
-/**
- * Log the task list
- */
-export function reportTaskList2(sequence: SequenceItem[], cliInput: string[], ctx: CommandTrigger) {
-
-    if (ctx.config.summary !== 'verbose') {
-        l('{yellow:+} {bold:%s}', cliInput.join(', '));
-        return;
-    }
-
-    const cliInputOutput = cliInput.slice(1).map(x => `'${x}'`).join(' ');
-
-    reportSequenceTree(sequence, ctx.config, `+ Task Tree for ${cliInputOutput}`);
 }
 
 export function reportTaskErrors(tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
