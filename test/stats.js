@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const cli = require("../");
-const join = require("../dist/task.sequence").decorateCompletedSequenceItemsWithReports;
+const seq = require("../dist/task.sequence");
 
 describe('Gathering completed stats', function () {
     it('can join stats to a success item', function (done) {
@@ -13,7 +13,7 @@ describe('Gathering completed stats', function () {
             .series()
             .toArray()
             .subscribe(reports => {
-                const joined = join(runner.sequence, reports);
+                const joined = seq.decorateSequenceWithReports(runner.sequence, reports);
                 const report = joined[0].items[0].stats;
                 assert.equal(report.completed, true);
                 assert.isNumber(report.startTime);
@@ -29,7 +29,7 @@ describe('Gathering completed stats', function () {
             .series()
             .toArray()
             .subscribe(reports => {
-                const joined = join(runner.sequence, reports);
+                const joined = seq.decorateSequenceWithReports(runner.sequence, reports);
                 const report = joined[0].stats;
                 assert.equal(report.started, true);
                 assert.equal(report.completed, false);
@@ -43,7 +43,7 @@ describe('Gathering completed stats', function () {
             .parallel()
             .toArray()
             .subscribe(reports => {
-                const joined = join(runner.sequence, reports);
+                const joined = seq.decorateSequenceWithReports(runner.sequence, reports);
                 const error  = joined[0].stats;
                 const ok     = joined[1].stats;
                 assert.equal(error.started, true);

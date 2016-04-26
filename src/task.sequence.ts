@@ -297,7 +297,7 @@ function loadTopLevelConfig(task: Task, trigger: CommandTrigger): any {
  * @param reports
  * @returns {*}
  */
-export function decorateCompletedSequenceItemsWithReports (sequence: SequenceItem[], reports: TaskReport[]) {
+export function decorateSequenceWithReports (sequence: SequenceItem[], reports: TaskReport[]) {
     return addMany(sequence, []);
     function addMany(sequence, initial) {
         return sequence.reduce(function (all, item) {

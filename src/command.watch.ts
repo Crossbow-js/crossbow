@@ -160,7 +160,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
             })
             .toArray()
             .flatMap((reports: TaskReport[]) => {
-                const incoming   = seq.decorateCompletedSequenceItemsWithReports(before.sequence, reports);
+                const incoming   = seq.decorateSequenceWithReports(before.sequence, reports);
                 const errorCount = seq.countSequenceErrors(incoming);
                 report(incoming);
                 if (errorCount > 0) {

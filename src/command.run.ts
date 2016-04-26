@@ -9,7 +9,7 @@ import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {TaskReport} from "./task.runner";
-import {createRunner, createFlattenedSequence, decorateCompletedSequenceItemsWithReports} from './task.sequence';
+import {createRunner, createFlattenedSequence, decorateSequenceWithReports} from './task.sequence';
 import {reportSummary, reportTaskList, reportTaskErrors, reportNoTasksProvided, taskReport} from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
@@ -110,7 +110,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
         })
         .toArray()
         .subscribe((reports: TaskReport[]) => {
-            const decoratedSequence = decorateCompletedSequenceItemsWithReports(sequence, reports);
+            const decoratedSequence = decorateSequenceWithReports(sequence, reports);
             reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
         }, e => {
             // never gunna get here baby

@@ -52,7 +52,7 @@ export function createObservablesForWatchers (watchers: Watcher[],
                 })
                 .toArray()
                 .flatMap((reports: TaskReport[]) => {
-                    const incoming   = seq.decorateCompletedSequenceItemsWithReports(watchEvent.runner._sequence, reports);
+                    const incoming   = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
                     const errorCount = seq.countSequenceErrors(incoming);
                     if (errorCount > 0) {
                         reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
