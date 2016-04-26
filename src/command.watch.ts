@@ -18,21 +18,13 @@ const debug    = require('debug')('cb:command.watch');
 const merge    = require('lodash.merge');
 const assign   = require('object-assign');
 
-export interface WatchTrigger extends CommandTrigger {
-    type: 'watcher'
-}
 export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): WatchTaskRunner {
-
-    /**
-     * First, allow modifications to the current context
-     * (such as shorthand watchers, for instance)
-     * @type {WatchTrigger}
-     */
-    const trigger = getContext({cli, input, config, type: 'watcher'});
+export default function execute (trigger: CommandTrigger): WatchTaskRunner {
+    
+    const {cli, input, config} = trigger;
 
     debug(`Working with input [${trigger.cli.input}]`);
 
@@ -183,11 +175,11 @@ export function handleIncomingWatchCommand (cli: Meow, input: CrossbowInput, con
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
             cli.input = moddedCliInput.concat('default');
-            return execute(cli, input, config);
+            return execute(getContext({cli, input, config, type: 'watcher'}));
         }
         reporter.reportNoWatchTasksProvided();
         return;
     }
 
-    return execute(cli, input, config);
+    return execute(getContext({cli, input, config, type: 'watcher'}));
 }

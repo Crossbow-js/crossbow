@@ -1,5 +1,4 @@
 import {Meow} from "./index";
-import {WatchTrigger} from "./command.watch";
 import {WatchTasks, resolveBeforeTasks} from "./watch.resolve";
 import {resolveTasks} from "./task.resolve";
 import {Tasks} from "./task.resolve.d";
@@ -7,6 +6,7 @@ import * as seq from "./task.sequence";
 import {SequenceItem} from "./task.sequence.factories";
 const debug = require("debug");
 import Rx = require("rx");
+import {CommandTrigger} from "./command.run";
 
 export interface BeforeTasks {
     runner: any
@@ -16,7 +16,7 @@ export interface BeforeTasks {
 }
 
 export function getBeforeTaskRunner (cli: Meow,
-                                     trigger: WatchTrigger,
+                                     trigger: CommandTrigger,
                                      watchTasks: WatchTasks,
                                      tracker$: Rx.Observable<any>): BeforeTasks {
     /**

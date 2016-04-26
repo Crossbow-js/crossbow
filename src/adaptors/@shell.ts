@@ -1,10 +1,10 @@
-import {RunCommandTrigger} from "../command.run";
+import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand} from './@npm';
 import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
 const debug = require('debug')('cb:@shell');
 
-module.exports = function (task: Task, trigger: RunCommandTrigger) {
+module.exports = function (task: Task, trigger: CommandTrigger) {
 
     return function (opts, ctx, observer) {
 

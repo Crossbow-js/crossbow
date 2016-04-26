@@ -14,28 +14,24 @@ import * as reporter from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
-    type: string
+    type: 'command' | 'watcher'
     cli: Meow
     input: CrossbowInput
     config: CrossbowConfiguration
-}
-
-export interface RunCommandTrigger extends CommandTrigger {
-    type: 'command'
 }
 
 if (process.env.DEBUG) {
     Rx.config.longStackSupport = true;
 }
 
-export default function execute (cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): TaskRunner {
-    const cliInput = cli.input.slice(1);
-    const ctx: RunCommandTrigger = {cli, input, config, type: 'command'};
+export default function execute (trigger: CommandTrigger): TaskRunner {
+    const cliInput = trigger.cli.input.slice(1);
+    const {cli, input, config} = trigger;
 
     /**
      * First Resolve the task names given in input.
      */
-    const tasks = resolveTasks(cliInput, ctx);
+    const tasks = resolveTasks(cliInput, trigger);
 
     // require('fs').writeFileSync('tasks.json', JSON.stringify(tasks, null, 4));
 
@@ -44,7 +40,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * to either modules on disk, or @adaptor tasks, so we can
      * go ahead and create a flattened run-sequence
      */
-    const sequence = seq.createFlattenedSequence(tasks.valid, ctx);
+    const sequence = seq.createFlattenedSequence(tasks.valid, trigger);
 
     // require('fs').writeFileSync('sequence.json', JSON.stringify(sequence, null, 4));
 
@@ -52,7 +48,7 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
      * With the flattened sequence, we can create nested collections
      * of Rx Observables
      */
-    const runner = seq.createRunner(sequence, ctx);
+    const runner = seq.createRunner(sequence, trigger);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -104,8 +100,8 @@ export default function execute (cli: Meow, input: CrossbowInput, config: Crossb
          */
         .filter(isReport)
         .do((x: TaskReport) => {
-            if (ctx.config.progress) {
-                reporter.taskReport(x, ctx);
+            if (trigger.config.progress) {
+                reporter.taskReport(x, trigger);
             }
         })
         .toArray()
@@ -131,7 +127,7 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
             return promptForRunCommand(cli, input, config).then(function (answers) {
                 const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
                 const configMerged = merge({}, config, {runMode: 'parallel'});
-                return execute(cliMerged, input, configMerged);
+                return execute({cli: cliMerged, input, config: configMerged, type: 'command'});
             });
         } else {
             reporter.reportNoTasksAvailable();
@@ -139,6 +135,6 @@ export function handleIncomingRunCommand (cli: Meow, input: CrossbowInput, confi
         }
     }
 
-    return execute(cli, input, config);
+    return execute({cli, input, config, type: 'command'});
 }
 

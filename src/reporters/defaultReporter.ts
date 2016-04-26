@@ -15,8 +15,7 @@ import {compile, prefix} from '../logger';
 import {WatchTasks} from "../watch.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
-import {WatchTrigger} from "../command.watch";
-import {CommandTrigger, RunCommandTrigger} from "../command.run";
+import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes} from "../task.utils";
@@ -80,7 +79,7 @@ export function reportSummary (sequence: SequenceItem[], cli: Meow, title: strin
     }
 }
 
-export function taskReport(report: TaskReport, trigger: RunCommandTrigger|WatchTrigger) {
+export function taskReport(report: TaskReport, trigger: CommandTrigger) {
     const label = getSequenceLabel(report.item, trigger.config);
     _taskReport(report, label);
 }
@@ -99,7 +98,7 @@ function _taskReport (report: TaskReport, label: string) {
     }
 }
 
-export function watchTaskReport(report: TaskReport, trigger: WatchTrigger) {
+export function watchTaskReport(report: TaskReport, trigger: CommandTrigger) {
     const label = getSequenceLabel(report.item, trigger.config);
     // todo make loglevel an enum
     _taskReport(report, label);
@@ -224,7 +223,7 @@ export function reportNoFilesMatched (runner) {
     l('{red:x warning} `{cyan:%s}` did not match any files', runner.patterns.join(' '));
 }
 
-export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: WatchTrigger ): void {
+export function reportBeforeWatchTaskErrors (watchTasks: WatchTasks, ctx: CommandTrigger ): void {
 
     l('{gray.bold:--------------------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');

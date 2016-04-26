@@ -4,7 +4,6 @@ import * as seq from './task.sequence';
 import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
-import {WatchTrigger} from "./command.watch";
 import {isReport} from './task.utils';
 
 const debug = require('debug')('cb:watch.runner');
@@ -22,7 +21,7 @@ export interface WatchEvent {
  * Create a stream that is the combination of all watchers
  */
 export function createObservablesForWatchers (watchers: Watcher[],
-                                       trigger: WatchTrigger,
+                                       trigger: CommandTrigger,
                                        tracker$: Rx.Observable<any>,
                                        tracker): Rx.Observable<TaskReport> {
     return Rx.Observable

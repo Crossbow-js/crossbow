@@ -6,13 +6,13 @@ const blacklist = ['options', 'bs-config', 'before'];
 var watcherUID = 1;
 
 import {WatchOptions} from "chokidar";
-import {WatchTrigger} from "./command.watch";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
 import {CrossbowInput} from "./index";
 import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
+import {CommandTrigger} from "./command.run";
 
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
@@ -168,7 +168,7 @@ function getFormattedTask (watchTaskParent: WatchTask, globalOptions: CBWatchOpt
         }, []);
 }
 
-function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): WatchTask {
+function createFlattenedWatchTask (taskName: string, trigger: CommandTrigger): WatchTask {
 
     const incoming  = preprocessWatchTask(taskName);
     const selection = trigger.input.watch[incoming.taskName] || {};
@@ -188,11 +188,11 @@ function createFlattenedWatchTask (taskName: string, trigger: WatchTrigger): Wat
     }
 }
 
-function validateTask (task:WatchTask, trigger: WatchTrigger): boolean {
+function validateTask (task:WatchTask, trigger: CommandTrigger): boolean {
     return task.errors.length === 0;
 }
 
-export function resolveWatchTasks (taskNames: string[], trigger: WatchTrigger): WatchTasks {
+export function resolveWatchTasks (taskNames: string[], trigger: CommandTrigger): WatchTasks {
 
     const taskList = taskNames
         .map(taskName => {

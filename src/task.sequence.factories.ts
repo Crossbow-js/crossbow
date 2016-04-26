@@ -1,7 +1,7 @@
 const assign = require('object-assign');
 
 import {Task} from "./task.resolve.d";
-import {RunCommandTrigger} from "./command.run";
+import {CommandTrigger} from "./command.run";
 import {TaskStats} from "./task.runner";
 
 export enum SequenceItemTypes {
@@ -15,7 +15,7 @@ export interface SequenceItem {
     taskName?: string
     task?: Task
     items: SequenceItem[]
-    factory?: (obs: any, opts: any, ctx: RunCommandTrigger, tracker$: any) => any
+    factory?: (obs: any, opts: any, ctx: CommandTrigger, tracker$: any) => any
     fnName?: string
     config?: any
     subTaskName?: string
@@ -38,7 +38,7 @@ export interface SequenceTask {
 }
 
 export interface TaskFactory {
-    (task: Task, trigger: RunCommandTrigger): any
+    (task: Task, trigger: CommandTrigger): any
     tasks?: TaskFactory[]
     name?: string
 }

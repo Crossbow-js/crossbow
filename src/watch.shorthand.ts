@@ -1,4 +1,4 @@
-import {WatchTrigger} from "./command.watch";
+import {CommandTrigger} from "./command.run";
 const merge = require('lodash.merge');
 
 export interface UnwrappedTask {
@@ -8,7 +8,7 @@ export interface UnwrappedTask {
     name: string
 }
 
-export function getContext(trigger: WatchTrigger): WatchTrigger {
+export function getContext(trigger: CommandTrigger): CommandTrigger {
     /**
      * First, unwrap each item. If it has a <pattern> -> <task> syntax
      * then we split it, otherwise just return empty arrays for
@@ -35,9 +35,9 @@ export function getContext(trigger: WatchTrigger): WatchTrigger {
 
     /**
      * Now merge the fake watch config with original
-     * @type {WatchTrigger}
+     * @type {CommandTrigger}
      */
-    const moddedCtx = <WatchTrigger>merge({}, trigger, {
+    const moddedCtx = <CommandTrigger>merge({}, trigger, {
         input: {
             watch: fakeWatchConfig
         }

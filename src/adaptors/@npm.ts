@@ -1,4 +1,4 @@
-import {RunCommandTrigger} from "../command.run";
+import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {Task} from "../task.resolve.d";
 
@@ -82,7 +82,7 @@ export interface CommandArgs {
     cmd: string[]
 }
 
-function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
+function getArgs (task: Task, trigger: CommandTrigger) : CommandArgs {
     const stringInput = transformStrings(task.command, trigger.config);
     return {
         stringInput: stringInput,
@@ -94,7 +94,7 @@ function getArgs (task: Task, trigger: RunCommandTrigger) : CommandArgs {
  * The main export is the function this will be run in the sequence
  * @returns {Function}
  */
-export default function (task: Task, trigger: RunCommandTrigger) {
+export default function (task: Task, trigger: CommandTrigger) {
 
     return (opts, ctx, observer) => {
 

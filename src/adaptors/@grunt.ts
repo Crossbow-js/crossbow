@@ -1,8 +1,8 @@
-import {RunCommandTrigger} from "../command.run";
+import {CommandTrigger} from "../command.run";
 import {Task} from "../task.resolve.d";
 import {resolve} from 'path';
 
-module.exports = function (task: Task, trigger: RunCommandTrigger) {
+module.exports = function (task: Task, trigger: CommandTrigger) {
 
     return function (opts, ctx, observer) {
 
