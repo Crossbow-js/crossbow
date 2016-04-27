@@ -15,6 +15,7 @@ export interface IncomingTask {
     cbflags: string[]
     modules?: string[]
     tasks?: Task[]
+    inlineFunctions: any[]
     query: any
 }
 
@@ -47,7 +48,7 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      */
     const baseTaskName = splitTask[0];
     const subTasks = splitTask.slice(1);
-
+    
     /**
      * Create the base task
      * @type {IncomingTask}
@@ -60,7 +61,8 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
         subTasks,
         taskName: baseTaskName,
         rawInput: taskName,
-        tasks: []
+        tasks: [],
+        inlineFunctions: []
     };
 
     /**

@@ -32,13 +32,21 @@ export function gatherTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): 
 
 function getModuleErrors(outgoing: OutgoingTask): TaskError[] {
     /**
+     * If there are inline functions to execute, this task can never be invalid
+     */
+    if (outgoing.inlineFunctions.length) {
+        return [];
+    }
+    
+    /**
      * If a module was not located, and there are 0 child tasks,
      * this can be classified as a `module not found error`
      */
-    const errors = (outgoing.modules.length === 0 && outgoing.tasks.length === 0)
-        ? [<ModuleNotFoundError>{type: TaskErrorTypes.ModuleNotFound, taskName: outgoing.taskName}]
-        : [];
-    return errors;
+    if (outgoing.modules.length === 0 && outgoing.tasks.length === 0) {
+        return [<ModuleNotFoundError>{type: TaskErrorTypes.ModuleNotFound, taskName: outgoing.taskName}]
+    }
+
+    return [];
 }
 
 function getCBFlagErrors(outgoing: OutgoingTask): TaskError[] {

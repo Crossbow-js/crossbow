@@ -412,7 +412,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
             }
 
             if (task.type === TaskTypes.Adaptor ||
-                task.type === TaskTypes.Runnable) {
+                task.type === TaskTypes.RunnableModule) {
                 if (task.errors.length) {
                     return acc.concat({
                         label: label,
@@ -486,7 +486,7 @@ function getLabel(task) {
         return `{bold:[${task.taskName}]}`;
     }
 
-    if (task.type === TaskTypes.Runnable) {
+    if (task.type === TaskTypes.RunnableModule) {
         if (task.errors.length) {
             return `{red.bold:x ${task.rawInput}}`;
         }
