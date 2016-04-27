@@ -83,16 +83,20 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
     const timestamp = new Date().getTime();
 
     /**
-     * If we've reached this point, we're going to handle running
-     * the tasks! This api should be exactly what we expect users
-     * to consume. We use the `config.runMode` flag to select a top-level
-     * parallel or series runner
+     * task Tracker for external observers
+     * @type {Subject<T>}
      */
     const tracker = new Rx.Subject();
     const tracker$ = tracker
         .filter(isReport)
         .share();
 
+    /**
+     * If we've reached this point, we're going to handle running
+     * the tasks! This api should be exactly what we expect users
+     * to consume. We use the `config.runMode` flag to select a top-level
+     * parallel or series runner
+     */
     runner[config.runMode]
         .call(null, tracker$)
         /**

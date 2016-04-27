@@ -159,13 +159,21 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
 
     /**
+     * Merge incoming config with query + flags
+     * eg:
+     *     $  sass?input=css/core.css --production
+     *     -> sass
+     *          input: css/core.css
+     *          production: true
+     */
+    const mergedConfigWithQuery = merge({}, config, task.query, task.flags);
+
+    /**
      * If the module did not export a function, but has a 'tasks'
      * property that is an array, use each function from it
      * eg:
      *  module.exports.tasks [sass, cssmin, version-rev]
      */
-    const mergedConfigWithQuery = merge({}, config, task.query, task.flags);
-
     if (imported.tasks && Array.isArray(imported.tasks)) {
         return imported.tasks.map(function (importedFn, i) {
             return createSequenceTaskItem({
@@ -205,7 +213,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
     return {
         sequence: items,
         series: (tracker$) => {
-            const flattened = flatten(items, [], false, tracker$);
+            const flattened = createObservableTree(items, [], false, tracker$);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .concatAll()
@@ -221,7 +229,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             return subject;
         },
         parallel: (tracker$) => {
-            const flattened = flatten(items, [], true, tracker$);
+            const flattened = createObservableTree(items, [], true, tracker$);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .mergeAll()
@@ -245,7 +253,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
      * nested observables for it (a task with children cannot itself
      * be a task that should be run)
      */
-    function flatten(items: SequenceItem[], initial: SequenceItem[], addCatch = false, tracker$) {
+    function createObservableTree(items: SequenceItem[], initial: SequenceItem[], addCatch = false, tracker$) {
 
         function reducer(all, item: SequenceItem) {
             let output;
@@ -254,7 +262,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * of (this task) will be run in `parallel`
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
-                output = Observable.merge(flatten(item.items, [], shouldCatch(trigger), tracker$));
+                output = Observable.merge(createObservableTree(item.items, [], shouldCatch(trigger), tracker$));
             }
             /**
              * If the current task was marked as `series`, all immediate child tasks
@@ -262,7 +270,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * one has completed
              */
             if (item.type === SequenceItemTypes.SeriesGroup) {
-                output = Observable.concat(flatten(item.items, [], false, tracker$));
+                output = Observable.concat(createObservableTree(item.items, [], false, tracker$));
             }
 
             /**

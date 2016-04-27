@@ -1,7 +1,7 @@
 watch:
   default:
     before:
-      - compile
+      - 'test/fixtures/tasks/bs.js'
     'src': ['compile']
   ts:
     before:

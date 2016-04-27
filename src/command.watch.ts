@@ -106,7 +106,8 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
          * and the watchers will not begin
          */
         createBeforeRunner(before).do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        createObservablesForWatchers(runners.valid, trigger, tracker$, tracker).catch(err => {
+        createObservablesForWatchers(runners.valid, trigger, tracker$, tracker)
+            .catch(err => {
             // Only intercept Crossbow errors
             // otherwise just allow it to be thrown
             // For example, 'before' runner may want
