@@ -1,13 +1,14 @@
 /// <reference path="../typings/main.d.ts" />
 import {isReport} from "./task.utils";
 const debug = require('debug')('cb:command.run');
-const Rx = require('rx');
+import Rx = require('rx');
 const merge = require('lodash.merge');
 
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from './task.resolve';
 import {TaskRunner, TaskReport} from './task.runner';
+import Immutable = require('immutable');
 
 import * as seq from "./task.sequence";
 import * as reporter from './reporters/defaultReporter';
@@ -20,10 +21,7 @@ export interface CommandTrigger {
     config: CrossbowConfiguration
     tracker?: any
     tracker$?: any
-}
-
-if (process.env.DEBUG) {
-    Rx.config.longStackSupport = true;
+    shared: Rx.BehaviorSubject<Immutable.Map<string, any>>
 }
 
 export default function execute(trigger: CommandTrigger): TaskRunner {
@@ -133,7 +131,13 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
             return promptForRunCommand(cli, input, config).then(function (answers) {
                 const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
                 const configMerged = merge({}, config, {runMode: 'parallel'});
-                return execute({cli: cliMerged, input, config: configMerged, type: 'command'});
+                return execute({
+                    shared: new Rx.BehaviorSubject(Immutable.Map({})),
+                    cli: cliMerged,
+                    input,
+                    config: configMerged,
+                    type: 'command'
+                });
             });
         } else {
             reporter.reportNoTasksAvailable();
@@ -141,6 +145,12 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
         }
     }
 
-    return execute({cli, input, config, type: 'command'});
+    return execute({
+        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        cli,
+        input,
+        config,
+        type: 'command'
+    });
 }
 

@@ -10,6 +10,7 @@ import {getModifiedWatchContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
 import * as seq from "./task.sequence";
 import Rx = require('rx');
+import Immutable = require('immutable');
 import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import {isReport} from "./task.utils";
@@ -176,11 +177,23 @@ export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, conf
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
             cli.input = moddedCliInput.concat('default');
-            return execute(getModifiedWatchContext({cli, input, config, type: 'watcher'}));
+            return execute(getModifiedWatchContext({
+                shared: new Rx.BehaviorSubject(Immutable.Map({})),
+                cli,
+                input,
+                config,
+                type: 'watcher'
+            }));
         }
         reporter.reportNoWatchTasksProvided();
         return;
     }
 
-    return execute(getModifiedWatchContext({cli, input, config, type: 'watcher'}));
+    return execute(getModifiedWatchContext({
+        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        cli,
+        input,
+        config,
+        type: 'watcher'
+    }));
 }

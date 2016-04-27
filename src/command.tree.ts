@@ -4,6 +4,8 @@ import {CrossbowConfiguration} from './config';
 import {reportTaskTree} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
 import {resolveTasks} from './task.resolve';
+import Immutable = require('immutable');
+import Rx = require('rx');
 
 export default function execute(trigger: CommandTrigger): void {
     const {input, config} = trigger;
@@ -14,5 +16,11 @@ export default function execute(trigger: CommandTrigger): void {
 }
 
 export function handleIncomingTreeCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
-    execute({cli, input, config, type: 'command'});
+    execute({
+        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        cli,
+        input,
+        config,
+        type: 'command'
+    });
 }
