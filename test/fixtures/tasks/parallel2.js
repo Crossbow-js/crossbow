@@ -1,7 +1,6 @@
-module.exports = function (obs) {
+module.exports = function (opts, context, obs) {
     return new Promise(function (resolve, reject) {
         setTimeout(function () {
-            obs.log.info('done 2');
             resolve('done 2');
         }, 150);
     });

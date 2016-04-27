@@ -463,7 +463,10 @@ function adaptorLabel(task: Task) {
 
 function moduleLabel(task: Task) {
     const filepath = relative(process.cwd(), task.modules[0]);
-    return `{cyan:${task.taskName} ${filepath}}`;
+    if (task.taskName === filepath) {
+        return `${task.taskName}`;
+    }
+    return `${task.taskName} ${filepath}`;
 }
 
 function npmScriptLabel(task: Task) {
