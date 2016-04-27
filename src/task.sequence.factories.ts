@@ -15,7 +15,7 @@ export interface SequenceItem {
     taskName?: string
     task?: Task
     items: SequenceItem[]
-    factory?: (obs: any, opts: any, ctx: CommandTrigger, tracker$: any) => any
+    factory?: (opts: any, ctx: CommandTrigger, observer: Rx.Observer<any>) => any
     fnName?: string
     config?: any
     subTaskName?: string

@@ -41,15 +41,15 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
      */
     const runners = createWatchRunners(watchTasks, trigger);
 
-    const tracker = new Rx.Subject();
-    const tracker$ = tracker
+    trigger.tracker = new Rx.Subject();
+    trigger.tracker$ = trigger.tracker
         .filter(isReport)
         .share();
 
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
      */
-    const before = getBeforeTaskRunner(cli, trigger, watchTasks, tracker$);
+    const before = getBeforeTaskRunner(cli, trigger, watchTasks);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -106,7 +106,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
          * and the watchers will not begin
          */
         createBeforeRunner(before).do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        createObservablesForWatchers(runners.valid, trigger, tracker$, tracker)
+        createObservablesForWatchers(runners.valid, trigger)
             .catch(err => {
             // Only intercept Crossbow errors
             // otherwise just allow it to be thrown
@@ -144,7 +144,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
 
         return before
             .runner
-            .series(tracker$) // todo - should this support parallel run mode also?
+            .series(trigger.tracker$) // todo - should this support parallel run mode also?
             .filter(isReport)
             .do(report => {
                 if (trigger.config.progress) {

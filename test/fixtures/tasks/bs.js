@@ -1,9 +1,8 @@
-module.exports = function (opts, ctx, observer, tracker$) {
+module.exports = function (opts, ctx, observer) {
 
-    // console.log(ctx);
-    tracker$.subscribe(function (x) {
-        console.log('VALU', x.type, x.item.seqUID);
+    ctx.tracker$.subscribe(function (x) {
+        console.log('VALUE', x.type, x.item.seqUID);
     });
-
+    
     observer.done();
 };

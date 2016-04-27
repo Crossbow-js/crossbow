@@ -20,10 +20,7 @@ export interface WatchEvent {
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers(watchers: Watcher[],
-                                             trigger: CommandTrigger,
-                                             tracker$: Rx.Observable<any>,
-                                             tracker): Rx.Observable<TaskReport> {
+export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<TaskReport> {
     return Rx.Observable
         /**
          * Take each <Watcher> and create an observable stream for it,
@@ -37,9 +34,10 @@ export function createObservablesForWatchers(watchers: Watcher[],
         .flatMap((watchEvent: WatchEvent, i) => {
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
-            const upcoming = watchEvent.runner._runner.series(tracker$)
+            const upcoming = watchEvent.runner._runner
+                .series(trigger.tracker$)
                 .filter(isReport)
-                .do(tracker)
+                .do(trigger.tracker)
                 .do((x: TaskReport) => {
                     // todo - simpler/shorter format for task reports on watchers
                     if (trigger.config.progress) {

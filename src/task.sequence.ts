@@ -213,7 +213,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
     return {
         sequence: items,
         series: (tracker$) => {
-            const flattened = createObservableTree(items, [], false, tracker$);
+            const flattened = createObservableTree(items, [], false);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .concatAll()
@@ -229,7 +229,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             return subject;
         },
         parallel: (tracker$) => {
-            const flattened = createObservableTree(items, [], true, tracker$);
+            const flattened = createObservableTree(items, [], true);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
                 .mergeAll()
@@ -253,7 +253,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
      * nested observables for it (a task with children cannot itself
      * be a task that should be run)
      */
-    function createObservableTree(items: SequenceItem[], initial: SequenceItem[], addCatch = false, tracker$) {
+    function createObservableTree(items: SequenceItem[], initial: SequenceItem[], addCatch = false) {
 
         function reducer(all, item: SequenceItem) {
             let output;
@@ -262,7 +262,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * of (this task) will be run in `parallel`
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
-                output = Observable.merge(createObservableTree(item.items, [], shouldCatch(trigger), tracker$));
+                output = Observable.merge(createObservableTree(item.items, [], shouldCatch(trigger)));
             }
             /**
              * If the current task was marked as `series`, all immediate child tasks
@@ -270,14 +270,14 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * one has completed
              */
             if (item.type === SequenceItemTypes.SeriesGroup) {
-                output = Observable.concat(createObservableTree(item.items, [], false, tracker$));
+                output = Observable.concat(createObservableTree(item.items, [], false));
             }
 
             /**
              * Finally is item is a task, create an observable for it.
              */
             if (item.type === SequenceItemTypes.Task && item.factory) {
-                output = createObservableFromSequenceItem(item, trigger, tracker$);
+                output = createObservableFromSequenceItem(item, trigger);
             }
 
             /**

@@ -17,8 +17,7 @@ export interface BeforeTasks {
 
 export function getBeforeTaskRunner(cli: Meow,
                                     trigger: CommandTrigger,
-                                    watchTasks: WatchTasks,
-                                    tracker$: Rx.Observable<any>): BeforeTasks {
+                                    watchTasks: WatchTasks): BeforeTasks {
     /**
      * Get 'before' task list
      */

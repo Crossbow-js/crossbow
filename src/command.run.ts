@@ -18,6 +18,8 @@ export interface CommandTrigger {
     cli: Meow
     input: CrossbowInput
     config: CrossbowConfiguration
+    tracker?: any
+    tracker$?: any
 }
 
 if (process.env.DEBUG) {
@@ -86,8 +88,8 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * task Tracker for external observers
      * @type {Subject<T>}
      */
-    const tracker = new Rx.Subject();
-    const tracker$ = tracker
+    trigger.tracker = new Rx.Subject();
+    trigger.tracker$ = trigger.tracker
         .filter(isReport)
         .share();
 
@@ -98,7 +100,8 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * parallel or series runner
      */
     runner[config.runMode]
-        .call(null, tracker$)
+        .call(null, trigger.tracker$)
+        .do(trigger.tracker)
         /**
          * Now dicard anything that is not a start/error/begin event
          */
@@ -117,7 +120,6 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
         }, _ => {
             debug('All tasks finished');
         })
-
 }
 
 export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
