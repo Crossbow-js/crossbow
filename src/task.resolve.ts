@@ -184,6 +184,13 @@ function resolveChildTasks(initialTasks: any[], taskName: string, parents: strin
             return flat;
         }
 
+        /**
+         * Never try to resolve children tasks if this is an Inline Function
+         */
+        if (flat.type === TaskTypes.InlineFunction) {
+            return flat;
+        }
+
         if (!flat.modules.length) {
             flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
         }
@@ -233,6 +240,7 @@ function createAdaptorTask(taskName, parents): Task {
         taskName: taskName,
         subTasks: [],
         modules: [],
+        inlineFunctions: [],
         tasks: [],
         rawInput: taskName,
         parents: parents,

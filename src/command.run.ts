@@ -98,7 +98,7 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * parallel or series runner
      */
     runner[config.runMode]
-        .call(null, trigger.tracker$)
+        .call()
         .do(trigger.tracker)
         /**
          * Now dicard anything that is not a start/error/begin event

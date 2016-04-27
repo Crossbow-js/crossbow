@@ -1,3 +1,4 @@
+import {TaskTypes} from "./task.resolve";
 const objPath = require('object-path');
 const merge = require('lodash.merge');
 const assign = require('object-assign');
@@ -27,7 +28,6 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
 
         function reducer(all, task: Task) {
-
 
             /**
              * If the current task has child tasks, we build a tree of
@@ -63,7 +63,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * At this point, we must be dealing with a task that should be run,
              * so we first check if it's an adaptor @ task first
              */
-            if (task.adaptor) {
+            if (task.type === TaskTypes.Adaptor) {
                 return all.concat(getSequenceItemWithConfig(
                     task,
                     trigger,
@@ -75,10 +75,19 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             /**
              * Finally, if the does not have children tasks & is not an
              * adaptor task it must have at least 1 associated module
-             * so we can begin working with it by first resolving
-             * the top-level configuration object for it.
+             * (or an inline function) so we can begin working with it
+             * by first resolving the top-level configuration object for it.
              */
             const localConfig = loadTopLevelConfig(task, trigger);
+
+            /**
+             * If it's an inline function,
+             */
+            if (task.type === TaskTypes.InlineFunction) {
+                return getSequenceItemWithConfig(task, trigger, task.inlineFunctions[0], localConfig)
+            }
+
+
             /**
              * Next we load the module
              */
@@ -212,7 +221,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 
     return {
         sequence: items,
-        series: (tracker$) => {
+        series: () => {
             const flattened = createObservableTree(items, [], false);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)
@@ -228,7 +237,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
                 .subscribe();
             return subject;
         },
-        parallel: (tracker$) => {
+        parallel: () => {
             const flattened = createObservableTree(items, [], true);
             const subject = new Rx.ReplaySubject(2000);
             Observable.from(flattened)

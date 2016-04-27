@@ -94,10 +94,10 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                         }
                     });
                     single.setDisposable(dis);
-                    return single
+                    return single;
                 }
             }
-            return handleReturn(output, observer);
+            handleReturn(output, observer);
         }
 
         /**
@@ -106,7 +106,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * we can complete the task immediately
          */
         if (item.factory.length < 3) {
-            return observer.onCompleted();
+            return observer.done();
         }
 
     }).catch(error => {

@@ -14,7 +14,8 @@ describe('can pre-process incoming task names', function () {
                 rawInput: 'file.js',
                 taskName: 'file.js',
                 query: {},
-                tasks: []
+                tasks: [],
+                inlineFunctions: []
             }
         );
     });

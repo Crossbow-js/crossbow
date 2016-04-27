@@ -107,16 +107,4 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].runMode, 'parallel');
         assert.equal(runner.tasks.valid[0].tasks[0].runMode, 'series');
     });
-    it.only('can resolve tasks with inline functions', function () {
-        const runner = cli.getRunner(['js'], {
-            tasks: {
-                js: function (opts) {
-
-                }
-            }
-        });
-
-        assert.equal(runner.tasks.valid[0].runMode, 'series');
-        // assert.equal(runner.tasks.valid[0].tasks[0].runMode, 'series');
-    });
 });

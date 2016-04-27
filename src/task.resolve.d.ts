@@ -20,6 +20,7 @@ export interface Task {
     flags: any
     origin: TaskOriginTypes
     type: TaskTypes
+    inlineFunctions: Array<()=>void>
 }
 
 export interface TasknameWithOrigin {
