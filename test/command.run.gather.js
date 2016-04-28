@@ -105,7 +105,7 @@ describe('Gathering run tasks (1)', function () {
             }
         });
 
-        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.Parallel);
-        assert.equal(runner.tasks.valid[0].tasks[0].runMode, TaskRunModes.Series);
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.parallel);
+        assert.equal(runner.tasks.valid[0].tasks[0].runMode, TaskRunModes.series);
     });
 });

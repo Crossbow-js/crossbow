@@ -40,7 +40,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                  * If the current task was marked as `parallel`, all immediate children
                  * of (this task) will be run in `parallel`
                  */
-                if (task.runMode === TaskRunModes.Parallel) {
+                if (task.runMode === TaskRunModes.parallel) {
                     return all.concat(createSequenceParallelGroup({
                         taskName: task.taskName,
                         items: flatten(task.tasks, [])
@@ -51,7 +51,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                  * will be queued and run in series - each waiting until the previous
                  * one has completed
                  */
-                if (task.runMode === TaskRunModes.Series) {
+                if (task.runMode === TaskRunModes.series) {
                     return all.concat(createSequenceSeriesGroup({
                         taskName: task.taskName,
                         items: flatten(task.tasks, []),
@@ -269,7 +269,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
      * error should not adversely affect sibling tasks
      */
     function shouldCatch(trigger) {
-        return trigger.config.runMode === TaskRunModes.Parallel;
+        return trigger.config.runMode === TaskRunModes.parallel;
     }
 
     /**

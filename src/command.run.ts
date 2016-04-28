@@ -97,7 +97,7 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * to consume. We use the `config.runMode` flag to select a top-level
      * parallel or series runner
      */
-    runner[config.runMode.toLowerCase()]
+    runner[config.runMode]
         .call()
         .do(trigger.tracker)
         /**
@@ -130,7 +130,7 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
             reporter.reportNoTasksProvided();
             return promptForRunCommand(cli, input, config).then(function (answers) {
                 const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
-                const configMerged = merge({}, config, {runMode: TaskRunModes.Parallel});
+                const configMerged = merge({}, config, {runMode: TaskRunModes.parallel});
                 return execute({
                     shared: new Rx.BehaviorSubject(Immutable.Map({})),
                     cli: cliMerged,

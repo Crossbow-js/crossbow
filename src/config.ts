@@ -33,7 +33,7 @@ const defaults = <CrossbowConfiguration>{
      * one completes. You can set this to 'parallel' instead
      * if you wish for your code to run as fast as possible
      */
-    runMode: TaskRunModes.Series,
+    runMode: TaskRunModes.series,
     resumeOnError: false,
     /**
      * How much task information should be output
@@ -90,7 +90,7 @@ const flagTransforms = {
      * -p changes 'runMode' from series to parallel
      */
     p: (opts) => {
-        return assign({}, opts, {runMode: TaskRunModes.Parallel});
+        return assign({}, opts, {runMode: TaskRunModes.parallel});
     },
     /**
      * -c specifies a config file

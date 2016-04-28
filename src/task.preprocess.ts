@@ -167,9 +167,9 @@ function processFlags(incoming: IncomingTask): OutgoingTask {
 
     const runMode = (function () {
         if (incoming.cbflags.indexOf('p') > -1) {
-            return TaskRunModes.Parallel;
+            return TaskRunModes.parallel;
         }
-        return TaskRunModes.Series;
+        return TaskRunModes.series;
     })();
 
     return assign({}, incoming, {

@@ -27,13 +27,8 @@ export enum TaskOriginTypes {
 }
 
 export enum TaskRunModes {
-    Series = <any>"Series",
-    Parallel = <any>"Parallel",
-}
-
-export enum TaskStatusTypes {
-    Series = <any>"Series",
-    Parallel = <any>"Parallel",
+    series = <any>"series",
+    parallel = <any>"Parallel",
 }
 
 const defaultTask = <Task>{
@@ -45,7 +40,7 @@ const defaultTask = <Task>{
     tasks: [],
     parents: [],
     errors: [],
-    runMode: TaskRunModes.Series
+    runMode: TaskRunModes.series
 };
 
 
@@ -256,7 +251,7 @@ function createAdaptorTask(taskName, parents): Task {
         parents: parents,
         errors: [],
         command: commandInput,
-        runMode: TaskRunModes.Series,
+        runMode: TaskRunModes.series,
         query: {},
         flags: {},
         origin: TaskOriginTypes.Adaptor,
