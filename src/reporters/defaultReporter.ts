@@ -255,7 +255,7 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
                 label: `{yellow:+ input: '${task.name}'}`, nodes: [
                     {
                         label: [
-                            `{red.bold:x [${task.name}]}`,
+                            `{red.bold:x ${task.name}}`,
                             getWatchError(task.errors[0], task)
                         ].join('\n')
                     }
@@ -385,9 +385,9 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
         return item.task.taskName;
     }
     if (item.items.length === 1) {
-        return compile(`{bold:[${item.taskName}]}`);
+        return compile(`{bold:${item.taskName}}`);
     } else {
-        return compile(`{bold:[${item.taskName}]} {yellow:${SequenceItemTypes[item.type]}}`);
+        return compile(`{bold:${item.taskName}} {yellow:${SequenceItemTypes[item.type]}}`);
     }
 }
 
@@ -475,15 +475,19 @@ function npmScriptLabel(task: Task) {
 
 function getLabel(task) {
 
+    if (task.type === TaskTypes.InlineFunction) {
+        return `${task.taskName}`;
+    }
+
     if (task.origin === TaskOriginTypes.NpmScripts) {
         return npmScriptLabel(task);
     }
 
     if (task.type === TaskTypes.Group) {
         if (task.errors.length) {
-            return `{red.bold:x [${task.taskName}]}`;
+            return `{red.bold:x ${task.taskName}}`;
         }
-        return `{bold:[${task.taskName}]}`;
+        return `{bold:${task.taskName}}`;
     }
 
     if (task.type === TaskTypes.RunnableModule) {

@@ -28,7 +28,7 @@ export enum TaskOriginTypes {
 
 export enum TaskRunModes {
     series = <any>"series",
-    parallel = <any>"Parallel",
+    parallel = <any>"parallel",
 }
 
 const defaultTask = <Task>{
