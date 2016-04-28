@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const cli = require("../");
+const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
 function handoff(cmd, input, cb) {
     return cli({
@@ -104,7 +105,7 @@ describe('Gathering run tasks (1)', function () {
             }
         });
 
-        assert.equal(runner.tasks.valid[0].runMode, 'parallel');
-        assert.equal(runner.tasks.valid[0].tasks[0].runMode, 'series');
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.Parallel);
+        assert.equal(runner.tasks.valid[0].tasks[0].runMode, TaskRunModes.Series);
     });
 });

@@ -1,5 +1,6 @@
 import {Task} from "./task.resolve.d";
 import {CrossbowInput} from "./index";
+import {TaskRunModes} from "./task.resolve";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -164,9 +165,12 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
  */
 function processFlags(incoming: IncomingTask): OutgoingTask {
 
-    const runMode = incoming.cbflags.indexOf('p') > -1
-        ? 'parallel'
-        : 'series';
+    const runMode = (function () {
+        if (incoming.cbflags.indexOf('p') > -1) {
+            return TaskRunModes.Parallel;
+        }
+        return TaskRunModes.Series;
+    })();
 
     return assign({}, incoming, {
         runMode
@@ -204,8 +208,8 @@ function getBaseNameAndFlags(taskName: string): {baseName: string, flags: {}} {
     } else {
         baseName = splitFlags[1];
         if (splitFlags.length === 3) {
-            const mini = require('yargs-parser');
-            flags = withoutCommand(mini(splitFlags[2]));
+            const yargsParser = require('yargs-parser');
+            flags = withoutCommand(yargsParser(splitFlags[2]));
         }
     }
     return {baseName, flags};

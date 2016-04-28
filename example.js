@@ -1,16 +1,18 @@
-'use strict';
+// 'use strict';
 
 
 const cb = require('./');
-cb.runner(['js', 'css'], require('./examples/crossbow'))
+cb.runner(['js', 'css', 'shane'], require('./examples/crossbow'))
     .parallel()
-    .filter(x => typeof x.type === 'string')
-    .do(x => {
-        console.log(log(x))
-    })
-    .subscribe();
+    .do(log)
+    .toArray()
+    .subscribe(function (reports) {
+        require('fs').writeFileSync('reports.json', JSON.stringify(reports, null, 2));
+        // console.log(reports);
+    });
 
 function log(x) {
-    // console.log(x.item);
-    return {id: x.item.seqUID, type: x.type, name: x.item.task.taskName}
+    // console.log(`(${x.item.seqUID}) - ${x.type} - ${x.item.task.taskName}`);
+    // console.log(`${x.item.seqUID} `);
 }
+// var meow = require('meow');

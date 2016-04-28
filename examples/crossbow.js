@@ -21,7 +21,10 @@ module.exports = {
             'test/fixtures/tasks/simple.js'
         ],
         css: ['test/fixtures/tasks/simple.multi.js'],
-        bs: ["test/fixtures/tasks/bs.js"]
+        bs: ["test/fixtures/tasks/bs.js"],
+        shane: function () {
+            console.log('hippies');
+        }
     },
     config: {
         css: {

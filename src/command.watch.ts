@@ -145,7 +145,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
 
         return before
             .runner
-            .series()
+            .Series()
             .filter(isReport)
             .do(report => {
                 if (trigger.config.progress) {

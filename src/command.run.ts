@@ -6,7 +6,7 @@ const merge = require('lodash.merge');
 
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
-import {resolveTasks} from './task.resolve';
+import {resolveTasks, TaskRunModes} from './task.resolve';
 import {TaskRunner, TaskReport} from './task.runner';
 import Immutable = require('immutable');
 
@@ -97,7 +97,7 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * to consume. We use the `config.runMode` flag to select a top-level
      * parallel or series runner
      */
-    runner[config.runMode]
+    runner[config.runMode.toLowerCase()]
         .call()
         .do(trigger.tracker)
         /**
@@ -130,7 +130,7 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
             reporter.reportNoTasksProvided();
             return promptForRunCommand(cli, input, config).then(function (answers) {
                 const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
-                const configMerged = merge({}, config, {runMode: 'parallel'});
+                const configMerged = merge({}, config, {runMode: TaskRunModes.Parallel});
                 return execute({
                     shared: new Rx.BehaviorSubject(Immutable.Map({})),
                     cli: cliMerged,

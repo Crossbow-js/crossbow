@@ -10,7 +10,7 @@ describe('can pre-process incoming task names', function () {
                 flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
-                runMode: 'series',
+                runMode: 'Series',
                 rawInput: 'file.js',
                 taskName: 'file.js',
                 query: {},
@@ -20,7 +20,6 @@ describe('can pre-process incoming task names', function () {
         );
     });
     it('can handle single subtask', function () {
-
         const proc = preprocess('file.js:dev', {tasks:{}});
         assert.equal(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.subTasks, ['dev']);

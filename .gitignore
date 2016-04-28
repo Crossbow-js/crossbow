@@ -4,3 +4,4 @@ npm-debug.log
 /dist
 /tasks.json
 /sequence.json
+/reports.json

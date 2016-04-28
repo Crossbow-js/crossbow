@@ -1,10 +1,11 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
+import {TaskRunModes} from "./task.resolve";
 const assign = require('object-assign');
 
 export interface CrossbowConfiguration {
     logLevel: string
     cwd: string
-    runMode: string
+    runMode: TaskRunModes
     resumeOnError: boolean
     fail: boolean
     summary: string
@@ -32,7 +33,7 @@ const defaults = <CrossbowConfiguration>{
      * one completes. You can set this to 'parallel' instead
      * if you wish for your code to run as fast as possible
      */
-    runMode: 'series',
+    runMode: TaskRunModes.Series,
     resumeOnError: false,
     /**
      * How much task information should be output
@@ -89,7 +90,7 @@ const flagTransforms = {
      * -p changes 'runMode' from series to parallel
      */
     p: (opts) => {
-        return assign({}, opts, {runMode: 'parallel'});
+        return assign({}, opts, {runMode: TaskRunModes.Parallel});
     },
     /**
      * -c specifies a config file
