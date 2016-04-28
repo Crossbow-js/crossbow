@@ -81,12 +81,12 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             const localConfig = loadTopLevelConfig(task, trigger);
 
             /**
-             * If it's an inline function,
+             * If it's an inline function, return immediately
+             * with this task
              */
             if (task.type === TaskTypes.InlineFunction) {
-                return getSequenceItemWithConfig(task, trigger, task.inlineFunctions[0], localConfig)
+                return all.concat(getSequenceItemWithConfig(task, trigger, null, localConfig));
             }
-
 
             /**
              * Next we load the module
@@ -166,6 +166,30 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     }
 }
 function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
+
+    /**
+     * Much duplication here, look to refactor
+     */
+    if (task.type === TaskTypes.InlineFunction) {
+        if (task.subTasks.length) {
+            return task.subTasks.map(function (subtask, i) {
+                const mergedConfigWithQuery = merge({}, config[subtask], task.query, task.flags);
+                return createSequenceTaskItem({
+                    fnName: getFunctionName(task.inlineFunctions[0], i + 1),
+                    factory: task.inlineFunctions[0],
+                    task: task,
+                    config: mergedConfigWithQuery
+                })
+            });
+        }
+        const mergedConfigWithQuery = merge({}, config, task.query, task.flags);
+        return [createSequenceTaskItem({
+            fnName: getFunctionName(task.inlineFunctions[0], 0),
+            factory: task.inlineFunctions[0],
+            task: task,
+            config: mergedConfigWithQuery
+        })];
+    }
 
     /**
      * Merge incoming config with query + flags

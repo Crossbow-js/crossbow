@@ -3,5 +3,6 @@ git:
   depth: 2
 language: node_js
 node_js:
+  - "6"
   - "5.3"
   - "4.2"
