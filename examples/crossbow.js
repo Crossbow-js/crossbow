@@ -16,12 +16,18 @@ module.exports = {
     },
     tasks: {
         unit: "@npm sleep 1",
-        buildall: ['js', 'css'],
+        "buildall@p": ['js', 'error', 'css'],
         js: [
             'test/fixtures/tasks/simple.js'
         ],
-        css: ['test/fixtures/tasks/simple.multi.js'],
-        bs: ["test/fixtures/tasks/bs.js"]
+        css: ['test/fixtures/tasks/simple.multi.js', 'shane'],
+        bs: ["test/fixtures/tasks/bs.js"],
+        shane: function () {
+            console.log('hippies');
+        },
+        error: function () {
+            throw new Error("some ting");
+        }
     },
     config: {
         css: {

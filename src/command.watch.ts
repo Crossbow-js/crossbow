@@ -145,7 +145,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
 
         return before
             .runner
-            .series(trigger.tracker$) // todo - should this support parallel run mode also?
+            .series()
             .filter(isReport)
             .do(report => {
                 if (trigger.config.progress) {

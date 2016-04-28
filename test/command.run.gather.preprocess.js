@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const preprocess = require('../dist/task.preprocess').preprocessTask;
+const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
 describe('can pre-process incoming task names', function () {
     it('can handle simple tasks tasks', function () {
@@ -10,16 +11,16 @@ describe('can pre-process incoming task names', function () {
                 flags: {},
                 baseTaskName: 'file.js',
                 subTasks: [],
-                runMode: 'series',
+                runMode: TaskRunModes.series,
                 rawInput: 'file.js',
                 taskName: 'file.js',
                 query: {},
-                tasks: []
+                tasks: [],
+                inlineFunctions: []
             }
         );
     });
     it('can handle single subtask', function () {
-
         const proc = preprocess('file.js:dev', {tasks:{}});
         assert.equal(proc.baseTaskName, 'file.js');
         assert.deepEqual(proc.subTasks, ['dev']);

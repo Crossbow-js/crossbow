@@ -1,5 +1,6 @@
 import {Task} from "./task.resolve.d";
 import {CrossbowInput} from "./index";
+import {TaskRunModes} from "./task.resolve";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -15,6 +16,7 @@ export interface IncomingTask {
     cbflags: string[]
     modules?: string[]
     tasks?: Task[]
+    inlineFunctions: any[]
     query: any
 }
 
@@ -47,7 +49,7 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      */
     const baseTaskName = splitTask[0];
     const subTasks = splitTask.slice(1);
-
+    
     /**
      * Create the base task
      * @type {IncomingTask}
@@ -60,7 +62,8 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
         subTasks,
         taskName: baseTaskName,
         rawInput: taskName,
-        tasks: []
+        tasks: [],
+        inlineFunctions: []
     };
 
     /**
@@ -162,9 +165,12 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
  */
 function processFlags(incoming: IncomingTask): OutgoingTask {
 
-    const runMode = incoming.cbflags.indexOf('p') > -1
-        ? 'parallel'
-        : 'series';
+    const runMode = (function () {
+        if (incoming.cbflags.indexOf('p') > -1) {
+            return TaskRunModes.parallel;
+        }
+        return TaskRunModes.series;
+    })();
 
     return assign({}, incoming, {
         runMode
@@ -202,8 +208,8 @@ function getBaseNameAndFlags(taskName: string): {baseName: string, flags: {}} {
     } else {
         baseName = splitFlags[1];
         if (splitFlags.length === 3) {
-            const mini = require('yargs-parser');
-            flags = withoutCommand(mini(splitFlags[2]));
+            const yargsParser = require('yargs-parser');
+            flags = withoutCommand(yargsParser(splitFlags[2]));
         }
     }
     return {baseName, flags};

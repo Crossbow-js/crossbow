@@ -1,5 +1,5 @@
 import {TaskError} from "./task.errors.d";
-import {TaskOriginTypes, TaskTypes} from "./task.resolve";
+import {TaskOriginTypes, TaskTypes, TaskRunModes} from "./task.resolve";
 
 export interface Task {
     valid: boolean
@@ -12,7 +12,7 @@ export interface Task {
     errors: TaskError[]
     adaptor?: string
     command?: string
-    runMode: string
+    runMode: TaskRunModes
     startTime?: number
     endTime?: number
     duration?: number
@@ -20,6 +20,7 @@ export interface Task {
     flags: any
     origin: TaskOriginTypes
     type: TaskTypes
+    inlineFunctions: Array<()=>void>
 }
 
 export interface TasknameWithOrigin {

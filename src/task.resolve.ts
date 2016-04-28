@@ -7,15 +7,16 @@ import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, removeNewlines} from "./task.preprocess";
+import {preprocessTask, removeNewlines, OutgoingTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
 
 export enum TaskTypes {
-    Runnable = <any>"Runnable",
-    Adaptor = <any>"Adaptor",
-    Group = <any>"Group"
+    RunnableModule = <any>"RunnableModule",
+    Adaptor  = <any>"Adaptor",
+    Group    = <any>"Group",
+    InlineFunction = <any>"InlineFunction"
 }
 
 export enum TaskOriginTypes {
@@ -23,6 +24,11 @@ export enum TaskOriginTypes {
     NpmScripts = <any>"NpmScripts",
     FileSystem = <any>"FileSystem",
     Adaptor = <any>"Adaptor"
+}
+
+export enum TaskRunModes {
+    series = <any>"series",
+    parallel = <any>"parallel",
 }
 
 const defaultTask = <Task>{
@@ -34,7 +40,7 @@ const defaultTask = <Task>{
     tasks: [],
     parents: [],
     errors: [],
-    runMode: 'series'
+    runMode: TaskRunModes.series
 };
 
 
@@ -47,10 +53,22 @@ function createTask(obj: any): Task {
     return merge({}, defaultTask, obj);
 }
 
+function locateInlineFunctions(incoming: OutgoingTask, input: CrossbowInput) : any[] {
+    const maybe = input.tasks[incoming.baseTaskName];
+    if (typeof maybe === 'function') {
+        return [maybe];
+    }
+    return [];
+}
+
 /**
  * Entry point for all tasks
  */
 function createFlattenedTask(taskName: string, parents: string[], trigger: CommandTrigger): Task {
+
+    /** DEBUG **/
+    debug(`resolving ('${typeof taskName}') ${taskName}`);
+    /** DEBUG-END **/
 
     /**
      * Remove any newlines on incoming task names
@@ -76,6 +94,10 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
      */
     const incoming = preprocessTask(taskName, trigger.input);
 
+    /** DEBUG **/
+    debug(`preprocessed '${taskName}'`, incoming);
+    /** DEBUG-END **/
+
     /**
      * Try to locate modules/files using the cwd + the current
      * task name. This happens as a first pass so that local files
@@ -86,14 +108,29 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
      * @type {Array}
      */
     incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
+    debug('Located modules', incoming.modules.length);
 
     /**
      * Resolve any child tasks if no modules were found, this is the core of how the recursive
      * alias's work
      */
-    // todo unit test this logic - or even better make it obsolete
     if (!incoming.modules.length) {
-        incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+
+        /**
+         * Now try to locate inline functions
+         * @type {Array}
+         */
+        incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
+        debug('Located inline functions', incoming.inlineFunctions.length);
+
+        if (!incoming.inlineFunctions.length) {
+
+            /**
+             * Finally, it probably has nested tasks
+             * @type {Task[]}
+             */
+            incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+        }
     }
 
     const errors = gatherTaskErrors(
@@ -101,9 +138,17 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
         trigger.input
     );
 
-    const type = incoming.modules.length
-        ? TaskTypes.Runnable
-        : TaskTypes.Group;
+    const type = (function(){
+        if (incoming.modules.length) {
+            return TaskTypes.RunnableModule;
+        }
+        if (incoming.inlineFunctions.length) {
+            return TaskTypes.InlineFunction;
+        }
+        return TaskTypes.Group;
+    })();
+
+    debug(`Setting type ${type}`);
 
     return createTask(assign({}, incoming, {
         parents,
@@ -141,6 +186,13 @@ function resolveChildTasks(initialTasks: any[], taskName: string, parents: strin
          * Never try to resolve children tasks if this is an adaptor
          */
         if (flat.type === TaskTypes.Adaptor) {
+            return flat;
+        }
+
+        /**
+         * Never try to resolve children tasks if this is an Inline Function
+         */
+        if (flat.type === TaskTypes.InlineFunction) {
             return flat;
         }
 
@@ -193,12 +245,13 @@ function createAdaptorTask(taskName, parents): Task {
         taskName: taskName,
         subTasks: [],
         modules: [],
+        inlineFunctions: [],
         tasks: [],
         rawInput: taskName,
         parents: parents,
         errors: [],
         command: commandInput,
-        runMode: 'series',
+        runMode: TaskRunModes.series,
         query: {},
         flags: {},
         origin: TaskOriginTypes.Adaptor,
@@ -281,6 +334,22 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
         if (adaptors[<any>task.adaptor]) {
             return adaptors[<any>task.adaptor].validate.apply(null, [task, trigger]);
         }
+    }
+
+    /**
+     * If this task was set to InlineFunction, it's always valid
+     * (as there's a function to call)
+     */
+    if (task.type === TaskTypes.InlineFunction) {
+        return true;
+    }
+
+    /**
+     * If the task has external modules associated
+     * with it, it's always valid (as it has things to run)
+     */
+    if (task.type === TaskTypes.RunnableModule) {
+        return true;
     }
 
     /**
