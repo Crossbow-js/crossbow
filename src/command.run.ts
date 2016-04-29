@@ -29,6 +29,15 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
     const {cli, input, config} = trigger;
 
     /**
+     * task Tracker for external observers
+     * @type {Subject<T>}
+     */
+    trigger.tracker = new Rx.Subject();
+    trigger.tracker$ = trigger.tracker
+        .filter(isReport)
+        .share();
+
+    /**
      * First Resolve the task names given in input.
      */
     const tasks = resolveTasks(cliInput, trigger);
@@ -81,15 +90,6 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * @type {number}
      */
     const timestamp = new Date().getTime();
-
-    /**
-     * task Tracker for external observers
-     * @type {Subject<T>}
-     */
-    trigger.tracker = new Rx.Subject();
-    trigger.tracker$ = trigger.tracker
-        .filter(isReport)
-        .share();
 
     /**
      * If we've reached this point, we're going to handle running

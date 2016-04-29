@@ -35,9 +35,13 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner
-                .series(trigger.tracker$)
+                .series()
                 .filter(isReport)
-                .do(trigger.tracker)
+                .do(function (val) {
+                    // Push reports onto tracker
+                    // for cross-watcher reports
+                    trigger.tracker.onNext(val);
+                })
                 .do((x: TaskReport) => {
                     // todo - simpler/shorter format for task reports on watchers
                     if (trigger.config.progress) {

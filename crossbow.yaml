@@ -2,11 +2,7 @@ watch:
   default:
     before:
       - 'test/fixtures/tasks/bs.js'
-    'src': ['compile']
-  ts:
-    before:
-      - compile
-    'src': ['compile']
+    '*.json': ['test/fixtures/tasks/error.js', 'test/fixtures/tasks/observable.js']
 
 tasks:
 
