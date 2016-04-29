@@ -69,13 +69,13 @@ export function reportSummary(sequence: SequenceItem[], cli: Meow, title: string
         });
         nl();
         if (config.fail) {
-            l(`{red:x} ${title} {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+            l(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
         } else {
-            l(`{yellow:x} ${title} {yellow:%sms} (${errorCount} %s)`, runtime, errorCount === 1 ? 'error' : 'errors');
+            l(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
         }
     } else {
         nl();
-        l(`{ok: } ${title} {yellow:%sms}`, runtime);
+        l(`{ok: } ${title} {yellow:${duration(runtime)}`);
     }
 }
 
@@ -90,7 +90,7 @@ function _taskReport(report: TaskReport, label: string) {
             l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
             break;
         case TaskReportType.end:
-            l(`{green:✔ [${report.item.seqUID}]} ${label} {yellow:(${report.stats.duration}ms)}`);
+            l(`{green:✔ [${report.item.seqUID}]} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
             l(`{red:x [${report.item.seqUID}]} ${label}`);
@@ -117,7 +117,7 @@ function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: str
 }
 
 export function reportWatcherTriggeredTasksCompleted(index: number, tasks: string[], time: number) {
-    l(`{green:✔} [${index}] ${tasks.join(', ')} {yellow:(${time}ms)}`);
+    l(`{green:✔} [${index}] ${tasks.join(', ')} {yellow:(${duration(time)})}`);
 }
 export function reportWatcherTriggeredTasks(index: number, tasks: string[]) {
     l(`{yellow:+} [${index}] ${tasks.join(', ')}`);
@@ -316,7 +316,7 @@ function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string 
         return err.toString();
     }
     const head = [
-        `{red:x} ${sequenceLabel} {yellow:(${stats.duration}ms)}`,
+        `{red:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
     const body = err._cbError ? [] : err.stack.split('\n').slice(1);
@@ -343,9 +343,9 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
                 } else {
                     if (stats.started) {
                         if (stats.completed) {
-                            label = `{green:✔} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                            label = `{green:✔} ` + label + ` {yellow:(${duration(stats.duration)})}`;
                         } else {
-                            label = `{yellow:x (didn't complete)} ` + label + ` {yellow:(${stats.duration}ms)}`;
+                            label = `{yellow:x (didn't complete)} ` + label + ` {yellow:(${duration(stats.duration)})}`;
                         }
                     } else {
                         label = `{yellow:x} ${label} {yellow:(didn't start)}`;
@@ -505,4 +505,8 @@ function getLabel(task) {
     }
 
     return `${task.taskName}}`;
+}
+
+function duration (ms) {
+    return String((Number(ms)/1000).toFixed(2)) + 's';
 }
