@@ -91,15 +91,9 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      */
     const timestamp = new Date().getTime();
 
-    /**
-     * If we've reached this point, we're going to handle running
-     * the tasks! This api should be exactly what we expect users
-     * to consume. We use the `config.runMode` flag to select a top-level
-     * parallel or series runner
-     */
-    runner[config.runMode]
+    runner[trigger.config.runMode]
         .call()
-        .do(trigger.tracker)
+        .do(report => trigger.tracker.onNext(report))
         /**
          * Now dicard anything that is not a start/error/begin event
          */
@@ -121,6 +115,16 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
 }
 
 export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+
+    /**
+     * If only 1 task provided, such as
+     *  $ crossbow run build-all
+     *  -> always run in parallel mode (to stop errors from affecting children
+     */
+    if (cli.input.length === 2) {
+        config.runMode = TaskRunModes.parallel;
+    }
+
     /**
      * If no task given, or if user has selected interactive mode,
      * show the UI for task selection

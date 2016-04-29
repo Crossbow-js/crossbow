@@ -16,17 +16,17 @@ module.exports = {
     },
     tasks: {
         unit: "@npm sleep 1",
-        "buildall@p": ['js', 'error', 'css'],
+        "buildall@p": ['js', 'css'],
         js: [
             'test/fixtures/tasks/simple.js'
         ],
-        css: ['test/fixtures/tasks/simple.multi.js', 'shane'],
+        'css@p': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
         bs: ["test/fixtures/tasks/bs.js"],
         shane: function () {
             console.log('hippies');
         },
-        error: function () {
-            throw new Error("some ting");
+        error: function (opts, ctx, obs) {
+            obs.onError(new Error("some ting"));
         }
     },
     config: {
