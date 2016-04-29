@@ -2,7 +2,7 @@ import {OutgoingTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {
     TaskError,
-    ModuleNotFoundError,
+    TaskNotFoundError,
     CBFlagNotProvidedError,
     SubtaskNotProvidedError,
     SubtasksNotInConfigError,
@@ -12,7 +12,7 @@ import {
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
-    ModuleNotFound = <any>"ModuleNotFound",
+    TaskNotFound = <any>"TaskNotFound",
     SubtasksNotInConfig = <any>"SubtasksNotInConfig",
     SubtaskNotProvided = <any>"SubtaskNotProvided",
     SubtaskNotFound = <any>"SubtaskNotFound",
@@ -43,7 +43,7 @@ function getModuleErrors(outgoing: OutgoingTask): TaskError[] {
      * this can be classified as a `module not found error`
      */
     if (outgoing.modules.length === 0 && outgoing.tasks.length === 0) {
-        return [<ModuleNotFoundError>{type: TaskErrorTypes.ModuleNotFound, taskName: outgoing.taskName}]
+        return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: outgoing.taskName}]
     }
 
     return [];

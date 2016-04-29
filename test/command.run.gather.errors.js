@@ -5,24 +5,24 @@ const errorTypes = require('../dist/task.errors').TaskErrorTypes;
 describe('Gathering run tasks with errors', function () {
     it('reports single missing module', function () {
     	const runner = cli.getRunner(['list']);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
     });
     it('reports multiple missing modules', function () {
     	const runner = cli.getRunner(['list', 'otheraswell']);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[0].taskName, 'list');
-        assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[1].taskName, 'otheraswell');
     });
     it('reports multiple missing modules plus missing subtask config', function () {
     	const runner = cli.getRunner(['list:someconfig', 'uglifry']);
 
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[0].errors[1].type, errorTypes.SubtasksNotInConfig);
 
         assert.equal(runner.tasks.invalid[1].errors.length, 1);
-        assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.TaskNotFound);
     });
     it('reports when subtask not given', function () {
     	const runner = cli.getRunner(['test/fixtures/tasks/simple.js:']);
@@ -53,7 +53,7 @@ describe('Gathering run tasks with errors', function () {
             config: {}
         });
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.ModuleNotFound);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[0].errors[1].type, errorTypes.FlagNotProvided);
     });
 });

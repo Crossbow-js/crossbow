@@ -435,7 +435,7 @@ function getErrors(task) {
     if (!task.errors.length) {
         return [];
     }
-    if (task.errors[0].type === taskErrors.TaskErrorTypes.ModuleNotFound) {
+    if (task.errors[0].type === taskErrors.TaskErrorTypes.TaskNotFound) {
         return [getSingleError(task.errors[0], task)];
     }
     return task.errors.map(error => getSingleError(error, task));

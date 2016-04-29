@@ -75,6 +75,6 @@ describe('Resolving watch task errors', function () {
             }
         });
         assert.equal(runner.runners.invalid[0]._tasks.invalid.length, 1);
-        assert.equal(runner.runners.invalid[0]._tasks.invalid[0].errors[0].type, errors.ModuleNotFound);
+        assert.equal(runner.runners.invalid[0]._tasks.invalid[0].errors[0].type, errors.TaskNotFound);
     });
 });

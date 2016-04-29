@@ -3,7 +3,7 @@ import {TaskErrorTypes} from "./task.errors";
 export interface TaskError {
     type: TaskErrorTypes
 }
-export interface ModuleNotFoundError extends TaskError {
+export interface TaskNotFoundError extends TaskError {
     taskName: string
 }
 export interface SubtasksNotInConfigError extends TaskError {
