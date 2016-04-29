@@ -4,7 +4,7 @@ import {TaskReport} from "./task.runner";
 import Rx = require('rx');
 
 export interface Runner {
-    series: (tracker$: Rx.Observable<any>) => Rx.Observable<TaskReport>
-    parallel: (tracker$: Rx.Observable<any>) => Rx.Observable<TaskReport>,
+    series: () => Rx.Observable<TaskReport>
+    parallel: () => Rx.Observable<TaskReport>,
     sequence: SequenceItem[]
 }

@@ -27,6 +27,15 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
 
     const {cli, input, config} = trigger;
 
+    /**
+     * task Tracker for external observers
+     * @type {Subject<T>}
+     */
+    trigger.tracker = new Rx.Subject();
+    trigger.tracker$ = trigger.tracker
+        .filter(isReport)
+        .share();
+
     debug(`Working with input [${trigger.cli.input}]`);
 
     /**
@@ -41,11 +50,6 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
      * Create runners for watch tasks;
      */
     const runners = createWatchRunners(watchTasks, trigger);
-
-    trigger.tracker = new Rx.Subject();
-    trigger.tracker$ = trigger.tracker
-        .filter(isReport)
-        .share();
 
     /**
      * Never continue if any of the BEFORE tasks were flagged as invalid
