@@ -96,7 +96,7 @@ function getArgs(task: Task, trigger: CommandTrigger): CommandArgs {
  */
 export default function (task: Task, trigger: CommandTrigger) {
 
-    return (opts, ctx, observer) => {
+    return (opts, ctx, done) => {
 
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const env = getEnv(process.env, trigger.config);
@@ -117,13 +117,13 @@ export default function (task: Task, trigger: CommandTrigger) {
         emitter.on('close', function (code) {
             // todo: Make pretty errors that originate from child processes
             if (code !== 0) {
-                const e: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
-                e._cbError = true;
-                return observer.onError(e);
+                const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+                err._cbError = true;
+                return done(err);
             }
-            observer.done();
+            done();
         }).on('error', function (err) {
-            observer.onError(err);
+            done(err);
         });
 
         return {

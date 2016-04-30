@@ -1,12 +1,12 @@
-function simple (opts, ctx, obs) {
+function simple (opts, ctx, done) {
     setTimeout(function () {
-        obs.done();
+        done();
     }, 10);
 }
 
-function simple2 (opts, ctx, obs) {
+function simple2 (opts, ctx, done) {
     setTimeout(function () {
-        obs.done();
+        done();
     }, 10);
 }
 

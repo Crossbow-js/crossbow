@@ -1,3 +1,4 @@
+import {TaskTypes} from "./task.resolve";
 const Rx = require('rx');
 
 import {Tasks} from "./task.resolve.d";
@@ -64,50 +65,25 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
-        observer.done = function () {
-            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
-            observer.onCompleted();
-        };
+        var asyncDone = require('async-done');
+        var argCount  = item.factory.length;
 
-        var output;
-
-        output = item.factory(item.config, trigger, observer);
-
-        if (output !== undefined) {
-            if (output.type) {
-                if (output.type === 'child_process') {
-                    debug('child process returned');
-                    const child = output.child;
-                    var single = new Rx.SingleAssignmentDisposable();
-                    var dis = Rx.Disposable.create(function () {
-                        if ((typeof output.child.raw.exitCode) !== 'number') {
-                            debug('tearing down a child_process because exitCode is missing');
-                            child.removeAllListeners('close');
-                            child.kill('SIGINT');
-                            child.on('close', function () {
-                                debug('close method on child encountered');
-                                single.dispose();
-                            });
-                        } else {
-                            debug('child process already completed, not disposing');
-                            single.dispose();
-                        }
-                    });
-                    single.setDisposable(dis);
-                    return single;
+        if (item.task.type === TaskTypes.InlineFunction
+        || item.task.type === TaskTypes.RunnableModule
+        || item.task.type === TaskTypes.Adaptor) {
+            /**
+             *
+             */
+            asyncDone(item.factory.bind(null, item.config, trigger), function (err) {
+                if (err) {
+                    observer.onError(err);
+                    return;
                 }
-            }
-            handleReturn(output, observer);
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+                observer.onCompleted();
+            });
         }
 
-        /**
-         * If the argument length is less than 3, it means the user
-         * has not asked for access to the observer - which means
-         * we can complete the task immediately
-         */
-        if (item.factory.length < 3) {
-            return observer.done();
-        }
 
     }).catch(error => {
         /**

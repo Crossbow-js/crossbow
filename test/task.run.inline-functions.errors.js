@@ -13,10 +13,10 @@ describe('Running tasks from inline-functions with errors', function () {
                     called += 1;
                     throw new Error('Oops!');
                 },
-                css: function (opts, ctx, obs) {
+                css: function (opts, ctx, done) {
                     setTimeout(function () {
                         called += 1;
-                        obs.done();
+                        done();
                     }, 200);
                 }
             }
@@ -25,9 +25,10 @@ describe('Running tasks from inline-functions with errors', function () {
             .parallel()
             .toArray()
             .subscribe(function (reports) {
+                console.log(reports);
                 assert.equal(reports[0].type, TaskReportType.start);
-                assert.equal(reports[1].type, TaskReportType.error);
-                assert.equal(reports[2].type, TaskReportType.start);
+                assert.equal(reports[1].type, TaskReportType.start);
+                assert.equal(reports[2].type, TaskReportType.error);
                 assert.equal(reports[3].type, TaskReportType.end);
                 done();
             });
@@ -39,9 +40,9 @@ describe('Running tasks from inline-functions with errors', function () {
                 js: function () {
                     throw new Error('Oops!');
                 },
-                css: function (opts, ctx, obs) {
+                css: function (opts, ctx, done) {
                     setTimeout(function () {
-                        obs.done();
+                        done();
                     }, 200);
                 }
             }

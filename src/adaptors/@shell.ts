@@ -6,7 +6,7 @@ const debug = require('debug')('cb:@shell');
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
-    return function (opts, ctx, observer) {
+    return function (opts, ctx, done) {
 
         const args = getArgs(task, trigger);
         const stdio = trigger.config.suppressOutput
@@ -23,13 +23,13 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
 
         emitter.on('close', function (code) {
             if (code !== 0) {
-                const e: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
-                e._cbError = true;
-                return observer.onError(e);
+                const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+                err._cbError = true;
+                return done(err);
             }
-            observer.done();
+            done();
         }).on('error', function (err) {
-            observer.onError(err);
+            done(err);
         });
     };
 };

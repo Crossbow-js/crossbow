@@ -1,6 +1,6 @@
-function simple (opts, ctx, obs) {
+function simple (opts, ctx, done) {
     setTimeout(function () {
-        obs.done();
+        done();
     }, 10);
 }
 

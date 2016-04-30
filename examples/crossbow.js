@@ -22,11 +22,18 @@ module.exports = {
         ],
         'css@p': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
         bs: ["test/fixtures/tasks/bs.js"],
-        shane: function () {
-            console.log('hippies');
+        shane: function shaneFN(options, context, cb) {
+            cb();
         },
-        error: function (opts, ctx, obs) {
-            obs.onError(new Error("some ting"));
+        error: function (opts, ctx, observer) {
+            var gulp = require('gulp');
+            var through2 = require('through2');
+            var count = 0;
+            var to;
+            return gulp.src('test/fixtures/js/*.js')
+                .pipe(through2.obj(function (file, enc, cb) {
+                    throw new Error('wa wa');
+                }));
         }
     },
     config: {

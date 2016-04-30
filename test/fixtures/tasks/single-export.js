@@ -1,4 +1,4 @@
-module.exports = function singleExport(opts, ctx, obs) {
+module.exports = function singleExport(opts, ctx, done) {
     obs.onNext('Sup bro');
-    obs.done();
+    done();
 };

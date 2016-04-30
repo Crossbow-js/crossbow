@@ -1,8 +1,8 @@
-function simple2 (_, _2, obs) {
+function simple2 (_, _2, done) {
     //obs.log.info('{blue:+} Running simple 2');
     setTimeout(function () {
         //obs.log.info('{ok: } Completed');
-        obs.done();
+        done();
     }, 50);
 }
 
