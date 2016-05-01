@@ -22,8 +22,17 @@ module.exports = {
         ],
         'css@p': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
         bs: ["test/fixtures/tasks/bs.js"],
-        shane: function shaneFN(options, context, cb) {
-            cb();
+        sync: function (options, context) {
+            const values = context.shared.getValue();
+            context.shared.onNext(values.set('ip', '0.0.0.0:3000'))
+        },
+        sync1: function (options, context) {
+            console.log(context.shared.getValue().toJS());
+        },
+        shane: function shaneFN(options, context) {
+            return function teardown () {
+                console.log('My tear down');
+            };
         },
         error: function (opts, ctx, observer) {
             var gulp = require('gulp');
@@ -32,7 +41,13 @@ module.exports = {
             var to;
             return gulp.src('test/fixtures/js/*.js')
                 .pipe(through2.obj(function (file, enc, cb) {
-                    throw new Error('wa wa');
+                    setTimeout(() => {
+                        console.log((count++))
+                        if (count === 2) {
+                            throw new Error('omg');
+                        }
+                        cb();
+                    }, 500);
                 }));
         }
     },

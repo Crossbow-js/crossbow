@@ -16,15 +16,9 @@ const types = {
     },
     nodeStream: {
         predicate (input) {
-            return typeof input.pipe === 'function';
+            return typeof input.on === 'function';
         },
         handle: handleNodeStream
-    },
-    eventEmitter: {
-        predicate (input) {
-            return typeof input.addListener === 'function';
-        },
-        handle: handleEventEmitter
     }
 };
 
@@ -34,56 +28,44 @@ interface Observer {
     onError: () => void
 }
 
-export default function handleReturnType(output, obs: Observer) {
+export default function handleReturnType(output, cb: ()=>void) {
 
     var match = Object.keys(types).filter(x => {
         return types[x].predicate.call(null, output);
     })[0];
 
     if (match && typeof types[match].handle === 'function') {
-        return types[match].handle.apply(null, [output, obs]);
+        return types[match].handle.apply(null, [output, cb]);
     }
 };
 
-function handleNodeStream(output, obs) {
+function handleNodeStream(output, done) {
     return RxNode.fromStream(output, 'end')
         .subscribe(function (val) {
-            obs.onNext(val);
         }, function (err) {
-            obs.onError(err);
+            done(err);
         }, function () {
-            obs.done();
+            done();
         });
 }
 
-function handlePromise(output, obs) {
+function handlePromise(output, done) {
     return Rx.Observable
         .fromPromise(output)
         .subscribe((val) => {
-            obs.onNext(val);
-        }, e => {
-            obs.onError(e);
+        }, err => {
+            done(err);
         }, () => {
-            obs.done();
+            done();
         });
 }
 
-function handleObs(output, obs) {
+function handleObs(output, done) {
     return output
         .subscribe(val => {
-            obs.onNext(val);
         }, e => {
-            obs.onError(e);
+            done(e);
         }, () => {
-            obs.done();
+            done();
         });
-}
-
-function handleEventEmitter(output, obs) {
-    const o = Rx.Observable
-        .fromEvent(output)
-        .subscribe();
-
-    o.onError(x => obs.onError(x));
-    o.onCompleted(x => obs.done());
 }

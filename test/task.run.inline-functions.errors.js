@@ -25,10 +25,9 @@ describe('Running tasks from inline-functions with errors', function () {
             .parallel()
             .toArray()
             .subscribe(function (reports) {
-                console.log(reports);
                 assert.equal(reports[0].type, TaskReportType.start);
-                assert.equal(reports[1].type, TaskReportType.start);
-                assert.equal(reports[2].type, TaskReportType.error);
+                assert.equal(reports[1].type, TaskReportType.error);
+                assert.equal(reports[2].type, TaskReportType.start);
                 assert.equal(reports[3].type, TaskReportType.end);
                 done();
             });

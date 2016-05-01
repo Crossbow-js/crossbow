@@ -26,9 +26,4 @@ tasks:
   sleep1: '@npm sleep 1'
   sleep2: '@npm sleep 1'
 
-  timeout: '@npm node test/fixtures/tasks/timeout.js'
-  timeout-error@p:
-    - '@npm node test/fixtures/tasks/timeout-error.js'
-    - '@npm node test/fixtures/tasks/simple.js'
-
   slow-stream: 'test/fixtures/tasks/slow-stream.js'
