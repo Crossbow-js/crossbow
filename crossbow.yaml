@@ -23,12 +23,16 @@ tasks:
   lint:   '@npm eslint lib'
   unit:   '@npm mocha test'
 
-  sleep1: '@npm sleep 1'
-  sleep2: '@npm sleep 1'
+  sleep@p:
+    - sleep1
+    - sleep2
+    - sleep3
+    - sleep4
+    - slow-stream
 
-  timeout: '@npm node test/fixtures/tasks/timeout.js'
-  timeout-error@p:
-    - '@npm node test/fixtures/tasks/timeout-error.js'
-    - '@npm node test/fixtures/tasks/simple.js'
+  sleep1: ['@npm sleep', '@npm sleep 3']
+  sleep2: '@npm sleep 1'
+  sleep3: '@npm sleep 1'
+  sleep4: '@npm sleep 1'
 
   slow-stream: 'test/fixtures/tasks/slow-stream.js'

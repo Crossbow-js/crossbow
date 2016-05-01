@@ -5,11 +5,12 @@ import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {CommandTrigger} from './command.run';
-import logger from './logger';
-import handleReturn from './task.return.values';
+import handleReturnType from "./task.return.values";
 
 const debug = require('debug')('cb:task.runner');
 const assign = require('object-assign');
+const once = require('once');
+const domain = require('domain');
 
 export interface TaskRunner {
     tasks: Tasks
@@ -65,16 +66,15 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
-        var asyncDone = require('async-done');
         var argCount  = item.factory.length;
 
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type === TaskTypes.RunnableModule
         || item.task.type === TaskTypes.Adaptor) {
-            /**
-             *
-             */
-            asyncDone(item.factory.bind(null, item.config, trigger), function (err) {
+
+
+            const argCount = item.factory.length;
+            const cb = once(function (err) {
                 if (err) {
                     observer.onError(err);
                     return;
@@ -82,6 +82,55 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
                 observer.onCompleted();
             });
+
+            function onError(err) {
+                cb(err);
+            }
+
+            var d = domain.create();
+            d.once('error', onError);
+            var domainBoundFn = d.bind(item.factory.bind(null, item.config, trigger));
+
+            function done(err?: Error) {
+                d.removeListener('error', onError);
+                d.exit();
+                return cb.apply(null, arguments);
+            }
+            
+            var result  = domainBoundFn(done);
+
+            if (result) {
+
+                var returns = handleReturnType(result, done);
+
+                /**
+                 * If the return value does not need to be consumed,
+                 * but it is IS a function, assume it's the tear-down logic
+                 * for this task - which also means it MUST signify completion
+                 * via the callback
+                 */
+                if (!returns && typeof result === 'function') {
+                    if (argCount >= 3) {
+                        return result;
+                    } else {
+                        // todo example of needing to beautify error stack
+                        done(new Error('You returned tear-down logic, but you never asked for the completion callback'));
+                        return;
+                    }
+                } else {
+                    console.log('omg here');
+                }
+            } else {
+
+                /**
+                 * Assume sync function if nothing returned
+                 * and 3rd argument was not asked for
+                 */
+                if (argCount < 3) {
+                    done();
+                    return;
+                }
+            }
         }
 
 

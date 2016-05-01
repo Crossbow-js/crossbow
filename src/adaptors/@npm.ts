@@ -90,6 +90,20 @@ function getArgs(task: Task, trigger: CommandTrigger): CommandArgs {
     };
 }
 
+export function teardown (emitter) {
+    if ((typeof emitter.raw.exitCode) !== 'number') {
+        debug('tearing down a child_process because exitCode is missing');
+        emitter.removeAllListeners('close');
+        emitter.kill('SIGINT');
+        emitter.on('close', function () {
+            debug('close method on child encountered');
+            // todo - async teardown for sequential
+        });
+    } else {
+        debug('child process already completed, not disposing');
+    }
+}
+
 /**
  * The main export is the function this will be run in the sequence
  * @returns {Function}
@@ -126,9 +140,8 @@ export default function (task: Task, trigger: CommandTrigger) {
             done(err);
         });
 
-        return {
-            type: 'child_process',
-            child: emitter
+        return function tearDownNpmAdaptor () {
+            teardown(emitter);
         };
     };
 };
