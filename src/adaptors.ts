@@ -18,14 +18,14 @@ const adaptors = {
         validate: () => true,
         create: shellAdaptor
     },
+    'sh': {
+        validate: () => true,
+        create: shellAdaptor
+    },
     'npm': {
         validate: () => true,
         create: npmAdaptor
-    },
-    //'bgShell': {
-    //    validate: () => true,
-    //    create: bgShellAdaptor
-    //}
+    }
 };
 
 export = adaptors;
