@@ -29,8 +29,13 @@ module.exports = {
         sync1: function (options, context) {
             console.log(context.shared.getValue().toJS());
         },
-        shane: function shaneFN(options, context) {
+        shane: function shaneFN(options, context, done) {
+            const out = setTimeout(function () {
+                console.log('hello');
+            }, 2000);
+            done();
             return function teardown () {
+                clearTimeout(out);
                 console.log('My tear down');
             };
         },

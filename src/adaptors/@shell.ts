@@ -1,5 +1,5 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand} from './@npm';
+import {getArgs, runCommand, teardown} from './@npm';
 import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
 const debug = require('debug')('cb:@shell');
@@ -31,5 +31,9 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
         }).on('error', function (err) {
             done(err);
         });
+
+        return function tearDownShellAdaptor () {
+            teardown(emitter);
+        };
     };
 };

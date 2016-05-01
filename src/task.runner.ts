@@ -91,7 +91,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             d.once('error', onError);
             var domainBoundFn = d.bind(item.factory.bind(null, item.config, trigger));
 
-            function done() {
+            function done(err?: Error) {
                 d.removeListener('error', onError);
                 d.exit();
                 return cb.apply(null, arguments);
@@ -106,11 +106,19 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 /**
                  * If the return value does not need to be consumed,
                  * but it is IS a function, assume it's the tear-down logic
-                 * for this task.
+                 * for this task - which also means it MUST signify completion
+                 * via the callback
                  */
                 if (!returns && typeof result === 'function') {
-                    done();
-                    return result;
+                    if (argCount >= 3) {
+                        return result;
+                    } else {
+                        // todo example of needing to beautify error stack
+                        done(new Error('You returned tear-down logic, but you never asked for the completion callback'));
+                        return;
+                    }
+                } else {
+                    console.log('omg here');
                 }
             } else {
 
