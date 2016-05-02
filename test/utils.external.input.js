@@ -10,7 +10,7 @@ describe('Retrieving external input', function () {
 
         assert.ok(files.valid[0].input.tasks);
     });
-    it('can use a examples/crossbow.yaml file when config flag given', function () {
+    it('can use a examples/crossbow.yaml file when options flag given', function () {
         const files = utils.readFiles(['examples/crossbow.yaml'], process.cwd());
         assert.ok(files.valid[0].input.tasks.css);
     });

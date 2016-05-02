@@ -83,7 +83,7 @@ function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskErr
      *          dev: 'input.scss'
      */
     return outgoing.subTasks.reduce((all, subTaskName) => {
-        const configKeys = Object.keys(objPath.get(input, ['config'].concat(outgoing.baseTaskName), {}));
+        const configKeys = Object.keys(objPath.get(input, ['options'].concat(outgoing.baseTaskName), {}));
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -121,7 +121,7 @@ function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskErr
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = objPath.get(input, ['config'].concat(outgoing.baseTaskName, subTaskName));
+        const match = objPath.get(input, ['options'].concat(outgoing.baseTaskName, subTaskName));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,

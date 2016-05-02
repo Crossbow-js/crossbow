@@ -63,9 +63,9 @@ describe('task.resolve (inline-functions)', function () {
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 2);
     });
-    it('sends correct options from config', function () {
+    it('sends correct options from options', function () {
         const runner = cli.getRunner(['js:dev:kittie --production', 'test/fixtures/tasks/promise.js --name="shane"'], {
-            config: {
+            options: {
                 js: {
                     dev: {
                         name: "kittie"
@@ -82,8 +82,8 @@ describe('task.resolve (inline-functions)', function () {
             }
         });
         assert.equal(runner.sequence.length, 5);
-        assert.equal(runner.sequence[0].config.name, 'kittie');
-        assert.equal(runner.sequence[1].config.name, 'shane');
-        assert.equal(runner.sequence[2].config.name, 'shane');
+        assert.equal(runner.sequence[0].options.name, 'kittie');
+        assert.equal(runner.sequence[1].options.name, 'shane');
+        assert.equal(runner.sequence[2].options.name, 'shane');
     });
 });

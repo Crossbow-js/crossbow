@@ -64,7 +64,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * so we first check if it's an adaptor @ task first
              */
             if (task.type === TaskTypes.Adaptor) {
-                return all.concat(getSequenceItemWithConfig(
+                return all.concat(getSequenceItemWithOptions(
                     task,
                     trigger,
                     adaptors[task.adaptor].create(task, trigger),
@@ -76,16 +76,16 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * Finally, if the does not have children tasks & is not an
              * adaptor task it must have at least 1 associated module
              * (or an inline function) so we can begin working with it
-             * by first resolving the top-level configuration object for it.
+             * by first resolving the top-level options object for it.
              */
-            const localConfig = loadTopLevelConfig(task, trigger);
+            const localOptions = loadTopLevelOptions(task, trigger);
             const callable = (function () {
                 if (task.type === TaskTypes.InlineFunction) {
                     return task.inlineFunctions[0];
                 }
                 return require(task.modules[0]);
             })();
-            return all.concat(resolveFromFunction(task, callable, trigger, localConfig));
+            return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
         }, initial);
     }
 }
@@ -94,38 +94,38 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
  * If the current TaskType is an InlineFunction or
  * module to be run,
  */
-function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localConfig:{}): SequenceItem[] {
+function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:{}): SequenceItem[] {
 
     /**
      * If the current item has no sub-tasks, we can return early
-     * with a simple task creation using the global config
+     * with a simple task creation using the global options
      *
      * eg:
      *      $ crossbow run sass
      *
-     * config:
+     * options:
      *      sass:
      *        input:  "core.scss"
      *        output: "core.css"
      *
-     * -> `sass` task will be run with the configuration
+     * -> `sass` task will be run with the options
      *    {input: "core.scss", output: "core.css"}
      */
     if (!task.subTasks.length) {
-        return getSequenceItemWithConfig(task, trigger, callable, localConfig);
+        return getSequenceItemWithOptions(task, trigger, callable, localOptions);
     }
 
     /**
      * Now we know for sure that this task has `subTasks`
      * so if the first entry in the subTasks array is a `*` - then
-     * the user wants to run all tasks under this configuration
+     * the user wants to run all tasks under this options
      * object. So we need to get the keys and use each one as a lookup
-     * on the local configuration.
+     * on the local options.
      *
      * eg:
      *      $ crossbow run sass:*
      *
-     * config:
+     * options:
      *   sass:
      *     site:  {input: "core.scss"}
      *     debug: {input: "debug.scss"}
@@ -134,7 +134,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
      */
     const lookupKeys = (function () {
         if (task.subTasks[0] === '*') {
-            return Object.keys(localConfig);
+            return Object.keys(localOptions);
         }
         return task.subTasks;
     })();
@@ -142,16 +142,16 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     /**
      * Now generate 1 task per lookup key.
      */
-    return lookupKeys.reduce((acc, configKey) => {
+    return lookupKeys.reduce((acc, optionKey) => {
         /**
-         * `configKey` here will be a string that represented the subTask
+         * `optionKey` here will be a string that represented the subTask
          * name, so we use that to try and find a child key
-         * in the config that matched it.
+         * in the options that matched it.
          * */
-        const currentConfigObject = objPath.get(localConfig, configKey);
-        const sequenceItems = getSequenceItemWithConfig(task, trigger, callable, currentConfigObject)
+        const currentOptionObject = objPath.get(localOptions, optionKey);
+        const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
                 .map(seqItem => {
-                    seqItem.subTaskName = configKey;
+                    seqItem.subTaskName = optionKey;
                     return seqItem;
                 });
 
@@ -159,17 +159,18 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     }, []);
 }
 
-function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported: TaskFactory, config): SequenceItem[] {
+function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options): SequenceItem[] {
 
     /**
-     * Merge incoming config with query + flags
+     * Merge incoming options with query + flags
      * eg:
      *     $  sass?input=css/core.css --production
      *     -> sass
      *          input: css/core.css
      *          production: true
      */
-    const mergedConfigWithQuery = merge({}, config, task.query, task.flags);
+
+    const mergedOptionsWithQuery = merge({}, options, task.query, task.flags);
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -183,7 +184,7 @@ function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported
                 fnName: getFunctionName(imported, i + 1),
                 factory: importedFn,
                 task: task,
-                config: mergedConfigWithQuery
+                options: mergedOptionsWithQuery
             })
         });
     }
@@ -199,7 +200,7 @@ function getSequenceItemWithConfig(task: Task, trigger: CommandTrigger, imported
             fnName: getFunctionName(imported, 0),
             factory: imported,
             task: task,
-            config: mergedConfigWithQuery,
+            options: mergedOptionsWithQuery,
         })]
     }
 }
@@ -338,10 +339,10 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 }
 
 /**
- * From user input, try to locate a configuration object
+ * From user input, try to locate a options object
  */
-function loadTopLevelConfig(task: Task, trigger: CommandTrigger): {} {
-    return objPath.get(trigger.input.config, [task.taskName], {});
+function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
+    return objPath.get(trigger.input.options, [task.taskName], {});
 }
 
 /**

@@ -26,7 +26,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
-            config: {
+            options: {
                 'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}
@@ -36,10 +36,10 @@ describe('Gathering run tasks, grouped by runMode', function () {
 
         assert.equal(runner.sequence[0].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 4);
-        assert.equal(runner.sequence[0].items[0].config.name, 'shane');
-        assert.equal(runner.sequence[0].items[1].config.name, 'shane');
-        assert.equal(runner.sequence[0].items[2].config.name, 'kittie');
-        assert.equal(runner.sequence[0].items[3].config.name, 'kittie');
+        assert.equal(runner.sequence[0].items[0].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[1].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[2].options.name, 'kittie');
+        assert.equal(runner.sequence[0].items[3].options.name, 'kittie');
     });
     it('can gather groups in parallel', function () {
         this.timeout(10000);
@@ -49,7 +49,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
-            config: {
+            options: {
                 'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}
@@ -73,7 +73,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
-            config: {
+            options: {
                 'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}
@@ -96,7 +96,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
-            config: {
+            options: {
                 'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}
@@ -130,7 +130,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
                 'css':       'test/fixtures/tasks/simple.js:first:second'
             },
-            config: {
+            options: {
                 'test/fixtures/tasks/simple.multi.js': {
                     first: {name: 'shane'},
                     second: {name: 'kittie'}

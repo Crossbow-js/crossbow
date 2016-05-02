@@ -89,7 +89,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
             var d = domain.create();
             d.once('error', onError);
-            var domainBoundFn = d.bind(item.factory.bind(null, item.config, trigger));
+            var domainBoundFn = d.bind(item.factory.bind(null, item.options, trigger));
 
             function done(err?: Error) {
                 d.removeListener('error', onError);

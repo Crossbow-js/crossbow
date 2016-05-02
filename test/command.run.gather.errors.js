@@ -14,7 +14,7 @@ describe('Gathering run tasks with errors', function () {
         assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[1].taskName, 'otheraswell');
     });
-    it('reports multiple missing modules plus missing subtask config', function () {
+    it('reports multiple missing modules plus missing subtask options', function () {
     	const runner = cli.getRunner(['list:someconfig', 'uglifry']);
 
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
@@ -30,27 +30,27 @@ describe('Gathering run tasks with errors', function () {
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskNotProvided);
     });
     it('reports when subtask not found', function () {
-    	const runner = cli.getRunner(['test/fixtures/tasks/simple.js:dev'], {config: {
+    	const runner = cli.getRunner(['test/fixtures/tasks/simple.js:dev'], {options: {
             'test/fixtures/tasks/simple.js': {shane:'here'}
         }});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskNotFound);
     });
-    it('reports when subtask as * given, but not config exists', function () {
-    	const runner = cli.getRunner(['test/fixtures/tasks/simple.js:*'], {config: {}});
+    it('reports when subtask as * given, but not options exists', function () {
+    	const runner = cli.getRunner(['test/fixtures/tasks/simple.js:*'], {options: {}});
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.SubtaskWildcardNotAvailable);
     });
     it('reports when @flag is present, but no flag given ', function () {
     	const runner = cli.getRunner(['test/fixtures/tasks/simple.js@'],{
-            config: {}
+            options: {}
         });
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.FlagNotProvided);
     });
     it('reports when @flag is present, but no flag given + module error ', function () {
         const runner = cli.getRunner(['test/fixtures/tasks/NOTEXIST.js@'],{
-            config: {}
+            options: {}
         });
         assert.equal(runner.tasks.invalid[0].errors.length, 2);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);

@@ -15,7 +15,7 @@ module.exports = {
             }
         }
     },
-    config: {
+    options: {
         sass: {
             input:  'test/fixtures/scss/main.scss',
             output: 'test/fixtures/css/main.min.css',

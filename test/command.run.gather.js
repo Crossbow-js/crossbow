@@ -36,7 +36,7 @@ describe('Gathering run tasks (1)', function () {
                 handoff: true
             }
         }, {
-            config: {
+            options: {
                 "test/fixtures/tasks/simple.js": {
                     dev: {
                         input: "scss/scss/core.scss",
@@ -58,7 +58,7 @@ describe('Gathering run tasks (1)', function () {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
-            config: {
+            options: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
                         input: "scss/core.scss",

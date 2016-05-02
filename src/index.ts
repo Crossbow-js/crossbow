@@ -23,7 +23,7 @@ export interface Meow {
 export interface CrossbowInput {
     tasks: any
     watch: any
-    config: any
+    options: any
     gruntfile?: string
     mergedTasks: any
 }
@@ -32,13 +32,10 @@ function generateMeowInput(incoming: Meow|any): Meow {
     return assign({input: [], flags: {}}, incoming || {});
 }
 /**
- * `Input` is the object that is looked at to resolve tasks/config and
+ * `Input` is the object that is looked at to resolve tasks/options and
  * watchers
- * @param incoming
- * @param config
- * @returns {any}
  */
-function generateInput(incoming: CrossbowInput|any, config: CrossbowConfiguration): CrossbowInput {
+function generateInput(incoming: CrossbowInput|any): CrossbowInput {
 
     return _merge({
         tasks: {},
@@ -46,7 +43,7 @@ function generateInput(incoming: CrossbowInput|any, config: CrossbowConfiguratio
             before: [],
             options: {}
         },
-        config: {}
+        options: {}
     }, incoming || {});
 }
 
@@ -94,7 +91,7 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
             }
             if (userConfig.valid.length) {
                 debug(`Using external input from ${userConfig.valid[0].resolved}`);
-                return processInput(cli, generateInput(userConfig.valid[0].input, mergedConfig), mergedConfig);
+                return processInput(cli, generateInput(userConfig.valid[0].input), mergedConfig);
             }
         } else {
             if (input === undefined) {
@@ -102,12 +99,12 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
             }
             const defaultInputFiles = retrieveDefaultInputFiles(mergedConfig);
             if (defaultInputFiles.valid.length) {
-                return processInput(cli, generateInput(defaultInputFiles.valid[0].input, mergedConfig), mergedConfig);
+                return processInput(cli, generateInput(defaultInputFiles.valid[0].input), mergedConfig);
             }
         }
     }
 
-    return processInput(cli, generateInput(input, mergedConfig), mergedConfig);
+    return processInput(cli, generateInput(input), mergedConfig);
 }
 
 /**

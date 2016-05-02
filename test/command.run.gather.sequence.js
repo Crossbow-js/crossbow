@@ -33,7 +33,7 @@ describe('Gathering run tasks', function () {
     });
     it('can gather opts for sub tasks', function () {
         const runner = cli.getRunner(["test/fixtures/tasks/simple.js:dev"], {
-            config: {
+            options: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
                         input: "scss/core.scss",
@@ -54,7 +54,7 @@ describe('Gathering run tasks', function () {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
-            config: {
+            options: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
                         input: "scss/core.scss",
@@ -68,20 +68,20 @@ describe('Gathering run tasks', function () {
             }
         });
 
-        assert.equal(runner.sequence[0].items[0].config.input, 'scss/main.scss');
-        assert.equal(runner.sequence[0].items[0].config.output, 'css/main.min.css');
+        assert.equal(runner.sequence[0].items[0].options.input, 'scss/main.scss');
+        assert.equal(runner.sequence[0].items[0].options.output, 'css/main.min.css');
 
-        assert.equal(runner.sequence[0].items[1].config.input, 'scss/core.scss');
-        assert.equal(runner.sequence[0].items[1].config.output, 'css/core.css');
+        assert.equal(runner.sequence[0].items[1].options.input, 'scss/core.scss');
+        assert.equal(runner.sequence[0].items[1].options.output, 'css/core.css');
     });
-    it('can gather tasks wth query-config', function () {
+    it('can gather tasks wth query-options', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js?input=app.js']
             },
-            config: {}
+            options: {}
         });
 
-        assert.equal(runner.sequence[0].items[0].config.input, 'app.js');
+        assert.equal(runner.sequence[0].items[0].options.input, 'app.js');
     });
 });

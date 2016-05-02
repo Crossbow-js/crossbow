@@ -56,7 +56,7 @@ module.exports = {
                 }));
         }
     },
-    config: {
+    options: {
         css: {
             name: "kittie"
         },

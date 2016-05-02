@@ -17,7 +17,7 @@ export interface SequenceItem {
     items: SequenceItem[]
     factory?: (opts: any, ctx: CommandTrigger, observer: Rx.Observer<any>) => any
     fnName?: string
-    config?: any
+    options?: any
     subTaskName?: string
     stats?: TaskStats
     seqUID: number
@@ -35,7 +35,7 @@ export interface SequenceTask {
     fnName: string,
     factory: TaskFactory,
     task: Task,
-    config: any
+    options: any
 }
 
 export interface TaskFactory {

@@ -18,7 +18,7 @@ export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger
 
     /**
      * Next take any items that were split and
-     * generate a fake watch config object
+     * generate a fake watch options object
      * @type
      */
     const fakeWatchConfig = unwrapped.reduce((acc, item) => {
@@ -34,7 +34,7 @@ export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger
     }, {});
 
     /**
-     * Now merge the fake watch config with original
+     * Now merge the fake watch options with original
      * @type {CommandTrigger}
      */
     const moddedCtx = <CommandTrigger>merge({}, trigger, {

@@ -29,7 +29,7 @@ tasks:
     build-css:  ['crossbow-sass']
     build-js:   ['@npm webpack', '@shell uglify-js src/dist/app.js']
 
-config:
+options:
     $:
         root: test/fixtures
 

@@ -62,10 +62,10 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
-    it('passes options from config', function (done) {
+    it('passes options from options', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:dev:kittie --production'], {
-            config: {
+            options: {
                 js: {
                     dev: {
                         input: "src/app.js"
@@ -93,10 +93,10 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
-    it('Allows errors when config not defined config ', function () {
+    it('Allows errors when options not defined options ', function () {
         const opts = [];
         const runner = cli.getRunner(['js:dev:typo --production'], {
-            config: {
+            options: {
                 js: {
                     dev: {
                         input: "src/app.js"

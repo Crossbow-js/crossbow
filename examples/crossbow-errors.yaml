@@ -28,7 +28,7 @@ tasks:
     build-css:  ['sass', 'cssmin', 'cachebreaker:css']
     build-js:   ['@npm webpack', '@shell uglify-js src/dist/app.js', 'cachebreaker:js']
 
-config:
+options:
     $:
         root: test/fixtures
 
