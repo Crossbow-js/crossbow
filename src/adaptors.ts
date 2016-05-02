@@ -1,5 +1,6 @@
 const gruntAdaptor = require('./adaptors/@grunt');
 const shellAdaptor = require('./adaptors/@shell');
+const bgAdaptor    = require('./adaptors/@bg');
 import npmAdaptor from './adaptors/@npm';
 
 const adaptors = {
@@ -21,6 +22,14 @@ const adaptors = {
     'sh': {
         validate: () => true,
         create: shellAdaptor
+    },
+    'bg': {
+        validate: () => true,
+        create: bgAdaptor
+    },
+    'bgnpm': {
+        validate: () => true,
+        create: bgAdaptor
     },
     'npm': {
         validate: () => true,

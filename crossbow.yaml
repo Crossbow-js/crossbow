@@ -1,10 +1,19 @@
 watch:
+  js:
+    before: 'watchify'
+    watchers:
+      - patterns: 'test/fixtures/scss'
+        tasks: ['@sh echo "sass file edited"']
+
   default:
     before:
       - 'test/fixtures/tasks/bs.js'
     '*.json': ['test/fixtures/tasks/error.js', 'test/fixtures/tasks/observable.js']
 
 tasks:
+
+  watchify: >
+    @bg watchify test/fixtures/js/app.js -o test/fixtures/js/app.watchify.js -v -d
 
   test:
     - compile

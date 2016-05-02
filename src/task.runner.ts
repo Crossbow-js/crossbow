@@ -113,7 +113,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     if (argCount >= 3) {
                         return result;
                     } else {
-                        // todo example of needing to beautify error stack
                         done(new Error('You returned tear-down logic, but you never asked for the completion callback'));
                         return;
                     }
