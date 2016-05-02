@@ -1,0 +1,166 @@
+watch:
+  default:
+    src:
+      - "@sh echo triggering build"
+      - build_test
+      - "@sh build completed"
+
+tasks:
+
+  ## Builds ##
+  build_all:
+    - build_es6 build_global
+    - build_amd
+    - build_cjs
+    - build_global
+    - generate_packages
+
+
+  build_amd:
+    - clean_dist_amd
+    - copy_src_amd
+    - compile_dist_amd
+
+
+  build_cjs:
+    - clean_dist_cjs
+    - copy_src_cjs
+    - compile_dist_cjs
+
+
+  build_docs:
+    - build_es6_for_docs
+    - build_global build_spec
+    - tests2png
+    - decision_tree_widget
+    - '@npm esdoc -c esdoc.json'
+
+
+  build_es6:
+    - copy_src_es6
+    - compile_dist_es6
+
+
+  build_es6_for_docs:
+    - copy_src_es6
+    - compile_dist_es6_for_docs
+
+
+  # Minify Global core build using closure compiler
+  build_closure_core: >
+    @sh java -jar ./node_modules/google-closure-compiler/compiler.jar
+    --js ./dist/global/Rx.umd.js --language_in ECMASCRIPT5 --create_source_map
+    ./dist/global/Rx.umd.min.js.map --js_output_file ./dist/global/Rx.umd.min.js
+
+
+  # Build Global package, then minify build
+  build_global:
+    - '@sh rm -rf ./dist/global && mkdirp ./dist/global && node tools/make-umd-bundle.js'
+    - '@sh node tools/make-system-bundle.js'
+    - build_closure_core
+
+
+  # Build CJS & Global build, run macro performance test
+  build_perf:
+    - webdriver-update
+    - build_cjs
+    - build_global
+    - perf
+
+
+  # Build CJS package & test spec, execute mocha test runner
+  build_test:
+    - clean
+    - lint
+    - build_cjs
+    - clean_spec
+    - build_spec
+    - test_mocha
+
+
+  # Run lint to current code, build CJS & test spec, execute test coverage
+  build_cover:
+    - clean
+    - lint
+    - build_cjs
+    - build_spec
+    - cover
+
+
+  # Build test specs
+  build_spec:                  "@npm tsc --project ./spec --pretty"
+  build_spec_browser:          "@npm webpack --config spec/support/webpack.mocha.config.js"
+
+  # Check codebase has circular dependencies
+  check_circular_dependencies: "@sh madge ./dist/cjs --circular"
+
+  ## Cleanups ##
+  clean:            "@npm rm -rf ./dist/"
+  clean_spec:       "@npm rm -rf spec-js"
+  clean_dist_amd:   "@npm rm -rf ./dist/amd"
+  clean_dist_cjs:   "@npm rm -rf ./dist/cjs"
+  clean_dist_es6:   "@npm rm -rf ./dist/es6"
+
+  # Copy files into dist directories
+  copy_src_amd:     "@npm mkdirp ./dist/amd/src && cp -r ./src/* ./dist/amd/src"
+  copy_src_cjs:     "@npm mkdirp ./dist/cjs/src && cp -r ./src/* ./dist/cjs/src"
+  copy_src_es6:     "@npm mkdirp ./dist/es6/src && cp -r ./src/* ./dist/es6/src"
+
+  # Run git commit wizard
+  commit:           "@npm git-cz"
+  compile_dist_amd: "@npm tsc typings/main/ambient/es6-shim/index.d.ts ./dist/amd/src/Rx.ts ./dist/amd/src/add/observable/of.ts                             -m amd      --sourceMap --outDir ./dist/amd --target ES5    --diagnostics --pretty --noImplicitAny --suppressImplicitAnyIndexErrors --moduleResolution node"
+  compile_dist_cjs: "@npm tsc typings/main/ambient/es6-shim/index.d.ts ./dist/cjs/src/Rx.ts ./dist/cjs/src/add/observable/of.ts                             -m commonjs --sourceMap --outDir ./dist/cjs --target ES5 -d --diagnostics --pretty --noImplicitAny --suppressImplicitAnyIndexErrors --moduleResolution node"
+  compile_dist_es6: "@npm tsc                                          ./dist/es6/src/Rx.ts ./dist/es6/src/add/observable/of.ts                             -m es2015   --sourceMap --outDir ./dist/es6 --target ES6 -d --diagnostics --pretty --noImplicitAny --suppressImplicitAnyIndexErrors --moduleResolution node"
+  compile_dist_es6_for_docs: "@npm tsc                                 ./dist/es6/src/Rx.ts ./dist/es6/src/add/observable/of.ts ./dist/es6/src/MiscJSDoc.ts -m es2015   --sourceMap --outDir ./dist/es6 --target ES6 -d --diagnostics --pretty --noImplicitAny --suppressImplicitAnyIndexErrors --moduleResolution node"
+
+  ## Coverage ###
+  cover:
+    - cover_test
+    - cover_remapping
+  cover_test:
+    - clean_dist_cjs
+    - "@npm tsc typings/main/ambient/es6-shim/index.d.ts src/Rx.ts src/add/observable/of.ts -m commonjs --outDir dist/cjs --sourceMap --target ES5 -d && istanbul cover -x \"spec-js/**/*\" -x \"mocha-setup-node.js\" ./node_modules/mocha/bin/_mocha -- --opts spec/support/default.opts spec-js"
+  cover_remapping: "@npm remap-istanbul -i coverage/coverage.json -o coverage/coverage-remapped.json && remap-istanbul -i coverage/coverage.json -o coverage/coverage-remapped.lcov -t lcovonly && remap-istanbul -i coverage/coverage.json -o coverage/coverage-remapped -t html"
+  decision_tree_widget: "@sh cd doc/decision-tree-widget && npm run build && cd ../.."
+  generate_packages: "@sh node .make-packages.js"
+
+  ## Linting ###
+  lint:
+    - lint_src
+    - lint_spec
+    - lint_perf
+  lint_perf: "@npm eslint perf/"
+  lint_spec: "@npm tslint -c tslint.json spec/*.ts spec/**/*.ts spec/**/**/*.ts"
+  lint_src:  "@npm tslint -c tslint.json src/*.ts src/**/*.ts src/**/**/*.ts"
+
+  ## Perf ##
+  perf:       "@npm protractor protractor.conf.js"
+  perf_micro: "@sh node ./perf/micro/index.js"
+
+  ## Publish ##
+  prepublish:
+    - "@npm rm -rf ./typings"
+    - "@npm typings install"
+    - build_all
+
+  publish_docs: "@npm ./publish_docs.sh"
+  test_mocha:   "@npm mocha --opts spec/support/default.opts spec-js"
+
+  test_browser:
+    - build_spec_browser
+    - "@npm opn spec/support/mocha-browser-runner.html"
+
+  test:
+    - clean_spec
+    - build_spec
+    - test_mocha
+    - clean_spec
+
+  tests2png:
+    - build_spec
+    - "@sh mkdirp tmp/docs/img"
+    - "@sh mkdirp spec-js/support"
+    - "@sh cp spec/support/*.opts spec-js/support/"
+    - "@npm mocha --opts spec/support/tests2png.opts spec-js"
+
+  webdriver-update: '@npm webdriver-manager update'

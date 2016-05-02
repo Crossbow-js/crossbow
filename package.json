@@ -36,6 +36,7 @@
     "read-pkg-up": "1.0.1",
     "rx": "4.1.0",
     "rx-node": "1.0.2",
+    "stack-utils": "0.4.0",
     "traverse": "0.6.6",
     "vinyl-fs": "2.4.3",
     "yargs-parser": "2.4.0"

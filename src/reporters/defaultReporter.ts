@@ -319,10 +319,19 @@ function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string 
         `{red:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
-    const body = err._cbError ? [] : err.stack.split('\n').slice(1);
+    const body = err._cbError ? [] : err.stack.split('\n').slice(1).join('\n');
+
     const tail = [`- Please see above for any output that occurred`];
 
-    return [...head, ...body, ...tail].join('\n');
+    return [...head, getStack(body), ...tail].join('\n');
+}
+
+export function getStack (stack) {
+    var StackUtils = require('stack-utils');
+    var crossbowInternals = /\/crossbow-cli\/dist*/;
+    var crossbowDeps = /\/node_modules\/(?:rx|immutable)\//;
+    var stackUtils = new StackUtils({internals: [crossbowInternals, crossbowDeps, ...StackUtils.nodeInternals()]});
+    return stackUtils.clean(stack);
 }
 
 export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
@@ -387,21 +396,33 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     if (item.items.length === 1) {
         return compile(`{bold:${item.taskName}}`);
     } else {
-        return compile(`{bold:${item.taskName}} {yellow:${SequenceItemTypes[item.type]}}`);
+        return compile(`{bold:${item.taskName}} {yellow:${item.type}}`);
     }
 }
 
 export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
 
-    const toLog = getTasks(tasks, []);
-    const archy = require('archy');
+    let errorCount = 0;
+    const toLog    = getTasks(tasks, []);
+    const archy    = require('archy');
     const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
     logger.info(o.slice(26, -1));
 
+    nl();
+    if (errorCount) {
+        l(`{red:x} ${errorCount} %s found (see above)`, errorCount === 1 ? 'error' : 'errors');
+    } else {
+        l(`{ok: } 0 errors found`);
+    }
+
     function getTasks(tasks, initial) {
         return tasks.reduce((acc, task) => {
-            let label = [getLabel(task), ...getErrors(task)].join('\n');
+            const errors = getErrors(task);
+            if (errors.length) {
+                errorCount += errors.length;
+            }
+            let label = [getLabel(task), ...errors].join('\n');
             let nodes = getTasks(task.tasks, []);
 
             if (config.summary === 'verbose') {
