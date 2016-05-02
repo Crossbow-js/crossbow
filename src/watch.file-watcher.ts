@@ -5,6 +5,7 @@ import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
 import {isReport} from './task.utils';
+import {SequenceItem} from "./task.sequence.factories";
 
 const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
@@ -17,10 +18,18 @@ export interface WatchEvent {
     duration?: number
 }
 
+export interface WatchEventCompletion {
+    sequence: SequenceItem[]
+    watchEvent: WatchEvent
+}
+
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<TaskReport> {
+export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchEventCompletion> {
+
+    let paused = [];
+
     return Rx.Observable
         /**
          * Take each <Watcher> and create an observable stream for it,
@@ -31,10 +40,23 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
          */
+        .filter((x: WatchEvent) => {
+            if (x.runner.options.block && paused.indexOf(x.watcherUID) > -1) {
+                debug('File change blocked');
+                return false;
+            }
+            return true;
+        })
+        .do(x => {
+            if (x.runner.options.block) {
+                paused.push(x.watcherUID);
+            }
+        })
         .flatMap((watchEvent: WatchEvent, i) => {
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner
+                // todo support parallel running here
                 .series()
                 .filter(isReport)
                 .do(function (val) {
@@ -60,9 +82,12 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                     } else {
                         reporter.reportWatcherTriggeredTasksCompleted(i, watchEvent.runner.tasks, new Date().getTime() - timer);
                     }
-                    return Rx.Observable.just(incoming);
+                    return Rx.Observable.just({sequence: incoming, watchEvent: watchEvent});
                 });
             return upcoming;
+        })
+        .do((completion: WatchEventCompletion) => {
+            paused = paused.filter(x => x !== completion.watchEvent.watcherUID);
         });
 }
 
@@ -87,6 +112,10 @@ export function createObservableForWatcher(watcher: Watcher): Rx.Observable<Watc
         {
             option: 'throttle',
             fnName: 'throttle'
+        },
+        {
+            option: 'delay',
+            fnName: 'delay'
         }
     ];
 

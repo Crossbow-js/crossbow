@@ -1,4 +1,10 @@
 watch:
+  block:
+    options:
+      block: true
+    watchers:
+      - patterns: 'test/fixtures/scss/main.scss'
+        tasks: ['@sh sleep 1', "@npm sleep 1", "@npm sleep 1"]
   js:
     before: 'watchify'
     watchers:

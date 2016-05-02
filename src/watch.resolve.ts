@@ -17,7 +17,7 @@ import {CommandTrigger} from "./command.run";
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
     ignoreInitial: true,
-    block: true,
+    block: false,
     throttle: 0,
     delay: 0,
     debounce: 0
