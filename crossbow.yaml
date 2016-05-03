@@ -45,7 +45,10 @@ tasks:
     - sleep4
     - slow-stream
 
-  sleep1: ['@npm sleep', '@npm sleep 3']
+  sleep1@p:
+    - '@npm sleep'
+    - '@npm sleep 3'
+
   sleep2: '@npm sleep 1'
   sleep3: '@npm sleep 1'
   sleep4: '@npm sleep 1'

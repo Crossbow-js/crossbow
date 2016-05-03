@@ -371,6 +371,10 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
 }
 
 function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
+
+    /**
+     * Get the sequence label for a runnable task
+     */
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {
@@ -393,10 +397,24 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
         }
         return item.task.taskName;
     }
+
+    /**
+     * Here we are dealing with a ParallelGroup or a SeriesGroup
+     */
     if (item.items.length === 1) {
+        /**
+         * Don't append 'series' or 'parallel' if this group
+         * only consists of 1 item
+         */
         return compile(`{bold:${item.taskName}}`);
     } else {
-        return compile(`{bold:${item.taskName}} {yellow:${item.type}}`);
+        const typeLabel = (() => {
+            if (item.type === SequenceItemTypes.ParallelGroup) {
+                return '<parallel>';
+            }
+            return '<series>';
+        })();
+        return compile(`{bold:${item.taskName}} ${typeLabel}`);
     }
 }
 
