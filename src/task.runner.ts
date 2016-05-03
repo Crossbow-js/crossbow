@@ -116,8 +116,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                         done(new Error('You returned tear-down logic, but you never asked for the completion callback'));
                         return;
                     }
-                } else {
-                    console.log('omg here');
                 }
             } else {
 
