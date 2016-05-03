@@ -14,6 +14,8 @@ import Immutable = require('immutable');
 import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import {isReport} from "./task.utils";
+import promptForWatchCommand from "./command.watch.interactive";
+import {stripBlacklisted} from "./watch.utils";
 
 const debug = require('debug')('cb:command.watch');
 const merge = require('lodash.merge');
@@ -177,24 +179,64 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
 }
 
 export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+
+    const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
+
+    debug('top level watchers available', topLevelWatchers);
+
+    const sharedMap = new Rx.BehaviorSubject(Immutable.Map({}));
+
+    /**
+     * If the interactive flag was given (-i), always try
+     * that first.
+     */
+    if (config.interactive) {
+        return enterInteractive();
+    }
+
+    /**
+     * If the user did not provide a watcher name
+     */
     if (cli.input.length === 1) {
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
             cli.input = moddedCliInput.concat('default');
             return execute(getModifiedWatchContext({
-                shared: new Rx.BehaviorSubject(Immutable.Map({})),
+                shared: sharedMap,
                 cli,
                 input,
                 config,
                 type: TriggerTypes.watcher
             }));
         }
+
+        return enterInteractive();
+    }
+
+    /**
+     * If no watchers given, or if user has selected interactive mode,
+     * show the UI for watcher selection
+     */
+    function enterInteractive() {
+        if (!topLevelWatchers.length) {
+            reporter.reportNoWatchersAvailable();
+            return;
+        }
         reporter.reportNoWatchTasksProvided();
-        return;
+        return promptForWatchCommand(cli, input, config).then(function (answers) {
+            const cliMerged = merge({}, cli, {input: answers.watch});
+            return execute({
+                shared: sharedMap,
+                cli: cliMerged,
+                input,
+                config,
+                type: TriggerTypes.watcher
+            });
+        });
     }
 
     return execute(getModifiedWatchContext({
-        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        shared: sharedMap,
         cli,
         input,
         config,

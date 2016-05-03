@@ -302,8 +302,23 @@ export function reportNoTasksAvailable() {
     logger.info(o.slice(26, -1));
 }
 
+export function reportNoWatchersAvailable() {
+    heading('Sorry, there were no watchers available to run');
+    const o = archy({
+        label: `{yellow:+ input: ''}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x Input: ''}`,
+                    getExternalError(InputErrorTypes.NoWatchersAvailable, {}),
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
+}
+
 export function reportNoWatchTasksProvided() {
-    heading("You didn't provide a watch-task to run");
+    heading(`Entering interactive mode as you didn't provide a watcher to run`)
 }
 
 export interface CrossbowError extends Error {

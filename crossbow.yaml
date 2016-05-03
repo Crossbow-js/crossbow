@@ -11,11 +11,6 @@ watch:
       - patterns: 'test/fixtures/scss'
         tasks: ['@sh echo "sass file edited"']
 
-  default:
-    before:
-      - 'test/fixtures/tasks/bs.js'
-    '*.json': ['test/fixtures/tasks/error.js', 'test/fixtures/tasks/observable.js']
-
 tasks:
 
   default:
