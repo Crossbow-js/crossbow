@@ -1,5 +1,5 @@
 /// <reference path="../typings/main.d.ts" />
-import {CommandTrigger} from './command.run';
+import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {reportTaskTree} from './reporters/defaultReporter';
 import {CrossbowInput, Meow} from './index';
@@ -21,6 +21,6 @@ export function handleIncomingTreeCommand(cli: Meow, input: CrossbowInput, confi
         cli,
         input,
         config,
-        type: 'command'
+        type: TriggerTypes.command
     });
 }

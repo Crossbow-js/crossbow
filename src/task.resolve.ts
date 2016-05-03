@@ -260,6 +260,27 @@ function createAdaptorTask(taskName, parents): Task {
 }
 
 /**
+ * Look at a hash and determine if the incoming 'taskName'
+ * could match a valid taskName.
+ * eg:
+ *  $ crossbow run shane
+ *
+ * -> matches:   'shane' & 'shane@p'
+ */
+export function maybeTaskNames(tasks:{}, taskName:string): string[] {
+
+    return Object.keys(tasks).reduce(function (all, key) {
+
+        const match = key.match(new RegExp(`^${taskName}@(.+)`));
+
+        if (match) {
+            return tasks[key];
+        }
+        return all;
+    }, []);
+}
+
+/**
  * Attempt to match a task-name from within the various 'inputs'
  * given
  */
@@ -273,13 +294,7 @@ function pullTaskFromInput(taskName: string, input: CrossbowInput): TasknameWith
      * Next, look at the top-level input,
      * is this taskname going to match, and if so, does it contain any flags?
      */
-    const maybes = Object.keys(input.tasks).reduce(function (all, key) {
-        const match = key.match(new RegExp(`^${taskName}@(.+)`));
-        if (match) {
-            return input.tasks[key];
-        }
-        return all;
-    }, []);
+    const maybes = maybeTaskNames(input.tasks, taskName);
 
     if (maybes.length) {
         return {items: maybes, origin: TaskOriginTypes.CrossbowConfig};

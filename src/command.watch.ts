@@ -1,5 +1,5 @@
 /// <reference path="../typings/main.d.ts" />
-import {CommandTrigger} from './command.run';
+import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, Meow} from './index';
 import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
@@ -186,7 +186,7 @@ export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, conf
                 cli,
                 input,
                 config,
-                type: 'watcher'
+                type: TriggerTypes.watcher
             }));
         }
         reporter.reportNoWatchTasksProvided();
@@ -198,6 +198,6 @@ export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, conf
         cli,
         input,
         config,
-        type: 'watcher'
+        type: TriggerTypes.watcher
     }));
 }

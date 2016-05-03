@@ -6,7 +6,7 @@ const merge = require('lodash.merge');
 
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
-import {resolveTasks, TaskRunModes} from './task.resolve';
+import {resolveTasks, TaskRunModes, maybeTaskNames} from './task.resolve';
 import {TaskRunner, TaskReport} from './task.runner';
 import Immutable = require('immutable');
 
@@ -15,13 +15,18 @@ import * as reporter from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 
 export interface CommandTrigger {
-    type: 'command' | 'watcher'
+    type: TriggerTypes
     cli: Meow
     input: CrossbowInput
     config: CrossbowConfiguration
     tracker?: any
     tracker$?: any
     shared: Rx.BehaviorSubject<Immutable.Map<string, any>>
+}
+
+export enum TriggerTypes {
+    command = <any>"command",
+    watcher = <any>"watcher",
 }
 
 export default function execute(trigger: CommandTrigger): TaskRunner {
@@ -117,44 +122,111 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
 export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
 
     /**
+     * Array of top-level task names that are available
+     */
+    const topLevelTasks = Object.keys(input.tasks);
+
+    /**
+     * The shared Map that tasks can read/write to
+     */
+    const sharedMap     = new Rx.BehaviorSubject(Immutable.Map({}));
+
+    debug('top level tasks available', topLevelTasks);
+
+    /**
      * If only 1 task provided, such as
      *  $ crossbow run build-all
      *  -> always run in parallel mode (to stop errors from affecting children
      */
     if (cli.input.length === 2) {
+        debug('Setting config.runMode = parallel');
         config.runMode = TaskRunModes.parallel;
+    }
+
+    /**
+     * If the interactive flag was given (-i), always try
+     * that first.
+     */
+    if (config.interactive) {
+        return enterInteractive();
+    }
+
+    /**
+     * If the user never provided a task then we either look
+     * for a `default` task or enter interactive mode if possible
+     * eg:
+     *  $ crossbow run
+     */
+    if (cli.input.length === 1) {
+
+        /**
+         * First look if there's a 'default' task defined
+         */
+        if (hasDefaultTask()) {
+            const cliMerged = merge({}, cli, {input: ['run', 'default']});
+            return execute({
+                shared: sharedMap,
+                cli: cliMerged,
+                input,
+                config,
+                type: TriggerTypes.command
+            });
+        }
+
+        /**
+         * If no default task was found above, enter interactive mode
+         */
+        return enterInteractive();
+    }
+
+    /**
+     * Check if the provided input contains either
+     * 'default' or 'default@p' etc
+     */
+    function hasDefaultTask () {
+        if (maybeTaskNames(input.tasks, 'default').length) {
+            return true;
+        }
+        if (input.tasks['default'] !== undefined) {
+            return true;
+        }
     }
 
     /**
      * If no task given, or if user has selected interactive mode,
      * show the UI for task selection
      */
-    if (cli.input.length === 1 || config.interactive) {
-        if (cli.input.length === 1 && Object.keys(input.tasks).length) {
-            reporter.reportNoTasksProvided();
-            return promptForRunCommand(cli, input, config).then(function (answers) {
-                const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
-                const configMerged = merge({}, config, {runMode: TaskRunModes.parallel});
-                return execute({
-                    shared: new Rx.BehaviorSubject(Immutable.Map({})),
-                    cli: cliMerged,
-                    input,
-                    config: configMerged,
-                    type: 'command'
-                });
-            });
-        } else {
+    function enterInteractive() {
+        if (!topLevelTasks.length) {
             reporter.reportNoTasksAvailable();
             return;
         }
+        reporter.reportNoTasksProvided();
+        return promptForRunCommand(cli, input, config).then(function (answers) {
+            const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
+            const configMerged = merge({}, config, {runMode: TaskRunModes.parallel});
+            return execute({
+                shared: sharedMap,
+                cli: cliMerged,
+                input,
+                config: configMerged,
+                type: TriggerTypes.command
+            });
+        });
     }
 
+    /**
+     * If we reach here we're dealing with the default case
+     * where we are simply executing the command as normal
+     * eg:
+     *  $ crossbow run task1 task2@p etc ...
+     */
     return execute({
-        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        shared: sharedMap,
         cli,
         input,
         config,
-        type: 'command'
+        type: TriggerTypes.command
     });
 }
 
