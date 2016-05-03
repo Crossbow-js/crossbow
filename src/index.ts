@@ -8,6 +8,7 @@ import {retrieveDefaultInputFiles, readFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
+import {handleIncomingTasksCommand} from "./command.tasks";
 
 const meow = require('meow');
 const assign = require('object-assign');
@@ -49,6 +50,7 @@ function generateInput(incoming: CrossbowInput|any): CrossbowInput {
 
 const availableCommands = {
     run: handleIncomingRunCommand,
+    tasks: handleIncomingTasksCommand,
     tree: handleIncomingTreeCommand,
     doctor: handleIncomingTreeCommand,
     watch: handleIncomingWatchCommand,

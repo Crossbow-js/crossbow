@@ -418,7 +418,7 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     }
 }
 
-export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
+export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simple = false) {
 
     let errorCount = 0;
     const toLog    = getTasks(tasks, []);
@@ -435,13 +435,30 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
     }
 
     function getTasks(tasks, initial) {
+
         return tasks.reduce((acc, task) => {
+
             const errors = getErrors(task);
+
             if (errors.length) {
                 errorCount += errors.length;
             }
-            let label = [getLabel(task), ...errors].join('\n');
+
             let nodes = getTasks(task.tasks, []);
+            let label = [getLabel(task), ...errors].join('\n');
+
+            if (simple) {
+                const displayNodes = (function () {
+                    if (config.summary === 'verbose' && task.tasks.length) {
+                        return task.tasks.map((x:Task) => x.taskName);
+                    }
+                    return [];
+                })();
+                return acc.concat({
+                    label: label,
+                    nodes: displayNodes
+                });
+            }
 
             if (config.summary === 'verbose') {
                 return acc.concat({
