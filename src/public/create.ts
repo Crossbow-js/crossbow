@@ -38,17 +38,34 @@ var input = {
     options: {}
 };
 
+function incomingOptions (taskname: string, hash?:any): {} {
+    const outgoing = {};
+    if (typeof taskname === 'string') {
+        outgoing[taskname] = hash;
+        return outgoing;
+    }
+    return taskname;
+}
+
 export function create () {
-    return {
+    const api = {
         input: input,
-        task: function () {
+        task: function (taskname: string) {
         	const res = incomingTask.apply(null, arguments);
             input.tasks = merge(input.tasks, res);
+            return {
+                options: function (hash: any) {
+                    const res = incomingOptions(taskname, hash);
+                    input.options = merge(input.options, res);
+                }
+            }
         },
         options: function (incoming: {}) {
-            input.options = merge(input.options, incoming);
+            const res = incomingOptions.apply(null, arguments);
+            input.options = merge(input.options, res);
         }
-    }
+    };
+    return api;
 }
 
 export default input;
