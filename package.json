@@ -56,7 +56,7 @@
     "eslint": "1.10.3",
     "grunt": "0.4.5",
     "grunt-contrib-jshint": "0.11.3",
-    "gulp": "3.9.0",
+    "gulp": "git://github.com/gulpjs/gulp.git#b4d89c391b40cd29e8526e0391981eef67cfccab",
     "mocha": "2.3.4",
     "normalize.css": "3.0.3",
     "postcss": "5.0.14",

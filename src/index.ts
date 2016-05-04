@@ -4,6 +4,7 @@ import runner = require('./command.run');
 import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
+import {create} from './public/create';
 import {retrieveDefaultInputFiles, readFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
@@ -149,4 +150,6 @@ module.exports.run = function run(tasks: string[], input?: any, config?: any) {
         flags: config || {}
     }, input || {});
 };
+
+module.exports.create = create;
 
