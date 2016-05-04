@@ -110,6 +110,12 @@ export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputF
     return readFiles(maybes, cwd);
 }
 
+export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
+    const maybes = ['cbfile.js'];
+    const cwd = config.cwd;
+    return readFiles(maybes, cwd);
+}
+
 export function readFiles(paths: string[], cwd: string): InputFiles {
     const inputs = getFileInputs(paths, cwd);
     const invalid = inputs.filter(x => x.input === undefined);
@@ -216,4 +222,8 @@ export function isReport(report: any) {
         report.type === TaskReportType.start ||
         report.type === TaskReportType.end ||
         report.type === TaskReportType.error
+}
+
+export function isInternal (incoming) {
+    return incoming.match(/^_internal_fn_\d{0,10}/);
 }

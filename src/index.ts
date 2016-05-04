@@ -4,8 +4,7 @@ import runner = require('./command.run');
 import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {create} from './public/create';
-import {retrieveDefaultInputFiles, readFiles} from './task.utils';
+import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
@@ -69,9 +68,29 @@ if (!module.parent) {
     handleIncoming(cli);
 }
 
+function isCommand(input) {
+    return Object.keys(availableCommands).indexOf(input) > -1;
+}
+
 function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
     cli = generateMeowInput(cli);
+
     const mergedConfig = merge(cli.flags);
+
+    const cbfiles = retrieveCBFiles(mergedConfig);
+
+    /**
+     * Check if there's a cbfile.js in the root
+     */
+    if (cbfiles.valid.length) {
+        debug('cbfile.js exists');
+        var input = require('./public/create.js');
+        if (isCommand(cli.input[0])) {
+            return availableCommands[cli.input[0]].call(null, cli, input.default, mergedConfig);
+        }
+        cli.input = ['run'].concat(cli.input);
+        return availableCommands['run'].call(null, cli, input.default, mergedConfig);
+    }
 
     if (Object.keys(availableCommands).indexOf(cli.input[0]) === -1) {
         console.log('Show help here');
@@ -150,6 +169,4 @@ module.exports.run = function run(tasks: string[], input?: any, config?: any) {
         flags: config || {}
     }, input || {});
 };
-
-module.exports.create = create;
 

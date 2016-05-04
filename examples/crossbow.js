@@ -20,7 +20,7 @@ module.exports = {
         js: [
             'test/fixtures/tasks/simple.js'
         ],
-        'css@p': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
+        'css': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
         bs: ["test/fixtures/tasks/bs.js"],
         sync: function (options, context) {
             const values = context.shared.getValue();
@@ -47,10 +47,7 @@ module.exports = {
             return gulp.src('test/fixtures/js/*.js')
                 .pipe(through2.obj(function (file, enc, cb) {
                     setTimeout(() => {
-                        console.log((count++))
-                        if (count === 2) {
-                            throw new Error('omg');
-                        }
+                        console.log('slow-stream', count++);
                         cb();
                     }, 500);
                 }));
