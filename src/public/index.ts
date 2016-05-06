@@ -1,2 +1,2 @@
-import {create} from './create';
-module.exports.create = create;
+import {api} from './create';
+module.exports = api;

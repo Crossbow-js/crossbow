@@ -1,18 +1,9 @@
-const cb = require('./').create();
+const cb = require('./');
 
-cb.task('other', function (options, context, done) {
-	done();
-}).options({name: "alfred"});
-
-cb.task('shane', function Kittie(options, context) {
-	console.log(options);
-}).options({
-	dev: {
-		input: "kittie"
-	},
-	production: {
-		input: "sally"
-	}
+cb.task('build-all', ['sass'], function () {
+	// some fn that is guaranteed to rnu after sass is complete
 });
 
-// console.log(cb.input);
+cb.task('sass', function processSass(options, context) {
+	console.log('Running Sass');
+});

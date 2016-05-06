@@ -47,25 +47,22 @@ function incomingOptions (taskname: string, hash?:any): {} {
     return taskname;
 }
 
-export function create () {
-    const api = {
-        input: input,
-        task: function (taskname: string) {
-        	const res = incomingTask.apply(null, arguments);
-            input.tasks = merge(input.tasks, res);
-            return {
-                options: function (hash: any) {
-                    const res = incomingOptions(taskname, hash);
-                    input.options = merge(input.options, res);
-                }
+export const api = {
+    input: input,
+    task: function (taskname: string) {
+        const res = incomingTask.apply(null, arguments);
+        input.tasks = merge(input.tasks, res);
+        return {
+            options: function (hash: any) {
+                const res = incomingOptions(taskname, hash);
+                input.options = merge(input.options, res);
             }
-        },
-        options: function (incoming: {}) {
-            const res = incomingOptions.apply(null, arguments);
-            input.options = merge(input.options, res);
         }
-    };
-    return api;
-}
+    },
+    options: function (incoming: {}) {
+        const res = incomingOptions.apply(null, arguments);
+        input.options = merge(input.options, res);
+    }
+};
 
 export default input;
