@@ -85,6 +85,8 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
     if (cbfiles.valid.length) {
         debug('cbfile.js exists');
         var input = require('./public/create.js');
+        input.default.config = mergedConfig;
+        input.default.cli = cli;
         if (isCommand(cli.input[0])) {
             return availableCommands[cli.input[0]].call(null, cli, input.default, mergedConfig);
         }

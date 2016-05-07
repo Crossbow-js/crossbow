@@ -1,4 +1,6 @@
 import {CommandTrigger} from "../command.run";
+import {CBWatchOptions} from "../watch.resolve";
+import {handleIncomingWatchCommand} from "../command.watch";
 const merge = require('lodash.merge');
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
@@ -35,7 +37,9 @@ function incomingTask (taskname: string, deps?, fn?): {} {
 var input = {
     tasks: {},
     watch: {},
-    options: {}
+    options: {},
+    config: {}, // to be set by lib
+    cli: {}, // to be set by lib
 };
 
 function incomingOptions (taskname: string, hash?:any): {} {
@@ -62,6 +66,19 @@ export const api = {
     options: function (incoming: {}) {
         const res = incomingOptions.apply(null, arguments);
         input.options = merge(input.options, res);
+    },
+    watch: function (patterns: string[], tasks: string[], options?: CBWatchOptions) {
+        input.watch['shane'] = {
+            options: options,
+            watchers: [
+                {
+                    patterns: patterns,
+                    tasks: tasks
+                }
+            ]
+        };
+        const cliInput = ['watch', 'shane'];
+        handleIncomingWatchCommand({input: cliInput}, input, input.config);
     }
 };
 
