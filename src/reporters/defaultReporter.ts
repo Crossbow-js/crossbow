@@ -338,7 +338,8 @@ function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string 
 
     const tail = [`- Please see above for any output that occurred`];
 
-    return [...head, getStack(body), ...tail].join('\n');
+    // return [...head, getStack(body), ...tail].join('\n');
+    return [...head, body, ...tail].join('\n');
 }
 
 export function getStack (stack) {

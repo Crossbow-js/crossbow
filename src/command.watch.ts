@@ -25,7 +25,7 @@ export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-export default function execute(trigger: CommandTrigger): WatchTaskRunner {
+export default function execute(trigger: CommandTrigger): WatchTaskRunner|Rx.Observable<any> {
 
     const {cli, input, config} = trigger;
 

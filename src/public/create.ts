@@ -2,6 +2,8 @@ import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
 import {handleIncomingWatchCommand} from "../command.watch";
 import {CrossbowConfiguration} from "../config";
+import {getRawOutputStream} from "../watch.file-watcher";
+import {defaultWatchOptions} from "../watch.resolve";
 const merge = require('lodash.merge');
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
@@ -82,7 +84,20 @@ export const api = {
         };
         const cliInput = ['watch', identifer];
         const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config);
+
         return output.pluck('watchEvent');
+    },
+    watcher: function (patterns: string[], options: CBWatchOptions) {
+        const num = inlineWatcherCount++;
+        const identifer = `_inline_watcher_${num}`;
+        const watcher = {
+            patterns: patterns,
+            tasks: [],
+            name: identifer,
+            options: merge({}, defaultWatchOptions, options),
+            watcherUID: num
+        };
+        return getRawOutputStream(watcher);
     }
 };
 

@@ -38,3 +38,18 @@ cb.task('serve', ['build-all'], () => {
 			console.log(watchEvent.event, watchEvent.path);
 		});
 });
+
+cb.task('serve2', function () {
+    cb.watcher(['test/fixtures/*.html'])
+		.debounce(1000)
+		.subscribe(x => {
+			console.log(x);
+		});
+	
+    cb.watcher(['*.json'])
+		.debounce(1000)
+		.subscribe(x => {
+			console.log('JSON', x.path);
+		})
+});
+
