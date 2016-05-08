@@ -72,17 +72,18 @@ function isCommand(input) {
 }
 
 function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
-    cli = generateMeowInput(cli);
 
+    cli                = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
-
-    const cbfiles = retrieveCBFiles(mergedConfig);
+    const cbfiles      = retrieveCBFiles(mergedConfig);
 
     /**
      * Check if there's a cbfile.js in the root
+     * If there is, we enter into 'gulp' mode by default
      */
     if (cbfiles.valid.length) {
-        debug('cbfile.js exists');
+        console.log(cbfiles.valid[0]);
+        debug(`using ${cbfiles.valid[0]}`);
         var input = require('./public/create.js');
         input.default.config = mergedConfig;
         input.default.cli = cli;
@@ -91,6 +92,15 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
         }
         cli.input = ['run'].concat(cli.input);
         return availableCommands['run'].call(null, cli, input.default, mergedConfig);
+    }
+    /**
+     * Did the user provide the --cbfile flag, but the file was
+     * not found? Exit with error if so
+     */
+    if (mergedConfig.cbfile && cbfiles.invalid.length) {
+        console.log('There were errors resolving the following input file(s):');
+        reporter.reportMissingConfigFile(cbfiles);
+        return;
     }
 
     if (Object.keys(availableCommands).indexOf(cli.input[0]) === -1) {

@@ -17,7 +17,7 @@ export interface ExternalFileInput {
 }
 
 export enum InputErrorTypes {
-    InputFileMissing = <any>"InputFileMissing",
+    InputFileNotFound = <any>"InputFileNotFound",
     NoTasksAvailable = <any>"NoTasksAvailable",
     NoWatchersAvailable = <any>"NoWatchersAvailable"
 }
@@ -111,7 +111,13 @@ export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputF
 }
 
 export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
-    const maybes = ['cbfile.js'];
+    const defaultFiles = ['cbfile.js', 'crossbowfile.js'];
+    const maybes = (function () {
+    	if (config.cbfile) {
+            return [config.cbfile];
+        }
+        return defaultFiles;
+    })();
     const cwd = config.cwd;
     return readFiles(maybes, cwd);
 }
@@ -139,7 +145,7 @@ function getFileInputs(paths, cwd): ExternalFileInput[] {
             const path = incoming.path;
             if (!existsSync(resolved)) {
                 return {
-                    errors: [{type: InputErrorTypes.InputFileMissing}],
+                    errors: [{type: InputErrorTypes.InputFileNotFound}],
                     input: undefined,
                     path,
                     resolved
