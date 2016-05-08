@@ -17,7 +17,7 @@ export interface ExternalFileInput {
 }
 
 export enum InputErrorTypes {
-    InputFileMissing = <any>"InputFileMissing",
+    InputFileNotFound = <any>"InputFileNotFound",
     NoTasksAvailable = <any>"NoTasksAvailable",
     NoWatchersAvailable = <any>"NoWatchersAvailable"
 }
@@ -64,24 +64,24 @@ export function locateModule(cwd: string, name: string): string[] {
     return files;
 }
 
-/**
- * Look at an object of any depth and perform string substitutions
- * from things like {paths.root}
- * @param {Object} item
- * @param {Object} root
- * @returns {Object}
- */
-const traverse = require('traverse');
-export function transformStrings(item, root) {
-    return traverse(item).map(function () {
-        if (this.isLeaf) {
-            if (typeof this.node === 'string') {
-                this.update(replaceOne(this.node, root));
-            }
-            this.update(this.node);
-        }
-    });
-}
+// /**
+//  * Look at an object of any depth and perform string substitutions
+//  * from things like {paths.root}
+//  * @param {Object} item
+//  * @param {Object} root
+//  * @returns {Object}
+//  */
+// const traverse = require('traverse');
+// export function transformStrings(item, root) {
+//     return traverse(item).map(function () {
+//         if (this.isLeaf) {
+//             if (typeof this.node === 'string') {
+//                 this.update(replaceOne(this.node, root));
+//             }
+//             this.update(this.node);
+//         }
+//     });
+// }
 
 /**
  * @param {String} item - the string to replace
@@ -110,6 +110,18 @@ export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputF
     return readFiles(maybes, cwd);
 }
 
+export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
+    const defaultFiles = ['cbfile.js', 'crossbowfile.js'];
+    const maybes = (function () {
+    	if (config.cbfile) {
+            return [config.cbfile];
+        }
+        return defaultFiles;
+    })();
+    const cwd = config.cwd;
+    return readFiles(maybes, cwd);
+}
+
 export function readFiles(paths: string[], cwd: string): InputFiles {
     const inputs = getFileInputs(paths, cwd);
     const invalid = inputs.filter(x => x.input === undefined);
@@ -127,13 +139,14 @@ export function readFiles(paths: string[], cwd: string): InputFiles {
  */
 function getFileInputs(paths, cwd): ExternalFileInput[] {
     return paths
+        .map(String)
         .map(path => ({path: path, resolved: resolve(cwd, path)}))
         .map((incoming): ExternalFileInput => {
             const resolved = incoming.resolved;
             const path = incoming.path;
             if (!existsSync(resolved)) {
                 return {
-                    errors: [{type: InputErrorTypes.InputFileMissing}],
+                    errors: [{type: InputErrorTypes.InputFileNotFound}],
                     input: undefined,
                     path,
                     resolved
@@ -216,4 +229,8 @@ export function isReport(report: any) {
         report.type === TaskReportType.start ||
         report.type === TaskReportType.end ||
         report.type === TaskReportType.error
+}
+
+export function isInternal (incoming) {
+    return incoming.match(/^_internal_fn_\d{0,10}/);
 }

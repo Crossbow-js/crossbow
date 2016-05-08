@@ -17,6 +17,7 @@ export interface CrossbowConfiguration {
     interactive: boolean
     suppressOutput: boolean
     progress: boolean
+    cbfile: string
 }
 
 /**

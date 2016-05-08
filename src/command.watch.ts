@@ -25,7 +25,7 @@ export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-export default function execute(trigger: CommandTrigger): WatchTaskRunner {
+export default function execute(trigger: CommandTrigger): WatchTaskRunner|Rx.Observable<any> {
 
     const {cli, input, config} = trigger;
 
@@ -106,7 +106,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
      * If this completes (tasks complete or return true) then we continue
      * to create the file-watchers and hook up the tasks
      */
-    Rx.Observable.concat(
+    const wathcherStream$ = Rx.Observable.concat(
         /**
          * The 'before' runner can be `true`, complete, or throw.
          * If it throws, the login in the `do` block below will not run
@@ -123,8 +123,11 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner {
                 return Rx.Observable.empty();
             }
             return Rx.Observable.throw(err);
-        }))
-        .subscribe();
+        })).share();
+
+    wathcherStream$.subscribe();
+
+    return wathcherStream$;
 
     /**
      * Return an Observable that's either

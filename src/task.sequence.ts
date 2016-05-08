@@ -20,6 +20,7 @@ import {
 
 import {createObservableFromSequenceItem, TaskReportType} from "./task.runner";
 import {TaskReport} from "./task.runner";
+import {isInternal} from "./task.utils";
 
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
@@ -342,7 +343,24 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
  * From user input, try to locate a options object
  */
 function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
-    return objPath.get(trigger.input.options, [task.taskName], {});
+
+    // todo - more robust/featurefull way of matching options -> tasks
+
+    const fullMatch = objPath.get(trigger.input.options, [task.taskName]);
+
+    if (fullMatch !== undefined) {
+        return fullMatch;
+    }
+
+    if (isInternal(task.rawInput)) {
+        const lookup = task.taskName.replace(/_internal_fn_\d{0,10}_/, '');
+        const fromInternal = objPath.get(trigger.input.options, [lookup]);
+        if (fromInternal !== undefined) {
+            return fromInternal;
+        }
+    }
+
+    return {};
 }
 
 /**

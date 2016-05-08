@@ -122,7 +122,7 @@ export function createObservableForWatcher(watcher: Watcher): Rx.Observable<Watc
     return applyOperators(output$, additionalOperators, watcher.options);
 }
 
-function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
+export function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
 
     /** DEBUG **/
     debug(`[id:${watcher.watcherUID}] options: ${JSON.stringify(watcher.options, null, 2)}`);

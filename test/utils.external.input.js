@@ -18,6 +18,6 @@ describe('Retrieving external input', function () {
         const files = utils.readFiles(['oops/typeos'], process.cwd());
         assert.equal(files.valid.length, 0);
         assert.equal(files.invalid.length, 1);
-        assert.equal(files.invalid[0].errors[0].type, utils.InputErrorTypes.InputFileMissing);
+        assert.equal(files.invalid[0].errors[0].type, utils.InputErrorTypes.InputFileNotFound);
     });
 });

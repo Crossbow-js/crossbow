@@ -18,7 +18,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles, InputErrorTypes, _e} from "../task.utils";
+import {InputFiles, InputErrorTypes, _e, isInternal} from "../task.utils";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -338,7 +338,8 @@ function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string 
 
     const tail = [`- Please see above for any output that occurred`];
 
-    return [...head, getStack(body), ...tail].join('\n');
+    // return [...head, getStack(body), ...tail].join('\n');
+    return [...head, body, ...tail].join('\n');
 }
 
 export function getStack (stack) {
@@ -369,7 +370,7 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
                         if (stats.completed) {
                             label = `{green:✔} ` + label + ` {yellow:(${duration(stats.duration)})}`;
                         } else {
-                            label = `{yellow:x (didn't complete)} ` + label + ` {yellow:(${duration(stats.duration)})}`;
+                            label = `{yellow:x} ` + label + ` {yellow:(didn't complete, ${duration(stats.duration)})}`;
                         }
                     } else {
                         label = `{yellow:x} ${label} {yellow:(didn't start)}`;
@@ -436,7 +437,7 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
 export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simple = false) {
 
     let errorCount = 0;
-    const toLog    = getTasks(tasks, []);
+    const toLog    = getTasks(tasks, [], 0);
     const archy    = require('archy');
     const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
@@ -449,7 +450,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
         l(`{ok: } 0 errors found`);
     }
 
-    function getTasks(tasks, initial) {
+    function getTasks(tasks, initial, depth) {
 
         return tasks.reduce((acc, task) => {
 
@@ -459,18 +460,39 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
                 errorCount += errors.length;
             }
 
-            let nodes = getTasks(task.tasks, []);
+            /**
+             * Never show internal tasks at top-level
+             */
+            if (depth < 2) {
+                if (isInternal(task.rawInput)) {
+                    return acc;
+                }
+            }
+
+            let nodes = getTasks(task.tasks, [], depth++);
             let label = [getLabel(task), ...errors].join('\n');
 
             if (simple) {
+                if (errorCount) {
+                    return acc.concat({
+                        label: label,
+                        nodes: nodes
+                    });
+                }
                 const displayNodes = (function () {
                     if (config.summary === 'verbose' && task.tasks.length) {
-                        return task.tasks.map((x:Task) => x.taskName);
+                        return task.tasks.map((x:Task) => `${x.taskName}`);
                     }
                     return [];
                 })();
+                const displayLabel = (function () {
+                    if (task.tasks.length && config.summary !== 'verbose') {
+                        return label + ` [${task.tasks.length}]`;
+                    }
+                    return label;
+                })();
                 return acc.concat({
-                    label: label,
+                    label: displayLabel,
                     nodes: displayNodes
                 });
             }
@@ -547,7 +569,16 @@ function npmScriptLabel(task: Task) {
 function getLabel(task) {
 
     if (task.type === TaskTypes.InlineFunction) {
-        return `${task.taskName}`;
+        const fnName = (function () {
+        	if (task.inlineFunctions[0].name !== '') {
+                return `[Fn: ${task.inlineFunctions[0].name}]`;
+            }
+            return '[Fn]';
+        })();
+        if (task.errors.length) {
+            return `{red.bold:x ${task.taskName} ${fnName}}`;
+        }
+        return `${task.taskName} ${fnName}`;
     }
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
