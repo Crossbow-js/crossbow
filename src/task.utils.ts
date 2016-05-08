@@ -139,6 +139,7 @@ export function readFiles(paths: string[], cwd: string): InputFiles {
  */
 function getFileInputs(paths, cwd): ExternalFileInput[] {
     return paths
+        .map(String)
         .map(path => ({path: path, resolved: resolve(cwd, path)}))
         .map((incoming): ExternalFileInput => {
             const resolved = incoming.resolved;

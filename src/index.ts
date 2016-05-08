@@ -4,7 +4,7 @@ import runner = require('./command.run');
 import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles} from './task.utils';
+import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles, InputFiles} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
@@ -77,30 +77,8 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
     const mergedConfig = merge(cli.flags);
     const cbfiles      = retrieveCBFiles(mergedConfig);
 
-    /**
-     * Check if there's a cbfile.js in the root
-     * If there is, we enter into 'gulp' mode by default
-     */
-    if (cbfiles.valid.length) {
-        console.log(cbfiles.valid[0]);
-        debug(`using ${cbfiles.valid[0]}`);
-        var input = require('./public/create.js');
-        input.default.config = mergedConfig;
-        input.default.cli = cli;
-        if (isCommand(cli.input[0])) {
-            return availableCommands[cli.input[0]].call(null, cli, input.default, mergedConfig);
-        }
-        cli.input = ['run'].concat(cli.input);
-        return availableCommands['run'].call(null, cli, input.default, mergedConfig);
-    }
-    /**
-     * Did the user provide the --cbfile flag, but the file was
-     * not found? Exit with error if so
-     */
-    if (mergedConfig.cbfile && cbfiles.invalid.length) {
-        console.log('There were errors resolving the following input file(s):');
-        reporter.reportMissingConfigFile(cbfiles);
-        return;
+    if (cbfiles.valid.length || mergedConfig.cbfile) {
+        return handleCBfileMode(cbfiles, cli, mergedConfig);
     }
 
     if (Object.keys(availableCommands).indexOf(cli.input[0]) === -1) {
@@ -138,6 +116,34 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
     }
 
     return processInput(cli, generateInput(input), mergedConfig);
+}
+
+function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfiguration) {
+    /**
+     * Check if there's a cbfile.js in the root
+     * If there is, we enter into 'gulp' mode by default
+     */
+    if (cbfiles.valid.length) {
+        console.log(`Using ${cbfiles.valid[0].resolved}`);
+        debug(`using ${cbfiles.valid[0]}`);
+        var input = require('./public/create.js');
+        input.default.config = config;
+        input.default.cli = cli;
+        if (isCommand(cli.input[0])) {
+            return availableCommands[cli.input[0]].call(null, cli, input.default, config);
+        }
+        cli.input = ['run'].concat(cli.input);
+        return availableCommands['run'].call(null, cli, input.default, config);
+    }
+    /**
+     * Did the user provide the --cbfile flag, but the file was
+     * not found? Exit with error if so
+     */
+    if (config.cbfile && cbfiles.invalid.length) {
+        console.log('There were errors resolving the following input file(s):');
+        reporter.reportMissingConfigFile(cbfiles);
+        return;
+    }
 }
 
 /**
