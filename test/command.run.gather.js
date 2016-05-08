@@ -1,41 +1,24 @@
 const assert = require('chai').assert;
 const cli = require("../");
-const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
-function handoff(cmd, input, cb) {
-    return cli({
-        input: ['run'].concat(cmd),
-        flags: {
-            handoff: true
-        }
-    }, input, cb);
-}
+const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
 describe('Gathering run tasks (1)', function () {
     it('Accepts single string for adaptor task', function () {
-        var runner = handoff(['@npm ls'], {});
+        var runner = cli.getRunner(['@npm ls'], {});
 
         assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
         assert.equal(runner.tasks.valid[0].command, 'ls');
     });
     it('can gather from a default yaml file', function () {
-        const runner = cli({
-            input: ["run", "js"],
-            flags: {
-                config: 'examples/crossbow.yaml',
-                handoff: true
-            }
+        const runner = cli.getRunner(['js'], {}, {
+            config: 'examples/crossbow.yaml'
         });
         assert.equal(runner.tasks.valid.length, 1);
     });
     it('can gather simple tasks', function () {
 
-        const runner = cli({
-            input: ['run', 'test/fixtures/tasks/simple.js:dev'],
-            flags: {
-                handoff: true
-            }
-        }, {
+        const runner = cli.getRunner(['test/fixtures/tasks/simple.js:dev'], {
             options: {
                 "test/fixtures/tasks/simple.js": {
                     dev: {
@@ -49,12 +32,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
     it('can gather tasks when multi given in alias', function () {
-        const runner = cli({
-            input: ['run', 'js'],
-            flags: {
-                handoff: true
-            }
-        }, {
+        const runner = cli.getRunner(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
@@ -81,10 +59,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].tasks[1].subTasks[0], 'default');
     });
     it('can gather multiple valid tasks when using an alias', function () {
-        const runner = cli({
-            input: ["run", "css", "js"],
-            flags: {handoff: true}
-        }, {
+        const runner = cli.getRunner(["css", "js"], {
             tasks: {
                 css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
                 js: ['test/fixtures/tasks/simple.js']

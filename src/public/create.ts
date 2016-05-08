@@ -10,7 +10,7 @@ const merge = require('lodash.merge');
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
-let fncount = 0;
+let fncount            = 0;
 let inlineWatcherCount = 0;
 
 function incomingTask (taskname: string, fn: returnFn): {}

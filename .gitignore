@@ -5,3 +5,5 @@ npm-debug.log
 /tasks.json
 /sequence.json
 /reports.json
+/cbfile.js
+/_cbfile.js

@@ -1,16 +1,6 @@
 const assert = require('chai').assert;
 const cli = require("../");
 const types = require("../dist/task.sequence.factories").SequenceItemTypes;
-const logerrors = require("../dist/reporters/defaultReporter").logErrors;
-
-function handoff(cmd, input, cb) {
-    return cli({
-        input: ['run'].concat(cmd),
-        flags: {
-            handoff: true
-        }
-    }, input, cb);
-}
 
 function log (obj, pathname) {
     console.log(obj);
@@ -20,7 +10,7 @@ function log (obj, pathname) {
 describe('Gathering run tasks, grouped by runMode', function () {
     it('can gather groups in series', function () {
         this.timeout(10000);
-        var runner = handoff(['js'], {
+        var runner = cli.getRunner(['js'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -43,7 +33,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
     });
     it('can gather groups in parallel', function () {
         this.timeout(10000);
-        var runner = handoff(['build-all@p'], {
+        var runner = cli.getRunner(['build-all@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -67,7 +57,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
     });
     it('can gather groups in parallel when @p in task name', function () {
         this.timeout(10000);
-        var runner = handoff(['build-all'], {
+        var runner = cli.getRunner(['build-all'], {
             tasks: {
                 'build-all@p': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -90,7 +80,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
     });
     it('can run in series', function (done) {
         this.timeout(10000);
-        var runner = handoff(['js', 'css'], {
+        var runner = cli.getRunner(['js', 'css'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -124,7 +114,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
     });
     it('can run in parallel', function (done) {
         this.timeout(10000);
-        var runner = handoff(['js@p', 'css@p'], {
+        var runner = cli.getRunner(['js@p', 'css@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
