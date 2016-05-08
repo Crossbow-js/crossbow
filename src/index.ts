@@ -25,8 +25,7 @@ export interface CrossbowInput {
     tasks: any
     watch: any
     options: any
-    gruntfile?: string
-    mergedTasks: any
+    config?: any
 }
 
 function generateMeowInput(incoming: Meow|any): Meow {

@@ -1,14 +1,9 @@
 const cb = require('./');
 const bs = require('browser-sync').create();
+const merge = require('rx').Observable.merge;
 
 cb.task('reload', function () {
 	bs.reload();
-});
-
-cb.adaptor('@bs', (task) => {
-	if (task.command === 'reload') {
-		bs.reload();
-	}
 });
 
 cb.task('build-all', ['sass'], function () {
@@ -19,17 +14,27 @@ cb.task('sass', function processSass(options, context) {
 	console.log('Running Sass');
 });
 
-// cb.watch(['*.json'], ['sass']);
-
 cb.task('serve', ['build-all'], () => {
 	bs.init({
 		server: 'test/fixtures',
-		open: false
+		open: false,
+		logFileChanges: false
 	});
-	cb.watch(['test/fixtures/*.html'], ['sass', 'reload']);
-	cb.watch(['test/fixtures/*.html'], ['sass', () => bs.reload()]);
-	cb.watch(['test/fixtures/*.html'], ['sass', bs.reload]);
-	cb.watch(['test/fixtures/*.html'], ['sass', '@bs reload']);
+
+	const tasks    = ['sass', 'reload'];
+
+	// debounce HTML changes
+	const w1 = cb.watch(['test/fixtures/*.html', 'test/fixtures/*.json'], tasks, {debounce: 500});
+
+	// DO NOT debounce json changes
+	const w2 = cb.watch(['*.json'], tasks);
+
+	// merge 2 watchers
+	merge(w1, w2)
+		// filter events to only include 'change'
+		.filter(x => x.event === 'change')
+		// Get access to the event
+		.subscribe(watchEvent => {
+			console.log(watchEvent.event, watchEvent.path);
+		});
 });
-
-

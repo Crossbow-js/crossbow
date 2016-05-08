@@ -1,11 +1,13 @@
 import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
 import {handleIncomingWatchCommand} from "../command.watch";
+import {CrossbowConfiguration} from "../config";
 const merge = require('lodash.merge');
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
 let fncount = 0;
+let inlineWatcherCount = 0;
 
 function incomingTask (taskname: string, fn: returnFn): {}
 function incomingTask (taskname: string, deps: string[], fn?: returnFn): {}
@@ -38,7 +40,7 @@ var input = {
     tasks: {},
     watch: {},
     options: {},
-    config: {}, // to be set by lib
+    config: <CrossbowConfiguration>{}, // to be set by lib
     cli: {}, // to be set by lib
 };
 
@@ -68,7 +70,8 @@ export const api = {
         input.options = merge(input.options, res);
     },
     watch: function (patterns: string[], tasks: string[], options?: CBWatchOptions) {
-        input.watch['shane'] = {
+        const identifer = `_inline_watcher_${inlineWatcherCount++}`;
+        input.watch[identifer] = {
             options: options,
             watchers: [
                 {
@@ -77,8 +80,9 @@ export const api = {
                 }
             ]
         };
-        const cliInput = ['watch', 'shane'];
-        handleIncomingWatchCommand({input: cliInput}, input, input.config);
+        const cliInput = ['watch', identifer];
+        const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config);
+        return output.pluck('watchEvent');
     }
 };
 
