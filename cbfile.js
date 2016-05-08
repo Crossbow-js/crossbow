@@ -14,6 +14,7 @@ cb.task('sass', function processSass(options, context) {
 	console.log('Running Sass');
 });
 
+
 cb.task('serve', ['build-all'], () => {
 	bs.init({
 		server: 'test/fixtures',
@@ -23,10 +24,10 @@ cb.task('serve', ['build-all'], () => {
 
 	const tasks    = ['sass', 'reload'];
 
-	// debounce HTML changes
+	// de-bounce HTML changes
 	const w1 = cb.watch(['test/fixtures/*.html', 'test/fixtures/*.json'], tasks, {debounce: 500});
 
-	// DO NOT debounce json changes
+	// DO NOT de-bounce json changes
 	const w2 = cb.watch(['*.json'], tasks);
 
 	// merge 2 watchers
@@ -39,17 +40,16 @@ cb.task('serve', ['build-all'], () => {
 		});
 });
 
-cb.task('serve2', function () {
+cb.task('serve2', function (options, context, done) {
     cb.watcher(['test/fixtures/*.html'])
-		.debounce(1000)
 		.subscribe(x => {
-			console.log(x);
+			console.log('watcher 1', x.path);
 		});
-	
+
     cb.watcher(['*.json'])
 		.debounce(1000)
 		.subscribe(x => {
-			console.log('JSON', x.path);
+			console.log('watcher 2 json', x.path);
 		})
 });
 

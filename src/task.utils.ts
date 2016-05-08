@@ -64,24 +64,24 @@ export function locateModule(cwd: string, name: string): string[] {
     return files;
 }
 
-/**
- * Look at an object of any depth and perform string substitutions
- * from things like {paths.root}
- * @param {Object} item
- * @param {Object} root
- * @returns {Object}
- */
-const traverse = require('traverse');
-export function transformStrings(item, root) {
-    return traverse(item).map(function () {
-        if (this.isLeaf) {
-            if (typeof this.node === 'string') {
-                this.update(replaceOne(this.node, root));
-            }
-            this.update(this.node);
-        }
-    });
-}
+// /**
+//  * Look at an object of any depth and perform string substitutions
+//  * from things like {paths.root}
+//  * @param {Object} item
+//  * @param {Object} root
+//  * @returns {Object}
+//  */
+// const traverse = require('traverse');
+// export function transformStrings(item, root) {
+//     return traverse(item).map(function () {
+//         if (this.isLeaf) {
+//             if (typeof this.node === 'string') {
+//                 this.update(replaceOne(this.node, root));
+//             }
+//             this.update(this.node);
+//         }
+//     });
+// }
 
 /**
  * @param {String} item - the string to replace

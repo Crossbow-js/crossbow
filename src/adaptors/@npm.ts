@@ -7,7 +7,6 @@ const EventEmitter = require('events').EventEmitter;
 const debug = require('debug')('cb:adaptors.npm');
 const assign = require('object-assign');
 
-import {transformStrings} from '../task.utils';
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
 
@@ -83,10 +82,9 @@ export interface CommandArgs {
 }
 
 function getArgs(task: Task, trigger: CommandTrigger): CommandArgs {
-    const stringInput = transformStrings(task.command, trigger.config);
     return {
-        stringInput: stringInput,
-        cmd: [shFlag].concat(stringInput)
+        stringInput: task.command,
+        cmd: [shFlag].concat(task.command)
     };
 }
 
