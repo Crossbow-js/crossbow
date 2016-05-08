@@ -4,17 +4,6 @@ const bgAdaptor    = require('./adaptors/@bg');
 import npmAdaptor from './adaptors/@npm';
 
 const adaptors = {
-    'grunt': {
-        validate () {
-            try {
-                const installPath = require.resolve('grunt');
-                return true;
-            } catch (e) {
-                return false;
-            }
-        },
-        create: gruntAdaptor
-    },
     'shell': {
         validate: () => true,
         create: shellAdaptor
