@@ -394,13 +394,16 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     if (item.type === SequenceItemTypes.Task) {
         if (item.subTaskName) {
             if (item.fnName) {
-                return `${item.task.rawInput} - ${item.task.taskName} (fn: {bold:${item.fnName}}) with config {bold:${item.subTaskName}}`;
+                return `${item.task.rawInput} - ${item.task.taskName} [Function: {bold:${item.fnName}}] with config {bold:${item.subTaskName}}`;
             } else {
                 return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
             }
         }
         if (item.fnName) {
-            return `${item.task.taskName} (fn: {bold:${item.fnName}})`;
+            return `${item.task.taskName} [Function: {bold:${item.fnName}}]`;
+        }
+        if (item.task.type === TaskTypes.InlineFunction) {
+            return `${item.task.rawInput} [Function]`;
         }
         if (item.task.origin === TaskOriginTypes.NpmScripts) {
             return npmScriptLabel(item.task);
@@ -571,9 +574,9 @@ function getLabel(task) {
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {
         	if (task.inlineFunctions[0].name !== '') {
-                return `[Fn: ${task.inlineFunctions[0].name}]`;
+                return `[Function: ${task.inlineFunctions[0].name}]`;
             }
-            return '[Fn]';
+            return '[Function]';
         })();
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName} ${fnName}}`;

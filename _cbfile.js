@@ -2,6 +2,12 @@ const cb = require('./');
 const bs = require('browser-sync').create();
 const merge = require('rx').Observable.merge;
 
+cb.task('shane', [function (options, context, done) {
+	setTimeout(x => done(), 2000);
+}, function Shane(options, context, done) {
+	setTimeout(x => done(), 1000);
+}]);
+
 cb.task('reload', function () {
 	bs.reload();
 });

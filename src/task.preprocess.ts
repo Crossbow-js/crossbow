@@ -25,7 +25,25 @@ export interface OutgoingTask extends IncomingTask {
     tasks: Task[]
 }
 
-export function preprocessTask(taskName: string, input: CrossbowInput): OutgoingTask {
+let inlineFnCount = 0;
+export function preprocessTask(taskName: string|Function, input: CrossbowInput): OutgoingTask {
+
+    if (typeof taskName === 'function') {
+        const fnName = taskName.name;
+        const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
+        return <IncomingTask>{
+            cbflags: [],
+            query:   {},
+            flags:   {},
+            baseTaskName: identifier,
+            subTasks: [],
+            taskName: identifier,
+            rawInput: identifier,
+            tasks:    [],
+            runMode: 'series',
+            inlineFunctions: [taskName],
+        };
+    }
 
     /**
      * Split any end cbflags from the main task name
@@ -49,7 +67,7 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      */
     const baseTaskName = splitTask[0];
     const subTasks = splitTask.slice(1);
-    
+
     /**
      * Create the base task
      * @type {IncomingTask}
@@ -70,6 +88,10 @@ export function preprocessTask(taskName: string, input: CrossbowInput): Outgoing
      * Now pass it off to allow any flags to applied
      */
     return processFlags(incomingTask);
+}
+
+function createIncomingTask() {
+
 }
 
 export interface SplitTaskAndFlags {

@@ -71,20 +71,12 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
     /** DEBUG-END **/
 
     /**
-     * Remove any newlines on incoming task names
-     * (eg: in yaml files where commands are split
-     * into multiple lines, that sometimes leaves a trailing
-     * \n char.
-     */
-    taskName = removeNewlines(taskName);
-
-    /**
      * Never modify the current task if it begins
      * with a `@` - instead just return early with
      * a adaptors task
      *  eg: `@npm webpack`
      */
-    if (taskName.match(/^@/)) {
+    if (typeof taskName ==='string' && taskName.match(/^@/)) {
         return createAdaptorTask(taskName, parents);
     }
 
@@ -115,21 +107,22 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
      * alias's work
      */
     if (!incoming.modules.length) {
-
-        /**
-         * Now try to locate inline functions
-         * @type {Array}
-         */
-        incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
-        debug('Located inline functions', incoming.inlineFunctions.length);
-
         if (!incoming.inlineFunctions.length) {
-
             /**
-             * Finally, it probably has nested tasks
-             * @type {Task[]}
+             * Now try to locate inline functions
+             * @type {Array}
              */
-            incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+            incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
+            debug('Located inline functions', incoming.inlineFunctions.length);
+
+            if (!incoming.inlineFunctions.length) {
+
+                /**
+                 * Finally, it probably has nested tasks
+                 * @type {Task[]}
+                 */
+                incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+            }
         }
     }
 
