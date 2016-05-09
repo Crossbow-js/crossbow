@@ -166,9 +166,22 @@ export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfigur
 }
 
 export function getWatcherNode(watcher: Watcher) {
+    const tasksString = (function () {
+        return watcher.tasks.map(x => {
+            if (typeof x === 'string') {
+                return _e(x);
+            }
+            if (typeof x === 'function') {
+                if (x.name) {
+                    return `[Fn: ${x.name}]`;
+                }
+                return '[Fn]';
+            }
+        }).join(', ');
+    })();
     return [
         `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(', ')}}`,
-        `{bold:Tasks:} {cyan:${watcher.tasks.map(x => _e(x)).join(', ')}}`,
+        `{bold:Tasks:} {cyan:${tasksString}}`,
     ].join('\n');
 }
 

@@ -21,17 +21,22 @@ export interface IncomingTask {
 }
 
 export interface OutgoingTask extends IncomingTask {
-    runMode: string
+    runMode: TaskRunModes
     tasks: Task[]
 }
 
+interface Function {
+    name:string
+}
+
 let inlineFnCount = 0;
+
 export function preprocessTask(taskName: string|Function, input: CrossbowInput): OutgoingTask {
 
     if (typeof taskName === 'function') {
         const fnName = taskName.name;
         const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
-        return <IncomingTask>{
+        return {
             cbflags: [],
             query:   {},
             flags:   {},
@@ -40,7 +45,7 @@ export function preprocessTask(taskName: string|Function, input: CrossbowInput):
             taskName: identifier,
             rawInput: identifier,
             tasks:    [],
-            runMode: 'series',
+            runMode: TaskRunModes.series,
             inlineFunctions: [taskName],
         };
     }
@@ -49,7 +54,7 @@ export function preprocessTask(taskName: string|Function, input: CrossbowInput):
      * Split any end cbflags from the main task name
      * @type {SplitTaskAndFlags}
      */
-    var split = getSplitFlags(taskName, input);
+    var split = getSplitFlags(<string>taskName, input);
 
     /**
      * Split the incoming taskname on colons
@@ -79,7 +84,7 @@ export function preprocessTask(taskName: string|Function, input: CrossbowInput):
         baseTaskName,
         subTasks,
         taskName: baseTaskName,
-        rawInput: taskName,
+        rawInput: <string>taskName,
         tasks: [],
         inlineFunctions: []
     };
