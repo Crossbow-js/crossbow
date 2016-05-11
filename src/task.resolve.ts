@@ -12,6 +12,14 @@ import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
 
+/**
+ * Function.name is es6 & >
+ */
+export interface Function {
+    name: string
+}
+export type IncomingTaskItem = string|Function;
+export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
     RunnableModule = <any>"RunnableModule",
     Adaptor  = <any>"Adaptor",
@@ -64,10 +72,10 @@ function locateInlineFunctions(incoming: OutgoingTask, input: CrossbowInput) : a
 /**
  * Entry point for all tasks
  */
-function createFlattenedTask(taskName: string, parents: string[], trigger: CommandTrigger): Task {
+function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trigger: CommandTrigger): Task {
 
     /** DEBUG **/
-    debug(`resolving ('${typeof taskName}') ${taskName}`);
+    debug(`resolving ('${typeof taskItem}') ${taskItem}`);
     /** DEBUG-END **/
 
     /**
@@ -76,18 +84,18 @@ function createFlattenedTask(taskName: string, parents: string[], trigger: Comma
      * a adaptors task
      *  eg: `@npm webpack`
      */
-    if (typeof taskName ==='string' && taskName.match(/^@/)) {
-        return createAdaptorTask(taskName, parents);
+    if (typeof taskItem ==='string' && taskItem.match(/^@/)) {
+        return createAdaptorTask(taskItem, parents);
     }
 
     /**
      * Do basic processing on each task such as splitting out flags/sub-tasks
      * @type {OutgoingTask}
      */
-    const incoming = preprocessTask(taskName, trigger.input);
+    const incoming = preprocessTask(taskItem, trigger.input);
 
     /** DEBUG **/
-    debug(`preprocessed '${taskName}'`, incoming);
+    debug(`preprocessed '${taskItem}'`, incoming);
     /** DEBUG-END **/
 
     /**
@@ -370,13 +378,13 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
     }
 }
 
-export function resolveTasks(taskNames: string[], trigger: CommandTrigger): Tasks {
-    const taskList = taskNames
+export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTrigger): Tasks {
+    const taskList = taskCollection
     /**
      * Now begin making the nested task tree
      */
-        .map(taskName => {
-            return createFlattenedTask(taskName, [], trigger)
+        .map(task => {
+            return createFlattenedTask(task, [], trigger)
         });
     /**
      * Return both valid & invalid tasks. We want to let consumers

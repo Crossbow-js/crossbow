@@ -13,6 +13,7 @@ import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {CommandTrigger} from "./command.run";
+import {TaskCollection} from "./task.resolve";
 
 export const reservedTaskNames = ['before', 'options', 'bs-config'];
 export const defaultWatchOptions = <CBWatchOptions>{
@@ -40,7 +41,7 @@ export interface WatchTask {
 
 export interface Watcher {
     patterns: string[]
-    tasks: string[]
+    tasks: TaskCollection
     options: any
     watcherUID: any
     _tasks?: Tasks

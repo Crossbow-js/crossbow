@@ -3,7 +3,7 @@ import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve.d";
 import {Meow, CrossbowInput} from "../index";
-import {TaskOriginTypes, TaskTypes} from "../task.resolve";
+import {TaskOriginTypes, TaskTypes, TaskCollection} from "../task.resolve";
 import {relative} from 'path';
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
@@ -116,11 +116,11 @@ function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: str
     });
 }
 
-export function reportWatcherTriggeredTasksCompleted(index: number, tasks: string[], time: number) {
-    l(`{green:✔} [${index}] ${tasks.join(', ')} {yellow:(${duration(time)})}`);
+export function reportWatcherTriggeredTasksCompleted(index: number, taskCollection: TaskCollection, time: number) {
+    l(`{green:✔} [${index}] ${taskCollection.join(', ')} {yellow:(${duration(time)})}`);
 }
-export function reportWatcherTriggeredTasks(index: number, tasks: string[]) {
-    l(`{yellow:+} [${index}] ${tasks.join(', ')}`);
+export function reportWatcherTriggeredTasks(index: number, taskCollection: TaskCollection) {
+    l(`{yellow:+} [${index}] ${taskCollection.join(', ')}`);
 }
 
 /**
@@ -195,7 +195,7 @@ export function reportTaskErrors(tasks: Task[], cliInput: string[], input: Cross
     reportErrorsFromCliInput(cliInput, tasks, config);
 }
 
-export function reportWatchTaskTasksErrors(tasks: Task[], cliInput: string[], runner: Watcher, config: CrossbowConfiguration) {
+export function reportWatchTaskTasksErrors(tasks: Task[], taskCollection: TaskCollection, runner: Watcher, config: CrossbowConfiguration) {
 
     if (runner._tasks.invalid.length) {
         l('{gray.bold:---------------------------------------------------}');
@@ -204,7 +204,7 @@ export function reportWatchTaskTasksErrors(tasks: Task[], cliInput: string[], ru
         l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
         l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
         l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
-        reportErrorsFromCliInput(cliInput, tasks, config);
+        reportErrorsFromCliInput(taskCollection, tasks, config);
     } else {
         l('{gray.bold:---------------------------------------------------}');
         l(`{ok: } No errors from`);
@@ -212,7 +212,7 @@ export function reportWatchTaskTasksErrors(tasks: Task[], cliInput: string[], ru
         l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
         l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
         if (config.summary === 'verbose') {
-            reportErrorsFromCliInput(cliInput, tasks, config);
+            reportErrorsFromCliInput(taskCollection, tasks, config);
         }
     }
 }
@@ -244,8 +244,8 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: Command
     });
 }
 
-export function reportErrorsFromCliInput(cliInput: string[], tasks: Task[], config: CrossbowConfiguration): void {
-    cliInput.forEach(function (n, i) {
+export function reportErrorsFromCliInput(taskCollection: TaskCollection, tasks: Task[], config: CrossbowConfiguration): void {
+    taskCollection.forEach(function (n, i) {
         reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
 }
