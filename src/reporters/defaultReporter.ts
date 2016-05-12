@@ -3,7 +3,7 @@ import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve.d";
 import {Meow, CrossbowInput} from "../index";
-import {TaskOriginTypes, TaskTypes, TaskCollection} from "../task.resolve";
+import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
 import {relative} from 'path';
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
@@ -117,10 +117,26 @@ function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: str
 }
 
 export function reportWatcherTriggeredTasksCompleted(index: number, taskCollection: TaskCollection, time: number) {
-    l(`{green:✔} [${index}] ${taskCollection.join(', ')} {yellow:(${duration(time)})}`);
+    l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
 }
 export function reportWatcherTriggeredTasks(index: number, taskCollection: TaskCollection) {
-    l(`{yellow:+} [${index}] ${taskCollection.join(', ')}`);
+    l(`{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`);
+}
+
+export function getTaskCollectionList(taskCollection: TaskCollection): string[] {
+    return taskCollection.map(incomingTaskItemAsString);
+}
+
+export function incomingTaskItemAsString (x: IncomingTaskItem): string {
+    if (typeof x === 'string') {
+        return _e(x);
+    }
+    if (typeof x === 'function') {
+        if (x.name) {
+            return `[Function: ${x.name}]`;
+        }
+        return '[Function]';
+    }
 }
 
 /**
@@ -167,17 +183,7 @@ export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfigur
 
 export function getWatcherNode(watcher: Watcher) {
     const tasksString = (function () {
-        return watcher.tasks.map(x => {
-            if (typeof x === 'string') {
-                return _e(x);
-            }
-            if (typeof x === 'function') {
-                if (x.name) {
-                    return `[Fn: ${x.name}]`;
-                }
-                return '[Fn]';
-            }
-        }).join(', ');
+        return watcher.tasks.map(incomingTaskItemAsString).join(', ');
     })();
     return [
         `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(', ')}}`,
@@ -400,7 +406,6 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
 }
 
 function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
-
     /**
      * Get the sequence label for a runnable task
      */

@@ -53,7 +53,11 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             }
         })
         .flatMap((watchEvent: WatchEvent, i) => {
+
+            /** LOG **/
             reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
+            /** LOG END **/
+
             const timer = new Date().getTime();
             const upcoming = watchEvent.runner._runner
                 // todo support parallel running here
@@ -77,11 +81,15 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                 .flatMap((reports: TaskReport[]) => {
                     const incoming = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
                     const errorCount = seq.countSequenceErrors(incoming);
+
+                    /** LOG **/
                     if (errorCount > 0) {
                         reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
                     } else {
                         reporter.reportWatcherTriggeredTasksCompleted(i, watchEvent.runner.tasks, new Date().getTime() - timer);
                     }
+                    /** LOG END **/
+
                     return Rx.Observable.just({sequence: incoming, watchEvent: watchEvent});
                 });
             return upcoming;
