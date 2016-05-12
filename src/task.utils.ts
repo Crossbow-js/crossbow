@@ -1,4 +1,4 @@
-import {resolve, extname, basename} from 'path';
+import {resolve, extname, basename, join} from 'path';
 import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
@@ -99,27 +99,29 @@ function replaceOne(item, root) {
 }
 
 /**
- * Try to auto-load configuration
- * @param flags
- * @param config
- * @returns {*}
+ * Try to auto-load configuration files
+ * from the users CWD
  */
 export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
-    const maybes = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
-    const cwd = config.cwd;
-    return readFiles(maybes, cwd);
+    const defaultConfigFiles = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
+    return readFiles(defaultConfigFiles, config.cwd);
 }
 
+/**
+ * Try to load cbfiles (like gulp) from the users
+ * working directory
+ * @param config
+ * @returns {InputFiles}
+ */
 export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultFiles = ['cbfile.js', 'crossbowfile.js'];
+    const defaultCBFiles = ['cbfile.js', 'crossbowfile.js'];
     const maybes = (function () {
     	if (config.cbfile) {
             return [config.cbfile];
         }
-        return defaultFiles;
+        return defaultCBFiles;
     })();
-    const cwd = config.cwd;
-    return readFiles(maybes, cwd);
+    return readFiles(maybes, config.cwd);
 }
 
 export function readFiles(paths: string[], cwd: string): InputFiles {
@@ -167,6 +169,19 @@ function getFileInputs(paths, cwd): ExternalFileInput[] {
                 resolved
             }
         });
+}
+
+/**
+ * Attempt to use the LOCALLY installed crossbow-cli vesion
+ * first, this will ensure anything registered with .task etc
+ * can be picked up by global installs too.
+ * @param config
+ * @returns {InputFiles}
+ */
+export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
+    const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
+    const global = join(__dirname, 'public', 'create.js');
+    return readFiles([local, global], config.cwd);
 }
 
 /**

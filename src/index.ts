@@ -4,7 +4,7 @@ import runner = require('./command.run');
 import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles, InputFiles} from './task.utils';
+import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles, InputFiles, getRequirePaths} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
@@ -126,7 +126,8 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
     if (cbfiles.valid.length) {
         console.log(`Using ${cbfiles.valid[0].resolved}`);
         debug(`using ${cbfiles.valid[0]}`);
-        var input = require('./public/create.js');
+        var createFilePaths = getRequirePaths(config);
+        var input = require(createFilePaths.valid[0].resolved);
         input.default.config = config;
         input.default.cli = cli;
         if (isCommand(cli.input[0])) {
