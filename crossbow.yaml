@@ -1,4 +1,8 @@
 watch:
+  options:
+    debounce: 2000
+  default:
+    "*.json": ['@sh echo "hello"']
   block:
     options:
       block: true

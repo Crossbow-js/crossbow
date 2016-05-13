@@ -9,6 +9,7 @@ import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
+import {handleIncomingWatchersCommand} from "./command.watchers";
 import logger from './logger';
 
 const meow = require('meow');
@@ -54,7 +55,8 @@ const availableCommands = {
     tree: handleIncomingTreeCommand,
     doctor: handleIncomingTreeCommand,
     watch: handleIncomingWatchCommand,
-    w: handleIncomingWatchCommand
+    w: handleIncomingWatchCommand,
+    watchers: handleIncomingWatchersCommand
 };
 
 if (!module.parent) {
