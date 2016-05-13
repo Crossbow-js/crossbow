@@ -10,9 +10,10 @@ import {stripBlacklisted} from "./watch.utils";
 import {resolveWatchTasks} from "./watch.resolve";
 
 export default function execute(trigger: CommandTrigger): void {
-    const {input, config} = trigger;
-    const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
-    const watchTasks = resolveWatchTasks(topLevelWatchers, trigger);
+    const {input, config}   = trigger;
+    const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
+    const watchTasks        = resolveWatchTasks(topLevelWatchers, trigger);
+    
     console.log(watchTasks);
     // debug(`${watchTasks.valid.length} valid task(s)`);/*
     // debug(`${watchTasks.invalid.length} invalid task(s)`);*/

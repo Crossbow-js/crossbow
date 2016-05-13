@@ -97,7 +97,9 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|Rx.Obs
      * Never continue if any runners are invalid
      */
     if (runners.invalid.length) {
-        runners.all.forEach(runner => reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
+        runners.all.forEach(runner => {
+            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+        });
         return;
     }
 
