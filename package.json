@@ -7,7 +7,8 @@
     "test": "npm run ts && npm run unit",
     "unit": "mocha test",
     "lint": "eslint lib",
-    "ts": "tsc"
+    "ts": "tsc",
+    "prepublish": "npm run test"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
