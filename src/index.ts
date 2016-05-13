@@ -9,6 +9,7 @@ import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
+import logger from './logger';
 
 const meow = require('meow');
 const assign = require('object-assign');
@@ -101,7 +102,8 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
                 return;
             }
             if (userConfig.valid.length) {
-                debug(`Using external input from ${userConfig.valid[0].resolved}`);
+                // debug(`Using external input from ${userConfig.valid[0].resolved}`);
+                logger.info(`Using {cyan.bold:${userConfig.valid[0].resolved}}`);
                 return processInput(cli, generateInput(userConfig.valid[0].input), mergedConfig);
             }
         } else {
@@ -110,6 +112,7 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
             }
             const defaultInputFiles = retrieveDefaultInputFiles(mergedConfig);
             if (defaultInputFiles.valid.length) {
+                logger.info(`Using {cyan.bold:${defaultInputFiles.valid[0].resolved}}`);
                 return processInput(cli, generateInput(defaultInputFiles.valid[0].input), mergedConfig);
             }
         }
@@ -124,7 +127,7 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
      * If there is, we enter into 'gulp' mode by default
      */
     if (cbfiles.valid.length) {
-        console.log(`Using ${cbfiles.valid[0].resolved}`);
+        logger.info(`Using {cyan.bold:${cbfiles.valid[0].resolved}}`);
         debug(`using ${cbfiles.valid[0]}`);
         var createFilePaths = getRequirePaths(config);
         var input = require(createFilePaths.valid[0].resolved);

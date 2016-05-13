@@ -301,9 +301,7 @@ export function reportNoTasksProvided() {
 }
 
 function heading(title) {
-    l('{gray.bold:-' + new Array(title.length).join('-') + "-:");
-    l(`${title} {gray.bold::}`);
-    l('{gray.bold:-' + new Array(title.length).join('-') + "-:");
+    l(`${title}`);
 }
 
 export function reportNoTasksAvailable() {
