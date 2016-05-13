@@ -329,7 +329,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * Should we add a catch clause to this item to enable
              * siblings to continue when a task errors
              */
-            if (addCatch) {
+            if (addCatch || !trigger.config.fail) {
                 return all.concat(output.catch(x => Rx.Observable.empty()));
             }
 
@@ -353,7 +353,7 @@ function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
     }
 
     if (isInternal(task.rawInput)) {
-        const lookup = task.taskName.replace(/_internal_fn_\d{0,10}_/, '');
+        const lookup = task.taskName.replace(/(.+?)_internal_fn_\d{0,10}/, '');
         const fromInternal = objPath.get(trigger.input.options, [lookup]);
         if (fromInternal !== undefined) {
             return fromInternal;

@@ -1,35 +1,39 @@
 const cb = require('./');
 const bs = require('browser-sync').create();
-const merge = require('rx').Observable.merge;
+// const merge = require('rx').Observable.merge;
 
-cb.task('shane', [function (options, context, done) {
-	setTimeout(x => done(), 2000);
-}, function Shane(options, context, done) {
-	setTimeout(x => done(), 1000);
-}]);
+// cb.task('shane', [function (options, context, done) {
+// 	setTimeout(x => done(), 2000);
+// }, function Shane(options, context, done) {
+// 	setTimeout(x => done(), 1000);
+// }]);
 
-cb.task('reload', function () {
+cb.task('reload', function (opts) {
 	bs.reload();
+}).options({
+	dev: {
+		name: "kittie"
+	},
+	other: {
+		name: "shane"
+	}
 });
 
-cb.task('build-all', ['sass'], function () {
-	// some fn that is guaranteed to rnu after sass is complete
-});
+cb.task('build-all', ['sass']);
 
 cb.task('sass', ['@npm node-sass test/fixtures/scss/main.scss -o test/fixtures/css']);
 
 cb.task('serve', ['build-all'], () => {
-	// bs.init({
-	// 	server: 'test/fixtures',
-	// 	open: false,
-	// 	logFileChanges: false
-	// });
-    //
-	// // de-bounce HTML changes
-	const w1 = cb.watch(['test/fixtures/*.html'], ['sass', function afterSass() {
-		bs.reload('main.css');
-	}]);
-    //
+	bs.init({
+		server: 'test/fixtures',
+		open: false,
+		logFileChanges: false
+	});
+
+	// de-bounce HTML changes
+	const w1 = cb.watch(['test/fixtures/*.html'], [() => bs.reload()]);
+	const w2 = cb.watch(['test/fixtures/scss'], ['sass', () => bs.reload('main.css')]);
+
 	// // merge 2 watchers
 	// merge(w1)
 	// 	// filter events to only include 'change'

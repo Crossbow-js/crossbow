@@ -247,5 +247,5 @@ export function isReport(report: any) {
 }
 
 export function isInternal (incoming) {
-    return incoming.match(/^_internal_fn_\d{0,10}/);
+    return incoming.match(/_internal_fn_\d{0,10}$/);
 }

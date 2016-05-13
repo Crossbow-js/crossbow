@@ -13,10 +13,6 @@ watch:
 
 tasks:
 
-  default:
-    - compile
-    - watchify
-
   watchify: >
     @bg watchify test/fixtures/js/app.js -o test/fixtures/js/app.watchify.js -v -d
 

@@ -484,7 +484,8 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
             /**
              * Never show internal tasks at top-level
              */
-            if (depth < 2) {
+            // console.log(isInternal(task.rawInput));
+            if (depth === 0) {
                 if (isInternal(task.rawInput)) {
                     return acc;
                 }

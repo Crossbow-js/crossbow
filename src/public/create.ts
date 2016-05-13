@@ -28,7 +28,7 @@ function incomingTask (taskname: string, deps?, fn?): {} {
         if (!fn) {
             outgoing[taskname] = deps;
         } else {
-            const fnname = `_internal_fn_${fncount}_${taskname}`;
+            const fnname = `${taskname}_internal_fn_${fncount}`;
             outgoing[fnname] = fn;
             outgoing[taskname] = deps.concat(fnname);
         }
