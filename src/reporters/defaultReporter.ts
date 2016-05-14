@@ -19,6 +19,7 @@ import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes, _e, isInternal} from "../task.utils";
+import {WatchRunners} from "../watch.runner";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -209,20 +210,65 @@ export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, confi
         l('{gray.bold:---------------------------------------------------}');
         l(`{err: } Sorry, there were errors when resolving the tasks`);
         l(`  that will be used in the following watcher`);
-        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
-        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
-        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
+        logWatcher(runner);
         reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
     } else {
         l('{gray.bold:---------------------------------------------------}');
         l(`{ok: } No errors from`);
-        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
-        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
-        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
+        logWatcher(runner);
         if (config.summary === 'verbose') {
             reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
         }
     }
+}
+
+export function logWatcher (runner) {
+    l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
+    l(`      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`);
+    l(`         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`);
+}
+
+export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger) {
+    const o = archy({
+        label: '{yellow:Available Watchers:}',
+        nodes: runners.valid.map(function (runner) {
+            if (trigger.config.summary === 'verbose') {
+                return logWatcherName(runner);
+            }
+            return `{bold:${runner.parent}}`;
+        })
+    }, prefix);
+    logger.info(o.slice(26, -1));
+    console.log('');
+    logger.info(`Run your watchers in the following way:`);
+    logger.unprefixed('info', '\n' + runners.valid.map(x => `   {gray:$} crossbow watch {bold:${x.parent}}`).join('\n'));
+    if (runners.valid.length > 1) {
+        console.log('');
+        logger.info('Or run multiple watchers at once, such as:')
+        logger.unprefixed('info', '\n   {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+        console.log('');
+    }
+}
+
+export function logWatcherName (runner) {
+    return {
+        label: `{bold:${runner.parent}}`,
+        nodes: [
+            {
+                label: [
+                    // `Patterns`,
+                    ...runner.patterns.map(_e).map(x => `{cyan.bold:${x}}`)
+                ].join('\n')
+            },
+            {
+                label: [
+                    // `Tasks`,
+                    ...runner.tasks.map(x => `{magenta:${x}}`)
+                ].join('\n')
+            },
+        ]
+    };
+    // logger.info(o.slice(26, -1));
 }
 
 export function reportNoFilesMatched(runner) {
@@ -255,14 +301,10 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: Command
 export function reportWatchTaskErrors(tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
     heading(`Sorry, there were errors resolving your watch tasks`);
-
-    cli.input.slice(1).forEach(function (n, i) {
-        logWatchErrors([tasks[i]], '');
-        l('{gray.bold:-----------------------------------------------}');
-    });
+    logWatchErrors(tasks);
 }
 
-export function logWatchErrors(tasks: WatchTask[], indent: string): void {
+export function logWatchErrors(tasks: WatchTask[]): void {
 
     tasks.forEach(function (task: WatchTask) {
         if (task.errors.length) {
@@ -281,8 +323,8 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
             const watchTree = task.watchers.map(w => {
                 return {
                     label: [
-                        compile(`Patterns: [{cyan:${w.patterns.join(', ')}}]`),
-                        compile(`Tasks: [{magenta:${w.tasks.join(', ')}}]`)
+                        compile(`Patterns: {cyan:${w.patterns.join(', ')}}`),
+                        compile(`   Tasks: {magenta:${w.tasks.join(', ')}}`)
                     ].join('\n')
                 };
             });
