@@ -16,9 +16,10 @@ import {WatchTasks} from "../watch.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
-import {TaskReport, TaskReportType} from "../task.runner";
+import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes, _e, isInternal} from "../task.utils";
+import {WatchRunners} from "../watch.runner";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -191,36 +192,83 @@ export function getWatcherNode(watcher: Watcher) {
     ].join('\n');
 }
 
-export function reportTaskErrors(tasks: Task[], cliInput: string[], input: CrossbowInput, config: CrossbowConfiguration) {
+export function reportTaskErrors(tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
     l('  So none of them were run.');
     l('{gray.bold:------------------------------------------------}');
 
-    reportErrorsFromCliInput(cliInput, tasks, config);
+    taskCollection.forEach(function (n, i) {
+        reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
+    });
 }
 
-export function reportWatchTaskTasksErrors(tasks: Task[], taskCollection: TaskCollection, runner: Watcher, config: CrossbowConfiguration) {
+export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, config: CrossbowConfiguration) {
 
     if (runner._tasks.invalid.length) {
         l('{gray.bold:---------------------------------------------------}');
         l(`{err: } Sorry, there were errors when resolving the tasks`);
         l(`  that will be used in the following watcher`);
-        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
-        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
-        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
-        reportErrorsFromCliInput(taskCollection, tasks, config);
+        logWatcher(runner);
+        reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
     } else {
         l('{gray.bold:---------------------------------------------------}');
         l(`{ok: } No errors from`);
-        l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
-        l(`  {bold:Patterns:} {cyan:${runner.patterns.join(' ')}}`);
-        l(`  {bold:Tasks:} {cyan:${runner.tasks.join(' ')}}`);
+        logWatcher(runner);
         if (config.summary === 'verbose') {
-            reportErrorsFromCliInput(taskCollection, tasks, config);
+            reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
         }
     }
+}
+
+export function logWatcher (runner) {
+    l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
+    l(`      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`);
+    l(`         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`);
+}
+
+export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger) {
+    const o = archy({
+        label: '{yellow:Available Watchers:}',
+        nodes: runners.valid.map(function (runner) {
+            if (trigger.config.summary === 'verbose') {
+                return logWatcherName(runner);
+            }
+            return `{bold:${runner.parent}}`;
+        })
+    }, prefix);
+    logger.info(o.slice(26, -1));
+    console.log('');
+    logger.info(`Run your watchers in the following way:`);
+    logger.unprefixed('info', '\n' + runners.valid.map(x => `   {gray:$} crossbow watch {bold:${x.parent}}`).join('\n'));
+    if (runners.valid.length > 1) {
+        console.log('');
+        logger.info('Or run multiple watchers at once, such as:')
+        logger.unprefixed('info', '\n   {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+        console.log('');
+    }
+}
+
+export function logWatcherName (runner) {
+    return {
+        label: `{bold:${runner.parent}}`,
+        nodes: [
+            {
+                label: [
+                    // `Patterns`,
+                    ...runner.patterns.map(_e).map(x => `{cyan.bold:${x}}`)
+                ].join('\n')
+            },
+            {
+                label: [
+                    // `Tasks`,
+                    ...runner.tasks.map(x => `{magenta:${x}}`)
+                ].join('\n')
+            },
+        ]
+    };
+    // logger.info(o.slice(26, -1));
 }
 
 export function reportNoFilesMatched(runner) {
@@ -229,44 +277,34 @@ export function reportNoFilesMatched(runner) {
 
 export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: CommandTrigger): void {
 
-    l('{gray.bold:--------------------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
     l('  So none of them were run, and no watchers have begun either.');
-    l('{gray.bold:--------------------------------------------------------------}');
 
     watchTasks.all.forEach(function (wt) {
         const cliInput = resolveBeforeTasks(ctx.input, [wt]);
         const tasks = resolveTasks(cliInput, ctx);
+
+        if (!tasks.all.length) {
+            return;
+        }
 
         if (ctx.config.summary === 'verbose') {
             return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
         }
 
         if (tasks.invalid.length) {
-            reportTaskTree(tasks.invalid, ctx.config, `+ Tasks to run before: '${wt.name}'`)
-        } else {
-            reportTaskTree([], ctx.config, `+ Tasks to run before: '${wt.name}' (no errors)`)
+            return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
         }
-    });
-}
-
-export function reportErrorsFromCliInput(taskCollection: TaskCollection, tasks: Task[], config: CrossbowConfiguration): void {
-    taskCollection.forEach(function (n, i) {
-        reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
     });
 }
 
 export function reportWatchTaskErrors(tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
 
     heading(`Sorry, there were errors resolving your watch tasks`);
-
-    cli.input.slice(1).forEach(function (n, i) {
-        logWatchErrors([tasks[i]], '');
-        l('{gray.bold:-----------------------------------------------}');
-    });
+    logWatchErrors(tasks);
 }
 
-export function logWatchErrors(tasks: WatchTask[], indent: string): void {
+export function logWatchErrors(tasks: WatchTask[]): void {
 
     tasks.forEach(function (task: WatchTask) {
         if (task.errors.length) {
@@ -285,8 +323,8 @@ export function logWatchErrors(tasks: WatchTask[], indent: string): void {
             const watchTree = task.watchers.map(w => {
                 return {
                     label: [
-                        compile(`Patterns: [{cyan:${w.patterns.join(', ')}}]`),
-                        compile(`Tasks: [{magenta:${w.tasks.join(', ')}}]`)
+                        compile(`Patterns: {cyan:${w.patterns.join(', ')}}`),
+                        compile(`   Tasks: {magenta:${w.tasks.join(', ')}}`)
                     ].join('\n')
                 };
             });
@@ -342,7 +380,7 @@ export interface CrossbowError extends Error {
     _cbError?: boolean
 }
 
-function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string {
+function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowError): string {
 
     if (!err.stack) {
         return err.toString();
@@ -352,11 +390,10 @@ function getErrorText(sequenceLabel: string, stats, err: CrossbowError): string 
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
     const body = err._cbError ? [] : err.stack.split('\n').slice(1).join('\n');
-
     const tail = [`- Please see above for any output that occurred`];
 
-    // return [...head, getStack(body), ...tail].join('\n');
-    return [...head, body, ...tail].join('\n');
+    return [...head, getStack(body), ...tail].join('\n');
+    // return [...head, body, ...tail].join('\n');
 }
 
 export function getStack (stack) {
@@ -462,7 +499,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
 
     logger.info(o.slice(26, -1));
 
-    nl();
+    // nl();
     if (errorCount) {
         l(`{red:x} ${errorCount} %s found (see above)`, errorCount === 1 ? 'error' : 'errors');
     } else {

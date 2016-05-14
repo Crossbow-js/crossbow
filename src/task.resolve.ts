@@ -219,7 +219,7 @@ function createAdaptorTask(taskName, parents): Task {
      * @type {string|undefined}
      */
     const validAdaptorName = Object.keys(adaptors).filter(x => {
-        return taskName.match(new RegExp('^@' + x));
+        return taskName.match(new RegExp(`^@${x} `));
     })[0];
 
     /**

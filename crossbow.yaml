@@ -1,4 +1,8 @@
 watch:
+
+  default:
+    "*.json": ['@npm echo "hello"']
+
   block:
     options:
       block: true

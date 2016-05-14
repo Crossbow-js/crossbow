@@ -87,18 +87,23 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|Rx.Obs
     }
 
     /**
+     * Never continue if any runners are invalid
+     */
+    if (runners.invalid.length) {
+        runners.valid.forEach(runner => {
+            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+        });
+        runners.invalid.forEach(runner => {
+            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+        });
+        return;
+    }
+
+    /**
      *
      */
     if (before.tasks.valid.length) {
         reporter.reportBeforeTaskList(before.sequence, cli, trigger.config);
-    }
-
-    /**
-     * Never continue if any runners are invalid
-     */
-    if (runners.invalid.length) {
-        runners.all.forEach(runner => reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner.tasks, runner, config));
-        return;
     }
 
     /**
