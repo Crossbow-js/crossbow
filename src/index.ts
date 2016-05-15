@@ -158,8 +158,10 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
  * Now decide who should handle the current command
  */
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): any {
-    const firstArg = cli.input[0];
-    return availableCommands[firstArg].call(null, cli, input, config);
+    const firstArg     = cli.input[0];
+    const cbConfig     = _merge({}, input.config, cli.flags);
+    const secondMerge  = merge(cbConfig);
+    return availableCommands[firstArg].call(null, cli, input, secondMerge);
 }
 
 export default handleIncoming;
