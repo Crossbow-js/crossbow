@@ -20,13 +20,34 @@ export function preprocessTask(taskName: IncomingTaskItem, input: CrossbowInput,
     if (typeof taskName === 'string') {
         return handleStringInput(taskName, input, parents);
     }
-    // if (isPlainObject(taskName)) {
-    //     return handleObjectInput(taskName, input, parents);
-    // }
+    if (isPlainObject(taskName)) {
+        return handleObjectInput(taskName, input, parents);
+    }
 }
 
-function handleObjectInput(taskObj: {}, input, parents) {
-    return createTask({});
+export interface TaskLiteral {
+    input?: string
+    adaptor?: string
+    command?: string
+}
+
+function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
+
+    if (typeof taskLiteral.input === 'string') {
+        const taskLiteralAdaptor = createAdaptorTask(taskLiteral.input, parents);
+        return assign({}, taskLiteralAdaptor, taskLiteral);
+    }
+
+    if (typeof taskLiteral.adaptor === 'string' && typeof taskLiteral.command === 'string') {
+        const outgoing = assign({}, taskLiteral);
+        outgoing.rawInput = `@${outgoing.adaptor} ${outgoing.command}`;
+        outgoing.valid    = true;
+        outgoing.type     = TaskTypes.Adaptor;
+        outgoing.origin   = TaskOriginTypes.Adaptor;
+        return createTask(outgoing);
+    }
+
+    console.error('Task input not supported');
 }
 
 /**
