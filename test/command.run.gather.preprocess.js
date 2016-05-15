@@ -93,7 +93,6 @@ describe('can pre-process incoming task names', function () {
     });
     it('can single handle cli flags with dots', function () {
         const proc = preprocess('crossbow-sass --my.array=shane --my.array=kittie', {tasks:{}});
-        console.log(proc.flags);
         assert.deepEqual(proc.flags, {
             my: {array: ['shane', 'kittie']}
         });

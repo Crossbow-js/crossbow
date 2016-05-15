@@ -17,7 +17,7 @@ describe('Running tasks from inline-functions', function () {
             .series()
             .toArray()
             .subscribe(function () {
-                console.log('assert');
+                // console.log('assert');
                 // assert.equal(called, 1);
                 done();
             });

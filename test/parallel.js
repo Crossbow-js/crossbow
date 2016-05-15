@@ -14,13 +14,13 @@ module.exports = function handleConcat (tasks) {
     const subject = new Rx.ReplaySubject(2000);
     const catchTasks = tasks.map(x => x.catch(x => empty()));
     tasks.forEach(function (item) {
-        console.log(item);
+        // console.log(item);
     })
     O.from(catchTasks)
         .mergeAll()
         .do(subject)
         .subscribe(x => {}, e=>{}, _=> {
-            console.log('All done');
+            // console.log('All done');
         });
     return subject;
 };
@@ -38,15 +38,15 @@ module.exports.mergeFnNamed = function (tasks) {
         return items.reduce(function (acc, item) {
             let output;
             if (item.type === 'P') {
-                console.log('+',item.type, addCatch);
+                // console.log('+',item.type, addCatch);
                 output = merge(getItems(item.items, [], true));
             }
             if (item.type === 'S') {
-                console.log('+',item.type, addCatch);
+                // console.log('+',item.type, addCatch);
                 output = concat(getItems(item.items, []));
             }
             if (item.type === 'T') {
-                console.log('+',item.type, addCatch);
+                // console.log('+',item.type, addCatch);
                 output = item.task;
             }
             if (addCatch) {
@@ -60,7 +60,7 @@ module.exports.mergeFnNamed = function (tasks) {
         .mergeAll()
         .do(subject)
         .subscribe(x => {}, e=>{}, _=> {
-            console.log('All done');
+            // console.log('All done');
         });
     return subject;
 };

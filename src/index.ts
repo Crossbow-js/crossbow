@@ -27,6 +27,7 @@ export interface CrossbowInput {
     tasks: any
     watch: any
     options: any
+    env?: any
     config?: any
 }
 
@@ -45,7 +46,8 @@ function generateInput(incoming: CrossbowInput|any): CrossbowInput {
             before: [],
             options: {}
         },
-        options: {}
+        options: {},
+        env: {}
     }, incoming || {});
 }
 

@@ -35,9 +35,9 @@ describe('Running in parallel', function () {
                 assert.equal(report[4].type, 'end');
                 assert.equal(report[5].type, 'end');
             }, function (e) {
-                console.log(e);
+                // console.log(e);
             }, function () {
-                console.log('done');
+                // console.log('done');
                 sub.dispose();
                 done();
             });

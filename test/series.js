@@ -28,7 +28,7 @@ module.exports = function handleConcat (tasks) {
          */
         .do(subject)
         .subscribe(x=>{}, e=>{}, _=> {
-            console.log('All done');
+            // console.log('All done');
         });
     return subject;
 };

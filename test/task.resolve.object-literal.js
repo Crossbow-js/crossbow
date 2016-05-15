@@ -58,6 +58,6 @@ describe('task.resolve object literal in long-hand', function () {
             }
         });
         assert.equal(runner.tasks.invalid.length, 1);
-        console.log(runner.tasks.invalid[0].tasks[0]);
+        // console.log(runner.tasks.invalid[0].tasks[0]);
     });
 });

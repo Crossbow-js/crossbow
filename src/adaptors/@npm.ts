@@ -6,6 +6,7 @@ const spawn = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
 const debug = require('debug')('cb:adaptors.npm');
 const assign = require('object-assign');
+const merge = require('lodash.merge');
 
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
@@ -69,10 +70,10 @@ function runCommand(args: string[], options: CommandOptions) {
  * @param {Immutable.Map} config
  * @returns {object}
  */
-function getEnv(process: any, taskEnv: any, config: CrossbowConfiguration) {
-    const localEnv = assign({}, process, taskEnv);
+function getEnv(process: any, config: CrossbowConfiguration) {
+    const localEnv = <any>{};
     const envpath = join(config.cwd, 'node_modules', '.bin');
-    localEnv.PATH = [envpath].concat(localEnv.PATH).join(':');
+    localEnv.PATH = [envpath].concat(process.PATH).join(':');
     return localEnv;
 }
 
@@ -102,6 +103,10 @@ export function teardown (emitter) {
     }
 }
 
+export function getMergedEnv (process: any, task: Task, trigger: CommandTrigger) {
+    return merge({}, getEnv(process.env, trigger.config), trigger.input.env, task.env);
+}
+
 /**
  * The main export is the function this will be run in the sequence
  * @returns {Function}
@@ -111,7 +116,7 @@ export default function (task: Task, trigger: CommandTrigger) {
     return (opts, ctx, done) => {
 
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
-        const env = getEnv(process.env, task.env, trigger.config);
+        const env = getMergedEnv(process, task, trigger);
         const stdio = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';

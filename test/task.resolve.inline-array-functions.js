@@ -9,7 +9,7 @@ describe('task.resolve (inline-functions)', function () {
         const runner = cli.getRunner(['js --shane'], {
             tasks: {
                 js: function () {
-                    console.log('f11');
+                    // console.log('f11');
                 }
             }
         });
