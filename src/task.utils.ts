@@ -3,6 +3,7 @@ import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
 import {TaskReportType} from "./task.runner";
+import {CommandTrigger} from "./command.run";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -88,6 +89,48 @@ export function locateModule(cwd: string, name: string): string[] {
 //         }
 //     });
 // }
+
+const traverse = require('traverse');
+/**
+ * Convert a JS object into ENV vars
+ * eg:
+ *    var obj = {
+ *      options: {
+ *        docker: {
+ *          port: 8000
+ *        }
+ *      }
+ *    }
+ * ->
+ *    envifyObject(obj, 'CB', 'OPTIONS')
+ * ->
+ *    CB_OPTIONS_DOCKER_PORT=8000
+ */
+export function envifyObject(object:any, prefix:string, topLevel: string) {
+    return traverse(object).reduce(function (acc, x) {
+        if (this.circular) {
+            this.remove();
+            return acc;
+        }
+        if (this.isLeaf) {
+            acc[[prefix, topLevel, ...this.path].join('_').toUpperCase()] = String(this.node);
+        }
+        return acc;
+    }, {});
+}
+
+const merge = require('lodash.merge');
+/**
+ * Currently we add the following from the toplevel of inputs
+ * 1. options
+ * 2. config
+ * 3. env
+ */
+export function getCBEnv (trigger: CommandTrigger): {} {
+    const cbOptionsEnv = envifyObject(trigger.input.options, trigger.config.envPrefix, 'OPTIONS');
+    const cbConfigEnv  = envifyObject(trigger.config, trigger.config.envPrefix, 'CONFIG');
+    return merge(cbOptionsEnv, cbConfigEnv, trigger.input.env);
+}
 
 /**
  * @param {String} item - the string to replace

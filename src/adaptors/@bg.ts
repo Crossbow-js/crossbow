@@ -1,15 +1,19 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown, getEnv, getMergedEnv} from './@npm';
+import {getArgs, runCommand, teardown, getEnv} from './@npm';
 import {Task} from "../task.resolve.d";
+import {envifyObject, getCBEnv} from "../task.utils";
 const debug = require('debug')('cb:@bg');
+const merge = require('lodash.merge');
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
     return function (opts, ctx, done) {
 
-        const args = getArgs(task, trigger);
-        const env = getMergedEnv(process, task, trigger);
-        const stdio = trigger.config.suppressOutput
+        const args   = getArgs(task, trigger);
+        const npmEnv = getEnv(process.env, trigger.config);
+        const cbEnv  = getCBEnv(trigger);
+        const env    = merge({}, npmEnv, cbEnv, task.env, process.env);
+        const stdio  = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';
 

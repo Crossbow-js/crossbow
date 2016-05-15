@@ -2,6 +2,7 @@ import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand, teardown} from './@npm';
 import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
+import {getCBEnv} from "../task.utils";
 const merge = require('lodash.merge');
 const debug = require('debug')('cb:@shell');
 
@@ -14,7 +15,8 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';
         
-        const env = merge({}, process.env, trigger.input.env, task.env);
+        const cbEnv = getCBEnv(trigger);
+        const env = merge({}, cbEnv, task.env, process.env);
 
         debug(`running %s`, args.cmd);
 

@@ -17,7 +17,8 @@ export interface CrossbowConfiguration {
     interactive: boolean
     suppressOutput: boolean
     progress: boolean
-    cbfile: string
+    cbfile: string,
+    envPrefix: string
 }
 
 /**
@@ -77,7 +78,21 @@ const defaults = <CrossbowConfiguration>{
      *
      * Should a failing task be allowed to quit the process?
      */
-    fail: true
+    fail: true,
+    /**
+     * Crossbow will add all options to your environment vars
+     * and will be path-based + prefixed
+     * eg:
+     *  options: {
+     *      docker: {
+     *          port: 8000
+     *      }
+     *  }
+     *
+     *  ->
+     *      CB_DOCKER_PORT=8000
+     */
+    envPrefix: 'CB'
 };
 
 /**
@@ -103,7 +118,7 @@ const flagTransforms = {
         return assign({}, opts, {config: opts.c});
     },
     /**
-     * -c specifies a config file
+     * -v verbose mode
      */
     v: (opts) => {
         return assign({}, opts, {summary: 'verbose'});
