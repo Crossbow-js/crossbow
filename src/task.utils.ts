@@ -224,7 +224,8 @@ export function createCrossbowTasksFromNpmScripts(cwd: string): any {
 const toStringTypes = {
     'obj': '[object Object]',
     'string': '[object String]',
-    'array': '[object Array]'
+    'array': '[object Array]',
+    'function': '[object Function]'
 };
 
 function testType(com: string, val: any): boolean {
@@ -237,6 +238,10 @@ export function isPlainObject(val: any): boolean {
 
 export function isString(val: any): boolean {
     return testType(toStringTypes['string'], val);
+}
+
+export function isFunction (val:any): boolean {
+    return testType(toStringTypes['function'], val); 
 }
 
 export function isReport(report: any) {

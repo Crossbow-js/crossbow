@@ -1,4 +1,3 @@
-import {OutgoingTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {
     TaskError,
@@ -9,6 +8,7 @@ import {
     SubtaskNotFoundError,
     SubtaskWildcardNotAvailableError
 } from "./task.errors.d";
+import {Task} from "./task.resolve.d";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
@@ -22,19 +22,19 @@ export enum TaskErrorTypes {
     FlagNotProvided = <any>"FlagNotProvided"
 }
 
-export function gatherTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskError[] {
+export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
     return [
         getModuleErrors,
         getCBFlagErrors,
         getSubTaskErrors
-    ].reduce((all, fn) => all.concat(fn(outgoing, input)), []);
+    ].reduce((all, fn) => all.concat(fn(task, input)), []);
 }
 
-function getModuleErrors(outgoing: OutgoingTask): TaskError[] {
+function getModuleErrors(task: Task): TaskError[] {
     /**
      * If there are inline functions to execute, this task can never be invalid
      */
-    if (outgoing.inlineFunctions.length) {
+    if (task.inlineFunctions.length) {
         return [];
     }
     
@@ -42,15 +42,15 @@ function getModuleErrors(outgoing: OutgoingTask): TaskError[] {
      * If a module was not located, and there are 0 child tasks,
      * this can be classified as a `module not found error`
      */
-    if (outgoing.modules.length === 0 && outgoing.tasks.length === 0) {
-        return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: outgoing.taskName}]
+    if (task.modules.length === 0 && task.tasks.length === 0) {
+        return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: task.taskName}]
     }
 
     return [];
 }
 
-function getCBFlagErrors(outgoing: OutgoingTask): TaskError[] {
-    return outgoing.cbflags.reduce((all, flag) => {
+function getCBFlagErrors(task: Task): TaskError[] {
+    return task.cbflags.reduce((all, flag) => {
         /**
          * if `flag` is an empty string, the user provided an @ after a task
          * name, but without the right-hand part.
@@ -64,7 +64,7 @@ function getCBFlagErrors(outgoing: OutgoingTask): TaskError[] {
         if (flag === '') {
             return all.concat(<CBFlagNotProvidedError>{
                 type: TaskErrorTypes.FlagNotProvided,
-                taskName: outgoing.taskName
+                taskName: task.taskName
             });
         }
 
@@ -72,7 +72,7 @@ function getCBFlagErrors(outgoing: OutgoingTask): TaskError[] {
     }, []);
 }
 
-function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskError[] {
+function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
     /**
      * Now validate any subtasks given with colon syntax
      *  eg: sass:dev
@@ -82,8 +82,8 @@ function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskErr
      *        sass:
      *          dev: 'input.scss'
      */
-    return outgoing.subTasks.reduce((all, subTaskName) => {
-        const configKeys = Object.keys(objPath.get(input, ['options'].concat(outgoing.baseTaskName), {}));
+    return task.subTasks.reduce((all, subTaskName) => {
+        const configKeys = Object.keys(objPath.get(input, ['options'].concat(task.baseTaskName), {}));
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -121,7 +121,7 @@ function getSubTaskErrors(outgoing: OutgoingTask, input: CrossbowInput): TaskErr
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = objPath.get(input, ['options'].concat(outgoing.baseTaskName, subTaskName));
+        const match = objPath.get(input, ['options'].concat(task.baseTaskName, subTaskName));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,

@@ -1,9 +1,10 @@
 import {TaskError} from "./task.errors.d";
-import {TaskOriginTypes, TaskTypes, TaskRunModes} from "./task.resolve";
+import {TaskOriginTypes, TaskTypes, TaskRunModes, CBFunction} from "./task.resolve";
 
 export interface Task {
     valid: boolean
     taskName: string
+    baseTaskName: string
     subTasks: string[]
     modules: string[]
     tasks: Task[]
@@ -18,9 +19,10 @@ export interface Task {
     duration?: number
     query: any
     flags: any
+    cbflags: string[]
     origin: TaskOriginTypes
     type: TaskTypes
-    inlineFunctions: Array<()=>void>
+    inlineFunctions: Array<CBFunction>
 }
 
 export interface TasknameWithOrigin {

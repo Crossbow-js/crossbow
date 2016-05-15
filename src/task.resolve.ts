@@ -4,10 +4,10 @@ const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule} from "./task.utils";
+import {locateModule, isPlainObject, isString} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, removeNewlines, OutgoingTask} from "./task.preprocess";
+import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
@@ -15,10 +15,10 @@ import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
 /**
  * Function.name is es6 & >
  */
-export interface Function {
+export interface CBFunction extends Function {
     name: string
 }
-export type IncomingTaskItem = string|Function;
+export type IncomingTaskItem = string|CBFunction;
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
     RunnableModule = <any>"RunnableModule",
@@ -31,7 +31,8 @@ export enum TaskOriginTypes {
     CrossbowConfig = <any>"CrossbowConfig",
     NpmScripts = <any>"NpmScripts",
     FileSystem = <any>"FileSystem",
-    Adaptor = <any>"Adaptor"
+    Adaptor = <any>"Adaptor",
+    InlineFunction = <any>"InlineFunction"
 }
 
 export enum TaskRunModes {
@@ -40,14 +41,14 @@ export enum TaskRunModes {
 }
 
 const defaultTask = <Task>{
-    valid: false,
+    valid:    false,
     rawInput: '',
     taskName: undefined,
     subTasks: [],
-    modules: [],
-    tasks: [],
-    parents: [],
-    errors: [],
+    modules:  [],
+    tasks:    [],
+    parents:  [],
+    errors:   [],
     runMode: TaskRunModes.series
 };
 
@@ -61,8 +62,8 @@ function createTask(obj: any): Task {
     return merge({}, defaultTask, obj);
 }
 
-function locateInlineFunctions(incoming: OutgoingTask, input: CrossbowInput) : any[] {
-    const maybe = input.tasks[incoming.baseTaskName];
+function locateInlineFunctions(task: Task, input: CrossbowInput) : any[] {
+    const maybe = input.tasks[task.baseTaskName];
     if (typeof maybe === 'function') {
         return [maybe];
     }
@@ -79,24 +80,22 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     /** DEBUG-END **/
 
     /**
-     * Never modify the current task if it begins
-     * with a `@` - instead just return early with
-     * a adaptors task
-     *  eg: `@npm webpack`
-     */
-    if (typeof taskItem ==='string' && taskItem.match(/^@/)) {
-        return createAdaptorTask(taskItem, parents);
-    }
-
-    /**
      * Do basic processing on each task such as splitting out flags/sub-tasks
      * @type {OutgoingTask}
      */
-    const incoming = preprocessTask(taskItem, trigger.input);
+    const incoming = preprocessTask(taskItem, trigger.input, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
     /** DEBUG-END **/
+
+    /**
+     * Exit now if this task is an 'adaptor' task as any
+     * module/function lookups do not apply
+     */
+    if (incoming.type === TaskTypes.Adaptor) {
+        return incoming;
+    }
 
     /**
      * Try to locate modules/files using the cwd + the current
@@ -204,7 +203,7 @@ function resolveChildTasks(initialTasks: any[], taskName: string, parents: strin
     });
 }
 
-function createAdaptorTask(taskName, parents): Task {
+export function createAdaptorTask(taskName, parents): Task {
 
     /**
      * Strip the first part of the task name.
@@ -241,6 +240,7 @@ function createAdaptorTask(taskName, parents): Task {
     }
 
     return <Task>{
+        baseTaskName: taskName,
         valid: true,
         adaptor: validAdaptorName,
         taskName: taskName,
@@ -256,7 +256,8 @@ function createAdaptorTask(taskName, parents): Task {
         query: {},
         flags: {},
         origin: TaskOriginTypes.Adaptor,
-        type: TaskTypes.Adaptor
+        type: TaskTypes.Adaptor,
+        cbflags: []
     };
 }
 

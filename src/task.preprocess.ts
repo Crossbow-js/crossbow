@@ -1,6 +1,7 @@
 import {Task} from "./task.resolve.d";
 import {CrossbowInput} from "./index";
-import {TaskRunModes} from "./task.resolve";
+import {TaskRunModes, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction} from "./task.resolve";
+import {isString} from "./task.utils";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -20,21 +21,26 @@ export interface IncomingTask {
     query: any
 }
 
-export interface OutgoingTask extends IncomingTask {
-    runMode: TaskRunModes
-    tasks: Task[]
-}
-
-interface Function {
-    name:string
-}
-
 let inlineFnCount = 0;
 
-export function preprocessTask(taskName: string|Function, input: CrossbowInput): OutgoingTask {
+export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput, parents: string[]): Task {
 
+    /**
+     * Never modify the current task if it begins
+     * with a `@` - instead just return early with
+     * a adaptors task
+     *  eg: `@npm webpack`
+     */
+    if (isString(taskName)) {
+        const adaptorName = <string>taskName;
+        if (adaptorName.match(/^@/)) {
+            return createAdaptorTask(adaptorName, parents);
+        }
+    }
+    
     if (typeof taskName === 'function') {
         const fnName = taskName.name;
+        const out: CBFunction = taskName;
         const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
         return {
             cbflags: [],
@@ -46,7 +52,13 @@ export function preprocessTask(taskName: string|Function, input: CrossbowInput):
             rawInput: identifier,
             tasks:    [],
             runMode: TaskRunModes.series,
-            inlineFunctions: [taskName],
+            inlineFunctions: [out],
+            valid: true,
+            modules: [],
+            parents: parents,
+            errors: [],
+            origin: TaskOriginTypes.InlineFunction,
+            type: TaskTypes.InlineFunction
         };
     }
 
@@ -190,7 +202,7 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
  * @param incoming
  * @returns {any}
  */
-function processFlags(incoming: IncomingTask): OutgoingTask {
+function processFlags(incoming: IncomingTask): Task {
 
     const runMode = (function () {
         if (incoming.cbflags.indexOf('p') > -1) {
