@@ -363,7 +363,7 @@ export function reportNoWatchersAvailable() {
         label: `{yellow:+ input: ''}`, nodes: [
             {
                 label: [
-                    `{red.bold:x Input: ''}`,
+                    `{red.bold:x No watchers available}`,
                     getExternalError(InputErrorTypes.NoWatchersAvailable, {}),
                 ].join('\n')
             }

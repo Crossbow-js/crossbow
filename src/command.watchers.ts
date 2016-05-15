@@ -14,7 +14,13 @@ import {logWatcherNames} from "./reporters/defaultReporter";
 export default function execute(trigger: CommandTrigger): void {
     const {input, config}   = trigger;
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
-    const watchTasks        = resolveWatchTasks(topLevelWatchers, trigger);
+
+    if (!topLevelWatchers.length) {
+        reporter.reportNoWatchersAvailable();
+        return;
+    }
+
+    const watchTasks = resolveWatchTasks(topLevelWatchers, trigger);
     const runners = createWatchRunners(watchTasks, trigger);
 
     /**
