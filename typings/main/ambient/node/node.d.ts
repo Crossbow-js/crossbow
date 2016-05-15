@@ -209,6 +209,7 @@ declare module NodeJS {
         end(buffer: Buffer, cb?: Function): void;
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
+        columns?: number
     }
 
     export interface ReadWriteStream extends ReadableStream, WritableStream {}

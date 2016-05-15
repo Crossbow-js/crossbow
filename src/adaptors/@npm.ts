@@ -65,12 +65,12 @@ function runCommand(args: string[], options: CommandOptions) {
 /**
  * Add the local ./node_modules/.bin directory to the beginning
  * of the users PATH - this will allow it to find local scripts
- * @param {process.env} env
+ * @param {process.env} process
  * @param {Immutable.Map} config
  * @returns {object}
  */
-function getEnv(env: any, config: CrossbowConfiguration) {
-    const localEnv = assign({}, env);
+function getEnv(process: any, taskEnv: any, config: CrossbowConfiguration) {
+    const localEnv = assign({}, process, taskEnv);
     const envpath = join(config.cwd, 'node_modules', '.bin');
     localEnv.PATH = [envpath].concat(localEnv.PATH).join(':');
     return localEnv;
@@ -111,7 +111,7 @@ export default function (task: Task, trigger: CommandTrigger) {
     return (opts, ctx, done) => {
 
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
-        const env = getEnv(process.env, trigger.config);
+        const env = getEnv(process.env, task.env, trigger.config);
         const stdio = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';

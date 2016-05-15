@@ -53,3 +53,9 @@ tasks:
   sleep4: '@npm sleep 1'
 
   slow-stream: 'test/fixtures/tasks/slow-stream.js'
+
+  pp:
+    - adadptor: 'sh'
+      command: 'echo "var $SHANE "'
+      env:
+        "SHANE": "HUMANS"
