@@ -4,21 +4,11 @@ const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
 describe('can pre-process incoming task names', function () {
     it('can handle simple tasks tasks', function () {
-        assert.deepEqual(
-            preprocess('file.js', {tasks:{}}),
-            {
-                cbflags: [],
-                flags: {},
-                baseTaskName: 'file.js',
-                subTasks: [],
-                runMode: TaskRunModes.series,
-                rawInput: 'file.js',
-                taskName: 'file.js',
-                query: {},
-                tasks: [],
-                inlineFunctions: []
-            }
-        );
+        const proc = preprocess('file.js', {tasks:{}});
+        assert.equal(proc.baseTaskName, 'file.js');
+        assert.deepEqual(proc.subTasks, []);
+        assert.deepEqual(proc.rawInput, 'file.js');
+        assert.deepEqual(proc.taskName, 'file.js');
     });
     it('can handle single subtask', function () {
         const proc = preprocess('file.js:dev', {tasks:{}});

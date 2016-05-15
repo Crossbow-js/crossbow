@@ -1,6 +1,6 @@
 import {Task} from "./task.resolve.d";
 import {CrossbowInput} from "./index";
-import {TaskRunModes, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction} from "./task.resolve";
+import {TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction} from "./task.resolve";
 import {isString} from "./task.utils";
 
 const assign = require('object-assign');
@@ -24,42 +24,32 @@ export interface IncomingTask {
 let inlineFnCount = 0;
 
 export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput, parents: string[]): Task {
+    if (typeof taskName === 'function') {
+        return handleFunctionInput(taskName, input, parents);
+    }
+    if (typeof taskName === 'string') {
+        return handleStringInput(taskName, input, parents);
+    }
+}
 
+/**
+ * String can be given that may be task themselves, like NPM tasks
+ * or shell commands, but they can also be an alias for other tasks
+ *
+ * examples:
+ *
+ *  - @npm webpack --config webpack.dev.js
+ *  - build (which may be an alias for many other tasks)
+ */
+function handleStringInput (taskName:string, input:CrossbowInput, parents:string[]) {
     /**
      * Never modify the current task if it begins
      * with a `@` - instead just return early with
      * a adaptors task
      *  eg: `@npm webpack`
      */
-    if (isString(taskName)) {
-        const adaptorName = <string>taskName;
-        if (adaptorName.match(/^@/)) {
-            return createAdaptorTask(adaptorName, parents);
-        }
-    }
-    
-    if (typeof taskName === 'function') {
-        const fnName = taskName.name;
-        const out: CBFunction = taskName;
-        const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
-        return {
-            cbflags: [],
-            query:   {},
-            flags:   {},
-            baseTaskName: identifier,
-            subTasks: [],
-            taskName: identifier,
-            rawInput: identifier,
-            tasks:    [],
-            runMode: TaskRunModes.series,
-            inlineFunctions: [out],
-            valid: true,
-            modules: [],
-            parents: parents,
-            errors: [],
-            origin: TaskOriginTypes.InlineFunction,
-            type: TaskTypes.InlineFunction
-        };
+    if (taskName.match(/^@/)) {
+        return createAdaptorTask(taskName, parents);
     }
 
     /**
@@ -89,7 +79,7 @@ export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput
      * Create the base task
      * @type {IncomingTask}
      */
-    const incomingTask = <IncomingTask>{
+    const incomingTask = createTask({
         cbflags: split.cbflags,
         query: split.query,
         flags: split.flags,
@@ -99,7 +89,7 @@ export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput
         rawInput: <string>taskName,
         tasks: [],
         inlineFunctions: []
-    };
+    });
 
     /**
      * Now pass it off to allow any flags to applied
@@ -107,8 +97,23 @@ export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput
     return processFlags(incomingTask);
 }
 
-function createIncomingTask() {
-
+/**
+ * Function can be given inline so this methods handles that
+ */
+function handleFunctionInput (taskName: CBFunction, input: CrossbowInput, parents: string[]): Task {
+    const fnName = taskName.name;
+    const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
+    return createTask({
+        runMode: TaskRunModes.series,
+        baseTaskName: identifier,
+        taskName: identifier,
+        rawInput: identifier,
+        inlineFunctions: [<CBFunction>taskName],
+        valid: true,
+        parents: parents,
+        origin: TaskOriginTypes.InlineFunction,
+        type: TaskTypes.InlineFunction
+    });
 }
 
 export interface SplitTaskAndFlags {
@@ -144,9 +149,7 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
      */
     if (!splitCBFlags) {
         const splitQuery = baseNameAndFlags.baseName.split('?');
-        const query = splitQuery.length > 1
-            ? qs.parse(splitQuery[1])
-            : {};
+        const query = getQuery(splitQuery);
 
         /**
          * Next, look at the top-level input,
@@ -169,25 +172,27 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
      */
     const base = splitCBFlags[1];
     const splitQuery = base.split('?');
-    const query = splitQuery.length > 1
-        ? qs.parse(splitQuery[1])
-        : {};
+    const query = getQuery(splitQuery);
 
-    /**
-     * If the 3rd item in the regex match is undefined, it means
-     * the @ was used at the end of the task name, but a value was not given.
-     * In that case we return an empty string to allow the error collection
-     * to kick in later
-     * @type {string[]}
-     */
-    const cbflags = splitCBFlags[2] === undefined
-        ? ['']
+    const cbflags = (function () {
+        /**
+         * If the 3rd item in the regex match is undefined, it means
+         * the @ was used at the end of the task name, but a value was not given.
+         * In that case we return an empty string to allow the error collection
+         * to kick in later
+         * @type {string[]}
+         */
+        if (splitCBFlags[2] === undefined) {
+            return [''];
+        }
         /**
          * Default case is where there are chars after the @, so we split them up
          *   eg: crossbow run '@npm run webpack@pas'
          *   ->  flags: ['p', 'a', 's']
          */
-        : splitCBFlags[2].split('');
+        return splitCBFlags[2].split('')
+    })();
+
     return {
         taskName: splitQuery[0],
         query,
@@ -196,22 +201,29 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
     };
 }
 
+function getQuery (splitQuery: string[]): {} {
+    if (splitQuery.length > 1) {
+        return qs.parse(splitQuery[1]);
+    }
+    return {}
+}
+
 /**
  * Apply any transformations to options based on
  * CB flags
- * @param incoming
+ * @param task
  * @returns {any}
  */
-function processFlags(incoming: IncomingTask): Task {
+function processFlags(task: Task): Task {
 
     const runMode = (function () {
-        if (incoming.cbflags.indexOf('p') > -1) {
+        if (task.cbflags.indexOf('p') > -1) {
             return TaskRunModes.parallel;
         }
         return TaskRunModes.series;
     })();
 
-    return assign({}, incoming, {
+    return assign({}, task, {
         runMode
     });
 }

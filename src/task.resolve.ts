@@ -41,14 +41,18 @@ export enum TaskRunModes {
 }
 
 const defaultTask = <Task>{
-    valid:    false,
-    rawInput: '',
+    valid:           false,
+    query:           {},
+    flags:           {},
+    subTasks:        [],
+    inlineFunctions: [],
+    modules:         [],
+    tasks:           [],
+    parents:         [],
+    errors:          [],
+    cbflags:         [],
+    rawInput:        '',
     taskName: undefined,
-    subTasks: [],
-    modules:  [],
-    tasks:    [],
-    parents:  [],
-    errors:   [],
     runMode: TaskRunModes.series
 };
 
@@ -58,7 +62,7 @@ const defaultTask = <Task>{
  * @param {object} obj
  * @returns {object}
  */
-function createTask(obj: any): Task {
+export function createTask(obj: any): Task {
     return merge({}, defaultTask, obj);
 }
 
@@ -80,7 +84,11 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     /** DEBUG-END **/
 
     /**
-     * Do basic processing on each task such as splitting out flags/sub-tasks
+     * Handle different types of task input
+     * supported:
+     *  - string
+     *  - function
+     *  - object literal
      * @type {OutgoingTask}
      */
     const incoming = preprocessTask(taskItem, trigger.input, parents);
