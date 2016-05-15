@@ -1,22 +1,8 @@
 const cb = require('./');
 const bs = require('browser-sync').create();
-// const merge = require('rx').Observable.merge;
-
-// cb.task('shane', [function (options, context, done) {
-// 	setTimeout(x => done(), 2000);
-// }, function Shane(options, context, done) {
-// 	setTimeout(x => done(), 1000);
-// }]);
 
 cb.task('reload', function (opts) {
 	bs.reload();
-}).options({
-	dev: {
-		name: "kittie"
-	},
-	other: {
-		name: "shane"
-	}
 });
 
 cb.task('build-all', ['sass']);
@@ -32,16 +18,21 @@ cb.task('serve', ['build-all'], () => {
 
 	// de-bounce HTML changes
 	const w1 = cb.watch(['test/fixtures/*.html'], [() => bs.reload()]);
-	const w2 = cb.watch(['test/fixtures/scss'], ['sass', () => bs.reload('main.css')]);
+	const w2 = cb.watch(['test/fixtures/scss'], ['sass', () => bs.reload('main.css')])
+    //
+	// w2.watcher$
+	// 	.pluck('watchEvent')
+	// 	.subscribe(x => {
+	// 		console.log('watcher', x);
+	// 	})
 
-	// // merge 2 watchers
-	// merge(w1)
-	// 	// filter events to only include 'change'
-	// 	.filter(x => x.event === 'change')
-	// 	// Get access to the event
-	// 	.subscribe(watchEvent => {
-	// 		console.log(watchEvent.event, watchEvent.path);
-	// 	});
+	w2.tracker$
+		.filter(x => {
+			return x.type === 'error' && x.item.task.parents.indexOf('sass') > -1
+		})
+		.subscribe(x => {
+			bs.notify('Error compiling SASS - please check your logs', 10000);
+		})
 });
 
 cb.task('serve2', function (options, context, done) {

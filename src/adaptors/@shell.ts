@@ -29,6 +29,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
         emitter.on('close', function (code) {
             if (code !== 0) {
                 const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+                err.stack = `Previous command failed with exit code ${code}`;
                 err._cbError = true;
                 return done(err);
             }

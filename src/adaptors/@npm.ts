@@ -133,6 +133,7 @@ export default function (task: Task, trigger: CommandTrigger) {
             // todo: Make pretty errors that originate from child processes
             if (code !== 0) {
                 const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+                err.stack = `Previous command failed with exit code ${code}`;
                 err._cbError = true;
                 return done(err);
             }

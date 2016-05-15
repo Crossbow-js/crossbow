@@ -86,8 +86,7 @@ export const api = {
         };
         const cliInput = ['watch', identifer];
         const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config);
-
-        return output.pluck('watchEvent');
+        return output;
     },
     watcher: function (patterns: string[], options: CBWatchOptions) {
         const num = inlineWatcherCount++;
