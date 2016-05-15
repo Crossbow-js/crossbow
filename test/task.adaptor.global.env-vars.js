@@ -31,4 +31,30 @@ describe('Adaptor tasks + global option vars', function () {
                 done();
             });
     });
+    it('@npm with options env vars' , function (done) {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: {
+                    input: '@sh sleep $CB_OPTIONS_MY_NESTED_OBJECT_SLEEP'
+                }
+            },
+            options: {
+                my: {
+                    nested: {
+                        object: {
+                            sleep: 0.3
+                        }
+                    }
+                }
+            }
+        });
+        var start = new Date().getTime();
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function () {
+                assert.ok(new Date().getTime() - start > 300);
+                done();
+            });
+    });
 });
