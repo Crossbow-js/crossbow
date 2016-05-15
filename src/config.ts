@@ -92,7 +92,7 @@ const defaults = <CrossbowConfiguration>{
      *  ->
      *      CB_DOCKER_PORT=8000
      */
-    envPrefix: 'CB'
+    envPrefix: 'cb'
 };
 
 /**

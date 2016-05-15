@@ -127,8 +127,8 @@ const merge = require('lodash.merge');
  * 3. env
  */
 export function getCBEnv (trigger: CommandTrigger): {} {
-    const cbOptionsEnv = envifyObject(trigger.input.options, trigger.config.envPrefix, 'OPTIONS');
-    const cbConfigEnv  = envifyObject(trigger.config, trigger.config.envPrefix, 'CONFIG');
+    const cbOptionsEnv = envifyObject(trigger.input.options, trigger.config.envPrefix, 'options');
+    const cbConfigEnv  = envifyObject(trigger.config, trigger.config.envPrefix, 'config');
     return merge(cbOptionsEnv, cbConfigEnv, trigger.input.env);
 }
 
