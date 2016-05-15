@@ -23,6 +23,7 @@ export interface Task {
     origin: TaskOriginTypes
     type: TaskTypes
     inlineFunctions: Array<CBFunction>
+    env: any
 }
 
 export interface TasknameWithOrigin {

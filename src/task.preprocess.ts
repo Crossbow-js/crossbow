@@ -5,6 +5,8 @@ import {
     IncomingTaskItem
 } from "./task.resolve";
 import {isPlainObject} from "./task.utils";
+import {AdaptorNotFoundError, InvalidTaskInputError} from "./task.errors.d";
+import {TaskErrorTypes} from "./task.errors";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -20,13 +22,53 @@ export function preprocessTask(taskName: IncomingTaskItem, input: CrossbowInput,
     if (typeof taskName === 'string') {
         return handleStringInput(taskName, input, parents);
     }
-    // if (isPlainObject(taskName)) {
-    //     return handleObjectInput(taskName, input, parents);
-    // }
+    if (isPlainObject(taskName)) {
+        return handleObjectInput(taskName, input, parents);
+    }
 }
 
-function handleObjectInput(taskObj: {}, input, parents) {
-    return createTask({});
+export interface TaskLiteral {
+    input?: string
+    adaptor?: string
+    command?: string
+}
+
+function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
+
+    if (typeof taskLiteral.input === 'string') {
+        const taskLiteralAdaptor = createAdaptorTask(taskLiteral.input, parents);
+        return assign({}, taskLiteralAdaptor, taskLiteral);
+    }
+
+    if (typeof taskLiteral.adaptor === 'string' && typeof taskLiteral.command === 'string') {
+        const outgoing = assign({}, taskLiteral);
+        outgoing.rawInput = `@${outgoing.adaptor} ${outgoing.command}`;
+        outgoing.valid    = true;
+        outgoing.type     = TaskTypes.Adaptor;
+        outgoing.origin   = TaskOriginTypes.Adaptor;
+        return createTask(outgoing);
+    }
+
+    return createTask({
+        rawInput: (function () {
+            const asString = JSON.stringify(taskLiteral);
+            if (asString.length > 100 || asString) {
+                return asString.slice(0, 97) + '...';
+            }
+            if (asString.length > process.stdout.columns) {
+                return asString.slice(0, process.stdout.columns - 3) + '...';
+            }
+            return asString;
+        })(),
+        taskName: '',
+        type: TaskTypes.Adaptor,
+        origin: TaskOriginTypes.Adaptor,
+        adaptor: '',
+        errors: [<InvalidTaskInputError>{
+            type: TaskErrorTypes.InvalidTaskInput,
+            input: taskLiteral
+        }]
+    });
 }
 
 /**

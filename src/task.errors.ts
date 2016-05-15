@@ -19,7 +19,8 @@ export enum TaskErrorTypes {
     SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
     AdaptorNotFound = <any>"AdaptorNotFound",
     FlagNotFound = <any>"FlagNotFound",
-    FlagNotProvided = <any>"FlagNotProvided"
+    FlagNotProvided = <any>"FlagNotProvided",
+    InvalidTaskInput = <any>"InvalidTaskInput"
 }
 
 export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] {

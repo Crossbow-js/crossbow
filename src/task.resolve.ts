@@ -52,8 +52,9 @@ const defaultTask = <Task>{
     errors:          [],
     cbflags:         [],
     rawInput:        '',
-    taskName: undefined,
-    runMode: TaskRunModes.series
+    env:             {},
+    taskName:        undefined,
+    runMode:         TaskRunModes.series,
 };
 
 

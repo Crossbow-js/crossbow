@@ -4,15 +4,60 @@ const TaskTypes = require("../dist/task.resolve").TaskTypes;
 const TaskRunModes = require("../dist/task.resolve").TaskRunModes;
 const SequenceItemTypes = require("../dist/task.sequence.factories").SequenceItemTypes;
 
-describe.skip('task.resolve object literal', function () {
-    it('with inline functions', function () {
+describe('task.resolve object literal in long-hand', function () {
+    it('adaptor + command keys', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {
                 js: {
-                    taskName: '@sh ls'
+                    adaptor: 'npm',
+                    command: 'sleep 1',
+                    env: {
+                        DOCKER_IP: 'another'
+                    }
                 }
             }
         });
         assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+    });
+    it('using only input key', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: {
+                    input: '@npm sleep 1',
+                    env: {
+                        DOCKER_IP: '0.0.0.0'
+                    }
+                }
+            }
+        });
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+        assert.equal(runner.tasks.valid[0].tasks[0].env.DOCKER_IP, '0.0.0.0');
+    });
+    it('using only input key in array', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: [{
+                    input: '@npm sleep 1',
+                    env: {
+                        DOCKER_IP: '0.0.0.0'
+                    }
+                }]
+            }
+        });
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+        assert.equal(runner.tasks.valid[0].tasks[0].env.DOCKER_IP, '0.0.0.0');
+    });
+    it('Gives good errors when input is invalid', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: {
+                    env: {
+                        DOCKER_IP: '0.0.0.0'
+                    }
+                }
+            }
+        });
+        assert.equal(runner.tasks.invalid.length, 1);
+        console.log(runner.tasks.invalid[0].tasks[0]);
     });
 });
