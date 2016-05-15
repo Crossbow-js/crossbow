@@ -74,7 +74,7 @@ function runCommand(args: string[], options: CommandOptions) {
 function getEnv(process: any, config: CrossbowConfiguration) {
     const localEnv = <any>{};
     const envpath = join(config.cwd, 'node_modules', '.bin');
-    localEnv.PATH = [envpath].concat(process.PATH).join(':');
+    localEnv.PATH = [envpath].concat(process.env.PATH).join(':');
     return localEnv;
 }
 
@@ -115,13 +115,12 @@ export default function (task: Task, trigger: CommandTrigger) {
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv = getCBEnv(trigger);
-        const env = merge({}, npmEnv, cbEnv, task.env, process.env);
+        const env = merge({}, process.env, npmEnv, cbEnv, task.env);
         const stdio  = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
-
         // todo close all child tasks following the exit of the main process
 
         const emitter = runCommand(commandArgs.cmd, {
