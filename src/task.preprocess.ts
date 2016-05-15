@@ -1,35 +1,32 @@
 import {Task} from "./task.resolve.d";
 import {CrossbowInput} from "./index";
-import {TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction} from "./task.resolve";
-import {isString} from "./task.utils";
+import {
+    TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction,
+    IncomingTaskItem
+} from "./task.resolve";
+import {isPlainObject} from "./task.utils";
 
 const assign = require('object-assign');
 const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
 export const removeNewlines = (x: string) => x.replace(/\n|\r/g, '').trim();
 
-export interface IncomingTask {
-    baseTaskName: string
-    subTasks: string[]
-    rawInput: string
-    taskName: string
-    flags: {}
-    cbflags: string[]
-    modules?: string[]
-    tasks?: Task[]
-    inlineFunctions: any[]
-    query: any
-}
-
 let inlineFnCount = 0;
 
-export function preprocessTask(taskName: string|CBFunction, input: CrossbowInput, parents: string[]): Task {
+export function preprocessTask(taskName: IncomingTaskItem, input: CrossbowInput, parents: string[]): Task {
     if (typeof taskName === 'function') {
         return handleFunctionInput(taskName, input, parents);
     }
     if (typeof taskName === 'string') {
         return handleStringInput(taskName, input, parents);
     }
+    // if (isPlainObject(taskName)) {
+    //     return handleObjectInput(taskName, input, parents);
+    // }
+}
+
+function handleObjectInput(taskObj: {}, input, parents) {
+    return createTask({});
 }
 
 /**

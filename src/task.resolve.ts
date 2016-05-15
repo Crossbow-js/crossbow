@@ -247,26 +247,18 @@ export function createAdaptorTask(taskName, parents): Task {
         });
     }
 
-    return <Task>{
+    return createTask({
         baseTaskName: taskName,
-        valid: true,
-        adaptor: validAdaptorName,
+        valid:    true,
+        adaptor:  validAdaptorName,
         taskName: taskName,
-        subTasks: [],
-        modules: [],
-        inlineFunctions: [],
-        tasks: [],
         rawInput: taskName,
-        parents: parents,
-        errors: [],
-        command: commandInput,
-        runMode: TaskRunModes.series,
-        query: {},
-        flags: {},
-        origin: TaskOriginTypes.Adaptor,
-        type: TaskTypes.Adaptor,
-        cbflags: []
-    };
+        parents:  parents,
+        command:  commandInput,
+        runMode:  TaskRunModes.series,
+        origin:   TaskOriginTypes.Adaptor,
+        type:     TaskTypes.Adaptor,
+    });
 }
 
 /**
