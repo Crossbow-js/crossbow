@@ -29,6 +29,12 @@ export function _e(x) {
         .replace(/}/g, '\\\}');
 }
 
+export function __e(x) {
+    return x
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
+}
+
 export interface InputError {
     type: InputErrorTypes
 }

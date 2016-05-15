@@ -5,6 +5,8 @@ import {
     IncomingTaskItem
 } from "./task.resolve";
 import {isPlainObject} from "./task.utils";
+import {AdaptorNotFoundError, InvalidTaskInputError} from "./task.errors.d";
+import {TaskErrorTypes} from "./task.errors";
 
 const assign = require('object-assign');
 const qs = require('qs');
@@ -47,7 +49,26 @@ function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
         return createTask(outgoing);
     }
 
-    console.error('Task input not supported');
+    return createTask({
+        rawInput: (function () {
+            const asString = JSON.stringify(taskLiteral);
+            if (asString.length > 100 || asString) {
+                return asString.slice(0, 97) + '...';
+            }
+            if (asString.length > process.stdout.columns) {
+                return asString.slice(0, process.stdout.columns - 3) + '...';
+            }
+            return asString;
+        })(),
+        taskName: '',
+        type: TaskTypes.Adaptor,
+        origin: TaskOriginTypes.Adaptor,
+        adaptor: '',
+        errors: [<InvalidTaskInputError>{
+            type: TaskErrorTypes.InvalidTaskInput,
+            input: taskLiteral
+        }]
+    });
 }
 
 /**

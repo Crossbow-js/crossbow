@@ -15,6 +15,10 @@ module.exports = {
         }
     },
     tasks: {
+        "webpack": {
+            "adaptor": "npm",
+            "command": "sleep 1",
+        },
         unit: "@npm sleep 1",
         "buildall@p": ['js', 'css'],
         js: [

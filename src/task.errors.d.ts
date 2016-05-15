@@ -21,6 +21,10 @@ export interface SubtaskNotFoundError extends TaskError {
 export interface AdaptorNotFoundError extends TaskError {
     taskName: string
 }
+export interface InvalidTaskInputError extends TaskError {
+    input: any
+}
+
 export interface CBFlagNotFoundError extends TaskError {
     taskName: string
 }
