@@ -10,9 +10,9 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
     return function (opts, ctx, done) {
 
         const args   = getArgs(task, trigger);
-        const npmEnv = getEnv(process.env, trigger.config);
+        const npmEnv = getEnv(process, trigger.config);
         const cbEnv  = getCBEnv(trigger);
-        const env    = merge({}, npmEnv, cbEnv, task.env, process.env);
+        const env    = merge({}, process.env, npmEnv, cbEnv, task.env);
         const stdio  = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';
