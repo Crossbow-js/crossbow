@@ -14,7 +14,7 @@ import logger from './logger';
 
 const meow = require('meow');
 const assign = require('object-assign');
-const _merge = require('lodash.merge');
+const _merge = require('../lodash.custom').merge;
 const debug = require('debug')('cb:init');
 
 export interface Meow {

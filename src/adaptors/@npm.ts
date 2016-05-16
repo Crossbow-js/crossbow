@@ -6,7 +6,7 @@ const spawn = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
 const debug = require('debug')('cb:adaptors.npm');
 const assign = require('object-assign');
-const merge = require('lodash.merge');
+const merge = require('../../lodash.custom').merge;
 
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";

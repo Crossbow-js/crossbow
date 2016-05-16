@@ -1,6 +1,6 @@
 /// <reference path="../typings/main.d.ts" />
 import {isPlainObject} from './task.utils';
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 const blacklist = ['options', 'bs-config', 'before'];
 
 var watcherUID = 1;

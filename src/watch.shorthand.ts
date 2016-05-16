@@ -1,5 +1,6 @@
 import {CommandTrigger} from "./command.run";
-const merge = require('lodash.merge');
+
+const merge = require('../lodash.custom').merge;
 
 export interface UnwrappedTask {
     patterns: string[]

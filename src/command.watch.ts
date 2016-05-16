@@ -18,7 +18,7 @@ import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 
 const debug = require('debug')('cb:command.watch');
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 
 export interface CrossbowError extends Error {

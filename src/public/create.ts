@@ -6,7 +6,7 @@ import {CrossbowConfiguration} from "../config";
 import {getRawOutputStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
 import {Meow} from "../index";
-const merge = require('lodash.merge');
+const merge = require('../../lodash.custom').merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 

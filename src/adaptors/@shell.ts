@@ -3,7 +3,7 @@ import {getArgs, runCommand, teardown} from './@npm';
 import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
 import {getCBEnv} from "../task.utils";
-const merge = require('lodash.merge');
+const merge = require('../../lodash.custom').merge;
 const debug = require('debug')('cb:@shell');
 
 module.exports = function (task: Task, trigger: CommandTrigger) {

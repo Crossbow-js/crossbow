@@ -1,6 +1,6 @@
 import {TaskTypes, TaskRunModes} from "./task.resolve";
 const objPath = require('object-path');
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const Rx = require('rx');
 const Observable = Rx.Observable;

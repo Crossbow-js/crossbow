@@ -119,7 +119,7 @@ export function envifyObject(object:any, prefix:string, topLevel: string) {
     }, {});
 }
 
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 /**
  * Currently we add the following from the toplevel of inputs
  * 1. options

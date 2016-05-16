@@ -1,5 +1,5 @@
 import {AdaptorNotFoundError} from "./task.errors.d";
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 

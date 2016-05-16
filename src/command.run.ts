@@ -2,7 +2,7 @@
 import {isReport} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
-const merge = require('lodash.merge');
+const merge = require('../lodash.custom').merge;
 
 import {Meow, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
