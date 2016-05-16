@@ -34,9 +34,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
      * @type {Subject<T>}
      */
     trigger.tracker = new Rx.Subject();
-    trigger.tracker$ = trigger.tracker
-        .filter(isReport)
-        .share();
+    trigger.tracker$ = trigger.tracker.share();
 
     debug(`Working with input [${trigger.cli.input}]`);
 
@@ -163,7 +161,6 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
         return before
             .runner
             .series()
-            .filter(isReport)
             .do(report => {
                 if (trigger.config.progress) {
                     reporter.taskReport(report, trigger);

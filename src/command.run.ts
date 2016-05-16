@@ -38,9 +38,7 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * @type {Subject<T>}
      */
     trigger.tracker = new Rx.Subject();
-    trigger.tracker$ = trigger.tracker
-        .filter(isReport)
-        .share();
+    trigger.tracker$ = trigger.tracker.share();
 
     /**
      * First Resolve the task names given in input.
@@ -99,10 +97,6 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
     runner[trigger.config.runMode]
         .call()
         .do(report => trigger.tracker.onNext(report))
-        /**
-         * Now dicard anything that is not a start/error/begin event
-         */
-        .filter(isReport)
         .do((x: TaskReport) => {
             if (trigger.config.progress) {
                 reporter.taskReport(x, trigger);

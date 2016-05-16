@@ -62,7 +62,6 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             const upcoming = watchEvent.runner._runner
                 // todo support parallel running here
                 .series()
-                .filter(isReport)
                 .do(function (val) {
                     // Push reports onto tracker
                     // for cross-watcher reports

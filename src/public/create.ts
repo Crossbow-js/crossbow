@@ -44,6 +44,7 @@ var input = {
     tasks: {},
     watch: {},
     options: {},
+    env: {},
     config: <CrossbowConfiguration>{}, // to be set by lib
     cli: <Meow>{}, // to be set by lib
 };
@@ -59,6 +60,12 @@ function incomingOptions (taskname: string, hash?:any): {} {
 
 export const api = {
     input: input,
+    env: function (obj: any) {
+        input.env = merge(input.env, obj);
+    },
+    config: function (obj: any) {
+        input.config = merge(input.config, obj);
+    },
     task: function (taskname: string) {
         const res = incomingTask.apply(null, arguments);
         input.tasks = merge(input.tasks, res);

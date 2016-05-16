@@ -135,13 +135,13 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
         debug(`using ${cbfiles.valid[0]}`);
         var createFilePaths = getRequirePaths(config);
         var input = require(createFilePaths.valid[0].resolved);
-        input.default.config = config;
+        input.default.config = processConfigs(_merge({}, config, input.default.config), cli.flags);
         input.default.cli = cli;
         if (isCommand(cli.input[0])) {
-            return availableCommands[cli.input[0]].call(null, cli, input.default, config);
+            return availableCommands[cli.input[0]].call(null, cli, input.default, input.default.config);
         }
         cli.input = ['run'].concat(cli.input);
-        return availableCommands['run'].call(null, cli, input.default, config);
+        return availableCommands['run'].call(null, cli, input.default, input.default.config);
     }
     /**
      * Did the user provide the --cbfile flag, but the file was
@@ -159,9 +159,13 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
  */
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): any {
     const firstArg     = cli.input[0];
-    const cbConfig     = _merge({}, input.config, cli.flags);
-    const secondMerge  = merge(cbConfig);
+    const secondMerge  = merge(processConfigs(input.config, cli.flags));
     return availableCommands[firstArg].call(null, cli, input, secondMerge);
+}
+
+function processConfigs (config, flags) {
+    const cbConfig     = _merge({}, config, flags);
+    return merge(cbConfig);
 }
 
 export default handleIncoming;

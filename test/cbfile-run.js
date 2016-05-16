@@ -27,4 +27,38 @@ describe('Using a cbfile', function () {
         });
         assert.equal(runner.sequence[0].options.input, 'some/file.js');
     });
+    it('works with top-level config', function (done) {
+        const runner = cb({
+            input: ['wait'],
+            flags: {
+                handoff: true,
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        var now = new Date().getTime();
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(x => {
+                assert.ok(new Date().getTime() - now > 300);
+                done();
+            })
+    });
+    it('works with top-level env', function (done) {
+        const runner = cb({
+            input: ['wait-env'],
+            flags: {
+                handoff: true,
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        var now = new Date().getTime();
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(x => {
+                assert.ok(new Date().getTime() - now > 300);
+                done();
+            })
+    });
 });
