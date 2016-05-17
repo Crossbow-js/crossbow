@@ -612,7 +612,7 @@ function adaptorLabel(task: Task) {
 }
 
 function moduleLabel(task: Task) {
-    const filepath = relative(process.cwd(), task.modules[0]);
+    const filepath = relative(process.cwd(), task.modules[0].rawInput);
     if (task.taskName === filepath) {
         return `${task.taskName}`;
     }

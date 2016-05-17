@@ -1,9 +1,10 @@
-import {resolve, extname, basename, join} from 'path';
+import {resolve, extname, basename, join, parse} from 'path';
 import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
+import {ParsedPath} from "path";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -53,7 +54,7 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule(config: CrossbowConfiguration, name: string): string[] {
+export function locateModule(config: CrossbowConfiguration, name: string): ExternalTask[] {
 
     const cwd         = config.cwd;
     const filesByName = locateModuleByName(config, name);
@@ -76,7 +77,13 @@ export function locateModule(config: CrossbowConfiguration, name: string): strin
     // return filesByName.concat();
 }
 
-function locateModuleByName (config:CrossbowConfiguration, name:string): string[] {
+export interface ExternalTask {
+    rawInput: string
+    parsed: ParsedPath
+    resolved: string
+}
+
+function locateModuleByName (config:CrossbowConfiguration, name:string): ExternalTask[] {
     return [
         ['tasks', name + '.js'],
         ['tasks', name],
@@ -85,9 +92,13 @@ function locateModuleByName (config:CrossbowConfiguration, name:string): string[
     ]
         .map(x => resolve.apply(null, [config.cwd].concat(x)))
         .filter(existsSync)
-        .filter(x => {
-            var stat = lstatSync(x);
-            return stat.isFile();
+        .filter(x => lstatSync(x).isFile())
+        .map(x => {
+            return {
+                rawInput: name,
+                parsed: parse(name),
+                resolved: x
+            }
         });
 }
 
