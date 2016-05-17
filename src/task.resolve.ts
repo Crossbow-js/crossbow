@@ -115,14 +115,16 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *   =  tasks/sass.js will be run
      * @type {Array}
      */
-    incoming.modules = locateModule(trigger.config, incoming.baseTaskName);
-    debug('Located modules', incoming.modules.length);
+    incoming.externalTasks = locateModule(trigger.config, incoming.baseTaskName);
+    // console.log(incoming.baseTaskName);
+    // console.log(incoming.externalTasks);
+    debug('Located modules', incoming.externalTasks.length);
 
     /**
      * Resolve any child tasks if no modules were found, this is the core of how the recursive
      * alias's work
      */
-    if (!incoming.modules.length) {
+    if (!incoming.externalTasks.length) {
         if (!incoming.inlineFunctions.length) {
             /**
              * Now try to locate inline functions
@@ -148,7 +150,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     );
 
     const type = (function(){
-        if (incoming.modules.length) {
+        if (incoming.externalTasks.length) {
             return TaskTypes.RunnableModule;
         }
         if (incoming.inlineFunctions.length) {
@@ -205,7 +207,7 @@ function resolveChildTasks(initialTasks: any[], taskName: string, parents: strin
             return flat;
         }
 
-        if (!flat.modules.length) {
+        if (!flat.externalTasks.length) {
             flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
         }
         return flat;
@@ -375,7 +377,7 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
      * and there are NO sub tasks to validate, this means the current
      * task is ALWAYS valid so we can return true;
      */
-    if (task.modules.length && !task.tasks.length) {
+    if (task.externalTasks.length && !task.tasks.length) {
         return true;
     }
 }

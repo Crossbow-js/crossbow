@@ -464,7 +464,7 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
         if (item.task.type === TaskTypes.Adaptor) {
             return adaptorLabel(item.task);
         }
-        if (item.task.modules.length) {
+        if (item.task.externalTasks.length) {
             return moduleLabel(item.task);
         }
         return item.task.taskName;
@@ -612,7 +612,7 @@ function adaptorLabel(task: Task) {
 }
 
 function moduleLabel(task: Task) {
-    const filepath = relative(process.cwd(), task.modules[0].rawInput);
+    const filepath = relative(process.cwd(), task.externalTasks[0].rawInput);
     if (task.taskName === filepath) {
         return `${task.taskName}`;
     }

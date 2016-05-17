@@ -1,4 +1,4 @@
-import {resolve, extname, basename, join, parse} from 'path';
+import {relative, resolve, extname, basename, join, parse} from 'path';
 import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
@@ -24,28 +24,11 @@ export enum InputErrorTypes {
     NoWatchersAvailable = <any>"NoWatchersAvailable"
 }
 
-export function _e(x) {
-    return x
-        .replace(/\n|\r/g, '')
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
-}
-
-export function __e(x) {
-    return x
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
-}
-
+export interface InputFileNotFoundError extends InputError {}
+export interface NoTasksAvailableError extends InputError {}
+export interface NoWatchersAvailableError extends InputError {}
 export interface InputError {
     type: InputErrorTypes
-}
-
-export interface InputFileNotFoundError extends InputError {
-}
-export interface NoTasksAvailableError extends InputError {
-}
-export interface NoWatchersAvailableError extends InputError {
 }
 
 export interface InputFiles {
@@ -57,7 +40,7 @@ export interface InputFiles {
 export function locateModule(config: CrossbowConfiguration, name: string): ExternalTask[] {
 
     const cwd         = config.cwd;
-    const filesByName = locateModuleByName(config, name);
+    const filesByName = locateExternalTask(config, name);
 
     /**
      * Exit early if this file exists
@@ -81,23 +64,27 @@ export interface ExternalTask {
     rawInput: string
     parsed: ParsedPath
     resolved: string
+    relative: string
 }
 
-function locateModuleByName (config:CrossbowConfiguration, name:string): ExternalTask[] {
-    return [
+function locateExternalTask (config:CrossbowConfiguration, name:string): ExternalTask[] {
+    const lookups = [
         ['tasks', name + '.js'],
         ['tasks', name],
         [name + '.js'],
         [name]
-    ]
+    ];
+
+    return lookups
         .map(x => resolve.apply(null, [config.cwd].concat(x)))
         .filter(existsSync)
         .filter(x => lstatSync(x).isFile())
-        .map(x => {
+        .map((resolvedFilePath: string): ExternalTask => {
             return {
                 rawInput: name,
-                parsed: parse(name),
-                resolved: x
+                parsed:   parse(resolvedFilePath),
+                resolved: resolvedFilePath,
+                relative: relative(config.cwd, resolvedFilePath)
             }
         });
 }
@@ -337,4 +324,17 @@ export function isReport(report: any) {
 
 export function isInternal (incoming) {
     return incoming.match(/_internal_fn_\d{0,10}$/);
+}
+
+export function _e(x) {
+    return x
+        .replace(/\n|\r/g, '')
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
+}
+
+export function __e(x) {
+    return x
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
 }

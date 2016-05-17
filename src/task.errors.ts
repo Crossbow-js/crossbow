@@ -43,7 +43,7 @@ function getModuleErrors(task: Task): TaskError[] {
      * If a module was not located, and there are 0 child tasks,
      * this can be classified as a `module not found error`
      */
-    if (task.modules.length === 0 && task.tasks.length === 0) {
+    if (task.externalTasks.length === 0 && task.tasks.length === 0) {
         return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: task.taskName}]
     }
 

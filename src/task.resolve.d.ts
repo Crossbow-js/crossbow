@@ -7,7 +7,7 @@ export interface Task {
     taskName: string
     baseTaskName: string
     subTasks: string[]
-    modules: ExternalTask[]
+    externalTasks: ExternalTask[]
     tasks: Task[]
     rawInput: string
     parents: string[]
