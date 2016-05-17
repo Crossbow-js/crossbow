@@ -37,27 +37,23 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule(config: CrossbowConfiguration, name: string): ExternalTask[] {
+export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalTask[] {
 
     const cwd         = config.cwd;
-    const filesByName = locateExternalTask(config, name);
+    const tasksByName = locateExternalTask(config, taskName);
 
     /**
      * Exit early if this file exists
-     * todo - allow this lookup to be cached to prevent future calls
+     * TODO - allow this lookup to be cached to prevent future calls
+     * TODO - skip file/node look-ups when key matches top-level task definition
      */
-    if (filesByName.length) return filesByName;
+    if (tasksByName.length) return tasksByName;
+
+    const tasksByRequire = locateNodeModule(config, taskName);
+
+    if (tasksByRequire.length) return tasksByRequire;
 
     return [];
-
-    /**
-     * If the lookup by name failed (eg crossbow run tasks/icons.js)
-     * then attempt to lookup the taskname in the users local node_modules
-     * directory
-     */
-    // const node/Module  = locateNodeModule(config, name);
-
-    // return filesByName.concat();
 }
 
 export interface ExternalTask {
@@ -89,8 +85,23 @@ function locateExternalTask (config:CrossbowConfiguration, name:string): Externa
         });
 }
 
-function locateNodeModule (config, name) {
-
+function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalTask[] {
+    try {
+        const maybe   = join(config.cwd, 'node_modules', name);
+        const required = require.resolve(maybe);
+        return [{
+            rawInput: name,
+            parsed:   parse(required),
+            resolved: required,
+            relative: relative(config.cwd, required)
+        }];
+    } catch (e) {
+        if (e.code !== 'MODULE_NOT_FOUND') {
+            throw e;
+        }
+        debug(`lookup for ${name} failed`, e.message);
+        return [];
+    }
 }
 
 // /**

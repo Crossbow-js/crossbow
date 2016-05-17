@@ -1,13 +1,13 @@
-import {AdaptorNotFoundError} from "./task.errors.d";
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 
+import {AdaptorNotFoundError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, isPlainObject, isString} from "./task.utils";
+import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, removeNewlines} from "./task.preprocess";
+import {preprocessTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
@@ -41,12 +41,13 @@ export enum TaskRunModes {
 }
 
 const defaultTask = <Task>{
+    baseTaskName:    '',
     valid:           false,
     query:           {},
     flags:           {},
     subTasks:        [],
     inlineFunctions: [],
-    modules:         [],
+    externalTasks:   [],
     tasks:           [],
     parents:         [],
     errors:          [],

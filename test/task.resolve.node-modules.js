@@ -1,26 +1,33 @@
 const assert = require('chai').assert;
 const cli = require("../");
 const TaskTypes = require("../dist/task.resolve").TaskTypes;
-const TaskRunModes = require("../dist/task.resolve").TaskRunModes;
+const TaskErrorTypes = require("../dist/task.errors").TaskErrorTypes;
 const SequenceItemTypes = require("../dist/task.sequence.factories").SequenceItemTypes;
 
 describe('task.resolve from installed node_modules', function () {
-    it.skip('can retrieve task-name without using require()', function () {
+    it('can retrieve task-name using require()', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {
-                js: 'test/fixtures/tasks/error.js'
+                js: 'crossbow-sass'
             }
         });
-        // console.log(runner.tasks.valid[0].tasks[0]);
-        // assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'crossbow-sass');
+        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'node_modules/crossbow-sass/index.js');
     });
-    // it('can retrieve task-name using require()', function () {
+    it('can give good errors when module not found', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: 'Krossbow-scass' // typo
+            }
+        });
+        assert.equal(runner.tasks.invalid[0].tasks[0].errors[0].type, TaskErrorTypes.TaskNotFound);
+    });
+    // it('does not look at any files if the name matches a task definition', function () {
     //     const runner = cli.getRunner(['js'], {
     //         tasks: {
-    //             js: 'crossbow-sass'
+    //             js: 'Krossbow-scass' // typo
     //         }
     //     });
-    //     console.log(runner.tasks.valid[0].tasks[0]);
-    //     // assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+    //     assert.equal(runner.tasks.invalid[0].tasks[0].errors[0].type, TaskErrorTypes.TaskNotFound);
     // });
 });
