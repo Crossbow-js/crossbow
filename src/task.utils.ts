@@ -53,22 +53,46 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule(cwd: string, name: string): string[] {
+export function locateModule(config: CrossbowConfiguration, name: string): string[] {
 
-    const files = [
+    const cwd         = config.cwd;
+    const filesByName = locateModuleByName(config, name);
+
+    /**
+     * Exit early if this file exists
+     * todo - allow this lookup to be cached to prevent future calls
+     */
+    if (filesByName.length) return filesByName;
+
+    return [];
+
+    /**
+     * If the lookup by name failed (eg crossbow run tasks/icons.js)
+     * then attempt to lookup the taskname in the users local node_modules
+     * directory
+     */
+    // const node/Module  = locateNodeModule(config, name);
+
+    // return filesByName.concat();
+}
+
+function locateModuleByName (config:CrossbowConfiguration, name:string): string[] {
+    return [
         ['tasks', name + '.js'],
         ['tasks', name],
         [name + '.js'],
         [name]
     ]
-        .map(x => resolve.apply(null, [cwd].concat(x)))
+        .map(x => resolve.apply(null, [config.cwd].concat(x)))
         .filter(existsSync)
         .filter(x => {
             var stat = lstatSync(x);
             return stat.isFile();
         });
+}
 
-    return files;
+function locateNodeModule (config, name) {
+
 }
 
 // /**
@@ -290,7 +314,7 @@ export function isString(val: any): boolean {
 }
 
 export function isFunction (val:any): boolean {
-    return testType(toStringTypes['function'], val); 
+    return testType(toStringTypes['function'], val);
 }
 
 export function isReport(report: any) {

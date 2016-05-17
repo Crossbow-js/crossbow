@@ -90,7 +90,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - string
      *  - function
      *  - object literal
-     * @type {OutgoingTask}
+     * @type {Task}
      */
     const incoming = preprocessTask(taskItem, trigger.input, parents);
 
@@ -115,7 +115,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *   =  tasks/sass.js will be run
      * @type {Array}
      */
-    incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
+    incoming.modules = locateModule(trigger.config, incoming.baseTaskName);
     debug('Located modules', incoming.modules.length);
 
     /**
