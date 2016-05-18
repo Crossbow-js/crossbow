@@ -642,7 +642,7 @@ function getLabel(task) {
         return npmScriptLabel(task);
     }
 
-    if (task.type === TaskTypes.Group) {
+    if (task.type === TaskTypes.TaskGroup) {
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName}}`;
         }

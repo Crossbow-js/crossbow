@@ -23,7 +23,7 @@ export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
     RunnableModule = <any>"RunnableModule",
     Adaptor  = <any>"Adaptor",
-    Group    = <any>"Group",
+    TaskGroup    = <any>"TaskGroup",
     InlineFunction = <any>"InlineFunction"
 }
 
@@ -108,66 +108,111 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     }
 
     /**
-     * Try to locate modules/files using the cwd + the current
-     * task name. This happens as a first pass so that local files
-     * can always override installed plugins.
-     *  eg: `crossbow-sass` installed locally, but tasks/sass.js file exists
-     *  ->  $ crossbow run sass
-     *   =  tasks/sass.js will be run
-     * @type {Array}
+     * Set child tasks
+     * @type {Task[]|Array}
      */
-    incoming.externalTasks = locateModule(trigger.config, incoming.baseTaskName);
-    // console.log(incoming.baseTaskName);
-    // console.log(incoming.externalTasks);
-    debug('Located modules', incoming.externalTasks.length);
+    incoming.tasks = (function () {
+    	const toplevel = trigger.input.tasks[incoming.baseTaskName];
+        if (toplevel !== undefined) {
+            return [].concat(toplevel).map(x => {
+                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+            });
+        }
+        return [];
+    })();
 
     /**
-     * Resolve any child tasks if no modules were found, this is the core of how the recursive
-     * alias's work
+     * Set task types
+     * @type {TaskTypes}
      */
-    if (!incoming.externalTasks.length) {
-        if (!incoming.inlineFunctions.length) {
-            /**
-             * Now try to locate inline functions
-             * @type {Array}
-             */
-            incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
-            debug('Located inline functions', incoming.inlineFunctions.length);
-
-            if (!incoming.inlineFunctions.length) {
-
-                /**
-                 * Finally, it probably has nested tasks
-                 * @type {Task[]}
-                 */
-                incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
-            }
-        }
-    }
-
-    const errors = gatherTaskErrors(
-        incoming,
-        trigger.input
-    );
-
-    const type = (function(){
+    incoming.type = (function () {
         if (incoming.externalTasks.length) {
             return TaskTypes.RunnableModule;
         }
         if (incoming.inlineFunctions.length) {
             return TaskTypes.InlineFunction;
         }
-        return TaskTypes.Group;
+        return TaskTypes.TaskGroup;
     })();
 
-    debug(`Setting type ${type}`);
+    /**
+     * @type {boolean}
+     */
+    incoming.valid = (function () {
+    	if (incoming.type === TaskTypes.TaskGroup) {
+            return true;
+        }
+        return false;
+    })();
 
-    return createTask(assign({}, incoming, {
-        parents,
-        errors,
-        type,
-        valid: errors.length === 0
-    }));
+    incoming.errors = gatherTaskErrors(
+        incoming,
+        trigger.input
+    );
+
+    return incoming;
+
+    // /**
+    //  * Try to locate modules/files using the cwd + the current
+    //  * task name. This happens as a first pass so that local files
+    //  * can always override installed plugins.
+    //  *  eg: `crossbow-sass` installed locally, but tasks/sass.js file exists
+    //  *  ->  $ crossbow run sass
+    //  *   =  tasks/sass.js will be run
+    //  * @type {Array}
+    //  */
+    // incoming.externalTasks = locateModule(trigger.config, incoming.baseTaskName);
+    // // console.log(incoming.baseTaskName);
+    // // console.log(incoming.externalTasks);
+    // debug('Located modules', incoming.externalTasks.length);
+    //
+    // /**
+    //  * Resolve any child tasks if no modules were found, this is the core of how the recursive
+    //  * alias's work
+    //  */
+    // if (!incoming.externalTasks.length) {
+    //     if (!incoming.inlineFunctions.length) {
+    //         /**
+    //          * Now try to locate inline functions
+    //          * @type {Array}
+    //          */
+    //         incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
+    //         debug('Located inline functions', incoming.inlineFunctions.length);
+    //
+    //         if (!incoming.inlineFunctions.length) {
+    //
+    //             /**
+    //              * Finally, it probably has nested tasks
+    //              * @type {Task[]}
+    //              */
+    //             incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
+    //         }
+    //     }
+    // }
+    //
+    // const errors = gatherTaskErrors(
+    //     incoming,
+    //     trigger.input
+    // );
+    //
+    // const type = (function(){
+    //     if (incoming.externalTasks.length) {
+    //         return TaskTypes.RunnableModule;
+    //     }
+    //     if (incoming.inlineFunctions.length) {
+    //         return TaskTypes.InlineFunction;
+    //     }
+    //     return TaskTypes.Group;
+    // })();
+    //
+    // debug(`Setting type ${type}`);
+    //
+    // return createTask(assign({}, incoming, {
+    //     parents,
+    //     errors,
+    //     type,
+    //     valid: errors.length === 0
+    // }));
 }
 
 function resolveChildTasks(initialTasks: any[], taskName: string, parents: string[], trigger: CommandTrigger): Task[] {
