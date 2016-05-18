@@ -5,7 +5,7 @@ import {
     IncomingTaskItem
 } from "./task.resolve";
 import {isPlainObject} from "./task.utils";
-import {AdaptorNotFoundError, InvalidTaskInputError} from "./task.errors.d";
+import {InvalidTaskInputError} from "./task.errors.d";
 import {TaskErrorTypes} from "./task.errors";
 
 const assign = require('object-assign');
@@ -125,9 +125,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         baseTaskName,
         subTasks,
         taskName: baseTaskName,
-        rawInput: <string>taskName,
-        tasks: [],
-        inlineFunctions: []
+        rawInput: <string>taskName
     });
 
     /**

@@ -39,7 +39,6 @@ export interface InputFiles {
 
 export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalTask[] {
 
-    const cwd         = config.cwd;
     const tasksByName = locateExternalTask(config, taskName);
 
     /**
