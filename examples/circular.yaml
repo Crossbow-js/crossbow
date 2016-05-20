@@ -1,6 +1,13 @@
 tasks:
   build:
-    - 'sleep'
+    - deep1
+
+  deep1:
+    - deep2
+
+  deep2:
+    - sleep
+
   sleep:
     - '@npm sleep 1'
     - 'build'
