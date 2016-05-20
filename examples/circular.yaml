@@ -1,0 +1,6 @@
+tasks:
+  build:
+    - 'sleep'
+  sleep:
+    - '@npm sleep 1'
+    - 'build'
