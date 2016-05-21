@@ -4,10 +4,10 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule} from "./task.utils";
+import {locateModule, removeNewlines} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, removeNewlines} from "./task.preprocess";
+import {preprocessTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";

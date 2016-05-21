@@ -386,14 +386,16 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
         return err.toString();
     }
     const head = [
-        `{red:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
+        `{red.bold:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
-    const body = err._cbError ? [] : err.stack.split('\n').slice(1).join('\n');
-    const tail = [`- Please see above for any output that occurred`];
-
-    return [...head, getStack(body), ...tail].join('\n');
-    // return [...head, body, ...tail].join('\n');
+    const body = err.stack.split('\n').slice(1);
+    const stack = getStack(body);
+    const tail = `- Please see above for any output that may of occurred`;
+    if (!stack) {
+        return [...head, tail].join('\n');
+    }
+    return [...head, getStack(body), tail].join('\n');
 }
 
 export function getStack (stack) {

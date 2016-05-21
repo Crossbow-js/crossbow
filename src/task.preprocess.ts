@@ -4,14 +4,13 @@ import {
     TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction,
     IncomingTaskItem
 } from "./task.resolve";
-import {isPlainObject} from "./task.utils";
+import {isPlainObject, stringifyObj} from "./task.utils";
 import {InvalidTaskInputError} from "./task.errors.d";
 import {TaskErrorTypes} from "./task.errors";
 
 const assign = require('object-assign');
 const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
-export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
 
 let inlineFnCount = 0;
 
@@ -45,16 +44,7 @@ function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
     }
 
     return createTask({
-        rawInput: (function () {
-            const asString = JSON.stringify(taskLiteral);
-            if (asString.length > 100 || asString) {
-                return asString.slice(0, 97) + '...';
-            }
-            if (asString.length > process.stdout.columns) {
-                return asString.slice(0, process.stdout.columns - 3) + '...';
-            }
-            return asString;
-        })(),
+        rawInput: stringifyObj(taskLiteral),
         taskName: '',
         type: TaskTypes.Adaptor,
         origin: TaskOriginTypes.Adaptor,

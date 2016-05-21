@@ -115,20 +115,24 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
          * If it throws, the login in the `do` block below will not run
          * and the watchers will not begin
          */
-        createBeforeRunner(before).do(() => reporter.reportWatchers(watchTasks.valid, config)),
-        createObservablesForWatchers(runners.valid, trigger)
+        createBeforeRunner(before)
             .catch(err => {
-            // Only intercept Crossbow errors
-            // otherwise just allow it to be thrown
-            // For example, 'before' runner may want
-            // to terminate the stream, but not with a throwable
-            if (err._cb) {
-                return Rx.Observable.empty();
-            }
-            return Rx.Observable.throw(err);
-        })).share();
+                // Only intercept Crossbow errors
+                // otherwise just allow it to be thrown
+                // For example, 'before' runner may want
+                // to terminate the stream, but not with a throwable
+                if (err._cb) {
+                    sub.dispose();
+                    return Rx.Observable.empty();
+                }
+                return Rx.Observable.throw(err);
+            })
+            .do(() => {
+                reporter.reportWatchers(watchTasks.valid, config);
+            }),
+        createObservablesForWatchers(runners.valid, trigger)).share();
 
-    watcher$.subscribe();
+    const sub = watcher$.subscribe();
 
     return {
         watcher$,

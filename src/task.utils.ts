@@ -302,6 +302,32 @@ export function createCrossbowTasksFromNpmScripts(cwd: string): any {
     return transformed;
 }
 
+export function getFunctionName (fn) {
+    if (fn.name !== '') {
+        return `[Function: ${fn.name}]`;
+    }
+    return '[Function]';
+}
+export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
+export function stringifyObj (incoming: any, max = 100): string {
+    const asString = (function () {
+        if (typeof incoming !== 'string') {
+            return JSON.stringify(incoming);
+        }
+        return incoming;
+    })()
+    if (asString.length > max || asString) {
+        return asString.slice(0, (max - 3)) + (function () {
+            if (asString.length - max > -3) return '...';
+            return '';
+        })();
+    }
+    if (asString.length > process.stdout.columns) {
+        return asString.slice(0, process.stdout.columns - 3) + '...';
+    }
+    return asString;
+}
+
 const toStringTypes = {
     'obj': '[object Object]',
     'string': '[object String]',
