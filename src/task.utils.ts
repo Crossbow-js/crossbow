@@ -1,9 +1,10 @@
-import {resolve, extname, basename, join} from 'path';
+import {relative, resolve, extname, basename, join, parse} from 'path';
 import {existsSync, readFileSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
+import {ParsedPath} from "path";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -23,28 +24,11 @@ export enum InputErrorTypes {
     NoWatchersAvailable = <any>"NoWatchersAvailable"
 }
 
-export function _e(x) {
-    return x
-        .replace(/\n|\r/g, '')
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
-}
-
-export function __e(x) {
-    return x
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
-}
-
+export interface InputFileNotFoundError extends InputError {}
+export interface NoTasksAvailableError extends InputError {}
+export interface NoWatchersAvailableError extends InputError {}
 export interface InputError {
     type: InputErrorTypes
-}
-
-export interface InputFileNotFoundError extends InputError {
-}
-export interface NoTasksAvailableError extends InputError {
-}
-export interface NoWatchersAvailableError extends InputError {
 }
 
 export interface InputFiles {
@@ -53,22 +37,70 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule(cwd: string, name: string): string[] {
+export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalTask[] {
 
-    const files = [
+    const tasksByName = locateExternalTask(config, taskName);
+
+    /**
+     * Exit early if this file exists
+     * TODO - allow this lookup to be cached to prevent future calls
+     * TODO - skip file/node look-ups when key matches top-level task definition
+     */
+    if (tasksByName.length) return tasksByName;
+
+    const tasksByRequire = locateNodeModule(config, taskName);
+
+    if (tasksByRequire.length) return tasksByRequire;
+
+    return [];
+}
+
+export interface ExternalTask {
+    rawInput: string
+    parsed: ParsedPath
+    resolved: string
+    relative: string
+}
+
+function locateExternalTask (config:CrossbowConfiguration, name:string): ExternalTask[] {
+    const lookups = [
         ['tasks', name + '.js'],
         ['tasks', name],
         [name + '.js'],
         [name]
-    ]
-        .map(x => resolve.apply(null, [cwd].concat(x)))
-        .filter(existsSync)
-        .filter(x => {
-            var stat = lstatSync(x);
-            return stat.isFile();
-        });
+    ];
 
-    return files;
+    return lookups
+        .map(x => resolve.apply(null, [config.cwd].concat(x)))
+        .filter(existsSync)
+        .filter(x => lstatSync(x).isFile())
+        .map((resolvedFilePath: string): ExternalTask => {
+            return {
+                rawInput: name,
+                parsed:   parse(resolvedFilePath),
+                resolved: resolvedFilePath,
+                relative: relative(config.cwd, resolvedFilePath)
+            }
+        });
+}
+
+function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalTask[] {
+    try {
+        const maybe   = join(config.cwd, 'node_modules', name);
+        const required = require.resolve(maybe);
+        return [{
+            rawInput: name,
+            parsed:   parse(required),
+            resolved: required,
+            relative: relative(config.cwd, required)
+        }];
+    } catch (e) {
+        if (e.code !== 'MODULE_NOT_FOUND') {
+            throw e;
+        }
+        debug(`lookup for ${name} failed`, e.message);
+        return [];
+    }
 }
 
 // /**
@@ -290,7 +322,7 @@ export function isString(val: any): boolean {
 }
 
 export function isFunction (val:any): boolean {
-    return testType(toStringTypes['function'], val); 
+    return testType(toStringTypes['function'], val);
 }
 
 export function isReport(report: any) {
@@ -302,4 +334,17 @@ export function isReport(report: any) {
 
 export function isInternal (incoming) {
     return incoming.match(/_internal_fn_\d{0,10}$/);
+}
+
+export function _e(x) {
+    return x
+        .replace(/\n|\r/g, '')
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
+}
+
+export function __e(x) {
+    return x
+        .replace(/\{/g, '\\\{')
+        .replace(/}/g, '\\\}');
 }

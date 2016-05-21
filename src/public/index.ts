@@ -27,7 +27,7 @@ module.exports.runner = function getRunner(tasks: string[], input?: any, config?
 };
 
 module.exports.run = function run(tasks: string[], input?: any, config?: any) {
-    handleIncoming({
+    return handleIncoming({
         input: ['run', ...tasks],
         flags: config || {}
     }, input || {});

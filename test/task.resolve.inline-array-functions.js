@@ -24,7 +24,7 @@ describe('task.resolve (inline-functions)', function () {
                 kittie: function () {}
             }
         });
-        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
         assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
         assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
     });

@@ -13,6 +13,9 @@ import Immutable = require('immutable');
 import * as seq from "./task.sequence";
 import * as reporter from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
+import {Tasks} from "./task.resolve.d";
+import {SequenceItem} from "./task.sequence.factories";
+import {Runner} from "./runner";
 
 export interface CommandTrigger {
     type: TriggerTypes
@@ -29,9 +32,27 @@ export enum TriggerTypes {
     watcher = <any>"watcher",
 }
 
-export default function execute(trigger: CommandTrigger): TaskRunner {
+export enum RunCommandReportTypes {
+    InvalidTasks = <any>"InvalidTasks",
+    Complete = <any>"Complete"
+}
+
+export interface RunCommandErrorReport {
+    type: RunCommandReportTypes
+    tasks: Tasks,
+    sequence: SequenceItem[]
+    runner: Runner
+}
+
+export interface RunCommandCompletionReport extends RunCommandErrorReport {
+    type: RunCommandReportTypes
+    reports: TaskReport[]
+}
+
+type RunCommandErrorStream = RunCommandErrorReport|Error;
+
+function getRunCommandSetup (trigger) {
     const cliInput = trigger.cli.input.slice(1);
-    const {cli, input, config} = trigger;
 
     /**
      * task Tracker for external observers
@@ -67,10 +88,13 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * if thats the case we give them the resolved tasks along with
      * the sequence and the primed runner
      */
-    if (config.handoff) {
-        debug(`Handing off runner`);
-        return {tasks, sequence, runner};
-    }
+    return {tasks, sequence, runner};
+}
+
+export default function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
+
+    const {cli, input, config} = trigger;
+    const {tasks, sequence, runner} = getRunCommandSetup(trigger);
 
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
@@ -78,10 +102,19 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      */
     if (tasks.invalid.length) {
         reporter.reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
-        return;
+        return Rx.Observable.concat<RunCommandErrorStream>(
+            Rx.Observable.just(<RunCommandErrorReport>{
+                type: RunCommandReportTypes.InvalidTasks,
+                tasks,
+                sequence,
+                runner,
+                name: 'shame'
+            }),
+            Rx.Observable.throw(new Error(`RunCommandErrorTypes.InvalidTasks`))
+        );
     }
 
-    debug(`~ run mode from CLI '${config.runMode}'`);
+    debug(`~ run mode from config '${config.runMode}'`);
 
     /**
      * Report task list that's about to run
@@ -93,8 +126,9 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
      * @type {number}
      */
     const timestamp = new Date().getTime();
+    const complete$ = new Rx.Subject<RunCommandCompletionReport>();
 
-    runner[trigger.config.runMode]
+    const run$ = runner[trigger.config.runMode]
         .call()
         .do(report => trigger.tracker.onNext(report))
         .do((x: TaskReport) => {
@@ -103,14 +137,23 @@ export default function execute(trigger: CommandTrigger): TaskRunner {
             }
         })
         .toArray()
-        .subscribe((reports: TaskReport[]) => {
-            const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-            reporter.reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
+        .share();
+
+    run$
+        .map(reports => seq.decorateSequenceWithReports(sequence, reports))
+        .do(reports => {
+            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner});
+            complete$.onCompleted();
+        })
+        .subscribe((sequenceItems: SequenceItem[]) => {
+            reporter.reportSummary(sequenceItems, cli, 'Total: ', config, new Date().getTime() - timestamp);
         }, e => {
-            // never gunna get here baby
+            // never reaches here baby
         }, _ => {
             debug('All tasks finished');
-        })
+        });
+
+    return complete$;
 }
 
 export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
@@ -125,6 +168,8 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
      */
     const sharedMap     = new Rx.BehaviorSubject(Immutable.Map({}));
 
+    const type = TriggerTypes.command;
+
     debug('top level tasks available', topLevelTasks);
 
     /**
@@ -135,6 +180,16 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
     if (cli.input.length === 2) {
         debug('Setting config.runMode = parallel');
         config.runMode = TaskRunModes.parallel;
+    }
+
+    if (config.handoff) {
+        return getRunCommandSetup({
+            shared: sharedMap,
+            cli,
+            input,
+            config,
+            type
+        });
     }
 
     /**
@@ -204,7 +259,7 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
                 cli: cliMerged,
                 input,
                 config: configMerged,
-                type: TriggerTypes.command
+                type
             });
         });
     }
@@ -220,7 +275,7 @@ export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config
         cli,
         input,
         config,
-        type: TriggerTypes.command
+        type
     });
 }
 

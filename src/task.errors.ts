@@ -9,6 +9,7 @@ import {
     SubtaskWildcardNotAvailableError
 } from "./task.errors.d";
 import {Task} from "./task.resolve.d";
+import {TaskTypes} from "./task.resolve";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
@@ -20,7 +21,8 @@ export enum TaskErrorTypes {
     AdaptorNotFound = <any>"AdaptorNotFound",
     FlagNotFound = <any>"FlagNotFound",
     FlagNotProvided = <any>"FlagNotProvided",
-    InvalidTaskInput = <any>"InvalidTaskInput"
+    InvalidTaskInput = <any>"InvalidTaskInput",
+    CircularReference = <any>"CircularReference"
 }
 
 export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
@@ -32,18 +34,15 @@ export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] 
 }
 
 function getModuleErrors(task: Task): TaskError[] {
-    /**
-     * If there are inline functions to execute, this task can never be invalid
-     */
-    if (task.inlineFunctions.length) {
-        return [];
-    }
     
+    if (task.type === TaskTypes.ExternalTask)   return [];
+    if (task.type === TaskTypes.InlineFunction) return [];
+
     /**
      * If a module was not located, and there are 0 child tasks,
      * this can be classified as a `module not found error`
      */
-    if (task.modules.length === 0 && task.tasks.length === 0) {
+    if (task.externalTasks.length === 0 && task.tasks.length === 0) {
         return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: task.taskName}]
     }
 

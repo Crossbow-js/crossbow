@@ -13,7 +13,7 @@ export interface CrossbowConfiguration {
     stack: boolean
     reporter: string
     handoff: boolean
-    config: string|void
+    config?: string|void
     interactive: boolean
     suppressOutput: boolean
     progress: boolean

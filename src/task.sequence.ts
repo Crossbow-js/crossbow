@@ -84,7 +84,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 if (task.type === TaskTypes.InlineFunction) {
                     return task.inlineFunctions[0];
                 }
-                return require(task.modules[0]);
+                return require(task.externalTasks[0].resolved);
             })();
             return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
         }, initial);

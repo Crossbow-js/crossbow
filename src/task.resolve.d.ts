@@ -1,12 +1,13 @@
 import {TaskError} from "./task.errors.d";
 import {TaskOriginTypes, TaskTypes, TaskRunModes, CBFunction} from "./task.resolve";
+import {ExternalTask} from "./task.utils";
 
 export interface Task {
     valid: boolean
     taskName: string
     baseTaskName: string
     subTasks: string[]
-    modules: string[]
+    externalTasks: ExternalTask[]
     tasks: Task[]
     rawInput: string
     parents: string[]

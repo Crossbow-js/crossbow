@@ -244,7 +244,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
     logger.unprefixed('info', '\n' + runners.valid.map(x => `   {gray:$} crossbow watch {bold:${x.parent}}`).join('\n'));
     if (runners.valid.length > 1) {
         console.log('');
-        logger.info('Or run multiple watchers at once, such as:')
+        logger.info('Or run multiple watchers at once, such as:');
         logger.unprefixed('info', '\n   {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
         console.log('');
     }
@@ -464,7 +464,7 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
         if (item.task.type === TaskTypes.Adaptor) {
             return adaptorLabel(item.task);
         }
-        if (item.task.modules.length) {
+        if (item.task.externalTasks.length) {
             return moduleLabel(item.task);
         }
         return item.task.taskName;
@@ -562,7 +562,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
             }
 
             if (task.type === TaskTypes.Adaptor ||
-                task.type === TaskTypes.RunnableModule) {
+                task.type === TaskTypes.ExternalTask) {
                 if (task.errors.length) {
                     return acc.concat({
                         label: label,
@@ -612,7 +612,7 @@ function adaptorLabel(task: Task) {
 }
 
 function moduleLabel(task: Task) {
-    const filepath = relative(process.cwd(), task.modules[0]);
+    const filepath = relative(process.cwd(), task.externalTasks[0].rawInput);
     if (task.taskName === filepath) {
         return `${task.taskName}`;
     }
@@ -632,38 +632,40 @@ function getLabel(task) {
             }
             return '[Function]';
         })();
-        if (task.errors.length) {
-            return `{red.bold:x ${task.taskName} ${fnName}}`;
-        }
-        return `${task.taskName} ${fnName}`;
+        return maybeErrorLabel(task, `${task.taskName} ${fnName}`);
     }
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
         return npmScriptLabel(task);
     }
 
-    if (task.type === TaskTypes.Group) {
+    if (task.type === TaskTypes.TaskGroup) {
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName}}`;
         }
         return `{bold:${task.taskName}}`;
     }
 
-    if (task.type === TaskTypes.RunnableModule) {
-        if (task.errors.length) {
-            return `{red.bold:x ${task.rawInput}}`;
-        }
-        return `{cyan:${task.taskName}}`;
+    if (task.type === TaskTypes.ExternalTask) {
+        return maybeErrorLabel(task, task.taskName);
     }
 
     if (task.type === TaskTypes.Adaptor) {
-        if (task.errors.length) {
-            return `{red.bold:x ${task.rawInput}}`;
-        }
-        return adaptorLabel(task);
+        return maybeErrorLabel(task, task.rawInput);
+    }
+
+    if (task.errors.length) {
+        return `{red.bold:x ${task.taskName}}`;
     }
 
     return `${task.taskName}}`;
+}
+
+function maybeErrorLabel (task: Task, label: string): string {
+    if (task.errors.length) {
+        return `{red.bold:x ${label}}`;
+    }
+    return label;
 }
 
 function duration (ms) {

@@ -1,10 +1,10 @@
-import {AdaptorNotFoundError} from "./task.errors.d";
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 
+import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, isPlainObject, isString} from "./task.utils";
+import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask, removeNewlines} from "./task.preprocess";
@@ -21,9 +21,9 @@ export interface CBFunction extends Function {
 export type IncomingTaskItem = string|CBFunction;
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
-    RunnableModule = <any>"RunnableModule",
+    ExternalTask = <any>"ExternalTask",
     Adaptor  = <any>"Adaptor",
-    Group    = <any>"Group",
+    TaskGroup    = <any>"TaskGroup",
     InlineFunction = <any>"InlineFunction"
 }
 
@@ -41,12 +41,13 @@ export enum TaskRunModes {
 }
 
 const defaultTask = <Task>{
+    baseTaskName:    '',
     valid:           false,
     query:           {},
     flags:           {},
     subTasks:        [],
     inlineFunctions: [],
-    modules:         [],
+    externalTasks:   [],
     tasks:           [],
     parents:         [],
     errors:          [],
@@ -67,12 +68,14 @@ export function createTask(obj: any): Task {
     return merge({}, defaultTask, obj);
 }
 
-function locateInlineFunctions(task: Task, input: CrossbowInput) : any[] {
-    const maybe = input.tasks[task.baseTaskName];
-    if (typeof maybe === 'function') {
-        return [maybe];
-    }
-    return [];
+export function createCircularReferenceTask(incoming: Task, parents: string[]): Task {
+    return merge({}, defaultTask, incoming, {
+        errors: [<CircularReferenceError>{
+            type: TaskErrorTypes.CircularReference,
+            incoming: incoming,
+            parents: parents
+        }]
+    });
 }
 
 /**
@@ -90,7 +93,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - string
      *  - function
      *  - object literal
-     * @type {OutgoingTask}
+     * @type {Task}
      */
     const incoming = preprocessTask(taskItem, trigger.input, parents);
 
@@ -100,119 +103,100 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
     /**
      * Exit now if this task is an 'adaptor' task as any
-     * module/function lookups do not apply
+     * module/function look-ups do not apply
      */
     if (incoming.type === TaskTypes.Adaptor) {
         return incoming;
     }
 
     /**
-     * Try to locate modules/files using the cwd + the current
-     * task name. This happens as a first pass so that local files
-     * can always override installed plugins.
-     *  eg: `crossbow-sass` installed locally, but tasks/sass.js file exists
-     *  ->  $ crossbow run sass
-     *   =  tasks/sass.js will be run
-     * @type {Array}
+     * Set child tasks
+     * @type {Task[]|Array}
      */
-    incoming.modules = locateModule(trigger.config.cwd, incoming.baseTaskName);
-    debug('Located modules', incoming.modules.length);
+    incoming.tasks = (function () {
+    	const toplevel = getTopLevelValue(incoming, trigger);
+        if (toplevel !== undefined) {
+            if (typeof toplevel === 'function') {
+                return [];
+            }
+            return [].concat(toplevel).map(x => {
+                if (parents.indexOf(x) > -1) {
+                    // todo - create log output for circular reference errors
+                    return createCircularReferenceTask(incoming, parents);
+                }
+                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+            });
+        }
+        return [];
+    })();
 
     /**
-     * Resolve any child tasks if no modules were found, this is the core of how the recursive
-     * alias's work
+     * @type {CBFunction[]}
      */
-    if (!incoming.modules.length) {
-        if (!incoming.inlineFunctions.length) {
-            /**
-             * Now try to locate inline functions
-             * @type {Array}
-             */
-            incoming.inlineFunctions = locateInlineFunctions(incoming, trigger.input);
-            debug('Located inline functions', incoming.inlineFunctions.length);
-
-            if (!incoming.inlineFunctions.length) {
-
-                /**
-                 * Finally, it probably has nested tasks
-                 * @type {Task[]}
-                 */
-                incoming.tasks = resolveChildTasks([], incoming.baseTaskName, parents, trigger);
-            }
+    incoming.inlineFunctions = (function () {
+        if (incoming.inlineFunctions.length) return incoming.inlineFunctions;
+        if (incoming.tasks.length)           return [];
+        const toplevel = getTopLevelValue(incoming, trigger);
+        if (typeof toplevel === 'function') {
+            return [toplevel];
         }
-    }
+        return [];
+    })();
 
-    const errors = gatherTaskErrors(
-        incoming,
-        trigger.input
-    );
+    /**
+     * @type {ExternalTask[]}
+     */
+    incoming.externalTasks = (function () {
+        if (incoming.tasks.length)           return [];
+        if (incoming.inlineFunctions.length) return [];
+        return locateModule(trigger.config, incoming.baseTaskName);
+    })();
 
-    const type = (function(){
-        if (incoming.modules.length) {
-            return TaskTypes.RunnableModule;
+    /**
+     * Set task types
+     * @type {TaskTypes}
+     */
+    incoming.type = (function () {
+        if (incoming.externalTasks.length) {
+            return TaskTypes.ExternalTask;
         }
         if (incoming.inlineFunctions.length) {
             return TaskTypes.InlineFunction;
         }
-        return TaskTypes.Group;
+        return TaskTypes.TaskGroup;
     })();
 
-    debug(`Setting type ${type}`);
+    /**
+     * @type {boolean}
+     */
+    incoming.valid = (function () {
+    	if (incoming.type === TaskTypes.TaskGroup) return true;
+    	if (incoming.type === TaskTypes.InlineFunction) return true;
+    	if (incoming.type === TaskTypes.ExternalTask) return true;
+        return false;
+    })();
 
-    return createTask(assign({}, incoming, {
-        parents,
-        errors,
-        type,
-        valid: errors.length === 0
-    }));
+    incoming.errors = gatherTaskErrors(
+        incoming,
+        trigger.input
+    );
+
+    incoming.parents = parents;
+
+    return incoming;
 }
 
-function resolveChildTasks(initialTasks: any[], taskName: string, parents: string[], trigger: CommandTrigger): Task[] {
-
-    const subject = pullTaskFromInput(taskName, trigger.input);
-
-    if (subject.items.length === 0) {
-        return initialTasks;
-    }
-
-    /**
-     * Ensure we're not looking at a previously resolved item to avoid
-     * an infinite loop
-     */
-    if (parents.indexOf(taskName) > -1) {
-        throw new ReferenceError(`Infinite loop detected from task: \`${taskName}\` Parent Tasks: ${parents.join(', ')}`);
-    }
-
-    /**
-     * Now return an array of sub-tasks that have also been
-     * resolved recursively
-     */
-    return subject.items.map(item => {
-        const flat = createFlattenedTask(item, parents.concat(taskName), trigger);
-        flat.origin = subject.origin;
-
-        /**
-         * Never try to resolve children tasks if this is an adaptor
-         */
-        if (flat.type === TaskTypes.Adaptor) {
-            return flat;
-        }
-
-        /**
-         * Never try to resolve children tasks if this is an Inline Function
-         */
-        if (flat.type === TaskTypes.InlineFunction) {
-            return flat;
-        }
-
-        if (!flat.modules.length) {
-            flat.tasks = resolveChildTasks(flat.tasks, item, parents.concat(taskName), trigger);
-        }
-        return flat;
-    });
+function getTopLevelValue(incoming: Task, trigger: CommandTrigger) {
+    const exactMatch = trigger.input.tasks[incoming.baseTaskName];
+    if (exactMatch !== undefined) return exactMatch;
+    const maybes = Object.keys(trigger.input.tasks).filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
+    if (maybes.length) return trigger.input.tasks[maybes[0]];
+    return undefined;
 }
 
 export function createAdaptorTask(taskName, parents): Task {
+
+    taskName = removeNewlines(taskName);
 
     /**
      * Strip the first part of the task name.
@@ -366,7 +350,7 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
      * If the task has external modules associated
      * with it, it's always valid (as it has things to run)
      */
-    if (task.type === TaskTypes.RunnableModule) {
+    if (task.type === TaskTypes.ExternalTask) {
         return true;
     }
 
@@ -375,7 +359,7 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
      * and there are NO sub tasks to validate, this means the current
      * task is ALWAYS valid so we can return true;
      */
-    if (task.modules.length && !task.tasks.length) {
+    if (task.externalTasks.length && !task.tasks.length) {
         return true;
     }
 }

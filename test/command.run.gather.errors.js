@@ -7,14 +7,14 @@ describe('Gathering run tasks with errors', function () {
     	const runner = cli.getRunner(['list']);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
     });
-    it('reports multiple missing modules', function () {
+    it('reports multiple missing externalTasks', function () {
     	const runner = cli.getRunner(['list', 'otheraswell']);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[0].taskName, 'list');
         assert.equal(runner.tasks.invalid[1].errors[0].type, errorTypes.TaskNotFound);
         assert.equal(runner.tasks.invalid[1].taskName, 'otheraswell');
     });
-    it('reports multiple missing modules plus missing subtask options', function () {
+    it('reports multiple missing externalTasks plus missing subtask options', function () {
     	const runner = cli.getRunner(['list:someconfig', 'uglifry']);
 
         assert.equal(runner.tasks.invalid[0].errors.length, 2);

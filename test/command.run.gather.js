@@ -67,7 +67,7 @@ describe('Gathering run tasks (1)', function () {
         });
         var first = runner.tasks.valid[0];
         assert.equal(first.taskName, 'css');
-        assert.equal(first.modules.length, 0);
+        assert.equal(first.externalTasks.length, 0);
         assert.equal(first.tasks.length, 2);
         assert.equal(first.tasks[0].tasks.length, 0);
         assert.equal(first.tasks[0].taskName, 'test/fixtures/tasks/simple.js');

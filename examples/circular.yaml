@@ -1,0 +1,14 @@
+tasks:
+  build:
+    - deep1
+
+  deep1:
+    - test/fixtures/tasks/error.js
+    - deep2
+
+  deep2:
+    - sleep
+
+  sleep:
+    - '@npm sleep 1'
+    - 'build'
