@@ -7,7 +7,7 @@ import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask} from "./task.preprocess";
+import {preprocessTask, removeNewlines} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
@@ -76,14 +76,6 @@ export function createCircularReferenceTask(incoming: Task, parents: string[]): 
             parents: parents
         }]
     });
-}
-
-function locateInlineFunctions(task: Task, input: CrossbowInput) : CBFunction[] {
-    const maybe = input.tasks[task.baseTaskName];
-    if (typeof maybe === 'function') {
-        return [maybe];
-    }
-    return [];
 }
 
 /**
@@ -203,6 +195,8 @@ function getTopLevelValue(incoming: Task, trigger: CommandTrigger) {
 }
 
 export function createAdaptorTask(taskName, parents): Task {
+
+    taskName = removeNewlines(taskName);
 
     /**
      * Strip the first part of the task name.

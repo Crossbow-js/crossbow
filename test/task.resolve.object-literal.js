@@ -6,7 +6,7 @@ const SequenceItemTypes = require("../dist/task.sequence.factories").SequenceIte
 
 describe('task.resolve object literal in long-hand', function () {
     it('adaptor + command keys', function () {
-        const runner = cli.getRunner(['js'], {
+        const runner = cli.getRunner(['js', 'js2'], {
             tasks: {
                 js: {
                     adaptor: 'npm',
@@ -14,9 +14,14 @@ describe('task.resolve object literal in long-hand', function () {
                     env: {
                         DOCKER_IP: 'another'
                     }
+                },
+                js2: {
+                    input: '@npm sleep 2'
                 }
             }
         });
+        assert.equal(runner.tasks.valid[0].tasks[0].baseTaskName, '@npm sleep 1');
+        assert.equal(runner.tasks.valid[1].tasks[0].baseTaskName, '@npm sleep 2');
         assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
     });
     it('using only input key', function () {
@@ -58,6 +63,5 @@ describe('task.resolve object literal in long-hand', function () {
             }
         });
         assert.equal(runner.tasks.invalid.length, 1);
-        // console.log(runner.tasks.invalid[0].tasks[0]);
     });
 });

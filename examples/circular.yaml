@@ -3,6 +3,7 @@ tasks:
     - deep1
 
   deep1:
+    - test/fixtures/tasks/error.js
     - deep2
 
   deep2:

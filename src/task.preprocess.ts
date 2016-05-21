@@ -11,7 +11,7 @@ import {TaskErrorTypes} from "./task.errors";
 const assign = require('object-assign');
 const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
-export const removeNewlines = (x: string) => x.replace(/\n|\r/g, '').trim();
+export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
 
 let inlineFnCount = 0;
 
@@ -35,18 +35,13 @@ export interface TaskLiteral {
 
 function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
+
     if (typeof taskLiteral.input === 'string') {
-        const taskLiteralAdaptor = createAdaptorTask(taskLiteral.input, parents);
-        return assign({}, taskLiteralAdaptor, taskLiteral);
+        return stubAdaptor(taskLiteral.input, taskLiteral, parents);
     }
 
     if (typeof taskLiteral.adaptor === 'string' && typeof taskLiteral.command === 'string') {
-        const outgoing = assign({}, taskLiteral);
-        outgoing.rawInput = `@${outgoing.adaptor} ${outgoing.command}`;
-        outgoing.valid    = true;
-        outgoing.type     = TaskTypes.Adaptor;
-        outgoing.origin   = TaskOriginTypes.Adaptor;
-        return createTask(outgoing);
+        return stubAdaptor(`@${taskLiteral.adaptor} ${taskLiteral.command}`, taskLiteral, parents);
     }
 
     return createTask({
@@ -69,6 +64,11 @@ function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
             input: taskLiteral
         }]
     });
+}
+
+function stubAdaptor (string, taskLiteral, parents) {
+    const taskLiteralAdaptor = createAdaptorTask(string, parents);
+    return assign({}, taskLiteralAdaptor, taskLiteral);
 }
 
 /**

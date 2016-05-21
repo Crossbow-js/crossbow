@@ -244,7 +244,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
     logger.unprefixed('info', '\n' + runners.valid.map(x => `   {gray:$} crossbow watch {bold:${x.parent}}`).join('\n'));
     if (runners.valid.length > 1) {
         console.log('');
-        logger.info('Or run multiple watchers at once, such as:')
+        logger.info('Or run multiple watchers at once, such as:');
         logger.unprefixed('info', '\n   {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
         console.log('');
     }
@@ -632,10 +632,7 @@ function getLabel(task) {
             }
             return '[Function]';
         })();
-        if (task.errors.length) {
-            return `{red.bold:x ${task.taskName} ${fnName}}`;
-        }
-        return `${task.taskName} ${fnName}`;
+        return maybeErrorLabel(task, `${task.taskName} ${fnName}`);
     }
 
     if (task.origin === TaskOriginTypes.NpmScripts) {
@@ -650,20 +647,25 @@ function getLabel(task) {
     }
 
     if (task.type === TaskTypes.ExternalTask) {
-        if (task.errors.length) {
-            return `{red.bold:x ${task.rawInput}}`;
-        }
-        return `{cyan:${task.taskName}}`;
+        return maybeErrorLabel(task, task.taskName);
     }
 
     if (task.type === TaskTypes.Adaptor) {
-        if (task.errors.length) {
-            return `{red.bold:x ${task.rawInput}}`;
-        }
-        return adaptorLabel(task);
+        return maybeErrorLabel(task, task.rawInput);
+    }
+
+    if (task.errors.length) {
+        return `{red.bold:x ${task.taskName}}`;
     }
 
     return `${task.taskName}}`;
+}
+
+function maybeErrorLabel (task: Task, label: string): string {
+    if (task.errors.length) {
+        return `{red.bold:x ${label}}`;
+    }
+    return label;
 }
 
 function duration (ms) {
