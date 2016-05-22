@@ -24,6 +24,25 @@ describe('task.resolve object literal in long-hand', function () {
         assert.equal(runner.tasks.valid[1].tasks[0].baseTaskName, '@npm sleep 2');
         assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
     });
+    it('adaptor + command keys + @ adaptor symbol', function () {
+        const runner = cli.getRunner(['js', 'js2'], {
+            tasks: {
+                js: {
+                    adaptor: '@npm',
+                    command: 'sleep 1',
+                    env: {
+                        DOCKER_IP: 'another'
+                    }
+                },
+                js2: {
+                    input: '@npm sleep 2'
+                }
+            }
+        });
+        assert.equal(runner.tasks.valid[0].tasks[0].baseTaskName, '@npm sleep 1');
+        assert.equal(runner.tasks.valid[1].tasks[0].baseTaskName, '@npm sleep 2');
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+    });
     it('using only input key', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {

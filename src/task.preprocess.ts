@@ -34,12 +34,12 @@ export interface TaskLiteral {
 
 function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
-
     if (typeof taskLiteral.input === 'string') {
         return stubAdaptor(taskLiteral.input, taskLiteral, parents);
     }
 
     if (typeof taskLiteral.adaptor === 'string' && typeof taskLiteral.command === 'string') {
+        taskLiteral.adaptor = taskLiteral.adaptor.replace(/^@/, '');
         return stubAdaptor(`@${taskLiteral.adaptor} ${taskLiteral.command}`, taskLiteral, parents);
     }
 

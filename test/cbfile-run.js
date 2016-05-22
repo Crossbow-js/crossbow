@@ -3,6 +3,18 @@ const cb  = require('../dist/index')['default'];
 const TaskTypes  = require('../dist/task.resolve').TaskTypes;
 
 describe('Using a cbfile', function () {
+    it('works with non-array inputs', function () {
+    	const runner = cb({
+            input: ['build-js'],
+            flags: {
+                handoff: true,
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        assert.equal(runner.tasks.valid[0].tasks.length, 2); //has a callback also
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.Adaptor);
+        assert.equal(runner.tasks.valid[0].tasks[0].command, 'webpack example.js');
+    });
     it('works with inline functions', function () {
     	const runner = cb({
             input: ['shane'],
@@ -60,5 +72,22 @@ describe('Using a cbfile', function () {
                 assert.ok(new Date().getTime() - now > 300);
                 done();
             })
+    });
+    it('runs with mix of array + non-array + fns', function (done) {
+        const runner = cb({
+            input: ['build-js'],
+            flags: {
+                handoff: true,
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(x => {
+                assert.equal(x.length, 4);
+                x.forEach(x => console.log(x.type, x.item.task.baseTaskName));
+                done();
+            });
     });
 });

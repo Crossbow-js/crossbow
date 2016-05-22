@@ -1,6 +1,11 @@
 const cb = require('./');
 const bs = require('browser-sync').create();
 
+cb.task('build-js', {
+	adaptor: 'npm',
+	command: 'webpack example.js'
+});
+
 cb.task('reload', function (opts) {
 	bs.reload();
 });

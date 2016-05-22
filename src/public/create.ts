@@ -22,6 +22,8 @@ function incomingTask (taskname: string, deps?, fn?): {} {
         deps = [];
     }
 
+    deps = [].concat(deps).filter(Boolean);
+
     const outgoing = {};
 
     if (deps.length) {

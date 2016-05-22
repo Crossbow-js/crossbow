@@ -26,6 +26,13 @@ cb.task('kittie', function () {
 	console.log('kittie task');
 });
 
+cb.task('build-js', {
+	adaptor: 'npm',
+	command: 'webpack example.js'
+}, function () {
+    console.log('all done');
+});
+
 cb.task('wait', [{
 	input: '@sh sleep $JS_OPTIONS_WAIT_TIME'
 }])
