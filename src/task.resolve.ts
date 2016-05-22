@@ -153,6 +153,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return locateModule(trigger.config, incoming.baseTaskName);
     })();
 
+    debug(`externalTasks: ${incoming.externalTasks[0]}`);
+
     /**
      * Set task types
      * @type {TaskTypes}
@@ -167,6 +169,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return TaskTypes.TaskGroup;
     })();
 
+    debug(`type: ${incoming.type}`);
+
     /**
      * @type {boolean}
      */
@@ -176,6 +180,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     	if (incoming.type === TaskTypes.ExternalTask)   return true;
         return false;
     })();
+
+    debug(`valid: ${incoming.valid}`);
 
     /**
      * Now apply any transformations
@@ -192,6 +198,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         trigger.input
     );
 
+    debug(`errors: ${incoming.errors}`);
+
     /**
      * Add parants array (for detecting circ refs);
      * @type {string[]}
@@ -205,16 +213,40 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
  * Allow transformations on tasks before error collections
  */
 function transform (incoming:Task): Task {
-    if (incoming.type === TaskTypes.ExternalTask) {
-        if (incoming.externalTasks[0].parsed.ext === '.sh') {
+    return Object.keys(transforms).reduce(function (task, key) {
+        const transform: TaskTransform = transforms[key];
+        if (transform.predicate(task)) {
+            debug(`Apply transform ${key}`);
+            return transform.fn(task);
+        }
+        return incoming;
+    }, incoming);
+}
+
+export interface TaskTransform {
+    predicate: (incoming:Task) => boolean
+    fn: (incoming:Task) => Task
+}
+
+/**
+ * Task Transformations
+ * This gives an opportunity to change a task just before error collection
+ */
+export const transforms = {
+    '@sh from File': <TaskTransform>{
+        predicate (incoming: Task):boolean {
+            return incoming.type === TaskTypes.ExternalTask &&
+                incoming.externalTasks[0].parsed.ext === '.sh';
+        },
+        fn (incoming: Task): Task {
             incoming.type    = TaskTypes.Adaptor;
             incoming.origin  = TaskOriginTypes.FileSystem;
             incoming.adaptor = 'sh';
             incoming.command = readFileSync(incoming.externalTasks[0].resolved, 'utf8');
+            return incoming;
         }
     }
-    return incoming;
-}
+};
 
 /**
  * Match a task name with a top-level value from 'tasks'
