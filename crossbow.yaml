@@ -53,6 +53,7 @@ tasks:
   sleep4: '@npm sleep 1'
 
   slow-stream: 'test/fixtures/tasks/slow-stream.js'
+  stream: 'test/fixtures/tasks/stream.js --name=shane'
 
   docker:
     - '@sh printenv'

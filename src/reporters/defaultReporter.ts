@@ -18,7 +18,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles, InputErrorTypes, _e, isInternal} from "../task.utils";
+import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
 
 const l = logger.info;
@@ -454,14 +454,11 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
                 return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
             }
         }
-        if (item.fnName) {
-            return `${item.task.taskName} [Function: {bold:${item.fnName}}]`;
-        }
         if (item.task.type === TaskTypes.InlineFunction) {
-            return `${item.task.rawInput} [Function]`;
+            return `${item.task.rawInput} ${getFunctionName(item.task.inlineFunctions[0])}`;
         }
-        if (item.task.origin === TaskOriginTypes.NpmScripts) {
-            return npmScriptLabel(item.task);
+        if (item.task.type === TaskTypes.ExternalTask) {
+            return `${item.task.rawInput}`;
         }
         if (item.task.type === TaskTypes.Adaptor) {
             return adaptorLabel(item.task);
