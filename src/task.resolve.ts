@@ -1,10 +1,11 @@
+import {applyTransforms} from "./task.transforms";
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeNewlines, removeTrailingNewlines} from "./task.utils";
+import {locateModule, removeTrailingNewlines} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
@@ -95,7 +96,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - object literal
      * @type {Task}
      */
-    const incoming = preprocessTask(taskItem, trigger.input, parents);
+    var incoming = preprocessTask(taskItem, trigger.input, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
@@ -152,6 +153,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return locateModule(trigger.config, incoming.baseTaskName);
     })();
 
+    debug(`externalTasks: ${JSON.stringify(incoming.externalTasks[0])}`);
+
     /**
      * Set task types
      * @type {TaskTypes}
@@ -166,34 +169,72 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return TaskTypes.TaskGroup;
     })();
 
+    debug(`type: ${incoming.type}`);
+
     /**
      * @type {boolean}
      */
     incoming.valid = (function () {
-    	if (incoming.type === TaskTypes.TaskGroup) return true;
+    	if (incoming.type === TaskTypes.TaskGroup)      return true;
     	if (incoming.type === TaskTypes.InlineFunction) return true;
-    	if (incoming.type === TaskTypes.ExternalTask) return true;
+    	if (incoming.type === TaskTypes.ExternalTask)   return true;
         return false;
     })();
 
+    debug(`valid: ${incoming.valid}`);
+
+    /**
+     * Now apply any transformations
+     * @type {Task}
+     */
+    incoming = applyTransforms(incoming);
+
+    /**
+     * Collect errors
+     * @type {TaskError[]}
+     */
     incoming.errors = gatherTaskErrors(
         incoming,
         trigger.input
     );
 
+    debug(`errors: ${incoming.errors}`);
+
+    /**
+     * Add parents array (for detecting circular references);
+     * @type {string[]}
+     */
     incoming.parents = parents;
 
-    return incoming;
+    return incoming
 }
 
-function getTopLevelValue(incoming: Task, trigger: CommandTrigger) {
+/**
+ * Match a task name with a top-level value from 'tasks'
+ */
+function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
     const exactMatch = trigger.input.tasks[incoming.baseTaskName];
-    if (exactMatch !== undefined) return exactMatch;
+
+    if (exactMatch !== undefined) {
+        return exactMatch;
+    }
+
     const maybes = Object.keys(trigger.input.tasks).filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
-    if (maybes.length) return trigger.input.tasks[maybes[0]];
+
+    if (maybes.length) {
+        return trigger.input.tasks[maybes[0]];
+    }
+
     return undefined;
 }
 
+/**
+ * Anything that begins @ is always an adaptor and will skip
+ * file i/o etc.
+ * @param taskName
+ * @param parents
+ * @returns {Task}
+ */
 export function createAdaptorTask(taskName, parents): Task {
 
     taskName = removeTrailingNewlines(taskName);
