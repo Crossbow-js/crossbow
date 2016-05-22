@@ -68,6 +68,7 @@ tasks:
     echo 'hey'
 
   shell: test/fixtures/files/run.sh
+  jsfile: '@sh node test/fixtures/files/one.js'
 
 options:
   docker:
