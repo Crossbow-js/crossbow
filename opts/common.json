@@ -1,0 +1,51 @@
+{
+  "config": {
+    "desc": "Path to your input file.",
+    "type": "string",
+    "alias": "c"
+  },
+  "cwd": {
+    "desc": "Current Working directory",
+    "type": "string"
+  },
+  "cbfile": {
+    "desc": "Path to your cbfile.js (gulp mode)",
+    "type": "string"
+  },
+  "e": {
+    "desc": "Global Environment vars (eg: NAME=docker)",
+    "type": "array"
+  },
+  "verbose": {
+    "desc": "Increase Verbosity level of output",
+    "type": "boolean",
+    "alias": "v",
+    "count": true,
+    "default": false
+  },
+  "interactive": {
+    "desc": "Run interactive mode",
+    "type": "boolean",
+    "alias": "i"
+  },
+  "progress": {
+    "desc": "Show start/end progress reports for every task",
+    "type": "boolean",
+    "alias": "P"
+  },
+  "suppressOutput": {
+    "desc": "Don't show child_process where possible",
+    "type": "boolean",
+    "alias": "q"
+  },
+  "envPrefix": {
+    "desc": "Prefix to use before any auto-generated ENV vars",
+    "type": "string",
+    "default": "cb"
+  },
+  "fail": {
+    "desc": "Use --no-fail to stop failures affecting sibling tasks ",
+    "type": "boolean",
+    "default": true
+  }
+}

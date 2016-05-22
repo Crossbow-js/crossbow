@@ -1,23 +1,21 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
+import {LogLevel} from "./reporters/defaultReporter";
 const assign = require('object-assign');
 
 export interface CrossbowConfiguration {
-    logLevel: string
     cwd: string
     runMode: TaskRunModes
-    resumeOnError: boolean
+    verbose: LogLevel
+    parallel: boolean
     fail: boolean
-    summary: string
-    strict: boolean
-    stack: boolean
     reporter: string
     handoff: boolean
     config?: string|void
     interactive: boolean
     suppressOutput: boolean
     progress: boolean
-    cbfile: string,
+    cbfile?: string
     envPrefix: string
     env: any
 }
@@ -26,7 +24,6 @@ export interface CrossbowConfiguration {
  * @type {{cwd: *, runMode: string, resumeOnError: boolean, summary: string, strict: boolean}}
  */
 const defaults = <CrossbowConfiguration>{
-    logLevel: "info",
     /**
      * The current working directory, we never advise changing this
      */
@@ -38,19 +35,12 @@ const defaults = <CrossbowConfiguration>{
      */
     runMode: TaskRunModes.series,
     resumeOnError: false,
+    parallel: false,
     /**
      * How much task information should be output
      * following task completion/setup
      */
-    summary: 'short', // 'short', 'long', 'verbose'
-    /**
-     * Force config file etc
-     */
-    strict: false,
-    /**
-     * Should logged errors produce a stack trace
-     */
-    stack: false,
+    verbose: 2, // 2 = normal, 3 = verbose. Maybe will add more later
     /**
      * How should task summaries be output
      */
@@ -105,40 +95,30 @@ const defaults = <CrossbowConfiguration>{
  */
 const flagTransforms = {
     /**
-     * -p changes 'runMode' from series to parallel
-     */
-    p: (opts) => {
-        return assign({}, opts, {runMode: TaskRunModes.parallel});
-    },
-    /**
-     * -c specifies a config file
-     */
-    c: (opts) => {
-        if (typeof opts.c !== 'string') {
-            return opts;
-        }
-        return assign({}, opts, {config: opts.c});
-    },
-    /**
-     * -v verbose mode
-     */
-    v: (opts) => {
-        return assign({}, opts, {summary: 'verbose'});
-    },
-    /**
      * Take any -e flags and set them
      * on the config.env vars.
      *
      * eg: crossbow run task.js -e PET=kittie
      */
     e: function (opts) {
-        [].concat(opts.e).forEach(string => {
+        opts.e.forEach(string => {
             const split = string.split('=').map(x => x.trim()).filter(Boolean);
             if (split.length === 2) {
                 opts.env[split[0]] = split[1];
             }
         });
         return opts;
+    },
+    /**
+     * If parallel run mode has been set, update the
+     * corresponding runMode options too
+     */
+    parallel: function (opts: any): any {
+    	if (opts.parallel === true) {
+            opts.runMode = TaskRunModes.parallel;
+            return opts;
+        }
+        opts.runMode = TaskRunModes.series;
     }
 };
 

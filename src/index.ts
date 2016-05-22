@@ -10,6 +10,7 @@ import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
+import cli from "./cli";
 import logger from './logger';
 
 const meow = require('meow');
@@ -62,14 +63,7 @@ const availableCommands = {
 };
 
 if (!module.parent) {
-    const cli = <Meow>meow('', {
-        alias: {
-            q: 'suppressOutput',
-            i: 'interactive',
-            s: 'strict'
-        }
-    });
-    handleIncoming(cli);
+    cli(handleIncoming);
 }
 
 function isCommand(input) {
@@ -78,7 +72,6 @@ function isCommand(input) {
 
 function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
 
-    cli                = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
     const cbfiles      = retrieveCBFiles(mergedConfig);
 
