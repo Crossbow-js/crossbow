@@ -1,5 +1,6 @@
 import {TaskErrorTypes} from "./task.errors";
 import {Task} from "./task.resolve.d";
+import {ExternalTask} from "./task.utils";
 
 export interface TaskError {
     type: TaskErrorTypes
@@ -36,4 +37,8 @@ export interface CBFlagNotProvidedError extends TaskError {
 export interface CircularReferenceError extends TaskError {
     incoming: Task
     parents: string[]
+}
+export interface FileTypeNotSupportedError extends TaskError {
+    taskName: string,
+    externalTask: ExternalTask
 }

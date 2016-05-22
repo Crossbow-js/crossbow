@@ -7,6 +7,10 @@ describe('Gathering run tasks with errors', function () {
     	const runner = cli.getRunner(['list']);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
     });
+    it('reports unsupported file types', function () {
+    	const runner = cli.getRunner(['test/fixtures/files/tast.rb']);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.FileTypeNotSupported);
+    });
     it('reports multiple missing externalTasks', function () {
     	const runner = cli.getRunner(['list', 'otheraswell']);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);

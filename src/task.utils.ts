@@ -363,6 +363,11 @@ export function isInternal (incoming) {
     return incoming.match(/_internal_fn_\d{0,10}$/);
 }
 
+const supportedFileExtensions = ['.js'];
+export function isSupportedFileType (incoming): boolean {
+    return supportedFileExtensions.indexOf(incoming.toLowerCase()) > -1;
+}
+
 export function _e(x) {
     return x
         .replace(/\n|\r/g, '')

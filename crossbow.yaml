@@ -67,6 +67,8 @@ tasks:
     @sh sleep 1
     echo 'hey'
 
+  shell: test/fixtures/files/run.sh
+
 options:
   docker:
     port: '8000'

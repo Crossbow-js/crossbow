@@ -6,10 +6,12 @@ import {
     SubtaskNotProvidedError,
     SubtasksNotInConfigError,
     SubtaskNotFoundError,
-    SubtaskWildcardNotAvailableError
+    SubtaskWildcardNotAvailableError,
+    FileTypeNotSupportedError
 } from "./task.errors.d";
 import {Task} from "./task.resolve.d";
 import {TaskTypes} from "./task.resolve";
+import {isSupportedFileType} from "./task.utils";
 const objPath = require('object-path');
 
 export enum TaskErrorTypes {
@@ -22,12 +24,14 @@ export enum TaskErrorTypes {
     FlagNotFound = <any>"FlagNotFound",
     FlagNotProvided = <any>"FlagNotProvided",
     InvalidTaskInput = <any>"InvalidTaskInput",
-    CircularReference = <any>"CircularReference"
+    CircularReference = <any>"CircularReference",
+    FileTypeNotSupported = <any>"FileTypeNotSupported"
 }
 
 export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
     return [
         getModuleErrors,
+        getFileTypeErrors,
         getCBFlagErrors,
         getSubTaskErrors
     ].reduce((all, fn) => all.concat(fn(task, input)), []);
@@ -47,6 +51,20 @@ function getModuleErrors(task: Task): TaskError[] {
     }
 
     return [];
+}
+
+function getFileTypeErrors(task: Task): TaskError[] {
+
+    /**
+     * If it's not an external task, this can never be an error
+     */
+    if (task.type !== TaskTypes.ExternalTask) return [];
+
+    const supported = isSupportedFileType(task.externalTasks[0].parsed.ext);
+
+    if (supported) return [];
+    
+    return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalTask: task.externalTasks[0]}];
 }
 
 function getCBFlagErrors(task: Task): TaskError[] {
