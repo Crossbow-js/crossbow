@@ -1,3 +1,4 @@
+import {readFileSync} from "fs";
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
@@ -95,7 +96,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - object literal
      * @type {Task}
      */
-    const incoming = preprocessTask(taskItem, trigger.input, parents);
+    var incoming = preprocessTask(taskItem, trigger.input, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
@@ -170,30 +171,77 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {boolean}
      */
     incoming.valid = (function () {
-    	if (incoming.type === TaskTypes.TaskGroup) return true;
+    	if (incoming.type === TaskTypes.TaskGroup)      return true;
     	if (incoming.type === TaskTypes.InlineFunction) return true;
-    	if (incoming.type === TaskTypes.ExternalTask) return true;
+    	if (incoming.type === TaskTypes.ExternalTask)   return true;
         return false;
     })();
 
+    /**
+     * Now apply any transformations
+     * @type {Task}
+     */
+    incoming = transform(incoming);
+
+    /**
+     * Collect errors
+     * @type {TaskError[]}
+     */
     incoming.errors = gatherTaskErrors(
         incoming,
         trigger.input
     );
 
+    /**
+     * Add parants array (for detecting circ refs);
+     * @type {string[]}
+     */
     incoming.parents = parents;
 
+    return incoming
+}
+
+/**
+ * Allow transformations on tasks before error collections
+ */
+function transform (incoming:Task): Task {
+    if (incoming.type === TaskTypes.ExternalTask) {
+        if (incoming.externalTasks[0].parsed.ext === '.sh') {
+            incoming.type    = TaskTypes.Adaptor;
+            incoming.origin  = TaskOriginTypes.FileSystem;
+            incoming.adaptor = 'sh';
+            incoming.command = readFileSync(incoming.externalTasks[0].resolved, 'utf8');
+        }
+    }
     return incoming;
 }
 
-function getTopLevelValue(incoming: Task, trigger: CommandTrigger) {
+/**
+ * Match a task name with a top-level value from 'tasks'
+ */
+function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
     const exactMatch = trigger.input.tasks[incoming.baseTaskName];
-    if (exactMatch !== undefined) return exactMatch;
+
+    if (exactMatch !== undefined) {
+        return exactMatch;
+    }
+
     const maybes = Object.keys(trigger.input.tasks).filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
-    if (maybes.length) return trigger.input.tasks[maybes[0]];
+
+    if (maybes.length) {
+        return trigger.input.tasks[maybes[0]];
+    }
+
     return undefined;
 }
 
+/**
+ * Anything that begins @ is always an adaptor and will skip
+ * file i/o etc.
+ * @param taskName
+ * @param parents
+ * @returns {Task}
+ */
 export function createAdaptorTask(taskName, parents): Task {
 
     taskName = removeTrailingNewlines(taskName);
