@@ -4,7 +4,7 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeNewlines} from "./task.utils";
+import {locateModule, removeNewlines, removeTrailingNewlines} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
@@ -196,8 +196,8 @@ function getTopLevelValue(incoming: Task, trigger: CommandTrigger) {
 
 export function createAdaptorTask(taskName, parents): Task {
 
-    taskName = removeNewlines(taskName);
-
+    taskName = removeTrailingNewlines(taskName);
+    
     /**
      * Strip the first part of the task name.
      *  eg: `@npm eslint`

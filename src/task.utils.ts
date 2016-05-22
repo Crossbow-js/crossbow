@@ -309,6 +309,7 @@ export function getFunctionName (fn) {
     return '[Function]';
 }
 export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
+export const removeTrailingNewlines = (x: string) => x.replace(/(\n|\r)$/, ' ').trim();
 export function stringifyObj (incoming: any, max = 100): string {
     const asString = (function () {
         if (typeof incoming !== 'string') {
