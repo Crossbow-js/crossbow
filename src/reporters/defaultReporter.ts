@@ -461,7 +461,7 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
             return `${item.task.rawInput}`;
         }
         if (item.task.type === TaskTypes.Adaptor) {
-            return adaptorLabel(item.task);
+            return `${item.task.rawInput}`;
         }
         if (item.task.externalTasks.length) {
             return moduleLabel(item.task);

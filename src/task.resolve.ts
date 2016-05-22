@@ -1,11 +1,11 @@
-import {readFileSync} from "fs";
+import {applyTransforms} from "./task.transforms";
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeNewlines, removeTrailingNewlines} from "./task.utils";
+import {locateModule, removeTrailingNewlines} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
@@ -153,7 +153,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return locateModule(trigger.config, incoming.baseTaskName);
     })();
 
-    debug(`externalTasks: ${incoming.externalTasks[0]}`);
+    debug(`externalTasks: ${JSON.stringify(incoming.externalTasks[0])}`);
 
     /**
      * Set task types
@@ -187,7 +187,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * Now apply any transformations
      * @type {Task}
      */
-    incoming = transform(incoming);
+    incoming = applyTransforms(incoming);
 
     /**
      * Collect errors
@@ -201,52 +201,13 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     debug(`errors: ${incoming.errors}`);
 
     /**
-     * Add parants array (for detecting circ refs);
+     * Add parents array (for detecting circular references);
      * @type {string[]}
      */
     incoming.parents = parents;
 
     return incoming
 }
-
-/**
- * Allow transformations on tasks before error collections
- */
-function transform (incoming:Task): Task {
-    return Object.keys(transforms).reduce(function (task, key) {
-        const transform: TaskTransform = transforms[key];
-        if (transform.predicate(task)) {
-            debug(`Apply transform ${key}`);
-            return transform.fn(task);
-        }
-        return incoming;
-    }, incoming);
-}
-
-export interface TaskTransform {
-    predicate: (incoming:Task) => boolean
-    fn: (incoming:Task) => Task
-}
-
-/**
- * Task Transformations
- * This gives an opportunity to change a task just before error collection
- */
-export const transforms = {
-    '@sh from File': <TaskTransform>{
-        predicate (incoming: Task):boolean {
-            return incoming.type === TaskTypes.ExternalTask &&
-                incoming.externalTasks[0].parsed.ext === '.sh';
-        },
-        fn (incoming: Task): Task {
-            incoming.type    = TaskTypes.Adaptor;
-            incoming.origin  = TaskOriginTypes.FileSystem;
-            incoming.adaptor = 'sh';
-            incoming.command = readFileSync(incoming.externalTasks[0].resolved, 'utf8');
-            return incoming;
-        }
-    }
-};
 
 /**
  * Match a task name with a top-level value from 'tasks'

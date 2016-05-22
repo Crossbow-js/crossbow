@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-printenv
+sleep 0.5
