@@ -159,7 +159,7 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
  */
 function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): any {
     const firstArg     = cli.input[0];
-    const secondMerge  = merge(processConfigs(input.config, cli.flags));
+    const secondMerge  = processConfigs(input.config, cli.flags);
     return availableCommands[firstArg].call(null, cli, input, secondMerge);
 }
 

@@ -19,6 +19,7 @@ export interface CrossbowConfiguration {
     progress: boolean
     cbfile: string,
     envPrefix: string
+    env: any
 }
 
 /**
@@ -92,7 +93,8 @@ const defaults = <CrossbowConfiguration>{
      *  ->
      *      CB_DOCKER_PORT=8000
      */
-    envPrefix: 'cb'
+    envPrefix: 'cb',
+    env: {}
 };
 
 /**
@@ -122,6 +124,21 @@ const flagTransforms = {
      */
     v: (opts) => {
         return assign({}, opts, {summary: 'verbose'});
+    },
+    /**
+     * Take any -e flags and set them
+     * on the config.env vars.
+     *
+     * eg: crossbow run task.js -e PET=kittie
+     */
+    e: function (opts) {
+        [].concat(opts.e).forEach(string => {
+            const split = string.split('=').map(x => x.trim()).filter(Boolean);
+            if (split.length === 2) {
+                opts.env[split[0]] = split[1];
+            }
+        });
+        return opts;
     }
 };
 

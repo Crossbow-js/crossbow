@@ -16,7 +16,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
             : 'inherit';
         
         const cbEnv = getCBEnv(trigger);
-        const env = merge({}, cbEnv, task.env, process.env);
+        const env = merge({}, cbEnv, task.env, process.env, trigger.config.env);
 
         debug(`running %s`, args.cmd);
 

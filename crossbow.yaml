@@ -76,3 +76,6 @@ options:
 
 config:
   envPrefix: 'JS'
+
+env:
+  SHANE: 'hello'
