@@ -12,7 +12,7 @@ import {
 import {Task} from "./task.resolve.d";
 import {TaskTypes} from "./task.resolve";
 import {isSupportedFileType} from "./task.utils";
-const objPath = require('object-path');
+const _ = require('../lodash.custom');
 
 export enum TaskErrorTypes {
     TaskNotFound = <any>"TaskNotFound",
@@ -38,7 +38,7 @@ export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] 
 }
 
 function getModuleErrors(task: Task): TaskError[] {
-    
+
     if (task.type === TaskTypes.ExternalTask)   return [];
     if (task.type === TaskTypes.InlineFunction) return [];
 
@@ -63,7 +63,7 @@ function getFileTypeErrors(task: Task): TaskError[] {
     const supported = isSupportedFileType(task.externalTasks[0].parsed.ext);
 
     if (supported) return [];
-    
+
     return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalTask: task.externalTasks[0]}];
 }
 
@@ -101,7 +101,7 @@ function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
      *          dev: 'input.scss'
      */
     return task.subTasks.reduce((all, subTaskName) => {
-        const configKeys = Object.keys(objPath.get(input, ['options'].concat(task.baseTaskName), {}));
+        const configKeys = Object.keys(_.get(input, ['options'].concat(task.baseTaskName), {}));
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -139,7 +139,7 @@ function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = objPath.get(input, ['options'].concat(task.baseTaskName, subTaskName));
+        const match = _.get(input, ['options'].concat(task.baseTaskName, subTaskName));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,

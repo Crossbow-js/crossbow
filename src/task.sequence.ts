@@ -1,5 +1,5 @@
 import {TaskTypes, TaskRunModes} from "./task.resolve";
-const objPath = require('object-path');
+const _ = require('../lodash.custom');
 const merge = require('../lodash.custom').merge;
 const assign = require('object-assign');
 const Rx = require('rx');
@@ -149,7 +149,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * name, so we use that to try and find a child key
          * in the options that matched it.
          * */
-        const currentOptionObject = objPath.get(localOptions, optionKey);
+        const currentOptionObject = _.get(localOptions, optionKey);
         const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
                 .map(seqItem => {
                     seqItem.subTaskName = optionKey;
@@ -346,7 +346,7 @@ function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
 
     // todo - more robust/featurefull way of matching options -> tasks
 
-    const fullMatch = objPath.get(trigger.input.options, [task.taskName]);
+    const fullMatch = _.get(trigger.input.options, [task.taskName]);
 
     if (fullMatch !== undefined) {
         return fullMatch;
@@ -354,7 +354,7 @@ function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
 
     if (isInternal(task.rawInput)) {
         const lookup = task.taskName.replace(/(.+?)_internal_fn_\d{0,10}/, '');
-        const fromInternal = objPath.get(trigger.input.options, [lookup]);
+        const fromInternal = _.get(trigger.input.options, [lookup]);
         if (fromInternal !== undefined) {
             return fromInternal;
         }
@@ -395,7 +395,7 @@ export function decorateSequenceWithReports(sequence: SequenceItem[], reports: T
 export function countSequenceErrors(items: SequenceItem[]): number {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
-            const errors = objPath.get(item, 'stats.errors', []);
+            const errors = _.get(item, 'stats.errors', []);
             if (errors.length) {
                 return acc + errors.length;
             }

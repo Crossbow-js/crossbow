@@ -8,7 +8,7 @@ import {ParsedPath} from "path";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
-const objPath = require('object-path');
+const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
 export interface ExternalFileInput {
@@ -171,7 +171,7 @@ export function getCBEnv (trigger: CommandTrigger): {} {
  */
 function replaceOne(item, root) {
     return item.replace(/\{\{(.+?)\}\}/g, function () {
-        const match = objPath.get(root, arguments[1].split('.'));
+        const match = _.get(root, arguments[1].split('.'));
         if (typeof match === 'string') {
             return replaceOne(match, root);
         }
@@ -281,7 +281,7 @@ export function createCrossbowTasksFromNpmScripts(cwd: string): any {
     /**
      * Try to retrieve `scripts`
      */
-    const npmScripts = objPath.get(pkg, ['scripts'], {});
+    const npmScripts = _.get(pkg, ['scripts'], {});
 
     /**
      * Return if anything failed with package.json or scripts prop

@@ -9,7 +9,7 @@
     "lint": "eslint lib",
     "ts": "tsc",
     "prepublish": "npm run test",
-    "lodash": "lodash include=merge exports=node"
+    "lodash": "lodash include=merge,get exports=node"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
@@ -28,9 +28,7 @@
     "immutable": "3.8.0",
     "inquirer": "1.0.1",
     "js-yaml": "3.6.0",
-    "lodash.merge": "4.3.5",
     "object-assign": "4.0.1",
-    "object-path": "0.9.2",
     "once": "1.3.3",
     "qs": "6.1.0",
     "read-pkg-up": "1.0.1",
