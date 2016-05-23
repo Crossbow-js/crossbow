@@ -395,7 +395,7 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
     if (!stack) {
         return [...head, tail].join('\n');
     }
-    return [...head, getStack(body), tail].join('\n');
+    return [...head, ...body, tail].join('\n');
 }
 
 export function getStack (stack) {
