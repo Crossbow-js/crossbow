@@ -2,7 +2,7 @@ import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve.d";
-import {Meow, CrossbowInput} from "../index";
+import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
 import {relative} from 'path';
 import {Watcher} from "../watch.resolve";
@@ -53,7 +53,7 @@ export function reportMissingConfigFile(inputs: InputFiles) {
     }
 }
 
-export function reportSummary(sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
+export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
 
@@ -148,7 +148,7 @@ export function incomingTaskItemAsString (x: IncomingTaskItem): string {
 /**
  * Log the task list
  */
-export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix = '', config: CrossbowConfiguration) {
+export function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
 
     if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
@@ -159,7 +159,7 @@ export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix 
     }
 }
 
-export function reportBeforeTaskList(sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
+export function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
 
     l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
 
@@ -303,7 +303,7 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: Command
     });
 }
 
-export function reportWatchTaskErrors(tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
+export function reportWatchTaskErrors(tasks: WatchTask[], cli: CLI, input: CrossbowInput) {
 
     heading(`Sorry, there were errors resolving your watch tasks`);
     logWatchErrors(tasks);

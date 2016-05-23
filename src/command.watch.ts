@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {CrossbowInput, Meow} from './index';
+import {CrossbowInput, CLI} from './index';
 import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
 import * as reporter from './reporters/defaultReporter';
 import {TaskReport} from "./task.runner";
@@ -190,7 +190,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     }
 }
 
-export function handleIncomingWatchCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
 

@@ -4,7 +4,7 @@ const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 const merge = require('../lodash.custom').merge;
 
-import {Meow, CrossbowInput} from './index';
+import {CLI, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks, TaskRunModes, maybeTaskNames} from './task.resolve';
 import {TaskRunner, TaskReport} from './task.runner';
@@ -19,7 +19,7 @@ import {Runner} from "./runner";
 
 export interface CommandTrigger {
     type: TriggerTypes
-    cli: Meow
+    cli: CLI
     input: CrossbowInput
     config: CrossbowConfiguration
     tracker?: any
@@ -156,7 +156,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     return complete$;
 }
 
-export function handleIncomingRunCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
 
     /**
      * Array of top-level task names that are available

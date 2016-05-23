@@ -2,7 +2,7 @@
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import * as reporter from './reporters/defaultReporter';
-import {CrossbowInput, Meow} from './index';
+import {CrossbowInput, CLI} from './index';
 import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
 import Rx = require('rx');
@@ -44,7 +44,7 @@ export default function execute(trigger: CommandTrigger): void {
     logWatcherNames(runners, trigger);
 }
 
-export function handleIncomingWatchersCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
     execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,

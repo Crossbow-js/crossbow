@@ -11,7 +11,7 @@ export interface CrossbowConfiguration {
     fail: boolean
     reporter: string
     handoff: boolean
-    config?: string|void
+    config: string[]
     interactive: boolean
     suppressOutput: boolean
     progress: boolean
@@ -36,6 +36,7 @@ const defaults = <CrossbowConfiguration>{
     runMode: TaskRunModes.series,
     resumeOnError: false,
     parallel: false,
+    config: [],
     /**
      * How much task information should be output
      * following task completion/setup
@@ -119,6 +120,7 @@ const flagTransforms = {
             return opts;
         }
         opts.runMode = TaskRunModes.series;
+        return opts;
     }
 };
 

@@ -5,10 +5,10 @@ const inquirer = require('inquirer');
 import {compile} from './logger';
 import {removeNewlines} from './task.utils';
 
-import {Meow, CrossbowInput} from './index';
+import {CLI, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 
-export default function prompt(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
 
     const taskSelect = {
         type: "checkbox",

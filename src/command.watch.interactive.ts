@@ -3,10 +3,10 @@ import {stripBlacklisted} from "./watch.utils";
 const debug = require('debug')('cb:command.run');
 const inquirer = require('inquirer');
 
-import {Meow, CrossbowInput} from './index';
+import {CLI, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 
-export default function promptForWatchCommand(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration) {
+export default function promptForWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
     const prompt = topLevelWatchers.map(key => ({name: key, value: key}));

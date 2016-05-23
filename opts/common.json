@@ -1,8 +1,9 @@
 {
   "config": {
     "desc": "Path to your input file.",
-    "type": "string",
-    "alias": "c"
+    "type": "array",
+    "alias": "c",
+    "default": []
   },
   "cwd": {
     "desc": "Current Working directory",
@@ -10,7 +11,8 @@
   },
   "cbfile": {
     "desc": "Path to your cbfile.js (gulp mode)",
-    "type": "string"
+    "type": "string",
+    "default": ""
   },
   "e": {
     "desc": "Global Environment vars (eg: NAME=docker)",

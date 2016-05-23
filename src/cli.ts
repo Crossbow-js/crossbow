@@ -37,6 +37,18 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
+    if (command === "watch") {
+        out = yargs
+            .usage("Usage: $0 watch [watchers..]")
+            .options(merge({}, common, require('../opts/command.watch.opts.json')))
+            .example("$0 watch default docker", "Run 2 watchers (default+docker)")
+            .example("$0 watch", "Runs the 'default' watcher if available")
+            .example("$0 watch -i", "Choose a watcher interactively")
+            .example("$0 watch '*.js -> @npm webpack'", "Use the short hand watch syntax")
+            .help()
+            .argv;
+    }
+    console.log(stripUndefined(out));
     cb({flags: stripUndefined(out), input: out._});
 }
 
