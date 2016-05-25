@@ -56,6 +56,9 @@ const availableCommands = {
     watchers: handleIncomingWatchersCommand
 };
 
+/**
+ * If running from the CLI, hand off to 'yargs' for parsing options
+ */
 if (!module.parent) {
     cli(handleIncoming);
 }
@@ -148,9 +151,9 @@ function handleCBfileMode(cbfiles: InputFiles, cli: CLI, config: CrossbowConfigu
  * Now decide who should handle the current command
  */
 function processInput(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): any {
-    const firstArg     = cli.input[0];
-    const secondMerge  = processConfigs(input.config, cli.flags);
-    return availableCommands[firstArg].call(null, cli, input, secondMerge);
+    const firstArg = cli.input[0];
+    const merged   = merge(_.merge({}, input.config, cli.flags));
+    return availableCommands[firstArg].call(null, cli, input, merged);
 }
 
 function processConfigs (config, flags) {

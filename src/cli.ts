@@ -17,7 +17,7 @@ export default function (cb) {
 
     var argv    = yargs.argv;
     var command = argv._[0];
-    var valid   = ["run", "watch"];
+    var valid   = ["run", "watch", "tasks", "tree"];
 
     if (valid.indexOf(command) > -1) {
         handleIncoming(command, yargs.reset(), cb);
@@ -34,6 +34,8 @@ function handleIncoming(command, yargs, cb) {
             .options(merge({}, common, require('../opts/command.run.opts.json')))
             .example("$0 run task1 task2 task3", "Run 3 tasks in sequence")
             .example("$0 run task1 task2 -p", "Run 2 tasks in parallel")
+            .example("$0 run -i", "Run in interactive mode (aso you can select tasks")
+            .example("$0 run some-task -c .cb.yaml", "Run 'some-task' as defined in a configuration file")
             .help()
             .argv;
     }
@@ -48,7 +50,23 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
-    console.log(stripUndefined(out));
+    if (command === "tasks") {
+        out = yargs
+            .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
+            .options(merge({}, require('../opts/command.watch.opts.json')))
+            .example("$0 tasks")
+            .help()
+            .argv;
+    }
+    if (command === "tree") {
+        out = yargs
+            .usage("Usage: $0 tree\nShow's all tasks and their children in a tree.")
+            .options(merge({}, require('../opts/command.watch.opts.json')))
+            .example("$0 tree", "Shows tasks with minimal info")
+            .example("$0 tree -v", "Shows tasks with maximum info")
+            .help()
+            .argv;
+    }
     cb({flags: stripUndefined(out), input: out._});
 }
 

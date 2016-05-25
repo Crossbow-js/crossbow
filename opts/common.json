@@ -42,8 +42,7 @@
   },
   "envPrefix": {
     "desc": "Prefix to use before any auto-generated ENV vars",
-    "type": "string",
-    "default": "cb"
+    "type": "string"
   },
   "fail": {
     "desc": "Use --no-fail to stop failures affecting sibling tasks ",
