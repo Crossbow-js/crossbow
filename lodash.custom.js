@@ -1,7 +1,7 @@
 /**
  * @license
  * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash include="merge,get" exports="node"`
+ * Build: `lodash include="merge,get,assign" exports="node"`
  * Copyright jQuery Foundation and other contributors <https://jquery.org/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -439,6 +439,9 @@
       Set = getNative(root, 'Set'),
       WeakMap = getNative(root, 'WeakMap'),
       nativeCreate = getNative(Object, 'create');
+
+  /** Detect if properties shadowing those on `Object.prototype` are non-enumerable. */
+  var nonEnumShadows = !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf');
 
   /** Used to lookup unminified function names. */
   var realNames = {};
@@ -2639,6 +2642,50 @@
   /*------------------------------------------------------------------------*/
 
   /**
+   * Assigns own enumerable string keyed properties of source objects to the
+   * destination object. Source objects are applied from left to right.
+   * Subsequent sources overwrite property assignments of previous sources.
+   *
+   * **Note:** This method mutates `object` and is loosely based on
+   * [`Object.assign`](https://mdn.io/Object/assign).
+   *
+   * @static
+   * @memberOf _
+   * @since 0.10.0
+   * @category Object
+   * @param {Object} object The destination object.
+   * @param {...Object} [sources] The source objects.
+   * @returns {Object} Returns `object`.
+   * @see _.assignIn
+   * @example
+   *
+   * function Foo() {
+   *   this.c = 3;
+   * }
+   *
+   * function Bar() {
+   *   this.e = 5;
+   * }
+   *
+   * Foo.prototype.d = 4;
+   * Bar.prototype.f = 6;
+   *
+   * _.assign({ 'a': 1 }, new Foo, new Bar);
+   * // => { 'a': 1, 'c': 3, 'e': 5 }
+   */
+  var assign = createAssigner(function(object, source) {
+    if (nonEnumShadows || isPrototype(source) || isArrayLike(source)) {
+      copyObject(source, keys(source), object);
+      return;
+    }
+    for (var key in source) {
+      if (hasOwnProperty.call(source, key)) {
+        assignValue(object, key, source[key]);
+      }
+    }
+  });
+
+  /**
    * Gets the value at `path` of `object`. If the resolved value is
    * `undefined`, the `defaultValue` is used in its place.
    *
@@ -2822,6 +2869,7 @@
   /*------------------------------------------------------------------------*/
 
   // Add methods that return wrapped values in chain sequences.
+  lodash.assign = assign;
   lodash.constant = constant;
   lodash.keys = keys;
   lodash.keysIn = keysIn;

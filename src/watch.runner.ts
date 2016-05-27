@@ -5,7 +5,7 @@ import {resolveTasks} from "./task.resolve";
 import * as seq from "./task.sequence";
 import {BeforeTasks} from "./watch.before";
 const debug = require('debug')('cb:watch.runner');
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 
 export interface WatchRunners {
     all: Watcher[]
@@ -27,7 +27,7 @@ export function createWatchRunners(watchTasks: WatchTasks, ctx: CommandTrigger):
 
             const tasks = resolveTasks(watcher.tasks, ctx);
 
-            const subject = assign({}, watcher, {
+            const subject = _.assign({}, watcher, {
                 _tasks: tasks,
                 parent: item.name
             });

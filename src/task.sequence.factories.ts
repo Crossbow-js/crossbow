@@ -1,4 +1,4 @@
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 
 import {Task} from "./task.resolve.d";
 import {CommandTrigger} from "./command.run";
@@ -45,13 +45,13 @@ export interface TaskFactory {
 }
 var seqUID = 0;
 export function createSequenceTaskItem(incoming: SequenceTask): SequenceItem {
-    return assign({type: SequenceItemTypes.Task, items: [], seqUID: seqUID++}, incoming);
+    return _.assign({type: SequenceItemTypes.Task, items: [], seqUID: seqUID++}, incoming);
 }
 
 export function createSequenceSeriesGroup(incoming: SequenceSeriesGroup): SequenceItem {
-    return assign({type: SequenceItemTypes.SeriesGroup}, incoming);
+    return _.assign({type: SequenceItemTypes.SeriesGroup}, incoming);
 }
 
 export function createSequenceParallelGroup(incoming: SequenceParallelGroup): SequenceItem {
-    return assign({type: SequenceItemTypes.ParallelGroup}, incoming);
+    return _.assign({type: SequenceItemTypes.ParallelGroup}, incoming);
 }

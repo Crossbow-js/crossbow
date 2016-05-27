@@ -1,7 +1,8 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
-const assign = require('object-assign');
+
+const _ = require('../lodash.custom');
 
 export interface CrossbowConfiguration {
     cwd: string
@@ -131,7 +132,7 @@ const flagTransforms = {
  */
 export function merge(opts: CrossbowConfiguration|any): CrossbowConfiguration {
 
-    const newOpts = assign({}, defaults, opts);
+    const newOpts = _.assign({}, defaults, opts);
 
     return Object.keys(flagTransforms)
         .reduce(function (opts, x) {

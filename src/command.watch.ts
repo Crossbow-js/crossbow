@@ -13,13 +13,11 @@ import Rx = require('rx');
 import Immutable = require('immutable');
 import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
-import {isReport} from "./task.utils";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 
 const debug = require('debug')('cb:command.watch');
-const merge = require('../lodash.custom').merge;
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 
 export interface CrossbowError extends Error {
     _cb: boolean
@@ -236,7 +234,7 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
         }
         reporter.reportNoWatchTasksProvided();
         return promptForWatchCommand(cli, input, config).then(function (answers) {
-            const cliMerged = merge({}, cli, {input: answers.watch});
+            const cliMerged = _.merge({}, cli, {input: answers.watch});
             return execute({
                 shared: sharedMap,
                 cli: cliMerged,
