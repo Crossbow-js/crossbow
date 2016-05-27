@@ -9,7 +9,6 @@ export default function (cb) {
         .command("tree", "See your entire task tree")
         .command("tasks", "See your available top-level tasks")
         .command("init", "Create a configuration file")
-        .command("init-cbfile", "Create a cbfile.js")
         .version(function () {
             return pkg.version;
         })
@@ -17,7 +16,7 @@ export default function (cb) {
 
     var argv    = yargs.argv;
     var command = argv._[0];
-    var valid   = ["run", "watch", "tasks", "tree"];
+    var valid   = ["run", "watch", "tasks", "tree", "init"];
 
     if (valid.indexOf(command) > -1) {
         handleIncoming(command, yargs.reset(), cb);
@@ -64,6 +63,16 @@ function handleIncoming(command, yargs, cb) {
             .options(merge({}, require('../opts/command.watch.opts.json')))
             .example("$0 tree", "Shows tasks with minimal info")
             .example("$0 tree -v", "Shows tasks with maximum info")
+            .help()
+            .argv;
+    }
+    if (command === "init") {
+        out = yargs
+            .usage("Usage: $0 init")
+            .options(merge({}, require('../opts/command.init.opts.json')))
+            .example("$0 init", "Creates the default crossbow.yaml file")
+            .example("$0 init --type cbfile", "Create a 'cbfile.js'")
+            .example("$0 init --type js", "Create a module.exports style config")
             .help()
             .argv;
     }

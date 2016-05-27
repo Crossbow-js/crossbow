@@ -10,6 +10,7 @@ import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
+import {handleIncomingInitCommand} from "./command.init";
 import cli from "./cli";
 import logger from './logger';
 
@@ -53,7 +54,8 @@ const availableCommands = {
     doctor: handleIncomingTreeCommand,
     watch: handleIncomingWatchCommand,
     w: handleIncomingWatchCommand,
-    watchers: handleIncomingWatchersCommand
+    watchers: handleIncomingWatchersCommand,
+    init: handleIncomingInitCommand
 };
 
 /**

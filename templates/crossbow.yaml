@@ -1,0 +1,27 @@
+config:
+  # Place any global config here
+
+watch:
+  # Watch Options that apply to all watchers
+  options:
+    debounce: 500
+  default:
+    '*.json':
+      - sleep
+      - log
+
+# Define task alias here
+tasks:
+
+  # run 3 tasks in parallel
+  sleep@p:
+    - '@sh sleep 1'
+    - '@sh sleep 1'
+    - '@sh sleep 1'
+
+  # Run a single shell script
+  log:   '@sh echo "json file changed"'
+
+# Global env vars available to all child processes
+env:
+  NAME: "Kittie"

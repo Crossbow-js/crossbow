@@ -1,6 +1,7 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
+import {resolve} from "path";
 
 const _ = require('../lodash.custom');
 
@@ -20,6 +21,7 @@ export interface CrossbowConfiguration {
     envPrefix: string
     env: any
     before: string[]
+    type?: 'cbfile' | 'yaml' | 'js' | 'json'
 }
 
 /**
@@ -94,7 +96,11 @@ const defaults = <CrossbowConfiguration>{
     /**
      * Tasks that should be run before any watchers begin
      */
-    before: []
+    before: [],
+    /**
+     *
+     */
+    type: 'yaml'
 };
 
 /**
@@ -129,6 +135,10 @@ const flagTransforms = {
             return opts;
         }
         opts.runMode = TaskRunModes.series;
+        return opts;
+    },
+    cwd: function (opts) {
+    	opts.cwd = resolve(opts.cwd);
         return opts;
     }
 };
