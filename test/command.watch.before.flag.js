@@ -2,7 +2,7 @@ const assert      = require('chai').assert;
 const cli = require('../');
 
 describe('using tasks given as flags as before', function () {
-    it.only('uses the before tasks given in cli.flags' , function () {
+    it('uses the before tasks given in cli.flags' , function () {
         const runner = cli.getWatcher(['default'], {
             watch: {
                 default: {

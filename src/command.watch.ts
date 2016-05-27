@@ -50,9 +50,11 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     const runners = createWatchRunners(watchTasks, trigger);
 
     /**
-     * Never continue if any of the BEFORE tasks were flagged as invalid
+     * Get a special runner that will execute before
+     * watchers begin
+     * @type {BeforeTasks}
      */
-    const before = getBeforeTaskRunner(cli, trigger, watchTasks);
+    const before = getBeforeTaskRunner(trigger, watchTasks);
 
     /**
      * Check if the user intends to handle running the tasks themselves,

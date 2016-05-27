@@ -19,6 +19,7 @@ export interface CrossbowConfiguration {
     cbfile?: string
     envPrefix: string
     env: any
+    before: string[]
 }
 
 /**
@@ -86,7 +87,14 @@ const defaults = <CrossbowConfiguration>{
      *      CB_DOCKER_PORT=8000
      */
     envPrefix: 'cb',
-    env: {}
+    /**
+     * Global ENV vars
+     */
+    env: {},
+    /**
+     * Tasks that should be run before any watchers begin
+     */
+    before: []
 };
 
 /**

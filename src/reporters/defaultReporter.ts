@@ -280,25 +280,25 @@ export function reportNoFilesMatched(runner) {
     l('{red:x warning} `{cyan:%s}` did not match any files', runner.patterns.join(' '));
 }
 
-export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: CommandTrigger): void {
+export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, trigger: CommandTrigger): void {
 
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
     l('  So none of them were run, and no watchers have begun either.');
 
-    watchTasks.all.forEach(function (wt) {
-        const cliInput = resolveBeforeTasks(ctx.input, [wt]);
-        const tasks = resolveTasks(cliInput, ctx);
+    watchTasks.all.forEach(function (watchTask) {
+        const cliInput = resolveBeforeTasks(trigger.config.before, trigger.input, [watchTask]);
+        const tasks = resolveTasks(cliInput, trigger);
 
         if (!tasks.all.length) {
             return;
         }
 
-        if (ctx.config.verbose === LogLevel.Verbose) {
-            return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
+        if (trigger.config.verbose === LogLevel.Verbose) {
+            return reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`);
         }
 
         if (tasks.invalid.length) {
-            return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
+            return reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`);
         }
     });
 }

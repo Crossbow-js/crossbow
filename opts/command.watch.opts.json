@@ -1,1 +1,8 @@
-{}
+{
+  "before": {
+    "desc": "Specify tasks that must complete before watchers begin",
+    "type": "array",
+    "alias": "b",
+    "default": []
+  }
+}

@@ -213,14 +213,22 @@ export function resolveWatchTasks(taskNames: string[], trigger: CommandTrigger):
 
     return output;
 }
-export function resolveBeforeTasks(input: CrossbowInput, watchTasks: WatchTask[]): string[] {
+
+/**
+ * The goal of this function is to produce a flat array containing tasks as strings
+ * this allows us to feed that into the task resolution stuff
+ */
+export function resolveBeforeTasks(beforeFlagsFromCliOrConfig: string[], input: CrossbowInput, watchTasks: WatchTask[]): string[] {
+
+    const fromTopLevelInput = [].concat(input.watch.before);
+    const fromWatchTasks    = watchTasks.reduce((acc, item) => {
+        return acc.concat(item.before);
+    }, []);
 
     return [
-        ...[].concat(input.watch.before), // allow string or array for watch.before
-        ...watchTasks.reduce((acc, item) => {
-                return acc.concat([].concat(item.before).filter(Boolean));
-            }, [])
-            .filter(Boolean)].filter(Boolean);
-
-};
+        ...beforeFlagsFromCliOrConfig,
+        ...fromTopLevelInput, // allow string or array for watch.before
+        ...fromWatchTasks
+    ].filter(Boolean);
+}
 
