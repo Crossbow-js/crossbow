@@ -1,0 +1,8 @@
+{
+  "parallel": {
+    "desc": "Run top-level tasks in parallel",
+    "type": "boolean",
+    "alias": "p",
+    "default": false
+  }
+}

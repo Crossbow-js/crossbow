@@ -5,7 +5,7 @@ import {handleIncomingRunCommand} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {getRawOutputStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
-import {Meow} from "../index";
+import {CLI} from "../index";
 const merge = require('../../lodash.custom').merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
@@ -48,7 +48,7 @@ var input = {
     options: {},
     env: {},
     config: <CrossbowConfiguration>{}, // to be set by lib
-    cli: <Meow>{}, // to be set by lib
+    cli: <CLI>{}, // to be set by lib
 };
 
 function incomingOptions (taskname: string, hash?:any): {} {

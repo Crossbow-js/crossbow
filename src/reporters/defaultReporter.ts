@@ -2,7 +2,7 @@ import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
 import logger from "../logger";
 import {Task} from "../task.resolve.d";
-import {Meow, CrossbowInput} from "../index";
+import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
 import {relative} from 'path';
 import {Watcher} from "../watch.resolve";
@@ -29,6 +29,11 @@ function nl() {
     l(`{gray:-}`);
 }
 
+export const enum LogLevel {
+    Short = 2,
+    Verbose = 3
+}
+
 export function reportMissingConfigFile(inputs: InputFiles) {
     if (inputs.invalid.length) {
         heading(`Sorry, there were errors resolving your input files`);
@@ -48,12 +53,12 @@ export function reportMissingConfigFile(inputs: InputFiles) {
     }
 }
 
-export function reportSummary(sequence: SequenceItem[], cli: Meow, title: string, config: CrossbowConfiguration, runtime: number) {
+export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
 
     // todo - show a reduced tree showing only errors
-    if (config.summary === 'verbose' || errorCount > 0) {
+    if (config.verbose === LogLevel.Verbose || errorCount > 0) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         nl();
         reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
@@ -143,9 +148,9 @@ export function incomingTaskItemAsString (x: IncomingTaskItem): string {
 /**
  * Log the task list
  */
-export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix = '', config: CrossbowConfiguration) {
+export function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
 
-    if (config.summary === 'verbose') {
+    if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         nl();
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
@@ -154,11 +159,11 @@ export function reportTaskList(sequence: SequenceItem[], cli: Meow, titlePrefix 
     }
 }
 
-export function reportBeforeTaskList(sequence: SequenceItem[], cli: Meow, config: CrossbowConfiguration) {
+export function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
 
     l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
 
-    if (config.summary === 'verbose') {
+    if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.map(x => `'${x}'`).join(' ');
         nl();
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
@@ -216,7 +221,7 @@ export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, confi
         l('{gray.bold:---------------------------------------------------}');
         l(`{ok: } No errors from`);
         logWatcher(runner);
-        if (config.summary === 'verbose') {
+        if (config.verbose === LogLevel.Verbose) {
             reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
         }
     }
@@ -232,7 +237,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
     const o = archy({
         label: '{yellow:Available Watchers:}',
         nodes: runners.valid.map(function (runner) {
-            if (trigger.config.summary === 'verbose') {
+            if (trigger.config.verbose === LogLevel.Verbose) {
                 return logWatcherName(runner);
             }
             return `{bold:${runner.parent}}`;
@@ -288,7 +293,7 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: Command
             return;
         }
 
-        if (ctx.config.summary === 'verbose') {
+        if (ctx.config.verbose === LogLevel.Verbose) {
             return reportTaskTree(tasks.all, ctx.config, `+ Tasks to run before: '${wt.name}'`);
         }
 
@@ -298,7 +303,7 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, ctx: Command
     });
 }
 
-export function reportWatchTaskErrors(tasks: WatchTask[], cli: Meow, input: CrossbowInput) {
+export function reportWatchTaskErrors(tasks: WatchTask[], cli: CLI, input: CrossbowInput) {
 
     heading(`Sorry, there were errors resolving your watch tasks`);
     logWatchErrors(tasks);
@@ -536,13 +541,13 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
                     });
                 }
                 const displayNodes = (function () {
-                    if (config.summary === 'verbose' && task.tasks.length) {
+                    if (config.verbose === LogLevel.Verbose && task.tasks.length) {
                         return task.tasks.map((x:Task) => `${x.taskName}`);
                     }
                     return [];
                 })();
                 const displayLabel = (function () {
-                    if (task.tasks.length && config.summary !== 'verbose') {
+                    if (task.tasks.length && config.verbose === LogLevel.Short) {
                         return label + ` [${task.tasks.length}]`;
                     }
                     return label;
@@ -553,7 +558,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
                 });
             }
 
-            if (config.summary === 'verbose') {
+            if (config.verbose === LogLevel.Verbose) {
                 return acc.concat({
                     label: label,
                     nodes: nodes

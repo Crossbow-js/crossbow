@@ -1,4 +1,4 @@
-import {Meow} from "./index";
+import {CLI} from "./index";
 import {WatchTasks, resolveBeforeTasks} from "./watch.resolve";
 import {resolveTasks} from "./task.resolve";
 import {Tasks} from "./task.resolve.d";
@@ -15,7 +15,7 @@ export interface BeforeTasks {
     sequence: SequenceItem[]
 }
 
-export function getBeforeTaskRunner(cli: Meow,
+export function getBeforeTaskRunner(cli: CLI,
                                     trigger: CommandTrigger,
                                     watchTasks: WatchTasks): BeforeTasks {
     /**

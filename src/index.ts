@@ -10,17 +10,15 @@ import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
+import cli from "./cli";
 import logger from './logger';
 
-const meow = require('meow');
-const assign = require('object-assign');
-const _merge = require('../lodash.custom').merge;
+const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
 
-export interface Meow {
+export interface CLI {
     input: string[]
     flags: any
-    help?: string
 }
 
 export interface CrossbowInput {
@@ -31,16 +29,13 @@ export interface CrossbowInput {
     config?: any
 }
 
-function generateMeowInput(incoming: Meow|any): Meow {
-    return assign({input: [], flags: {}}, incoming || {});
-}
 /**
  * `Input` is the object that is looked at to resolve tasks/options and
  * watchers
  */
 function generateInput(incoming: CrossbowInput|any): CrossbowInput {
 
-    return _merge({
+    return _.merge({
         tasks: {},
         watch: {
             before: [],
@@ -61,24 +56,19 @@ const availableCommands = {
     watchers: handleIncomingWatchersCommand
 };
 
+/**
+ * If running from the CLI, hand off to 'yargs' for parsing options
+ */
 if (!module.parent) {
-    const cli = <Meow>meow('', {
-        alias: {
-            q: 'suppressOutput',
-            i: 'interactive',
-            s: 'strict'
-        }
-    });
-    handleIncoming(cli);
+    cli(handleIncoming);
 }
 
 function isCommand(input) {
     return Object.keys(availableCommands).indexOf(input) > -1;
 }
 
-function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
+function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
-    cli                = generateMeowInput(cli);
     const mergedConfig = merge(cli.flags);
     const cbfiles      = retrieveCBFiles(mergedConfig);
 
@@ -95,11 +85,14 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
      * If a user tried to load configuration from
      * an external file, load that now and set as the input
      */
-    if (mergedConfig.config || input === undefined) {
+    if (mergedConfig.config.length || input === undefined) {
 
-        if (mergedConfig.config) {
-            debug(`Config flag provided ${mergedConfig.config}`);
-            const userConfig = readFiles([<string>mergedConfig.config], mergedConfig.cwd);
+        if (mergedConfig.config.length) {
+            const configs = [].concat(mergedConfig.config);
+            /** DEBUG */
+            debug(`Config flag provided ${configs.join(',')}`);
+            /** DEBUG END */
+            const userConfig = readFiles(configs, mergedConfig.cwd);
             if (userConfig.invalid.length) {
                 console.log('There were errors resolving the following input file(s):');
                 reporter.reportMissingConfigFile(userConfig);
@@ -125,7 +118,7 @@ function handleIncoming(cli: Meow, input?: CrossbowInput|any): TaskRunner {
     return processInput(cli, generateInput(input), mergedConfig);
 }
 
-function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfiguration) {
+function handleCBfileMode(cbfiles: InputFiles, cli: CLI, config: CrossbowConfiguration) {
     /**
      * Check if there's a cbfile.js in the root
      * If there is, we enter into 'gulp' mode by default
@@ -135,7 +128,7 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
         debug(`using ${cbfiles.valid[0]}`);
         var createFilePaths = getRequirePaths(config);
         var input = require(createFilePaths.valid[0].resolved);
-        input.default.config = processConfigs(_merge({}, config, input.default.config), cli.flags);
+        input.default.config = processConfigs(_.merge({}, config, input.default.config), cli.flags);
         input.default.cli = cli;
         if (isCommand(cli.input[0])) {
             return availableCommands[cli.input[0]].call(null, cli, input.default, input.default.config);
@@ -157,14 +150,14 @@ function handleCBfileMode(cbfiles: InputFiles, cli: Meow, config: CrossbowConfig
 /**
  * Now decide who should handle the current command
  */
-function processInput(cli: Meow, input: CrossbowInput, config: CrossbowConfiguration): any {
-    const firstArg     = cli.input[0];
-    const secondMerge  = processConfigs(input.config, cli.flags);
-    return availableCommands[firstArg].call(null, cli, input, secondMerge);
+function processInput(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): any {
+    const firstArg = cli.input[0];
+    const merged   = merge(_.merge({}, input.config, cli.flags));
+    return availableCommands[firstArg].call(null, cli, input, merged);
 }
 
 function processConfigs (config, flags) {
-    const cbConfig     = _merge({}, config, flags);
+    const cbConfig     = _.merge({}, config, flags);
     return merge(cbConfig);
 }
 
