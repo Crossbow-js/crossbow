@@ -13,13 +13,11 @@ import Rx = require('rx');
 import Immutable = require('immutable');
 import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
-import {isReport} from "./task.utils";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 
 const debug = require('debug')('cb:command.watch');
-const merge = require('../lodash.custom').merge;
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 
 export interface CrossbowError extends Error {
     _cb: boolean
@@ -52,9 +50,11 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     const runners = createWatchRunners(watchTasks, trigger);
 
     /**
-     * Never continue if any of the BEFORE tasks were flagged as invalid
+     * Get a special runner that will execute before
+     * watchers begin
+     * @type {BeforeTasks}
      */
-    const before = getBeforeTaskRunner(cli, trigger, watchTasks);
+    const before = getBeforeTaskRunner(trigger, watchTasks);
 
     /**
      * Check if the user intends to handle running the tasks themselves,
@@ -236,7 +236,7 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
         }
         reporter.reportNoWatchTasksProvided();
         return promptForWatchCommand(cli, input, config).then(function (answers) {
-            const cliMerged = merge({}, cli, {input: answers.watch});
+            const cliMerged = _.merge({}, cli, {input: answers.watch});
             return execute({
                 shared: sharedMap,
                 cli: cliMerged,

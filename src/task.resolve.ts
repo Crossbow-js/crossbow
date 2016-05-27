@@ -1,6 +1,5 @@
 import {applyTransforms} from "./task.transforms";
-const merge = require('../lodash.custom').merge;
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
@@ -66,11 +65,11 @@ const defaultTask = <Task>{
  * @returns {object}
  */
 export function createTask(obj: any): Task {
-    return merge({}, defaultTask, obj);
+    return _.merge({}, defaultTask, obj);
 }
 
 export function createCircularReferenceTask(incoming: Task, parents: string[]): Task {
-    return merge({}, defaultTask, incoming, {
+    return _.merge({}, defaultTask, incoming, {
         errors: [<CircularReferenceError>{
             type: TaskErrorTypes.CircularReference,
             incoming: incoming,
@@ -238,7 +237,7 @@ function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
 export function createAdaptorTask(taskName, parents): Task {
 
     taskName = removeTrailingNewlines(taskName);
-    
+
     /**
      * Strip the first part of the task name.
      *  eg: `@npm eslint`

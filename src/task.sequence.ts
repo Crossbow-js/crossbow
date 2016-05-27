@@ -1,7 +1,5 @@
 import {TaskTypes, TaskRunModes} from "./task.resolve";
 const _ = require('../lodash.custom');
-const merge = require('../lodash.custom').merge;
-const assign = require('object-assign');
 const Rx = require('rx');
 const Observable = Rx.Observable;
 
@@ -171,7 +169,7 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
      *          production: true
      */
 
-    const mergedOptionsWithQuery = merge({}, options, task.query, task.flags);
+    const mergedOptionsWithQuery = _.merge({}, options, task.query, task.flags);
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -376,7 +374,7 @@ export function decorateSequenceWithReports(sequence: SequenceItem[], reports: T
     return addMany(sequence, []);
     function addMany(sequence, initial) {
         return sequence.reduce(function (all, item) {
-            const c = assign({}, item);
+            const c = _.assign({}, item);
             if (item.type === SequenceItemTypes.Task) {
                 c.stats = getMergedStats(item, reports);
                 return all.concat(c);
@@ -420,15 +418,15 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
     const end   = match.filter(x => x.type === TaskReportType.end)[0];
 
     if (start && end) {
-        return assign({}, start.stats, end.stats);
+        return _.assign({}, start.stats, end.stats);
     }
 
     if (start && error) {
-        return assign({}, start.stats, error.stats);
+        return _.assign({}, start.stats, error.stats);
     }
 
     if (start) {
-        return assign({}, start.stats);
+        return _.assign({}, start.stats);
     }
 
     return {item: item, errors: []};

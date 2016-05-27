@@ -8,7 +8,7 @@ import {isPlainObject, stringifyObj} from "./task.utils";
 import {InvalidTaskInputError} from "./task.errors.d";
 import {TaskErrorTypes} from "./task.errors";
 
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 const qs = require('qs');
 const flagRegex = /(.+?)@(.+)?$/;
 
@@ -58,7 +58,7 @@ function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
 function stubAdaptor (string, taskLiteral, parents) {
     const taskLiteralAdaptor = createAdaptorTask(string, parents);
-    return assign({}, taskLiteralAdaptor, taskLiteral);
+    return _.assign({}, taskLiteralAdaptor, taskLiteral);
 }
 
 /**
@@ -250,7 +250,7 @@ function processFlags(task: Task): Task {
         return TaskRunModes.series;
     })();
 
-    return assign({}, task, {
+    return _.assign({}, task, {
         runMode
     });
 }

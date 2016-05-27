@@ -5,8 +5,7 @@ import {Task} from "../task.resolve.d";
 const spawn = require('child_process').spawn;
 const EventEmitter = require('events').EventEmitter;
 const debug = require('debug')('cb:adaptors.npm');
-const assign = require('object-assign');
-const merge = require('../../lodash.custom').merge;
+const _ = require('../../lodash.custom');
 
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
@@ -115,7 +114,7 @@ export default function (task: Task, trigger: CommandTrigger) {
         const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv = getCBEnv(trigger);
-        const env = merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
+        const env = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
         const stdio  = trigger.config.suppressOutput
             ? ['pipe', 'pipe', 'pipe']
             : 'inherit';

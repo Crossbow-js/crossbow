@@ -8,7 +8,7 @@ import {CommandTrigger} from './command.run';
 import handleReturnType from "./task.return.values";
 
 const debug = require('debug')('cb:task.runner');
-const assign = require('object-assign');
+const _ = require('../lodash.custom');
 const once = require('once');
 const domain = require('domain');
 
@@ -96,7 +96,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 d.exit();
                 return cb.apply(null, arguments);
             }
-            
+
             var result  = domainBoundFn(done);
 
             if (result) {
@@ -171,7 +171,7 @@ export function getStartStats(startTime: number): TaskStats {
  */
 function getEndStats(stats: TaskStats) {
     const now = new Date().getTime();
-    return assign({}, stats, {
+    return _.assign({}, stats, {
         endTime: now,
         duration: now - stats.startTime,
         completed: true

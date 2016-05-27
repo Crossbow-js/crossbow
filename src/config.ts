@@ -1,7 +1,8 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
-const assign = require('object-assign');
+
+const _ = require('../lodash.custom');
 
 export interface CrossbowConfiguration {
     cwd: string
@@ -18,6 +19,7 @@ export interface CrossbowConfiguration {
     cbfile?: string
     envPrefix: string
     env: any
+    before: string[]
 }
 
 /**
@@ -85,7 +87,14 @@ const defaults = <CrossbowConfiguration>{
      *      CB_DOCKER_PORT=8000
      */
     envPrefix: 'cb',
-    env: {}
+    /**
+     * Global ENV vars
+     */
+    env: {},
+    /**
+     * Tasks that should be run before any watchers begin
+     */
+    before: []
 };
 
 /**
@@ -131,7 +140,7 @@ const flagTransforms = {
  */
 export function merge(opts: CrossbowConfiguration|any): CrossbowConfiguration {
 
-    const newOpts = assign({}, defaults, opts);
+    const newOpts = _.assign({}, defaults, opts);
 
     return Object.keys(flagTransforms)
         .reduce(function (opts, x) {

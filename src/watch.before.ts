@@ -15,13 +15,11 @@ export interface BeforeTasks {
     sequence: SequenceItem[]
 }
 
-export function getBeforeTaskRunner(cli: CLI,
-                                    trigger: CommandTrigger,
-                                    watchTasks: WatchTasks): BeforeTasks {
+export function getBeforeTaskRunner(trigger: CommandTrigger, watchTasks: WatchTasks): BeforeTasks {
     /**
      * Get 'before' task list
      */
-    const beforeTasksAsCliInput = resolveBeforeTasks(trigger.input, watchTasks.valid);
+    const beforeTasksAsCliInput = resolveBeforeTasks(trigger.config.before, trigger.input, watchTasks.valid);
 
     debug(`Combined global + task specific 'before' tasks [${beforeTasksAsCliInput}]`);
 
