@@ -15,7 +15,8 @@ export interface ExternalFileInput {
     path: string
     resolved: string
     input: CrossbowInput|any,
-    errors: InputError[]
+    errors: InputError[],
+    parsed: ParsedPath
 }
 
 export enum InputErrorTypes {
@@ -223,15 +224,21 @@ export function readFiles(paths: string[], cwd: string): InputFiles {
 function getFileInputs(paths, cwd): ExternalFileInput[] {
     return paths
         .map(String)
-        .map(path => ({path: path, resolved: resolve(cwd, path)}))
+        .map(path => ({
+            path: path,
+            resolved: resolve(cwd, path),
+            parsed: parse(path)
+        }))
         .map((incoming): ExternalFileInput => {
-            const resolved = incoming.resolved;
-            const path = incoming.path;
+            
+            const {resolved, path, parsed} = incoming;
+
             if (!existsSync(resolved)) {
                 return {
                     errors: [{type: InputErrorTypes.InputFileNotFound}],
                     input: undefined,
                     path,
+                    parsed,
                     resolved
                 }
             }
@@ -240,6 +247,7 @@ function getFileInputs(paths, cwd): ExternalFileInput[] {
                     errors: [],
                     input: yml.safeLoad(readFileSync(incoming.resolved)),
                     path,
+                    parsed,
                     resolved
                 }
             }
@@ -247,6 +255,7 @@ function getFileInputs(paths, cwd): ExternalFileInput[] {
                 errors: [],
                 input: require(incoming.resolved),
                 path,
+                parsed,
                 resolved
             }
         });

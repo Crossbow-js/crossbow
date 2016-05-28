@@ -1,27 +1,34 @@
+# Global configuration
 config:
-  # Place any global config here
+  envPrefix: "JS"
 
+# Watch tasks
 watch:
-  # Watch Options that apply to all watchers
   options:
     debounce: 500
   default:
-    '*.json':
-      - sleep
-      - log
+    "*.json":
+      - "all"
 
-# Define task alias here
+# Tasks
 tasks:
-
-  # run 3 tasks in parallel
+  # 2 tasks in sequence
+  all:
+    - "sleep"
+    - "hello-world"
+  # 3 Tasks in parallel
   sleep@p:
-    - '@sh sleep 1'
-    - '@sh sleep 1'
-    - '@sh sleep 1'
+    - "@sh sleep 1"
+    - "@sh sleep 1"
+    - "@sh sleep 1"
+  # 1 Shell script using global env vars, + envified options
+  hello-world:
+    - "@sh echo $GREETING $JS_OPTIONS_PLACE"
 
-  # Run a single shell script
-  log:   '@sh echo "json file changed"'
-
-# Global env vars available to all child processes
+# Global env values
 env:
-  NAME: "Kittie"
+  GREETING: "Hello"
+
+# Global options
+options:
+  place: "world"
