@@ -4,11 +4,10 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
-import {readInputFiles, ExternalFileInput, readFilesFromDisk, ExternalFile} from "./task.utils";
-import {join} from "path";
-import {readFileSync} from "fs";
-import {writeFileSync} from "fs";
+import * as utils from "./task.utils";
+import * as fs from "fs";
 import logger from './logger';
+import {join} from "path";
 import {reportDuplicateConfigFile} from "./reporters/defaultReporter";
 const _ = require('../lodash.custom');
 
@@ -16,7 +15,7 @@ export enum InitConfigFileErrorTypes {
     InitConfigFileExists = <any>"InitConfigFileExists"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
-export interface InitConfigFileExistsError extends InitConfigError {file: ExternalFile}
+export interface InitConfigFileExistsError extends InitConfigError {file: utils.ExternalFile}
 
 export enum InitConfigFileTypes {
     yaml   = <any>"yaml",
@@ -48,7 +47,7 @@ export default function execute(trigger: CommandTrigger): any {
      * Attempt to load existing config files from the CWD
      * @type {ExternalFile[]}
      */
-    const existingFilesInCwd = readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
+    const existingFilesInCwd = utils.readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
 
     /**
      * Now check if any of the existing files match the one the user
@@ -85,10 +84,10 @@ export default function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reportDuplicateConfigFile(matchingFiles);
+        reportDuplicateConfigFile(errors[0]);
     } else {
-        writeFileSync(join(config.cwd, fileTypeSelection),
-            readFileSync(join(templateDir, fileTypeSelection))
+        fs.writeFileSync(join(config.cwd, fileTypeSelection),
+            fs.readFileSync(join(templateDir, fileTypeSelection))
         );
         logger.info(`Created file {cyan.bold:${fileTypeSelection}}`);
     }

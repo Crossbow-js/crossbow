@@ -20,6 +20,7 @@ import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
+import {InitConfigFileExistsError} from "../command.init";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -53,21 +54,19 @@ export function reportMissingConfigFile(inputs: InputFiles) {
     }
 }
 
-export function reportDuplicateConfigFile(matchingFiles: ExternalFile[]) {
-        heading(`Sorry, this would cause an existing file to be overwritten`);
-        // inputs.invalid.forEach(function (item) {
-        //     const o = archy({
-        //         label: `{yellow:+ input: '${item.path}'}`, nodes: [
-        //             {
-        //                 label: [
-        //                     `{red.bold:x ${item.path}}`,
-        //                     getExternalError(item.errors[0].type, item.errors[0], item)
-        //                 ].join('\n')
-        //             }
-        //         ]
-        //     }, prefix);
-        //     logger.info(o.slice(26, -1));
-        // });
+export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
+    heading(`Sorry, this would cause an existing file to be overwritten`);
+    const o = archy({
+        label: `{yellow:+ attempted: '${error.file.path}'}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x ${error.file.path}}`,
+                    getExternalError(error.type, error, error.file)
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
 }
 
 export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
