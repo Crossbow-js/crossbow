@@ -8,6 +8,8 @@ import {readInputFiles, ExternalFileInput, readFilesFromDisk, ExternalFile} from
 import {join} from "path";
 import {readFileSync} from "fs";
 import {writeFileSync} from "fs";
+import logger from './logger';
+import {reportDuplicateConfigFile} from "./reporters/defaultReporter";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -83,11 +85,12 @@ export default function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-
+        reportDuplicateConfigFile(matchingFiles);
     } else {
         writeFileSync(join(config.cwd, fileTypeSelection),
             readFileSync(join(templateDir, fileTypeSelection))
         );
+        logger.info(`Created file {cyan.bold:${fileTypeSelection}}`);
     }
 
     return {existingFilesInCwd, matchingFiles, errors};
