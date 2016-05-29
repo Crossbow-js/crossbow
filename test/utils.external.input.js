@@ -11,11 +11,11 @@ describe('Retrieving external input', function () {
         assert.ok(files.valid[0].input.tasks);
     });
     it('can use a examples/crossbow.yaml file when options flag given', function () {
-        const files = utils.readFiles(['examples/crossbow.yaml'], process.cwd());
+        const files = utils.readInputFiles(['examples/crossbow.yaml'], process.cwd());
         assert.ok(files.valid[0].input.tasks.css);
     });
     it('returns useful errors if a file is not found', function () {
-        const files = utils.readFiles(['oops/typeos'], process.cwd());
+        const files = utils.readInputFiles(['oops/typeos'], process.cwd());
         assert.equal(files.valid.length, 0);
         assert.equal(files.invalid.length, 1);
         assert.equal(files.invalid[0].errors[0].type, utils.InputErrorTypes.InputFileNotFound);

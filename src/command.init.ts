@@ -4,13 +4,14 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
-import {readFiles, ExternalFileInput} from "./task.utils";
+import {readInputFiles, ExternalFileInput, readFilesFromDisk, ExternalFile} from "./task.utils";
+import {join} from "path";
 
 export enum InitConfigFileErrorTypes {
     InitConfigFileExists = <any>"InitConfigFileExists"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
-export interface InitConfigFileExistsError extends InitConfigError {file: ExternalFileInput}
+export interface InitConfigFileExistsError extends InitConfigError {file: ExternalFile}
 
 export enum InitConfigFileTypes {
     yaml   = <any>"yaml",
@@ -22,6 +23,7 @@ export enum InitConfigFileTypes {
 export default function execute(trigger: CommandTrigger): any {
     const {input, config} = trigger;
 
+    const templateDir = join(__dirname, '..', 'templates');
     const maybeExistingFileInputs = {
         'crossbow.yaml': InitConfigFileTypes.yaml,
         'crossbow.js': InitConfigFileTypes.js,
@@ -35,10 +37,31 @@ export default function execute(trigger: CommandTrigger): any {
         return;
     }
 
-    const existingFiles = readFiles(Object.keys(maybeExistingFileInputs), config.cwd);
-    const matchingFiles = existingFiles.valid.filter(function (file) {
-        return maybeExistingFileInputs[file.parsed.base] === config.type;
-    });
+    /**
+     * Attempt to load existing config files from the CWD
+     * @type {ExternalFile[]}
+     */
+    const existingFiles = readFilesFromDisk(Object.keys(maybeExistingFileInputs), config.cwd);
+
+    /**
+     * Now check if any of the existing files match the one the user
+     * is attempting to create.
+     *
+     * eg:
+     *  crossbow init --type js
+     * -> crossbow.js already exists in cwd -> error
+     *
+     * eg:
+     *  crossbow init --type yaml
+     * -> crossbow.js already exists in cwd, which is ok because they want a .yaml file -> success
+     *
+     * @type {ExternalFile[]}
+     */
+    const matchingFiles = existingFiles
+        .filter(x => x.errors.length === 0)
+        .filter(function (file) {
+            return maybeExistingFileInputs[file.parsed.base] === config.type;
+        });
 
     const errors: Array<InitConfigFileExistsError> = (function () {
         if (matchingFiles.length) {
@@ -53,9 +76,9 @@ export default function execute(trigger: CommandTrigger): any {
         return {existingFiles, matchingFiles, errors};
     }
 
+    
+
     return {existingFiles, matchingFiles, errors};
-    // console.log(config.type);
-    // reportTaskTree(resolveTasks(Object.keys(input.tasks), trigger).all, config, 'Available tasks:', true);
 }
 
 export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {

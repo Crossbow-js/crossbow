@@ -11,7 +11,7 @@ describe('Init command', function () {
         assert.equal(out.errors.length, 1);
         assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitConfigFileExists);
     });
-    it.only('returns no errors when the file will be unique', function () {
+    it('returns no errors when the file will be unique', function () {
         const out = handleIncoming({
             input: ['init'],
             flags: {handoff: true, cwd: 'test/fixtures', type: 'js'}
