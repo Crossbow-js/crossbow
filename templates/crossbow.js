@@ -25,4 +25,4 @@ module.exports = {
   options: {
     place: "world"
   }
-}
+};
