@@ -1,4 +1,4 @@
-const cb = require('../');
+const cb = require('crossbow-cli');
 
 cb.task('all', ['sleep', 'hello-world']);
 

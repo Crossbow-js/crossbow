@@ -20,7 +20,8 @@ import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
-import {InitConfigFileExistsError} from "../command.init";
+import {InitConfigFileExistsError, InitConfigFileTypes} from "../command.init";
+import {ParsedPath} from "path";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -67,6 +68,24 @@ export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
         ]
     }, prefix);
     logger.info(o.slice(26, -1));
+}
+
+export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
+    const output = [
+        `{green:✔} Created file {cyan.bold:${parsed.base}}`,
+        ``,
+        `Now, try the \`{yellow:hello-world}\` example in that file by running:`,
+        ``,
+        `  $ crossbow run hello-world`,
+        ``,
+        `Or to see multiple tasks running, with some in parallel, try:`,
+        ``,
+        `  $ crossbow run all`,
+    ];
+
+    output.forEach(function (arg) {
+        logger.info(arg);
+    })
 }
 
 export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {

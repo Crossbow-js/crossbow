@@ -8,7 +8,8 @@ import * as utils from "./task.utils";
 import * as fs from "fs";
 import logger from './logger';
 import {join} from "path";
-import {reportDuplicateConfigFile} from "./reporters/defaultReporter";
+import {reportDuplicateConfigFile, reportConfigFileCreated} from "./reporters/defaultReporter";
+import {parse} from "path";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -35,9 +36,9 @@ export default function execute(trigger: CommandTrigger): any {
         [InitConfigFileTypes.cbfile]: 'cbfile.js'
     };
 
-    const fileTypeSelection = maybeExistingFileInputs[config.type];
+    const outputFileName = maybeExistingFileInputs[config.type];
 
-    if (fileTypeSelection === undefined) {
+    if (outputFileName === undefined) {
         // InitConfigFileTypeNotSupported error
         console.log('not supported');
         return;
@@ -65,7 +66,7 @@ export default function execute(trigger: CommandTrigger): any {
      */
     const matchingFiles = existingFilesInCwd
         .filter(x => x.errors.length === 0)
-        .filter(file => fileTypeSelection === file.parsed.base);
+        .filter(file => outputFileName === file.parsed.base);
 
     const errors: Array<InitConfigFileExistsError> = (function () {
         if (matchingFiles.length) {
@@ -79,20 +80,33 @@ export default function execute(trigger: CommandTrigger): any {
     if (config.handoff) {
         return {existingFilesInCwd, matchingFiles, errors};
     }
-
+    
     /**
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
         reportDuplicateConfigFile(errors[0]);
-    } else {
-        fs.writeFileSync(join(config.cwd, fileTypeSelection),
-            fs.readFileSync(join(templateDir, fileTypeSelection))
-        );
-        logger.info(`Created file {cyan.bold:${fileTypeSelection}}`);
+        return {existingFilesInCwd, matchingFiles, errors}; 
     }
+    
+    const templateFilePath = join(templateDir, outputFileName);
+    const outputFilePath   = join(config.cwd, outputFileName);
+    
+    fs.writeFileSync(outputFilePath,
+        fs.readFileSync(templateFilePath)
+    );
+    
+    const output = {
+        existingFilesInCwd,
+        matchingFiles,
+        errors,
+        outputFilePath,
+        outputFileName
+    };
 
-    return {existingFilesInCwd, matchingFiles, errors};
+    reportConfigFileCreated(parse(outputFilePath), config.type);
+    
+    return output; 
 }
 
 export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
