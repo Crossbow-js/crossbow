@@ -18,8 +18,10 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName} from "../task.utils";
+import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
+import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
+import {ParsedPath} from "path";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -51,6 +53,54 @@ export function reportMissingConfigFile(inputs: InputFiles) {
             logger.info(o.slice(26, -1));
         });
     }
+}
+
+export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {
+    heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
+    const o = archy({
+        label: `{yellow:+ input: '${error.providedType}'}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x ${error.providedType}}`,
+                    getExternalError(error.type, error)
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
+}
+
+export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
+    heading(`Sorry, this would cause an existing file to be overwritten`);
+    const o = archy({
+        label: `{yellow:+ attempted: '${error.file.path}'}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x ${error.file.path}}`,
+                    getExternalError(error.type, error, error.file)
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
+}
+
+export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
+    const output = [
+        `{green:✔} Created file {cyan.bold:${parsed.base}}`,
+        ``,
+        `Now, try the \`{yellow:hello-world}\` example in that file by running:`,
+        ``,
+        `  $ crossbow run hello-world`,
+        ``,
+        `Or to see multiple tasks running, with some in parallel, try:`,
+        ``,
+        `  $ crossbow run all`,
+    ];
+
+    output.forEach(function (arg) {
+        logger.info(arg);
+    });
 }
 
 export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {

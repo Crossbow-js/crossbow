@@ -1,0 +1,34 @@
+# Global configuration
+config:
+  envPrefix: "JS"
+
+# Watch tasks
+watch:
+  options:
+    debounce: 500
+  default:
+    "*.json":
+      - "all"
+
+# Tasks
+tasks:
+  # 2 tasks in sequence
+  all:
+    - "sleep"
+    - "hello-world"
+  # 3 Tasks in parallel
+  sleep@p:
+    - "@sh sleep 1"
+    - "@sh sleep 1"
+    - "@sh sleep 1"
+  # 1 Shell script using global env vars, + envified options
+  hello-world:
+    - "@sh echo $GREETING $JS_OPTIONS_PLACE"
+
+# Global env values
+env:
+  GREETING: "Hello"
+
+# Global options
+options:
+  place: "world"

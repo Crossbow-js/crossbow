@@ -1,0 +1,6 @@
+{
+  "type": {
+    "desc": "Specify tasks that must complete before watchers begin [cbfile|yaml|js|json]",
+    "default": "yaml"
+  }
+}

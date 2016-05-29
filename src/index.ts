@@ -4,12 +4,13 @@ import runner = require('./command.run');
 import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {retrieveDefaultInputFiles, readFiles, retrieveCBFiles, InputFiles, getRequirePaths} from './task.utils';
+import {retrieveDefaultInputFiles, readInputFiles, retrieveCBFiles, InputFiles, getRequirePaths} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
 import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
+import {handleIncomingInitCommand} from "./command.init";
 import cli from "./cli";
 import logger from './logger';
 
@@ -53,7 +54,8 @@ const availableCommands = {
     doctor: handleIncomingTreeCommand,
     watch: handleIncomingWatchCommand,
     w: handleIncomingWatchCommand,
-    watchers: handleIncomingWatchersCommand
+    watchers: handleIncomingWatchersCommand,
+    init: handleIncomingInitCommand
 };
 
 /**
@@ -92,7 +94,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
             /** DEBUG */
             debug(`Config flag provided ${configs.join(',')}`);
             /** DEBUG END */
-            const userConfig = readFiles(configs, mergedConfig.cwd);
+            const userConfig = readInputFiles(configs, mergedConfig.cwd);
             if (userConfig.invalid.length) {
                 console.log('There were errors resolving the following input file(s):');
                 reporter.reportMissingConfigFile(userConfig);

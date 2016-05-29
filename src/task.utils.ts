@@ -11,20 +11,27 @@ const readPkgUp = require('read-pkg-up');
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
-export interface ExternalFileInput {
+
+export interface ExternalFile {
     path: string
     resolved: string
+    errors: InputError[],
+    parsed: ParsedPath
+}
+
+export interface ExternalFileInput extends ExternalFile {
     input: CrossbowInput|any,
-    errors: InputError[]
 }
 
 export enum InputErrorTypes {
     InputFileNotFound = <any>"InputFileNotFound",
     NoTasksAvailable = <any>"NoTasksAvailable",
-    NoWatchersAvailable = <any>"NoWatchersAvailable"
+    NoWatchersAvailable = <any>"NoWatchersAvailable",
+    FileNotFound = <any>"FileNotFound"
 }
 
 export interface InputFileNotFoundError extends InputError {}
+export interface FileNotFoundError extends InputError {}
 export interface NoTasksAvailableError extends InputError {}
 export interface NoWatchersAvailableError extends InputError {}
 export interface InputError {
@@ -185,7 +192,7 @@ function replaceOne(item, root) {
  */
 export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
     const defaultConfigFiles = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
-    return readFiles(defaultConfigFiles, config.cwd);
+    return readInputFiles(defaultConfigFiles, config.cwd);
 }
 
 /**
@@ -202,58 +209,95 @@ export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
         }
         return defaultCBFiles;
     })();
-    return readFiles(maybes, config.cwd);
+    return readInputFiles(maybes, config.cwd);
 }
 
-export function readFiles(paths: string[], cwd: string): InputFiles {
-    const inputs = getFileInputs(paths, cwd);
-    const invalid = inputs.filter(x => x.input === undefined);
-    const valid = inputs.filter(x => x.input !== undefined);
+export function readInputFiles(paths: string[], cwd: string): InputFiles {
+
+    /**
+     * Get files that exist on disk
+     * @type {ExternalFile[]}
+     */
+    const inputFiles = readFilesFromDisk(paths, cwd);
+
+    /**
+     * Add parsed input keys to them
+     * @type {}
+     */
+    const inputs = inputFiles.map(file => {
+
+        /**
+         * If the file does not exist, change the error to be an InputFileNotFound error
+         * as this will allow more descriptive logging when needed
+         */
+        if (file.errors.length) {
+            return _.assign({}, file, {
+                errors: [{type: InputErrorTypes.InputFileNotFound}],
+                input: undefined
+            });
+        }
+
+        /**
+         * If the input file was yaml, load it & translate to JS
+         */
+        if (file.parsed.ext.match(/ya?ml$/i)) {
+            return _.assign(file, {
+                input: yml.safeLoad(readFileSync(file.resolved))
+            })
+        }
+
+        /**
+         * Finally assume a JS/JSON file and 'require' it as normal
+         */
+        return _.assign({}, file, {
+            input: require(file.resolved)
+        });
+    });
 
     return {
         all: inputs,
-        valid,
-        invalid
+        valid: inputs.filter(x => x.errors.length === 0),
+        invalid: inputs.filter(x => x.errors.length > 0)
     };
 }
 
 /**
- *
+ * Take an array of paths and return file info + erros if they don't exist
+ * @param paths
+ * @param cwd
+ * @returns {ExternalFile[]}
  */
-function getFileInputs(paths, cwd): ExternalFileInput[] {
+export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] {
     return paths
         .map(String)
-        .map(path => ({path: path, resolved: resolve(cwd, path)}))
-        .map((incoming): ExternalFileInput => {
-            const resolved = incoming.resolved;
-            const path = incoming.path;
+        .map(path => ({
+            path: path,
+            resolved: resolve(cwd, path),
+            parsed: parse(path)
+        }))
+        .map((incoming): ExternalFile => {
+
+            const {resolved, path, parsed} = incoming;
+
             if (!existsSync(resolved)) {
                 return {
-                    errors: [{type: InputErrorTypes.InputFileNotFound}],
-                    input: undefined,
+                    errors: [{type: InputErrorTypes.FileNotFound}],
                     path,
-                    resolved
-                }
-            }
-            if (resolved.match(/\.ya?ml$/)) {
-                return {
-                    errors: [],
-                    input: yml.safeLoad(readFileSync(incoming.resolved)),
-                    path,
+                    parsed,
                     resolved
                 }
             }
             return {
                 errors: [],
-                input: require(incoming.resolved),
                 path,
+                parsed,
                 resolved
             }
         });
 }
 
 /**
- * Attempt to use the LOCALLY installed crossbow-cli vesion
+ * Attempt to use the LOCALLY installed crossbow-cli version
  * first, this will ensure anything registered with .task etc
  * can be picked up by global installs too.
  * @param config
@@ -262,7 +306,7 @@ function getFileInputs(paths, cwd): ExternalFileInput[] {
 export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
     const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
     const global = join(__dirname, 'public', 'create.js');
-    return readFiles([local, global], config.cwd);
+    return readInputFiles([local, global], config.cwd);
 }
 
 /**
