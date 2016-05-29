@@ -6,17 +6,24 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import * as utils from "./task.utils";
 import * as fs from "fs";
-import logger from './logger';
 import {join} from "path";
-import {reportDuplicateConfigFile, reportConfigFileCreated} from "./reporters/defaultReporter";
+import {
+    reportDuplicateConfigFile, reportConfigFileCreated,
+    reportInitConfigTypeNotSupported
+} from "./reporters/defaultReporter";
 import {parse} from "path";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
-    InitConfigFileExists = <any>"InitConfigFileExists"
+    InitConfigFileExists = <any>"InitConfigFileExists",
+    InitConfigFileTypeNotSupported = <any>"InitConfigFileTypeNotSupported"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
 export interface InitConfigFileExistsError extends InitConfigError {file: utils.ExternalFile}
+export interface InitConfigFileTypeNotSupported extends InitConfigError {
+    providedType: InitConfigFileTypes,
+    supportedTypes: {}
+}
 
 export enum InitConfigFileTypes {
     yaml   = <any>"yaml",
@@ -29,6 +36,7 @@ export default function execute(trigger: CommandTrigger): any {
     const {input, config} = trigger;
 
     const templateDir = join(__dirname, '..', 'templates');
+
     const maybeExistingFileInputs = {
         [InitConfigFileTypes.yaml]: 'crossbow.yaml',
         [InitConfigFileTypes.js]: 'crossbow.js',
@@ -39,9 +47,15 @@ export default function execute(trigger: CommandTrigger): any {
     const outputFileName = maybeExistingFileInputs[config.type];
 
     if (outputFileName === undefined) {
-        // InitConfigFileTypeNotSupported error
-        console.log('not supported');
-        return;
+        const errors = [{
+            type: InitConfigFileErrorTypes.InitConfigFileTypeNotSupported,
+            providedType: config.type,
+            supportedTypes: maybeExistingFileInputs
+        }];
+        if (!config.handoff) {
+            reportInitConfigTypeNotSupported(errors[0]);
+        }
+        return {errors};
     }
 
     /**

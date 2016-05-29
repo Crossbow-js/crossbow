@@ -20,7 +20,7 @@ import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
-import {InitConfigFileExistsError, InitConfigFileTypes} from "../command.init";
+import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
 
 const l = logger.info;
@@ -55,6 +55,21 @@ export function reportMissingConfigFile(inputs: InputFiles) {
     }
 }
 
+export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {
+    heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
+    const o = archy({
+        label: `{yellow:+ input: '${error.providedType}'}`, nodes: [
+            {
+                label: [
+                    `{red.bold:x ${error.providedType}}`,
+                    getExternalError(error.type, error)
+                ].join('\n')
+            }
+        ]
+    }, prefix);
+    logger.info(o.slice(26, -1));
+}
+
 export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
     heading(`Sorry, this would cause an existing file to be overwritten`);
     const o = archy({
@@ -85,7 +100,7 @@ export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFile
 
     output.forEach(function (arg) {
         logger.info(arg);
-    })
+    });
 }
 
 export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {

@@ -12,6 +12,14 @@ describe('Init command', function () {
         assert.equal(out.errors.length, 1);
         assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitConfigFileExists);
     });
+    it('returns errors when type is not supported', function () {
+        const out = handleIncoming({
+            input: ['init'],
+            flags: {handoff: true, cwd: 'test/fixtures', type: 'cjbile'} // typo
+        }, {});
+        assert.equal(out.errors.length, 1);
+        assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitConfigFileTypeNotSupported);
+    });
     it('returns no errors when the file will be unique', function () {
         const out = handleIncoming({
             input: ['init'],
