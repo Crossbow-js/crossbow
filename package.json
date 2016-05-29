@@ -9,7 +9,7 @@
     "lint": "eslint lib",
     "ts": "tsc",
     "prepublish": "npm run test",
-    "lodash": "lodash include=merge,get,assign exports=node"
+    "lodash": "lodash include=merge,get,assign,values exports=node"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
@@ -61,6 +61,7 @@
     "postcss": "5.0.14",
     "postcss-import": "7.1.3",
     "q": "1.4.1",
+    "rimraf": "2.5.2",
     "sinon": "1.17.2",
     "through2": "2.0.0",
     "typescript": "1.8.10",

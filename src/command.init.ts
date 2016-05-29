@@ -6,6 +6,9 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import {readInputFiles, ExternalFileInput, readFilesFromDisk, ExternalFile} from "./task.utils";
 import {join} from "path";
+import {readFileSync} from "fs";
+import {writeFileSync} from "fs";
+const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
     InitConfigFileExists = <any>"InitConfigFileExists"
@@ -25,13 +28,15 @@ export default function execute(trigger: CommandTrigger): any {
 
     const templateDir = join(__dirname, '..', 'templates');
     const maybeExistingFileInputs = {
-        'crossbow.yaml': InitConfigFileTypes.yaml,
-        'crossbow.js': InitConfigFileTypes.js,
-        'crossbow.json': InitConfigFileTypes.json,
-        'cbfile.js': InitConfigFileTypes.cbfile,
+        [InitConfigFileTypes.yaml]: 'crossbow.yaml',
+        [InitConfigFileTypes.js]: 'crossbow.js',
+        [InitConfigFileTypes.json]: 'crossbow.json',
+        [InitConfigFileTypes.cbfile]: 'cbfile.js'
     };
 
-    if (InitConfigFileTypes[config.type] === undefined) {
+    const fileTypeSelection = maybeExistingFileInputs[config.type];
+
+    if (fileTypeSelection === undefined) {
         // InitConfigFileTypeNotSupported error
         console.log('not supported');
         return;
@@ -41,7 +46,7 @@ export default function execute(trigger: CommandTrigger): any {
      * Attempt to load existing config files from the CWD
      * @type {ExternalFile[]}
      */
-    const existingFiles = readFilesFromDisk(Object.keys(maybeExistingFileInputs), config.cwd);
+    const existingFilesInCwd = readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
 
     /**
      * Now check if any of the existing files match the one the user
@@ -57,11 +62,9 @@ export default function execute(trigger: CommandTrigger): any {
      *
      * @type {ExternalFile[]}
      */
-    const matchingFiles = existingFiles
+    const matchingFiles = existingFilesInCwd
         .filter(x => x.errors.length === 0)
-        .filter(function (file) {
-            return maybeExistingFileInputs[file.parsed.base] === config.type;
-        });
+        .filter(file => fileTypeSelection === file.parsed.base);
 
     const errors: Array<InitConfigFileExistsError> = (function () {
         if (matchingFiles.length) {
@@ -73,12 +76,21 @@ export default function execute(trigger: CommandTrigger): any {
     })();
 
     if (config.handoff) {
-        return {existingFiles, matchingFiles, errors};
+        return {existingFilesInCwd, matchingFiles, errors};
     }
 
-    
+    /**
+     * He we perform any IO as we're not 'handing off'
+     */
+    if (errors.length) {
 
-    return {existingFiles, matchingFiles, errors};
+    } else {
+        writeFileSync(join(config.cwd, fileTypeSelection),
+            readFileSync(join(templateDir, fileTypeSelection))
+        );
+    }
+
+    return {existingFilesInCwd, matchingFiles, errors};
 }
 
 export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
