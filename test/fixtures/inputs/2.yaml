@@ -1,0 +1,2 @@
+env:
+  dir: 'file:2.yaml'
