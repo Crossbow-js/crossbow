@@ -63,6 +63,11 @@ tasks:
       env:
         DOCKER_PORT: 8000
 
+  desc:
+    description: 'Run the shane task'
+    tasks: ['multiline', 'shell']
+    runMode: 'parallel'
+
   multiline: |
     @sh sleep 1
     echo 'hey'

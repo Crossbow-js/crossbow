@@ -25,6 +25,7 @@ export interface Task {
     type: TaskTypes
     inlineFunctions: Array<CBFunction>
     env: any
+    description: string
 }
 
 export interface TasknameWithOrigin {
