@@ -141,6 +141,12 @@ const flagTransforms = {
     cwd: function (opts) {
     	opts.cwd = resolve(opts.cwd);
         return opts;
+    },
+    config: (opts) => {
+        if (opts.config && !Array.isArray(opts.config)) {
+            opts.config = [opts.config];
+        }
+        return opts;
     }
 };
 

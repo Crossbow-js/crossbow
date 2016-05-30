@@ -5,6 +5,7 @@ import {CrossbowInput} from "./index";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
+import {statSync} from "fs";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -27,7 +28,8 @@ export enum InputErrorTypes {
     InputFileNotFound = <any>"InputFileNotFound",
     NoTasksAvailable = <any>"NoTasksAvailable",
     NoWatchersAvailable = <any>"NoWatchersAvailable",
-    FileNotFound = <any>"FileNotFound"
+    FileNotFound = <any>"FileNotFound",
+    NotAFile = <any>"NotAFile"
 }
 
 export interface InputFileNotFoundError extends InputError {}
@@ -191,7 +193,7 @@ function replaceOne(item, root) {
  * from the users CWD
  */
 export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultConfigFiles = ['crossbow.js', 'crossbow.yaml', 'crossbow.yml'];
+    const defaultConfigFiles = ['crossbow.yaml', 'crossbow.js', 'crossbow.yml', 'crossbow.json'];
     return readInputFiles(defaultConfigFiles, config.cwd);
 }
 
@@ -232,6 +234,9 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
          */
         if (file.errors.length) {
             return _.assign({}, file, {
+                // here there may be any types of file error,
+                // but we only care that was an error, and normalise it
+                // here for logging. We can added nice per-error messages later.
                 errors: [{type: InputErrorTypes.InputFileNotFound}],
                 input: undefined
             });
@@ -282,6 +287,15 @@ export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] 
             if (!existsSync(resolved)) {
                 return {
                     errors: [{type: InputErrorTypes.FileNotFound}],
+                    path,
+                    parsed,
+                    resolved
+                }
+            }
+            const stat = statSync(resolved);
+            if (!stat.isFile()){
+                return {
+                    errors: [{type: InputErrorTypes.NotAFile}],
                     path,
                     parsed,
                     resolved

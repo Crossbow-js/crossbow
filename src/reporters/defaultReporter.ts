@@ -18,7 +18,10 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile} from "../task.utils";
+import {
+    InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile,
+    ExternalFileInput
+} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
@@ -36,23 +39,25 @@ export const enum LogLevel {
     Verbose = 3
 }
 
-export function reportMissingConfigFile(inputs: InputFiles) {
-    if (inputs.invalid.length) {
-        heading(`Sorry, there were errors resolving your input files`);
-        inputs.invalid.forEach(function (item) {
-            const o = archy({
-                label: `{yellow:+ input: '${item.path}'}`, nodes: [
-                    {
-                        label: [
-                            `{red.bold:x ${item.path}}`,
-                            getExternalError(item.errors[0].type, item.errors[0], item)
-                        ].join('\n')
-                    }
-                ]
-            }, prefix);
-            logger.info(o.slice(26, -1));
-        });
-    }
+export function reportUsingConfigFile(path: string) {
+    logger.info(`Using {cyan.bold:${path}}`);
+}
+
+export function reportMissingConfigFile(inputs: ExternalFileInput[]) {
+    heading(`Sorry, there were errors resolving your input files`);
+    inputs.forEach(function (item) {
+        const o = archy({
+            label: `{yellow:+ input: '${item.path}'}`, nodes: [
+                {
+                    label: [
+                        `{red.bold:x ${item.path}}`,
+                        getExternalError(item.errors[0].type, item.errors[0], item)
+                    ].join('\n')
+                }
+            ]
+        }, prefix);
+        logger.info(o.slice(26, -1));
+    });
 }
 
 export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {

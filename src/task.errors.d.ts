@@ -7,6 +7,7 @@ export interface TaskError {
 }
 export interface TaskNotFoundError extends TaskError {
     taskName: string
+    cwd: string
 }
 export interface SubtasksNotInConfigError extends TaskError {
     name: string

@@ -12,6 +12,7 @@ import {
 import {Task} from "./task.resolve.d";
 import {TaskTypes} from "./task.resolve";
 import {isSupportedFileType} from "./task.utils";
+import {CommandTrigger} from "./command.run";
 const _ = require('../lodash.custom');
 
 export enum TaskErrorTypes {
@@ -28,16 +29,16 @@ export enum TaskErrorTypes {
     FileTypeNotSupported = <any>"FileTypeNotSupported"
 }
 
-export function gatherTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
+export function gatherTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     return [
         getModuleErrors,
         getFileTypeErrors,
         getCBFlagErrors,
         getSubTaskErrors
-    ].reduce((all, fn) => all.concat(fn(task, input)), []);
+    ].reduce((all, fn) => all.concat(fn(task, trigger)), []);
 }
 
-function getModuleErrors(task: Task): TaskError[] {
+function getModuleErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 
     if (task.type === TaskTypes.ExternalTask)   return [];
     if (task.type === TaskTypes.InlineFunction) return [];
@@ -47,13 +48,17 @@ function getModuleErrors(task: Task): TaskError[] {
      * this can be classified as a `module not found error`
      */
     if (task.externalTasks.length === 0 && task.tasks.length === 0) {
-        return [<TaskNotFoundError>{type: TaskErrorTypes.TaskNotFound, taskName: task.taskName}]
+        return [<TaskNotFoundError>{
+            type: TaskErrorTypes.TaskNotFound,
+            taskName: task.taskName,
+            cwd: trigger.config.cwd
+        }]
     }
 
     return [];
 }
 
-function getFileTypeErrors(task: Task): TaskError[] {
+function getFileTypeErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 
     /**
      * If it's not an external task, this can never be an error
@@ -67,7 +72,7 @@ function getFileTypeErrors(task: Task): TaskError[] {
     return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalTask: task.externalTasks[0]}];
 }
 
-function getCBFlagErrors(task: Task): TaskError[] {
+function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     return task.cbflags.reduce((all, flag) => {
         /**
          * if `flag` is an empty string, the user provided an @ after a task
@@ -90,7 +95,7 @@ function getCBFlagErrors(task: Task): TaskError[] {
     }, []);
 }
 
-function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
+function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     /**
      * Now validate any subtasks given with colon syntax
      *  eg: sass:dev
@@ -101,7 +106,7 @@ function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
      *          dev: 'input.scss'
      */
     return task.subTasks.reduce((all, subTaskName) => {
-        const configKeys = Object.keys(_.get(input, ['options'].concat(task.baseTaskName), {}));
+        const configKeys = Object.keys(_.get(trigger.input, ['options'].concat(task.baseTaskName), {}));
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -139,7 +144,7 @@ function getSubTaskErrors(task: Task, input: CrossbowInput): TaskError[] {
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = _.get(input, ['options'].concat(task.baseTaskName, subTaskName));
+        const match = _.get(trigger.input, ['options'].concat(task.baseTaskName, subTaskName));
         if (match === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,

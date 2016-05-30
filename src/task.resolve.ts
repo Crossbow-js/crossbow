@@ -194,7 +194,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      */
     incoming.errors = gatherTaskErrors(
         incoming,
-        trigger.input
+        trigger
     );
 
     debug(`errors: ${incoming.errors}`);
