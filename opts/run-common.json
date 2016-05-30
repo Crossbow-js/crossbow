@@ -1,0 +1,22 @@
+{
+  "interactive": {
+    "desc": "Run interactive mode",
+    "type": "boolean",
+    "alias": "i"
+  },
+  "progress": {
+    "desc": "Show start/end progress reports for every task",
+    "type": "boolean",
+    "alias": "P"
+  },
+  "suppressOutput": {
+    "desc": "Don't show child_process where possible",
+    "type": "boolean",
+    "alias": "q"
+  },
+  "fail": {
+    "desc": "Use --no-fail to stop failures affecting sibling tasks ",
+    "type": "boolean",
+    "default": true
+  }
+}

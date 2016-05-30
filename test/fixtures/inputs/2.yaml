@@ -1,2 +1,2 @@
 env:
-  dir: 'file:2.yaml'
+  SLEEP: '.2'

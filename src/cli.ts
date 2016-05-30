@@ -1,6 +1,7 @@
 const merge = require('../lodash.custom').merge;
-var common = require('../opts/common.json');
-var pkg    = require('../package.json');
+const common = require('../opts/common.json');
+const runcommon = require('../opts/run-common.json');
+const pkg = require('../package.json');
 
 export default function (cb) {
     var yargs  = require("yargs")
@@ -30,7 +31,7 @@ function handleIncoming(command, yargs, cb) {
     if (command === "run") {
         out = yargs
             .usage("Usage: $0 run [tasknames..]")
-            .options(merge({}, common, require('../opts/command.run.opts.json')))
+            .options(merge({}, runcommon, common, require('../opts/command.run.opts.json')))
             .example("$0 run task1 task2 task3", "Run 3 tasks in sequence")
             .example("$0 run task1 task2 -p", "Run 2 tasks in parallel")
             .example("$0 run -i", "Run in interactive mode (aso you can select tasks")
@@ -41,7 +42,7 @@ function handleIncoming(command, yargs, cb) {
     if (command === "watch") {
         out = yargs
             .usage("Usage: $0 watch [watchers..]")
-            .options(merge({}, common, require('../opts/command.watch.opts.json')))
+            .options(merge({}, runcommon, common, require('../opts/command.watch.opts.json')))
             .example("$0 watch default docker", "Run 2 watchers (default+docker)")
             .example("$0 watch", "Runs the 'default' watcher if available")
             .example("$0 watch -i", "Choose a watcher interactively")
@@ -52,15 +53,15 @@ function handleIncoming(command, yargs, cb) {
     if (command === "tasks") {
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
-            .options(merge({}, require('../opts/command.watch.opts.json')))
+            .options(merge({}, common, require('../opts/command.tasks.opts.json')))
             .example("$0 tasks")
             .help()
             .argv;
     }
     if (command === "tree") {
         out = yargs
-            .usage("Usage: $0 tree\nShow's all tasks and their children in a tree.")
-            .options(merge({}, require('../opts/command.watch.opts.json')))
+            .usage("Usage: $0 tree\nShows all tasks and their children in a tree.")
+            .options(merge({}, common, require('../opts/command.tree.opts.json')))
             .example("$0 tree", "Shows tasks with minimal info")
             .example("$0 tree -v", "Shows tasks with maximum info")
             .help()
@@ -69,7 +70,7 @@ function handleIncoming(command, yargs, cb) {
     if (command === "init") {
         out = yargs
             .usage("Usage: $0 init")
-            .options(merge({}, require('../opts/command.init.opts.json')))
+            .options(merge({}, common, require('../opts/command.init.opts.json')))
             .example("$0 init", "Creates the default crossbow.yaml file")
             .example("$0 init --type cbfile", "Create a 'cbfile.js'")
             .example("$0 init --type js", "Create a module.exports style config")

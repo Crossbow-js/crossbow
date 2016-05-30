@@ -83,7 +83,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     }
 
     // if the user provided a -c flag, but external files were
-    // not returne, this is an error state.
+    // not return, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
         return processInput(cli, userInput.inputs[0]);
     }

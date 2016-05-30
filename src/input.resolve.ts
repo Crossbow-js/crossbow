@@ -1,6 +1,7 @@
 import {CrossbowConfiguration} from "./config";
 import * as utils from "./task.utils";
 import {CrossbowInput} from "./index";
+import {ExternalFileInput} from "./task.utils";
 const _ = require('../lodash.custom');
 
 export enum InputTypes {
@@ -37,7 +38,16 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
             type: InputTypes.ExternalFile,
             errors: [],
             sources: inputs.valid,
-            inputs: [generateBaseInput(inputs.valid[0].input)],
+            inputs: [
+                /**
+                 * Merged all given configs into a single obj
+                 * This is to allow, for example, production
+                 * configuration to override dev etc..
+                 */
+                inputs.valid.reduce((acc, file: ExternalFileInput) => {
+                    return _.merge(acc, generateBaseInput(file.input));
+                }, {})
+            ],
         }
     }
 
