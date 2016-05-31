@@ -15,6 +15,7 @@ const flagRegex = /(.+?)@(.+)?$/;
 let inlineFnCount = 0;
 
 export function preprocessTask(taskName: IncomingTaskItem, input: CrossbowInput, parents: string[]): Task {
+
     if (typeof taskName === 'function') {
         return handleFunctionInput(taskName, input, parents);
     }
@@ -30,6 +31,8 @@ export interface TaskLiteral {
     input?: string
     adaptor?: string
     command?: string
+    tasks?: IncomingTaskItem[]
+    description?: string
 }
 
 function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
@@ -122,6 +125,20 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * Now pass it off to allow any flags to applied
      */
     return processFlags(incomingTask);
+}
+
+function handleObjectWithTasksInput(taskLiteral: TaskLiteral, parents: string[]) {
+    // console.log(parents.slice(-1)[0]);
+    // createTask({
+    //     baseTaskName: identifier,
+    //     taskName: identifier,
+    //     rawInput: identifier,
+    //     inlineFunctions: [<CBFunction>taskName],
+    //     valid: true,
+    //     parents: parents,
+    //     origin: TaskOriginTypes.InlineFunction,
+    //     type: TaskTypes.InlineFunction
+    // });
 }
 
 /**

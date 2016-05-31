@@ -4,7 +4,7 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines} from "./task.utils";
+import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
@@ -52,34 +52,15 @@ const defaultTask = <Task>{
     parents:         [],
     errors:          [],
     cbflags:         [],
+    description:     '',
     rawInput:        '',
     env:             {},
     taskName:        undefined,
     runMode:         TaskRunModes.series,
 };
 
-
 /**
- * Factory for creating a new Task Item
- * @param {object} obj
- * @returns {object}
- */
-export function createTask(obj: any): Task {
-    return _.merge({}, defaultTask, obj);
-}
-
-export function createCircularReferenceTask(incoming: Task, parents: string[]): Task {
-    return _.merge({}, defaultTask, incoming, {
-        errors: [<CircularReferenceError>{
-            type: TaskErrorTypes.CircularReference,
-            incoming: incoming,
-            parents: parents
-        }]
-    });
-}
-
-/**
- * Entry point for all tasks
+ * Entry point for resolving the task tree from any given point
  */
 function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trigger: CommandTrigger): Task {
 
@@ -88,46 +69,102 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     /** DEBUG-END **/
 
     /**
-     * Handle different types of task input
-     * supported:
+     * We first 'preprocess' the task in order to
+     * handle different types of task input. Supported:
      *  - string
      *  - function
      *  - object literal
      * @type {Task}
      */
-    var incoming = preprocessTask(taskItem, trigger.input, parents);
+    let incoming = preprocessTask(taskItem, trigger.input, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
     /** DEBUG-END **/
 
     /**
-     * Exit now if this task is an 'adaptor' task as any
-     * module/function look-ups do not apply
+     * We exit very quickly if the pre-process step has delivered
+     * an 'adaptor' task - which means that's absolutely nothing left
+     * to determine.
      */
     if (incoming.type === TaskTypes.Adaptor) {
         return incoming;
     }
 
     /**
+     * A 'toplevelValue' is when the current baseTaskName matches a key
+     * in the given task definitions. This is classed an alias and we
+     * may want to handle sub-task resolution differently depending
+     * on when that value is.
+     *
+     * eg: If the user ran
+     *   $ crossbow run js
+     *
+     * and there's task config like:
+     *   js: ['task1', 'task2']
+     *
+     * -> Then the value is an array (2 items) that need resolving
+     * themselves and setting as children.
+     * @type {any}
+     */
+    let toplevelValue = getTopLevelValue(incoming, trigger);
+
+    /**
+     * There's a special case where the toplevel property of a task
+     * maybe a group definition, like
+     *
+     * js:
+     *  - tasks: ['one', 'two']
+     *    description: 'Some description'
+     *    runMode: 'parallel'
+     *
+     * In this case, we want to resolve 'one' and 'two' as children,
+     * and not the object literal itself. A common use-case is when
+     * you want to be able to provide a description for group-level tasks
+     * but normally this is only possible on a per-task basis
+     * @type {Task|Task}
+     */
+    incoming = (function () {
+        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
+            return createTask(_.merge(incoming, toplevelValue));
+        }
+        return incoming;
+    })();
+    
+    /**
+     * Determine which sub tasks need converting as children.
+     * Based on what was explained above, we may want to pass the
+     * toplevel Value, or may want to use the tasks value directly
+     * @type {Array}
+     */
+    const toConvert = (function () {
+        if (toplevelValue == undefined) return [];
+        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
+            return [].concat(toplevelValue.tasks);
+        }
+        if (typeof toplevelValue === 'function') {
+            return [];
+        }
+        return [].concat(toplevelValue);
+    })();
+    
+    /**
      * Set child tasks
-     * @type {Task[]|Array}
+     * @type {Task[]}
      */
     incoming.tasks = (function () {
-    	const toplevel = getTopLevelValue(incoming, trigger);
-        if (toplevel !== undefined) {
-            if (typeof toplevel === 'function') {
-                return [];
-            }
-            return [].concat(toplevel).map(x => {
-                if (parents.indexOf(x) > -1) {
-                    // todo - create log output for circular reference errors
-                    return createCircularReferenceTask(incoming, parents);
-                }
-                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
-            });
+
+        if (!toConvert.length) {
+            return [];
         }
-        return [];
+
+        return toConvert.map(x => {
+            if (parents.indexOf(x) > -1) {
+                // todo - create log output for circular reference errors
+                return createCircularReferenceTask(incoming, parents);
+            }
+            return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+        });
     })();
 
     /**
@@ -206,6 +243,28 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     incoming.parents = parents;
 
     return incoming
+}
+
+/**
+ * Factory for creating a new Task Item
+ * @param {object} obj
+ * @returns {object}
+ */
+export function createTask(obj: any): Task {
+    return _.merge({}, defaultTask, obj);
+}
+
+/**
+ * When a circular reference is detected, exit with the appropriate error
+ */
+export function createCircularReferenceTask(incoming: Task, parents: string[]): Task {
+    return _.merge({}, defaultTask, incoming, {
+        errors: [<CircularReferenceError>{
+            type: TaskErrorTypes.CircularReference,
+            incoming: incoming,
+            parents: parents
+        }]
+    });
 }
 
 /**
