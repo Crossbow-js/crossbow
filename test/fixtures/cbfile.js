@@ -35,7 +35,12 @@ cb.task('build-js', {
 
 cb.task('wait', [{
 	input: '@sh sleep $JS_OPTIONS_WAIT_TIME'
-}])
+}]);
+
+cb.task('obj', {
+	tasks: ['wait-env'],
+	description: "Run from an obj"
+});
 
 cb.env({__wait__: '0.3'});
 cb.task('wait-env', ['@sh sleep $__wait__']);

@@ -90,4 +90,20 @@ describe('Using a cbfile', function () {
                 done();
             });
     });
+    it('runs with object in place of tasks deps', function (done) {
+        const runner = cb({
+            input: ['obj'],
+            flags: {
+                handoff: true,
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(reports => {
+                assert.equal(reports.length, 2);
+                done();
+            });
+    });
 });

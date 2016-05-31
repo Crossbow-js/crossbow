@@ -6,6 +6,7 @@ import {CrossbowConfiguration} from "../config";
 import {getRawOutputStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
 import {CLI} from "../index";
+import {isPlainObject} from "../task.utils";
 const merge = require('../../lodash.custom').merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
@@ -13,18 +14,35 @@ type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 let fncount            = 0;
 let inlineWatcherCount = 0;
 
+function incomingTask (taskname: string, inlineLiteral: {}): {}
+function incomingTask (taskname: string, inlineLiteral: {}, fn?: returnFn): {}
 function incomingTask (taskname: string, fn: returnFn): {}
 function incomingTask (taskname: string, deps: string[], fn?: returnFn): {}
-function incomingTask (taskname: string, deps?, fn?): {} {
+function incomingTask (taskname: string, deps: any, fn?:any): any {
 
+    // only 2 params given (function last);
     if (typeof deps === 'function') {
         fn = deps;
         deps = [];
     }
 
-    deps = [].concat(deps).filter(Boolean);
-
     const outgoing = {};
+
+    if (isPlainObject(deps) && deps.tasks) {
+        if (deps.tasks) {
+            outgoing[taskname] = deps;
+        } else {
+            throw new Error('Object literally must contain at least a "tasks" key');
+        }
+        if (fn) {
+            const fnname = `${taskname}_internal_fn_${fncount++}`;
+            outgoing[fnname] = fn;
+            outgoing[taskname].tasks.push(fn);
+        }
+        return outgoing;
+    }
+
+    deps = [].concat(deps).filter(Boolean);
 
     if (deps.length) {
         if (!fn) {
