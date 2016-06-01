@@ -43,6 +43,9 @@ export function getTaskList(tasks) {
                 if (typeof item === 'function') {
                     return `${padLine(key, longest)}  [Function]`;
                 }
+                if (isPlainObject(item) && item.description) {
+                    return `${padLine(key, longest)}  ${item.description}`;
+                }
                 return `${padLine(key, longest)}  ${removeNewlines(stringifyObj(item, process.stdout.columns - (minWindow)))}`;
             })(items[0]),
             value: key
