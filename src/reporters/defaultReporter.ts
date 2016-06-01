@@ -606,7 +606,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
                 })();
                 const displayLabel = (function () {
                     const withCount = (function () {
-                        if (task.tasks.length && config.verbose === LogLevel.Short) {
+                        if ((task.tasks.length > 1) && config.verbose === LogLevel.Short) {
                             return label + ` [${task.tasks.length}]`;
                         }
                         return label;
