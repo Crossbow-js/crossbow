@@ -31,4 +31,18 @@ describe('Preparing data for output', function () {
         assert.equal(tree[0].tasks.length, 1);
         assert.equal(tree[0].tasks[0].tasks.length, 0);
     });
+    it.only('getTaskTree() limit 3', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: ['css'],
+                css: ['html'],
+                html: ['@html min']
+            }
+        });
+
+        const tree = getTaskTree(runner.tasks.all, 3);
+        assert.equal(tree.length, 1);
+        assert.equal(tree[0].tasks.length, 1);
+        assert.equal(tree[0].tasks[0].tasks.length, 1);
+    });
 });

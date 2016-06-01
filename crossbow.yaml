@@ -41,6 +41,7 @@ tasks:
     - sleep1
     - sleep2
     - sleep3
+    - desc
     - sleep4
     - slow-stream
 

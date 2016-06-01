@@ -1,6 +1,5 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import logger from "../logger";
 import {Task} from "../task.resolve.d";
 import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
@@ -11,6 +10,7 @@ import {WatchTask} from "../watch.resolve";
 import * as taskErrors from "../task.errors";
 import * as watchErrors from "../watch.errors";
 
+import logger from "../logger";
 import {compile, prefix} from '../logger';
 import {WatchTasks} from "../watch.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
@@ -649,7 +649,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
     }
 }
 
-function getErrors(task) {
+export function getErrors(task) {
     if (!task.errors.length) {
         return [];
     }
@@ -691,7 +691,7 @@ function npmScriptLabel(task: Task) {
     return `{magenta:[npm script]} ${task.command}`;
 }
 
-function getLabel(task) {
+export function getLabel(task) {
 
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {
