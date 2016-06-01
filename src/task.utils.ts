@@ -6,6 +6,7 @@ import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
 import {statSync} from "fs";
+import {Tasks} from "./task.resolve.d";
 
 const yml = require('js-yaml');
 const readPkgUp = require('read-pkg-up');
@@ -437,4 +438,25 @@ export function __e(x) {
     return x
         .replace(/\{/g, '\\\{')
         .replace(/}/g, '\\\}');
+}
+
+export function getTaskTree(tasks: Tasks, depth = 1) {
+    
+    const gathered = gather(tasks, [], 1);
+    
+    return gathered;
+    
+    function gather(items, initial, currentDepth) {
+        return items.reduce((acc, task) => {
+            if (currentDepth === depth) {
+                task.tasks = [];
+                return acc.concat(task);
+            }
+            if (currentDepth < depth) {
+                task.tasks = gather(task.tasks, [], currentDepth + 1);
+                return acc.concat(task);
+            }
+            return acc;
+        }, initial);
+    }
 }
