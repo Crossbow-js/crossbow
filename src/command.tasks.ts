@@ -12,13 +12,11 @@ export default function execute(trigger: CommandTrigger): void {
     const {input, config} = trigger;
     const resolved = resolveTasks(Object.keys(input.tasks), trigger);
     // console.log(resolveTasks(Object.keys(input.tasks), trigger));
-    // printSimpleTaskList(resolveTasks(Object.keys(input.tasks), trigger).all, config, 'Available tasks:', true);
     if (resolved.invalid.length) {
-        console.log('GOT errors');
+        reportTaskTree(resolved.all, config, 'Available tasks:');
     } else {
-        console.log('NO Errors');
+        printSimpleTaskList(resolved.valid, config, 'Available tasks:');
     }
-
 }
 
 export function handleIncomingTasksCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {

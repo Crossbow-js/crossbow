@@ -271,13 +271,13 @@ export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, confi
         l(`{err: } Sorry, there were errors when resolving the tasks`);
         l(`  that will be used in the following watcher`);
         logWatcher(runner);
-        reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
+        reportTaskTree(tasks, config, `+ input: ${runner.parent}`);
     } else {
         l('{gray.bold:---------------------------------------------------}');
         l(`{ok: } No errors from`);
         logWatcher(runner);
         if (config.verbose === LogLevel.Verbose) {
-            reportTaskTree(tasks, config, `+ input: ${runner.parent}`, false);
+            reportTaskTree(tasks, config, `+ input: ${runner.parent}`);
         }
     }
 }

@@ -28,7 +28,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
 export function getTaskList(tasks) {
     const topLevelTasks = Object.keys(tasks).filter(x => !isInternal(x));
-    const longest = topLevelTasks.reduce((val, item) => item.length > val ? item.length : val, 0);
+    const longest = longestString(topLevelTasks);
     const minWindow = longest + 6;
     return topLevelTasks.map(function (key) {
         const items = [].concat(tasks[key]);
@@ -53,7 +53,10 @@ export function getTaskList(tasks) {
     });
 }
 
-function padLine(incoming, max?) {
+export function longestString (col: string[]): number {
+    return col.reduce((val, item) => item.length > val ? item.length : val, 0);
+}
+export function padLine(incoming, max?) {
     if (incoming.length <= max) {
         return incoming + new Array(max-incoming.length+1).join(' ');
     }
