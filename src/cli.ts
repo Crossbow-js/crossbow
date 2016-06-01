@@ -13,6 +13,8 @@ export default function (cb) {
         .version(function () {
             return pkg.version;
         })
+        .example("$0 run task1 task2", "Run 2 tasks in sequence")
+        .example("$0 tasks", "List your available tasks")
         .epilogue("For help running a certain command, type <command> --help\neg: $0 run --help");
 
     var argv    = yargs.argv;

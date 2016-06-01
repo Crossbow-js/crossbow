@@ -34,7 +34,7 @@ export function getTaskList(tasks) {
         const items = [].concat(tasks[key]);
         if (items.length > 1) {
             return {
-                name: `${padLine(key, longest)}  [${items.length} tasks]`,
+                name: `${padLine(key, longest)}  ${items.length} tasks`,
                 value: key
             }
         }
@@ -44,7 +44,7 @@ export function getTaskList(tasks) {
                     return `${padLine(key, longest)}  [Function]`;
                 }
                 if (isPlainObject(item) && item.description) {
-                    return `${padLine(key, longest)}  ${item.description}`;
+                    return stringifyObj(`${padLine(key, longest)}  ${item.description}`, process.stdout.columns - (minWindow));
                 }
                 return `${padLine(key, longest)}  ${removeNewlines(stringifyObj(item, process.stdout.columns - (minWindow)))}`;
             })(items[0]),
