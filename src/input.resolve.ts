@@ -87,6 +87,19 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
     }
 
     /**
+     * Finally, try any cbfiles in the cwd
+     */
+    const defaultCbFiles = utils.retrieveCBFiles(config);
+    if (defaultCbFiles.valid.length) {
+        return {
+            errors: [],
+            type: InputTypes.CBFile,
+            sources: defaultCbFiles.valid,
+            inputs: []
+        }
+    }
+
+    /**
      * At this point, the user has not attempted to load any config files manually
      * so we try to load any defaults that are in the CWD
      */

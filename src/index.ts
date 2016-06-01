@@ -77,10 +77,10 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
-    if (mergedConfig.cbfile && userInput.type === InputTypes.CBFile) {
+    if (userInput.type === InputTypes.CBFile) {
         return handleCBfileMode(cli, mergedConfig);
     }
-
+    
     // if the user provided a -c flag, but external files were
     // not return, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
