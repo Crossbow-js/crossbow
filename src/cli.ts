@@ -7,8 +7,8 @@ export default function (cb) {
     var yargs  = require("yargs")
         .command("run", "Run a task(s)")
         .command("watch", "Run a watcher(s)")
-        .command("tree", "See your entire task tree")
         .command("tasks", "See your available top-level tasks")
+        .command("watchers", "See your available watchers")
         .command("init", "Create a configuration file")
         .version(function () {
             return pkg.version;
@@ -17,7 +17,7 @@ export default function (cb) {
 
     var argv    = yargs.argv;
     var command = argv._[0];
-    var valid   = ["run", "watch", "tasks", "tree", "init"];
+    var valid   = ["run", "watch", "watchers", "tasks", "init"];
 
     if (valid.indexOf(command) > -1) {
         handleIncoming(command, yargs.reset(), cb);
@@ -54,16 +54,17 @@ function handleIncoming(command, yargs, cb) {
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
             .options(merge({}, common, require('../opts/command.tasks.opts.json')))
-            .example("$0 tasks")
+            .example("$0 tasks", "Shows tasks with minimal info")
+            .example("$0 tasks -v", "Shows tasks with maximum info")
             .help()
             .argv;
     }
-    if (command === "tree") {
+    if (command === "watchers") {
         out = yargs
-            .usage("Usage: $0 tree\nShows all tasks and their children in a tree.")
-            .options(merge({}, common, require('../opts/command.tree.opts.json')))
-            .example("$0 tree", "Shows tasks with minimal info")
-            .example("$0 tree -v", "Shows tasks with maximum info")
+            .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
+            .options(merge({}, common, require('../opts/command.tasks.opts.json')))
+            .example("$0 watchers", "Show available Watchers")
+            .example("$0 watchers -v", "Shows tasks with maximum info")
             .help()
             .argv;
     }

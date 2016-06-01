@@ -299,14 +299,18 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
         })
     }, prefix);
     logger.info(o.slice(26, -1));
-    console.log('');
+    logger.info('');
     logger.info(`Run your watchers in the following way:`);
-    logger.unprefixed('info', '\n' + runners.valid.map(x => `   {gray:$} crossbow watch {bold:${x.parent}}`).join('\n'));
+    logger.info(``);
+    runners.valid.forEach(function (runner) {
+    	logger.info(` {gray:$} crossbow watch {bold:${runner.parent}}`);
+    });
     if (runners.valid.length > 1) {
-        console.log('');
+        logger.info('');
         logger.info('Or run multiple watchers at once, such as:');
-        logger.unprefixed('info', '\n   {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
-        console.log('');
+        logger.info(``);
+        logger.info(' {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+        logger.info('');
     }
 }
 
@@ -578,7 +582,6 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
             /**
              * Never show internal tasks at top-level
              */
-            // console.log(isInternal(task.rawInput));
             if (depth === 0) {
                 if (isInternal(task.rawInput)) {
                     return acc;
@@ -602,10 +605,16 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title, simp
                     return [];
                 })();
                 const displayLabel = (function () {
-                    if (task.tasks.length && config.verbose === LogLevel.Short) {
-                        return label + ` [${task.tasks.length}]`;
+                    const withCount = (function () {
+                        if (task.tasks.length && config.verbose === LogLevel.Short) {
+                            return label + ` [${task.tasks.length}]`;
+                        }
+                        return label;
+                    })();
+                    if (task.description) {
+                        return withCount + ' - ' + task.description;
                     }
-                    return label;
+                    return withCount;
                 })();
                 return acc.concat({
                     label: displayLabel,

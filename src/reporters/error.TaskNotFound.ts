@@ -8,6 +8,5 @@ module.exports = (error: TaskNotFoundError, task: Task) =>
   To see a list of your available tasks, run either of the following:
   
   {cyan:$} \{cyan.bold:crossbow tasks}
-  {cyan:$} \{cyan.bold:crossbow tree}
   {cyan:$} \{cyan.bold:crossbow run -i}
   `;

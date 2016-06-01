@@ -6,7 +6,6 @@ import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
 import {getRequirePaths} from './task.utils';
 import {handleIncomingRunCommand} from "./command.run";
-import {handleIncomingTreeCommand} from "./command.tree";
 import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
@@ -33,8 +32,8 @@ export interface CrossbowInput {
 const availableCommands = {
     run: handleIncomingRunCommand,
     tasks: handleIncomingTasksCommand,
-    tree: handleIncomingTreeCommand,
-    doctor: handleIncomingTreeCommand,
+    tree: handleIncomingTasksCommand,
+    doctor: handleIncomingTasksCommand,
     watch: handleIncomingWatchCommand,
     w: handleIncomingWatchCommand,
     watchers: handleIncomingWatchersCommand,
@@ -75,7 +74,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
         userInput.type === InputTypes.CBFile ||
         userInput.type === InputTypes.DefaultExternalFile
     ) reporter.reportUsingConfigFile(userInput.sources[0].resolved);
-    
+
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (mergedConfig.cbfile && userInput.type === InputTypes.CBFile) {
