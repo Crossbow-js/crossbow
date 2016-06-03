@@ -2,6 +2,7 @@ import {CrossbowConfiguration} from "./config";
 import * as utils from "./task.utils";
 import {CrossbowInput} from "./index";
 import {ExternalFileInput} from "./task.utils";
+const debug = require('debug')('cb:input');
 const _ = require('../lodash.custom');
 
 export enum InputTypes {
@@ -25,6 +26,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * request first as it may fail and then we don't want to continue
      */
     if (config.config.length) {
+        debug(`config flag provided ${config.config}`);
         const inputs = utils.readInputFiles(config.config, config.cwd);
         if (inputs.invalid.length) {
             return {
@@ -56,6 +58,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * request first as it may fail and then we don't want to continue
      */
     if (config.cbfile) {
+        debug(`'cbfile' flag provided ${config.cbfile}`);
         const cbfiles = utils.retrieveCBFiles(config);
         if (cbfiles.invalid.length) {
             return {
@@ -78,6 +81,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * This is how the test suit is even possible in such a system
      */
     if (utils.isPlainObject(inlineInput)) {
+        debug(`plain object given as input ${JSON.stringify(inlineInput)}`);
         return {
             type: InputTypes.InlineObject,
             errors: [],
@@ -91,6 +95,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      */
     const defaultCbFiles = utils.retrieveCBFiles(config);
     if (defaultCbFiles.valid.length) {
+        debug(`Default cbfile found ${defaultCbFiles.valid[0].resolved}`);
         return {
             errors: [],
             type: InputTypes.CBFile,
@@ -105,6 +110,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      */
     const defaultInputputFiles = utils.retrieveDefaultInputFiles(config);
     if (defaultInputputFiles.valid.length) {
+        debug(`Default input found ${defaultInputputFiles.valid[0].resolved}`);
         return {
             errors: [],
             type: InputTypes.DefaultExternalFile,
@@ -121,6 +127,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * Which means we just need the stub objects, enough
      * to allow the system to work.
      */
+    debug(`No external input given/found, using default`);
     return {
         errors: [],
         sources: [],
