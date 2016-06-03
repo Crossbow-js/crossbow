@@ -560,7 +560,7 @@ export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
     const archy    = require('archy');
     const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 
     // nl();
     if (errorCount) {

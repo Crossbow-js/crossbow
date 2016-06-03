@@ -368,6 +368,7 @@ export function getFunctionName (fn) {
     return '[Function]';
 }
 export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
+export const replaceNewlines = (x: string) => x.replace(/\n|\r/g, '\\n').trim();
 export const removeTrailingNewlines = (x: string) => x.replace(/(\n|\r)$/, ' ').trim();
 export function stringifyObj (incoming: any, max = 100): string {
     const asString = (function () {
@@ -441,11 +442,11 @@ export function __e(x) {
 }
 
 export function getTaskTree(tasks: Tasks, depth = 1) {
-    
+
     const gathered = gather(tasks, [], 1);
-    
+
     return gathered;
-    
+
     function gather(items, initial, currentDepth) {
         return items.reduce((acc, task) => {
             if (currentDepth === depth) {

@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {reportTaskTree} from './reporters/defaultReporter';
+import {reportTaskTree, LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI} from './index';
 import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
@@ -12,7 +12,9 @@ export default function execute(trigger: CommandTrigger): void {
     const {input, config} = trigger;
     const resolved = resolveTasks(Object.keys(input.tasks), trigger);
     // console.log(resolveTasks(Object.keys(input.tasks), trigger));
-    if (resolved.invalid.length) {
+    if (resolved.invalid.length ||
+        config.verbose === LogLevel.Verbose
+    ) {
         reportTaskTree(resolved.all, config, 'Available tasks:');
     } else {
         printSimpleTaskList(resolved.valid, config, 'Available tasks:');
