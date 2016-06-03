@@ -17,7 +17,7 @@ export default function execute(trigger: CommandTrigger): void {
     ) {
         reportTaskTree(resolved.all, config, 'Available tasks:');
     } else {
-        printSimpleTaskList(resolved.valid, config, 'Available tasks:');
+        printSimpleTaskList(resolved.valid);
     }
 }
 

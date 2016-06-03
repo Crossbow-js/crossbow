@@ -1,54 +1,60 @@
 /// <reference path="../typings/main.d.ts" />
-import {isInternal, getFunctionName, isPlainObject, stringifyObj} from "./task.utils";
+import {isInternal} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 const inquirer = require('inquirer');
+import Rx = require('rx');
+import Immutable = require('immutable');
 import {compile} from './logger';
-import {removeNewlines} from './task.utils';
-
 import {CLI, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
+import {resolveTasks} from "./task.resolve";
+import {TriggerTypes} from "./command.run";
+import {Task} from "./task.resolve.d";
+import {twoCol} from "./reporters/task.list";
+import {reportTaskTree} from "./reporters/defaultReporter";
 
-export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
-
-    const taskSelect = {
-        type: "checkbox",
-        message: "Select Tasks to run with <space>",
-        name: "tasks",
-        choices: getTaskList(input.tasks),
-        validate: function (answer: string[]): any {
-            if (answer.length < 1) {
-                return "You must choose at least one task";
-            }
-            return true;
-        }
-    };
-
-    return inquirer.prompt(taskSelect);
+export interface Answers {
+    tasks: string[]
 }
 
-export function getTaskList(tasks) {
-    const topLevelTasks = Object.keys(tasks).filter(x => !isInternal(x));
-    const longest = longestString(topLevelTasks);
-    const minWindow = longest + 6;
-    return topLevelTasks.map(function (key) {
-        const items = [].concat(tasks[key]);
-        if (items.length > 1) {
-            return {
-                name: `${padLine(key, longest)}  ${items.length} tasks`,
-                value: key
+export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
+
+    const resolved = resolveTasks(Object.keys(input.tasks), {
+        shared: new Rx.BehaviorSubject(Immutable.Map({})),
+        cli,
+        input,
+        config,
+        type: TriggerTypes.command
+    });
+    if (resolved.invalid.length) {
+
+        reportTaskTree(resolved.all, config, 'Available tasks:');
+        return Rx.Observable.empty<Answers>();
+
+    } else {
+        const taskSelect = {
+            type: "checkbox",
+            message: "Select Tasks to run with <space>",
+            name: "tasks",
+            choices: getTaskList(resolved.valid),
+            validate: function (answer: string[]): any {
+                if (answer.length < 1) {
+                    return "You must choose at least one task";
+                }
+                return true;
             }
-        }
+        };
+        return Rx.Observable.fromPromise<Answers>(inquirer.prompt(taskSelect));
+    }
+}
+
+export function getTaskList(tasks: Task[]) {
+    const topLevelTasks = tasks.filter(x => !isInternal(x.baseTaskName));
+    const col = twoCol(topLevelTasks);
+    return col.map((tuple, i) => {
         return {
-            name: (function (item) {
-                if (typeof item === 'function') {
-                    return `${padLine(key, longest)}  [Function]`;
-                }
-                if (isPlainObject(item) && item.description) {
-                    return stringifyObj(`${padLine(key, longest)}  ${item.description}`, process.stdout.columns - (minWindow));
-                }
-                return `${padLine(key, longest)}  ${removeNewlines(stringifyObj(item, process.stdout.columns - (minWindow)))}`;
-            })(items[0]),
-            value: key
+            name: compile(`${tuple[0]} ${tuple[1]}`),
+            value: topLevelTasks[i].baseTaskName
         }
     });
 }

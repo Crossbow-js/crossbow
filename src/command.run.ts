@@ -156,7 +156,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     return complete$;
 }
 
-export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration):any {
 
     /**
      * Array of top-level task names that are available
@@ -251,7 +251,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
             return;
         }
         reporter.reportNoTasksProvided();
-        return promptForRunCommand(cli, input, config).then(function (answers) {
+        return promptForRunCommand(cli, input, config).subscribe(function (answers) {
             const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
             const configMerged = merge({}, config, {runMode: TaskRunModes.parallel});
             return execute({
