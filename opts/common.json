@@ -14,6 +14,11 @@
     "type": "string",
     "default": ""
   },
+  "dump": {
+    "desc": "Dump task/sequence/config info to files in cwd",
+    "type": "boolean",
+    "default": false
+  },
   "e": {
     "desc": "Global Environment vars (eg: NAME=docker)",
     "type": "array"

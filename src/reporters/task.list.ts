@@ -1,5 +1,4 @@
 import logger from "../logger";
-import {CrossbowConfiguration} from "../config";
 import {escapeNewLines} from "../task.utils";
 import {Task} from "../task.resolve.d";
 import {longestString, padLine} from "../command.run.interactive";
@@ -19,7 +18,6 @@ function taskPreviews(item: Task) {
     });
     return `[ ${names.join(', ')} ]`;
 }
-
 
 function limit (string, linelength) {
     const rem = string.length - linelength;

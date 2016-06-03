@@ -19,6 +19,7 @@ export interface CrossbowConfiguration {
     suppressOutput: boolean
     progress: boolean
     cbfile?: string
+    dump: boolean
     envPrefix: string
     env: any
     before: string[]
@@ -42,6 +43,10 @@ const defaults = <CrossbowConfiguration>{
     resumeOnError: false,
     parallel: false,
     config: [],
+    /**
+     * Dump json to disk for debugging
+     */
+    dump: false,
     /**
      * How much task information should be output
      * following task completion/setup

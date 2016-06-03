@@ -16,6 +16,8 @@ import promptForRunCommand from './command.run.interactive';
 import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
+import {writeFileSync} from 'fs';
+import {join} from 'path';
 
 export interface CommandTrigger {
     type: TriggerTypes
@@ -66,7 +68,6 @@ function getRunCommandSetup (trigger) {
      */
     const tasks = resolveTasks(cliInput, trigger);
 
-    // require('fs').writeFileSync('tasks.json', JSON.stringify(tasks, null, 4));
 
     /**
      * All this point, all given task names have been resolved
@@ -74,8 +75,6 @@ function getRunCommandSetup (trigger) {
      * go ahead and create a flattened run-sequence
      */
     const sequence = seq.createFlattenedSequence(tasks.valid, trigger);
-
-    // require('fs').writeFileSync('sequence.json', JSON.stringify(sequence, null, 4));
 
     /**
      * With the flattened sequence, we can create nested collections
@@ -96,6 +95,12 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     const {cli, input, config} = trigger;
     const {tasks, sequence, runner} = getRunCommandSetup(trigger);
 
+    if (trigger.config.dump) {
+        writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
+        writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
+        writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
+    }
+
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
      * off
@@ -114,7 +119,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
         );
     }
 
-    debug(`~ run mode from config '${config.runMode}'`);
+    debug(`~ run mode from config in mode: '${config.runMode}'`);
 
     /**
      * Report task list that's about to run

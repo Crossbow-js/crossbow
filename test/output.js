@@ -31,7 +31,7 @@ describe('Preparing data for output', function () {
         assert.equal(tree[0].tasks.length, 1);
         assert.equal(tree[0].tasks[0].tasks.length, 0);
     });
-    it.only('getTaskTree() limit 3', function () {
+    it('getTaskTree() limit 3', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {
                 js: ['css'],
