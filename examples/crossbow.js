@@ -49,6 +49,9 @@ module.exports = {
                 console.log('My tear down');
             };
         },
+        error2: function () {
+            throw new Error('Oops!');
+        },
         error: function (opts, ctx, observer) {
             var gulp = require('gulp');
             var through2 = require('through2');

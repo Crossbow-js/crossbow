@@ -24,6 +24,7 @@ export interface CrossbowConfiguration {
     env: any
     before: string[]
     type?: InitConfigFileTypes
+    debug: boolean
 }
 
 /**
@@ -47,6 +48,7 @@ const defaults = <CrossbowConfiguration>{
      * Dump json to disk for debugging
      */
     dump: false,
+    debug: false,
     /**
      * How much task information should be output
      * following task completion/setup

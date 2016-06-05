@@ -25,10 +25,15 @@ import {
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
+import {parse} from "path";
+import {dirname} from "path";
+import {join} from "path";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
+const parsed  = parse(__dirname);
+const depsDir = join(dirname(parsed.dir), 'node_modules');
 
 function nl() {
     l(`{gray:-}`);
@@ -446,30 +451,45 @@ export interface CrossbowError extends Error {
     _cbError?: boolean
 }
 
-function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowError): string {
+function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowError, config: CrossbowConfiguration): string {
 
     if (!err.stack) {
         return err.toString();
     }
+
     const head = [
         `{red.bold:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
     ];
+
     const body = err.stack.split('\n').slice(1);
-    const stack = getStack(body);
+    const stack = getStack(body, config);
     const tail = `- Please see above for any output that may of occurred`;
     if (!stack) {
         return [...head, tail].join('\n');
     }
-    return [...head, ...body, tail].join('\n');
+    return [...head, ...stack, tail].join('\n');
 }
 
-export function getStack (stack) {
-    var StackUtils = require('stack-utils');
-    var crossbowInternals = /\/crossbow-cli\/dist*/;
-    var crossbowDeps = /\/node_modules\/(?:rx|immutable)\//;
-    var stackUtils = new StackUtils({internals: [crossbowInternals, crossbowDeps, ...StackUtils.nodeInternals()]});
-    return stackUtils.clean(stack);
+export function getStack (stack: string[], config: CrossbowConfiguration) {
+
+    const stringMatches = (function () {
+        if (config.debug) return [];
+        return [
+            parsed.dir,
+            depsDir,
+            'at bound (domain.js',
+            'at runBound (domain.js'
+        ];
+    })();
+
+    return stack
+        .filter(line => {
+            return stringMatches.every(string => {
+                return line.indexOf(string) === -1;
+            });
+        })
+        .map(x => x.trim());
 }
 
 export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
@@ -486,7 +506,7 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
             if (showStats && item.type === SequenceItemTypes.Task) {
                 if (stats.errors.length) {
                     const err = stats.errors[0];
-                    label = getErrorText(label, stats, err);
+                    label = getErrorText(label, stats, err, config);
                 } else {
                     if (stats.started) {
                         if (stats.completed) {
