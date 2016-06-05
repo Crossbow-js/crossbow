@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const cli = require("../");
 const types = require("../dist/task.sequence.factories").SequenceItemTypes;
+const TaskReportType = require('../dist/task.runner').TaskReportType;
 
 function log (obj, pathname) {
     console.log(obj);
@@ -139,6 +140,18 @@ describe('Gathering run tasks, grouped by runMode', function () {
         });
         stream$.subscribeOnCompleted(function () {
             assert.equal(messages.length, 12);
+            done();
+        });
+    });
+    it('runs a single external task (with multi functions) in seq', function (done) {
+        this.timeout(10000);
+        var runner = cli.run(['test/fixtures/tasks/simple.multi.js']);
+        runner.subscribe(function (x) {
+            assert.equal(x.reports[0].type, TaskReportType.start);
+            assert.equal(x.reports[2].type, TaskReportType.start);
+        }, function (err) {
+            done(err);
+        }, function () {
             done();
         });
     });

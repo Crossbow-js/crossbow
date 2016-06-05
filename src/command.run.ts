@@ -49,6 +49,7 @@ export interface RunCommandErrorReport {
 export interface RunCommandCompletionReport extends RunCommandErrorReport {
     type: RunCommandReportTypes
     reports: TaskReport[]
+    decoratedSequence: SequenceItem[]
 }
 
 type RunCommandErrorStream = RunCommandErrorReport|Error;
@@ -57,7 +58,7 @@ function getRunCommandSetup (trigger) {
     const cliInput = trigger.cli.input.slice(1);
 
     /**
-     * task Tracker for external observers
+     * Task Tracker for external observers
      * @type {Subject<T>}
      */
     trigger.tracker = new Rx.Subject();
@@ -67,7 +68,19 @@ function getRunCommandSetup (trigger) {
      * First Resolve the task names given in input.
      */
     const tasks = resolveTasks(cliInput, trigger);
+    const topLevelParallel = tasks.all.some(function (task) {
+        return task.runMode === TaskRunModes.parallel;
+    });
 
+    /**
+     * If only 1 task is being run, check if any sub-tasks
+     * are trying to be run in parallel mode and if so, set the runMode
+     * This is done to ensure if a child errors, it doesn't affect children.
+     * (as it's only a single task via the cli, it wouldn't be expected)
+     */
+    if (cliInput.length === 1 && topLevelParallel) {
+        trigger.config.runMode = TaskRunModes.parallel;
+    }
 
     /**
      * All this point, all given task names have been resolved
@@ -145,15 +158,21 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
         .share();
 
     run$
-        .map(reports => seq.decorateSequenceWithReports(sequence, reports))
         .do(reports => {
-            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner});
+            const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner, decoratedSequence});
             complete$.onCompleted();
+            reporter.reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
         })
-        .subscribe((sequenceItems: SequenceItem[]) => {
-            reporter.reportSummary(sequenceItems, cli, 'Total: ', config, new Date().getTime() - timestamp);
+        .subscribe(_ => {
+
         }, e => {
-            // never reaches here baby
+            // Task running should never reach here
+            if (e.stack) {
+                console.error(e.stack);
+            } else {
+                console.log(e);
+            }
         }, _ => {
             debug('All tasks finished');
         });
@@ -174,18 +193,8 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
     const sharedMap     = new Rx.BehaviorSubject(Immutable.Map({}));
 
     const type = TriggerTypes.command;
-
+    
     debug('top level tasks available', topLevelTasks);
-
-    /**
-     * If only 1 task provided, such as
-     *  $ crossbow run build-all
-     *  -> always run in parallel mode (to stop errors from affecting children
-     */
-    if (cli.input.length === 2) {
-        debug('Setting config.runMode = parallel');
-        config.runMode = TaskRunModes.parallel;
-    }
 
     if (config.handoff) {
         return getRunCommandSetup({
