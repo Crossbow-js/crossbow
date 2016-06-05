@@ -36,7 +36,7 @@ function nl() {
 
 export const enum LogLevel {
     Short = 2,
-    Verbose = 3
+    Verbose
 }
 
 export function reportUsingConfigFile(path: string) {
@@ -56,7 +56,7 @@ export function reportMissingConfigFile(inputs: ExternalFileInput[]) {
                 }
             ]
         }, prefix);
-        logger.info(o.slice(26, -1));
+        logger.info(o.slice(25, -1));
     });
 }
 
@@ -72,13 +72,13 @@ export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSup
             }
         ]
     }, prefix);
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 }
 
 export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
     heading(`Sorry, this would cause an existing file to be overwritten`);
     const o = archy({
-        label: `{yellow:+ attempted: '${error.file.path}'}`, nodes: [
+        label: `{yellow:+ Attempted: '${error.file.path}'}`, nodes: [
             {
                 label: [
                     `{red.bold:x ${error.file.path}}`,
@@ -87,21 +87,21 @@ export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
             }
         ]
     }, prefix);
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 }
 
 export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
-    const output = [
-        `{green:✔} Created file {cyan.bold:${parsed.base}}`,
-        ``,
-        `Now, try the \`{yellow:hello-world}\` example in that file by running:`,
-        ``,
-        `  $ crossbow run hello-world`,
-        ``,
-        `Or to see multiple tasks running, with some in parallel, try:`,
-        ``,
-        `  $ crossbow run all`,
-    ];
+    const output =
+`{green:✔} Created file: {cyan.bold:${parsed.base}}
+     Directory: {cyan.bold:${parsed.dir}}
+ 
+Now, try the \`{yellow:hello-world}\` example in that file by running: 
+ 
+  {gray:$} crossbow run {bold:hello-world} 
+ 
+Or to see multiple tasks running, with some in parallel, try: 
+
+  {gray:$} crossbow run {bold:all}`.split('\n');
 
     output.forEach(function (arg) {
         logger.info(arg);
@@ -238,7 +238,7 @@ export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfigur
         const o = archy({
             label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
         }, prefix);
-        logger.info(o.slice(26, -1));
+        logger.info(o.slice(25, -1));
     });
 }
 
@@ -290,7 +290,7 @@ export function logWatcher (runner) {
 
 export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger) {
     const o = archy({
-        label: '{yellow:Available Watchers:}',
+        label: '{yellow:Available Watchers}',
         nodes: runners.valid.map(function (runner) {
             if (trigger.config.verbose === LogLevel.Verbose) {
                 return logWatcherName(runner);
@@ -298,7 +298,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
             return `{bold:${runner.parent}}`;
         })
     }, prefix);
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
     logger.info('');
     logger.info(`Run your watchers in the following way:`);
     logger.info(``);
@@ -332,7 +332,7 @@ export function logWatcherName (runner) {
             },
         ]
     };
-    // logger.info(o.slice(26, -1));
+    // logger.info(o.slice(25, -1));
 }
 
 export function reportNoFilesMatched(runner) {
@@ -382,7 +382,7 @@ export function logWatchErrors(tasks: WatchTask[]): void {
                     }
                 ]
             }, prefix);
-            logger.info(o.slice(26, -1));
+            logger.info(o.slice(25, -1));
         } else {
             const watchTree = task.watchers.map(w => {
                 return {
@@ -393,7 +393,7 @@ export function logWatchErrors(tasks: WatchTask[]): void {
                 };
             });
             const o = archy({label: `{yellow:+ ${task.name}}`, nodes: watchTree}, prefix);
-            logger.info(o.slice(26, -1));
+            logger.info(o.slice(25, -1));
         }
     })
 }
@@ -418,7 +418,7 @@ export function reportNoTasksAvailable() {
             }
         ]
     }, prefix);
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 }
 
 export function reportNoWatchersAvailable() {
@@ -433,7 +433,7 @@ export function reportNoWatchersAvailable() {
             }
         ]
     }, prefix);
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 }
 
 export function reportNoWatchTasksProvided() {
@@ -475,7 +475,7 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
     const toLog = getItems(sequence, []);
     const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
-    logger.info(o.slice(26, -1));
+    logger.info(o.slice(25, -1));
 
     function getItems(items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
@@ -553,14 +553,14 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     }
 }
 
-export function reportTaskTree(tasks, config: CrossbowConfiguration, title) {
+export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, title: string) {
 
     let errorCount = 0;
     const toLog    = getTasks(tasks, [], 0);
     const archy    = require('archy');
-    const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
+    const output   = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
 
-    logger.info(o.slice(25, -1));
+    logger.info(output.slice(25, -1));
 
     // nl();
     if (errorCount) {

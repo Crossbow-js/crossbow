@@ -1,8 +1,8 @@
 import logger from "../logger";
 import {escapeNewLines} from "../task.utils";
 import {Task} from "../task.resolve.d";
-import {longestString, padLine} from "../command.run.interactive";
 import {TaskTypes} from "../task.resolve";
+import {longestString, padLine} from "../command.run.interactive";
 
 function taskPreviews(item: Task) {
     if (!item.tasks.length) {
@@ -39,6 +39,7 @@ export function twoCol (tasks: Task[]): Array<string[]> {
     const cols = process.stdout.columns;
 
     return tasks.map(function (item) {
+        
         const name = padLine(item.baseTaskName, longest + 1);
         const desclength = (cols - 5) - longest;
 
@@ -51,5 +52,4 @@ export function twoCol (tasks: Task[]): Array<string[]> {
         const desc = limit(taskPreviews(item), desclength);
         return [`{bold:${name}}`, desc];
     });
-
 }

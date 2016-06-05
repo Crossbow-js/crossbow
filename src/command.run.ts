@@ -26,7 +26,7 @@ export interface CommandTrigger {
     config: CrossbowConfiguration
     tracker?: any
     tracker$?: any
-    shared: Rx.BehaviorSubject<Immutable.Map<string, any>>
+    shared?: Rx.BehaviorSubject<Immutable.Map<string, any>>
 }
 
 export enum TriggerTypes {

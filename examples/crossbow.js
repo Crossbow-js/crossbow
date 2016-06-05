@@ -24,7 +24,13 @@ module.exports = {
         js: [
             'test/fixtures/tasks/simple.js'
         ],
-        'css': ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane'],
+        inlineObject: {
+            input: '@npm sleep 1'
+        },
+        css: {
+            description: 'CSS tasks are cooooool',
+            tasks: ['test/fixtures/tasks/simple.multi.js', 'error',  'test/fixtures/tasks/error.js', 'shane']
+        },
         bs: ["test/fixtures/tasks/bs.js"],
         sync: function (options, context) {
             const values = context.shared.getValue();
