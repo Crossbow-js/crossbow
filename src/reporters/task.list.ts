@@ -3,6 +3,7 @@ import {escapeNewLines} from "../task.utils";
 import {Task} from "../task.resolve.d";
 import {TaskTypes} from "../task.resolve";
 import {longestString, padLine} from "../command.run.interactive";
+import {WatchRunners} from "../watch.runner";
 
 function taskPreviews(item: Task) {
     if (!item.tasks.length) {
@@ -27,11 +28,8 @@ function limit (string, linelength) {
     return string;
 }
 
-export function printSimpleTaskList(tasks) {
-    const cols = twoCol(tasks);
-    cols.forEach(function (item) {
-    	logger.info(`${item[0]}  ${item[1]}`);
-    });
+export function getSimpleTaskList(tasks) {
+    return twoCol(tasks).map(x => `${x[0]}  ${x[1]}`)
 }
 
 export function twoCol (tasks: Task[]): Array<string[]> {
@@ -41,7 +39,7 @@ export function twoCol (tasks: Task[]): Array<string[]> {
     return tasks.map(function (item) {
         
         const name = padLine(item.baseTaskName, longest + 1);
-        const desclength = (cols - 5) - longest;
+        const desclength = (cols - 6) - longest;
 
         if (item.description) {
             const desc = limit(item.description, desclength);
@@ -50,6 +48,20 @@ export function twoCol (tasks: Task[]): Array<string[]> {
         }
 
         const desc = limit(taskPreviews(item), desclength);
+        return [`{bold:${name}}`, desc];
+    });
+}
+export function twoColWatchers (runners: WatchRunners): Array<string[]> {
+    const longest = longestString(runners.valid.map(x => x.parent));
+    const cols = process.stdout.columns;
+
+    return runners.valid.map(function (runner) {
+
+        const name = padLine(runner.parent, longest + 1);
+        const desclength = (cols - 6) - longest;
+
+        const desc = limit(`${runner.patterns.length} pattern(s), ${runner.tasks.length} task(s)`, desclength);
+        
         return [`{bold:${name}}`, desc];
     });
 }

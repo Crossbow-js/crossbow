@@ -102,6 +102,8 @@ export const api = {
     },
     watch: function (patterns: string[], tasks: string[], options?: CBWatchOptions) {
         const identifer = `_inline_watcher_${inlineWatcherCount++}`;
+        patterns = [].concat(patterns);
+        tasks = [].concat(tasks);
         input.watch[identifer] = {
             options: options,
             watchers: [

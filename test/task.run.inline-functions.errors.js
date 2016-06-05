@@ -1,6 +1,5 @@
 const assert = require('chai').assert;
 const cli = require("../");
-const TaskErrorTypes = require('../dist/task.errors').TaskErrorTypes;
 const TaskReportType = require('../dist/task.runner').TaskReportType;
 
 describe('Running tasks from inline-functions with errors', function () {

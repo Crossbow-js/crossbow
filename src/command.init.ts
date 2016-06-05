@@ -91,6 +91,9 @@ export default function execute(trigger: CommandTrigger): any {
         return [];
     })();
 
+    /**
+     * Allow consumer to handle executions
+     */
     if (config.handoff) {
         return {existingFilesInCwd, matchingFiles, errors};
     }
