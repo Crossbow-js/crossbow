@@ -17,6 +17,7 @@ const debug = require('debug')('cb:task-utils');
 export interface ExternalFile {
     path: string
     resolved: string
+    relative: string
     errors: InputError[],
     parsed: ParsedPath
 }
@@ -268,7 +269,7 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
 }
 
 /**
- * Take an array of paths and return file info + erros if they don't exist
+ * Take an array of paths and return file info + errors if they don't exist
  * @param paths
  * @param cwd
  * @returns {ExternalFile[]}
@@ -276,38 +277,41 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
 export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] {
     return paths
         .map(String)
-        .map(path => ({
+        .map((path: string): ExternalFile => ({
+            errors: [],
             path: path,
             resolved: resolve(cwd, path),
-            parsed: parse(path)
+            parsed: parse(path),
+            relative: relative(cwd, path)
         }))
         .map((incoming): ExternalFile => {
 
-            const {resolved, path, parsed} = incoming;
+            const {resolved} = incoming;
 
+            /**
+             * If the path does not exist, it's a FileNotFound error
+             */
             if (!existsSync(resolved)) {
-                return {
-                    errors: [{type: InputErrorTypes.FileNotFound}],
-                    path,
-                    parsed,
-                    resolved
-                }
+                return _.assign(incoming, {
+                    errors: [{type: InputErrorTypes.FileNotFound}]
+                });
             }
+
+            /**
+             * Not check it's a file & NOT a dir
+             * @type {Stats}
+             */
             const stat = statSync(resolved);
-            if (!stat.isFile()){
-                return {
+            if (!stat.isFile()) {
+                return _.assign(incoming, {
                     errors: [{type: InputErrorTypes.NotAFile}],
-                    path,
-                    parsed,
-                    resolved
-                }
+                });
             }
-            return {
-                errors: [],
-                path,
-                parsed,
-                resolved
-            }
+
+            /**
+             * At this point the file DOES exist
+             */
+            return incoming;
         });
 }
 

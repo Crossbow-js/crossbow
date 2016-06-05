@@ -39,8 +39,10 @@ export const enum LogLevel {
     Verbose
 }
 
-export function reportUsingConfigFile(path: string) {
-    logger.info(`Using {cyan.bold:${path}}`);
+export function reportUsingConfigFile(inputs: ExternalFileInput[]) {
+    inputs.forEach(function (input) {
+        logger.info(`Using: {cyan.bold:${input.relative}}`);
+    });
 }
 
 export function reportMissingConfigFile(inputs: ExternalFileInput[]) {
