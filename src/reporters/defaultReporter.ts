@@ -65,26 +65,35 @@ export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSup
     logger.info(`{red.bold:x '${error.providedType}'}`);
     multiLine(getExternalError(error.type, error));
 }
-export function multiLineTree(tree: string) {
-    const split = tree.split('\n');
-
-    logger.info(split[0]);
-
-    split.slice(1, -1).forEach(function (line) {
-        logger.unprefixed('info', `   ${line}`);
-    });
-}
-export function multiLine(input: string) {
-    input.split('\n')
-        .forEach(function (line) {
-            logger.info(line);
-        });
-}
 
 export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
     heading(`Sorry, this would cause an existing file to be overwritten`);
     logger.info(`{red.bold:x ${error.file.path}}`);
     multiLine(getExternalError(error.type, error, error.file));
+}
+
+/**
+ * There are multiple ways to output trees to the screen,
+ * so this helper function helps to normalize the output
+ * by providing the same padding on all but the first line.
+ */
+export function multiLineTree(tree: string) {
+    const split = tree.split('\n');
+    logger.info(split[0]);
+    split.slice(1, -1).forEach(function (line) {
+        logger.unprefixed('info', `   ${line}`);
+    });
+}
+
+/**
+ * Accept any string and output each line as though
+ * logger.info was called for each line (to maintain prefixes etc)
+ */
+export function multiLine(input: string) {
+    input.split('\n')
+        .forEach(function (line) {
+            logger.info(line);
+        });
 }
 
 export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
@@ -405,6 +414,10 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
         return err.toString();
     }
 
+    /**
+     * If _cbError is on the error object, it's a crossbow-generated
+     * error so we handle it as though we know what we're doing
+     */
     if (err._cbError) {
         return [
             `{red.bold:x} {red:${sequenceLabel}} {yellow:(${duration(stats.duration)})}`,
@@ -412,6 +425,11 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
         ].join('\n');
     }
 
+    /**
+     * At this point we have no idea what type the error is, so
+     * the following code just makes the first line red and then
+     * processes the stack traces (to remove internals)
+     */
     const head = [
         `{red.bold:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
@@ -428,6 +446,13 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
 
 export function getStack (stack: string[], config: CrossbowConfiguration): string[] {
 
+    /**
+     * An array of string that can be compared
+     * against each line of the stack trace to determine
+     * if that line should be stipped. EG: we
+     * don't want to muddy up stack traces with internals
+     * from Rx/Immutable etc.
+     */
     const stringMatches = (function () {
         if (config.debug) return [];
         return [
@@ -446,37 +471,56 @@ export function getStack (stack: string[], config: CrossbowConfiguration): strin
         });
 }
 
+/**
+ * Add meta info to a sequence item suing the stats.
+ * eg:
+ *   @npm webpack -w
+ * ->
+ *   ✔ @npm webpack -w (14.2s)
+ */
+function appendStatsToSequenceLabel(label: string, stats: TaskStats, config: CrossbowConfiguration) {
+    /**
+     * If any errors occured, append the error to the
+     * label so it shows in the correct part of the tree
+     */
+    if (stats.errors.length) {
+        const err = stats.errors[0];
+        return getErrorText(label, stats, err, config);
+    }
+
+    /**
+     * the item did not start if `started` is falsey
+     */
+    if (!stats.started) {
+        return `{yellow:x} ${label} {yellow:(didn't start)}`;
+    }
+
+    /**
+     * 'completed' means this task emitted a completion report.
+     */
+    if (stats.completed) {
+        return `{green:✔} ` + label + ` {yellow:(${duration(stats.duration)})}`;
+    }
+
+    /**
+     * At this point, the task DID start, but the completed
+     * flag is absent so we assume it was halted mid-flight.
+     */
+    return `{yellow:x} ` + label + ` {yellow:(didn't complete, ${duration(stats.duration)})}`;
+}
+
 export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
     const toLog = getItems(sequence, []);
     const o = archy({label: `{yellow:${title}}`, nodes: toLog});
-    const split = o.split('\n');
-
-    logger.info(split[0]);
-
-    split.slice(1, -1).forEach(function (line) {
-        logger.unprefixed('info', `   ${line}`);
-    });
+    multiLineTree(o);
 
     function getItems(items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
             let label = getSequenceLabel(item, config);
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
-                if (stats.errors.length) {
-                    const err = stats.errors[0];
-                    label = getErrorText(label, stats, err, config);
-                } else {
-                    if (stats.started) {
-                        if (stats.completed) {
-                            label = `{green:✔} ` + label + ` {yellow:(${duration(stats.duration)})}`;
-                        } else {
-                            label = `{yellow:x} ` + label + ` {yellow:(didn't complete, ${duration(stats.duration)})}`;
-                        }
-                    } else {
-                        label = `{yellow:x} ${label} {yellow:(didn't start)}`;
-                    }
-                }
+                label = appendStatsToSequenceLabel(label, item.stats, config);
             }
             let nodes = getItems(item.items, []);
             return acc.concat({
