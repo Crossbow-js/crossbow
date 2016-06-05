@@ -103,6 +103,39 @@ export function teardown (emitter) {
     }
 }
 
+export function getStdio (trigger: CommandTrigger) {
+    if (trigger.config.suppressOutput) {
+        return ['pipe', 'pipe', 'pipe'];
+    }
+    return [process.stdin, process.stdout, 'pipe'];
+}
+
+export function handleExit (emitter, done) {
+    const stderr = [];
+
+    emitter.stderr.on('data', function (data) {
+        stderr.push(data);
+    });
+
+    emitter.on('close', function (code) {
+
+        // todo: Make pretty errors that originate from child processes
+        if (code !== 0) {
+            const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
+            if (stderr.length) {
+                err.stack = stderr.map(String).join('');
+            } else {
+                err.stack = `Previous command failed with exit code ${code}`
+            }
+            err._cbError = true;
+            return done(err);
+        }
+        done();
+    }).on('error', function (err) {
+        done(err);
+    });
+}
+
 /**
  * The main export is the function this will be run in the sequence
  * @returns {Function}
@@ -115,9 +148,7 @@ export default function (task: Task, trigger: CommandTrigger) {
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv = getCBEnv(trigger);
         const env = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
-        const stdio  = trigger.config.suppressOutput
-            ? ['pipe', 'pipe', 'pipe']
-            : 'inherit';
+        const stdio = getStdio(trigger);
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
         // todo close all child tasks following the exit of the main process
@@ -128,18 +159,7 @@ export default function (task: Task, trigger: CommandTrigger) {
             stdio: stdio // [process.stdin, process.stdout, process.stderr]
         });
 
-        emitter.on('close', function (code) {
-            // todo: Make pretty errors that originate from child processes
-            if (code !== 0) {
-                const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
-                err.stack = `Previous command failed with exit code ${code}`;
-                err._cbError = true;
-                return done(err);
-            }
-            done();
-        }).on('error', function (err) {
-            done(err);
-        });
+        handleExit(emitter, done);
 
         return function tearDownNpmAdaptor () {
             teardown(emitter);

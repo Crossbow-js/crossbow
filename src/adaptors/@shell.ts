@@ -1,5 +1,5 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown} from './@npm';
+import {getArgs, runCommand, teardown, getStdio, handleExit} from './@npm';
 import {Task} from "../task.resolve.d";
 import {CrossbowError} from "../reporters/defaultReporter";
 import {getCBEnv} from "../task.utils";
@@ -11,9 +11,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
     return function (opts, ctx, done) {
 
         const args  = getArgs(task, trigger);
-        const stdio = trigger.config.suppressOutput
-            ? ['pipe', 'pipe', 'pipe']
-            : 'inherit';
+        const stdio = getStdio(trigger);
         
         const cbEnv = getCBEnv(trigger);
         const env = merge({}, cbEnv, task.env, process.env, trigger.config.env);
@@ -26,17 +24,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
             stdio: stdio
         });
 
-        emitter.on('close', function (code) {
-            if (code !== 0) {
-                const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
-                err.stack = `Previous command failed with exit code ${code}`;
-                err._cbError = true;
-                return done(err);
-            }
-            done();
-        }).on('error', function (err) {
-            done(err);
-        });
+        handleExit(emitter, done);
 
         return function tearDownShellAdaptor () {
             teardown(emitter);

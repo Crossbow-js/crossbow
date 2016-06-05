@@ -5,7 +5,7 @@ const getTaskTree = require("../dist/task.utils").getTaskTree;
 const getInputs = require("../dist/input.resolve").getInputs;
 
 describe('Simplifying stack traces', function () {
-    it.only('should remove internal errors', function (done) {
+    it.skip('should remove internal errors', function (done) {
         const runner = cli.run(['js'], {
             tasks: {
                 js: function () {
@@ -18,7 +18,7 @@ describe('Simplifying stack traces', function () {
         // /Users/shakyshane/crossbow/crossbow-cli/node_modules/immutable
 
         runner.subscribe(function () {
-            // console.log('Value');
+            console.log('Value');
         }, function () {
             // console.log('error');
         }, function () {

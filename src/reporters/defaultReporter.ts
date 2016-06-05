@@ -20,7 +20,7 @@ import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {
     InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile,
-    ExternalFileInput
+    ExternalFileInput, __e
 } from "../task.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
@@ -28,6 +28,7 @@ import {ParsedPath} from "path";
 import {parse} from "path";
 import {dirname} from "path";
 import {join} from "path";
+import {writeFileSync} from "fs";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -53,54 +54,31 @@ export function reportUsingConfigFile(inputs: ExternalFileInput[]) {
 export function reportMissingConfigFile(inputs: ExternalFileInput[]) {
     heading(`Sorry, there were errors resolving your input files`);
     inputs.forEach(function (item) {
-        const o = archy({
-            label: `{yellow:+ input: '${item.path}'}`, nodes: [
-                {
-                    label: [
-                        `{red.bold:x ${item.path}}`,
-                        getExternalError(item.errors[0].type, item.errors[0], item)
-                    ].join('\n')
-                }
-            ]
-        }, prefix);
-        logger.info(o.slice(25, -1));
+        logger.info(`{red.bold:x ${item.path}}`);
+        multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
     });
 }
 
 export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {
     heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
-    const o = archy({
-        label: `{yellow:+ input: '${error.providedType}'}`, nodes: [
-            {
-                label: [
-                    `{red.bold:x ${error.providedType}}`,
-                    getExternalError(error.type, error)
-                ].join('\n')
-            }
-        ]
-    }, prefix);
-    logger.info(o.slice(25, -1));
+    logger.info(`{red.bold:x '${error.providedType}'}`);
+    multiLine(getExternalError(error.type, error));
+}
+export function multiLine(input: string) {
+    input.split('\n')
+        .forEach(function (line) {
+            logger.info(line);
+        });
 }
 
 export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
     heading(`Sorry, this would cause an existing file to be overwritten`);
-    const o = archy({
-        label: `{yellow:+ Attempted: '${error.file.path}'}`, nodes: [
-            {
-                label: [
-                    `{red.bold:x ${error.file.path}}`,
-                    getExternalError(error.type, error, error.file)
-                ].join('\n')
-            }
-        ]
-    }, prefix);
-    logger.info(o.slice(25, -1));
+    logger.info(`{red.bold:x ${error.file.path}}`);
+    multiLine(getExternalError(error.type, error, error.file));
 }
 
 export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
-    const output =
-`{green:✔} Created file: {cyan.bold:${parsed.base}}
-     Directory: {cyan.bold:${parsed.dir}}
+    multiLine(`{green:✔} Created file: {cyan.bold:${parsed.base}}
  
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
  
@@ -108,11 +86,7 @@ Now, try the \`{yellow:hello-world}\` example in that file by running:
  
 Or to see multiple tasks running, with some in parallel, try: 
 
-  {gray:$} crossbow run {bold:all}`.split('\n');
-
-    output.forEach(function (arg) {
-        logger.info(arg);
-    });
+  {gray:$} crossbow run {bold:all}`);
 }
 
 export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
@@ -155,13 +129,13 @@ export function taskReport(report: TaskReport, trigger: CommandTrigger) {
 function _taskReport(report: TaskReport, label: string) {
     switch (report.type) {
         case TaskReportType.start:
-            l(`{yellow:+ [${report.item.seqUID}]} ${label}`);
+            l(`{yellow:> +} ${label}`);
             break;
         case TaskReportType.end:
-            l(`{green:✔ [${report.item.seqUID}]} ${label} {yellow:(${duration(report.stats.duration)})}`);
+            l(`{green:> ✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
-            l(`{red:x [${report.item.seqUID}]} ${label}`);
+            l(`{red:> x} ${label}`);
             break;
     }
 }
@@ -457,6 +431,14 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
         return err.toString();
     }
 
+    if (err._cbError) {
+        // writeFileSync('out.json', JSON.stringify(err.stack, null, 4));
+        return [
+            `{red.bold:x} {red:${sequenceLabel}} {yellow:(${duration(stats.duration)})}`,
+            __e(err.stack)
+        ].join('\n');
+    }
+
     const head = [
         `{red.bold:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
         `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
@@ -471,7 +453,7 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
     return [...head, ...stack, tail].join('\n');
 }
 
-export function getStack (stack: string[], config: CrossbowConfiguration) {
+export function getStack (stack: string[], config: CrossbowConfiguration): string[] {
 
     const stringMatches = (function () {
         if (config.debug) return [];
@@ -488,16 +470,21 @@ export function getStack (stack: string[], config: CrossbowConfiguration) {
             return stringMatches.every(string => {
                 return line.indexOf(string) === -1;
             });
-        })
-        .map(x => x.trim());
+        });
+        // .map(x => x.trim());
 }
 
 export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
     const toLog = getItems(sequence, []);
-    const o = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
+    const o = archy({label: `{yellow:${title}}`, nodes: toLog});
+    const split = o.split('\n');
 
-    logger.info(o.slice(25, -1));
+    logger.info(split[0]);
+
+    split.slice(1, -1).forEach(function (line) {
+        logger.unprefixed('info', `   ${line}`);
+    });
 
     function getItems(items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
@@ -580,9 +567,9 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
     let errorCount = 0;
     const toLog    = getTasks(tasks, [], 0);
     const archy    = require('archy');
-    const output   = archy({label: `{yellow:${title}}`, nodes: toLog}, prefix);
+    const output   = archy({label: `{yellow:${title}}`, nodes: toLog});
 
-    logger.info(output.slice(25, -1));
+    logger.unprefixed('info', output.slice(25, -1));
 
     // nl();
     if (errorCount) {
