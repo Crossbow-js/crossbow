@@ -58,13 +58,3 @@ export function getTaskList(tasks: Task[]) {
         }
     });
 }
-
-export function longestString (col: string[]): number {
-    return col.reduce((val, item) => item.length > val ? item.length : val, 0);
-}
-export function padLine(incoming, max?) {
-    if (incoming.length <= max) {
-        return incoming + new Array(max-incoming.length+1).join(' ');
-    }
-    return incoming;
-}

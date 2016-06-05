@@ -1,8 +1,6 @@
-import logger from "../logger";
-import {escapeNewLines} from "../task.utils";
+import {longestString, padLine, escapeNewLines} from "../task.utils";
 import {Task} from "../task.resolve.d";
 import {TaskTypes} from "../task.resolve";
-import {longestString, padLine} from "../command.run.interactive";
 import {WatchRunners} from "../watch.runner";
 
 function taskPreviews(item: Task) {
@@ -37,13 +35,12 @@ export function twoCol (tasks: Task[]): Array<string[]> {
     const cols = process.stdout.columns;
 
     return tasks.map(function (item) {
-        
+
         const name = padLine(item.baseTaskName, longest + 1);
         const desclength = (cols - 6) - longest;
 
         if (item.description) {
             const desc = limit(item.description, desclength);
-            // logger.info(`{bold:${name}}  ${desc}`);
             return [`{bold:${name}}`, desc];
         }
 
@@ -61,7 +58,7 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
         const desclength = (cols - 6) - longest;
 
         const desc = limit(`${runner.patterns.length} pattern(s), ${runner.tasks.length} task(s)`, desclength);
-        
+
         return [`{bold:${name}}`, desc];
     });
 }

@@ -445,24 +445,13 @@ export function __e(x) {
         .replace(/}/g, '\\\}');
 }
 
-export function getTaskTree(tasks: Tasks, depth = 1) {
-
-    const gathered = gather(tasks, [], 1);
-
-    return gathered;
-
-    function gather(items, initial, currentDepth) {
-        return items.reduce((acc, task) => {
-            if (currentDepth === depth) {
-                task.tasks = [];
-                return acc.concat(task);
-            }
-            if (currentDepth < depth) {
-                task.tasks = gather(task.tasks, [], currentDepth + 1);
-                return acc.concat(task);
-            }
-            return acc;
-        }, initial);
-    }
+export function longestString (col: string[]): number {
+    return col.reduce((val, item) => item.length > val ? item.length : val, 0);
 }
 
+export function padLine(incoming, max?) {
+    if (incoming.length <= max) {
+        return incoming + new Array(max-incoming.length+1).join(' ');
+    }
+    return incoming;
+}
