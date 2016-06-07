@@ -1,9 +1,9 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI} from './index';
+import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
-import * as reporter from './reporters/defaultReporter';
+import * as _reporter from './reporters/defaultReporter';
 import {TaskReport} from "./task.runner";
 import {resolveWatchTasks} from './watch.resolve';
 import {getModifiedWatchContext} from "./watch.shorthand";
@@ -72,7 +72,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
      * Never continue if any tasks were flagged as
      */
     if (watchTasks.invalid.length) {
-        reporter.reportWatchTaskErrors(watchTasks.all, cli, input);
+        _reporter.reportWatchTaskErrors(watchTasks.all, cli, input);
         return;
     }
 
@@ -80,7 +80,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
      *
      */
     if (before.tasks.invalid.length) {
-        reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
+        _reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
         return;
     }
 
@@ -89,10 +89,10 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
      */
     if (runners.invalid.length) {
         runners.valid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
         });
         runners.invalid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
         });
         return;
     }
@@ -101,7 +101,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
      *
      */
     if (before.tasks.valid.length) {
-        reporter.reportBeforeTaskList(before.sequence, cli, trigger.config);
+        _reporter.reportBeforeTaskList(before.sequence, cli, trigger.config);
     }
 
     /**
@@ -128,7 +128,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
                 return Rx.Observable.throw(err);
             })
             .do(() => {
-                reporter.reportWatchers(watchTasks.valid, config);
+                _reporter.reportWatchers(watchTasks.valid, config);
             }),
         createObservablesForWatchers(runners.valid, trigger)).share();
 
@@ -160,14 +160,14 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
          * @type {number}
          */
         const beforeTimestamp = new Date().getTime();
-        const report = (seq: SequenceItem[]) => reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
+        const report = (seq: SequenceItem[]) => _reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
 
         return before
             .runner
             .series()
             .do(report => {
                 if (trigger.config.progress) {
-                    reporter.taskReport(report, trigger);
+                    _reporter.taskReport(report, trigger);
                 }
             })
             .toArray()
@@ -181,7 +181,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
                      * so we `throw` here to ensure the upstream fails
                      */
                     const cberror = <CrossbowError>new Error('Before tasks did not complete!');
-                    reporter.reportBeforeTasksDidNotComplete(cberror);
+                    _reporter.reportBeforeTasksDidNotComplete(cberror);
                     cberror._cb = true;
                     return Rx.Observable.throw(cberror);
                 }
@@ -190,7 +190,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     }
 }
 
-export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
 
@@ -218,6 +218,7 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
                 cli,
                 input,
                 config,
+                reporter,
                 type: TriggerTypes.watcher
             }));
         }
@@ -231,10 +232,10 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
      */
     function enterInteractive() {
         if (!topLevelWatchers.length) {
-            reporter.reportNoWatchersAvailable();
+            _reporter.reportNoWatchersAvailable();
             return;
         }
-        reporter.reportNoWatchTasksProvided();
+        _reporter.reportNoWatchTasksProvided();
         return promptForWatchCommand(cli, input, config).then(function (answers) {
             const cliMerged = _.merge({}, cli, {input: answers.watch});
             return execute({
@@ -242,6 +243,7 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
                 cli: cliMerged,
                 input,
                 config,
+                reporter,
                 type: TriggerTypes.watcher
             });
         });
@@ -252,6 +254,7 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.watcher
     }));
 }

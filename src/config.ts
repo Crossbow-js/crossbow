@@ -3,6 +3,7 @@ import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
+import {join} from "path";
 
 const _ = require('../lodash.custom');
 
@@ -25,6 +26,7 @@ export interface CrossbowConfiguration {
     before: string[]
     type?: InitConfigFileTypes
     debug: boolean
+    reporters: Array<string|Function>
 }
 
 /**
@@ -108,7 +110,8 @@ const defaults = <CrossbowConfiguration>{
     /**
      *
      */
-    type: InitConfigFileTypes.yaml
+    type: InitConfigFileTypes.yaml,
+    reporters: []
 };
 
 /**

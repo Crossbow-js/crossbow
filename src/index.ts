@@ -11,7 +11,8 @@ import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
 import {handleIncomingInitCommand} from "./command.init";
 import cli from "./cli";
-import {getInputs, InputTypes} from "./input.resolve";
+import {getInputs, InputTypes, UserInput} from "./input.resolve";
+import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -27,6 +28,10 @@ export interface CrossbowInput {
     options: any
     env?: any
     config?: any
+}
+
+export interface CrossbowReporter {
+    (name: ReportNames, ...args): void
 }
 
 const availableCommands = {
@@ -59,13 +64,35 @@ if (!module.parent) {
  */
 function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
-    const mergedConfig = merge(cli.flags);
-    const userInput    = getInputs(mergedConfig, input);
+    const mergedConfig      = merge(cli.flags);
+    const userInput         = getInputs(mergedConfig, input);
+    const resolvedReporters = getReporters(mergedConfig, input);
+    const hasReporters      = resolvedReporters.valid.length;
+    const defaultReporter   = getDefaultReporter();
+
+    // Check if any given reporter are invalid
+    // and defer to default
+    if (resolvedReporters.invalid.length) {
+        defaultReporter(ReportNames.InvalidReporter, resolvedReporters);
+        return;
+    }
+
+    // proxy for calling reporter functions.
+    // uses default if none given
+    const report = function (...args) {
+        if (!hasReporters) {
+            return defaultReporter.apply(null, args);
+        }
+        resolvedReporters.valid.forEach(function (reporter: Reporter) {
+            reporter.callable.apply(null, args);
+        });
+    };
+
 
     // Bail early if a user tried to load a specific file
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
-        reporter.reportMissingConfigFile(userInput.sources);
+        report(ReportNames.InputFileNotFound, userInput.sources);
         return;
     }
 
@@ -73,46 +100,47 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.type === InputTypes.ExternalFile ||
         userInput.type === InputTypes.CBFile ||
         userInput.type === InputTypes.DefaultExternalFile
-    ) reporter.reportUsingConfigFile(userInput.sources);
+    ) report(ReportNames.UsingConfigFile, userInput.sources);
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {
-        return handleCBfileMode(cli, mergedConfig);
+        return handleCBfileMode(cli, mergedConfig, report);
     }
     
     // if the user provided a -c flag, but external files were
     // not return, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
-        return processInput(cli, userInput.inputs[0]);
+        return processInput(cli, userInput.inputs[0], report);
     }
 
-    return processInput(cli, userInput.inputs[0]);
+    return processInput(cli, userInput.inputs[0], report);
 }
 
-function handleCBfileMode(cli: CLI, config: CrossbowConfiguration) {
+function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reporter: CrossbowReporter) {
 
     var createFilePaths = getRequirePaths(config);
     var input = require(createFilePaths.valid[0].resolved);
     input.default.config = processConfigs(_.merge({}, config, input.default.config), cli.flags);
     input.default.cli = cli;
+    input.default.reporter = reporter;
 
     if (isCommand(cli.input[0])) {
-        return availableCommands[cli.input[0]].call(null, cli, input.default, input.default.config);
+        return availableCommands[cli.input[0]].call(null, cli, input.default, input.default.config, reporter);
     }
 
     cli.input = ['run'].concat(cli.input);
 
-    return availableCommands['run'].call(null, cli, input.default, input.default.config);
+    return availableCommands['run'].call(null, cli, input.default, input.default.config, reporter);
 }
 
 /**
  * Now decide who should handle the current command
  */
-function processInput(cli: CLI, input: CrossbowInput): any {
+function processInput(cli: CLI, input: CrossbowInput, reporter: CrossbowReporter): any {
     const firstArg = cli.input[0];
     const merged   = merge(_.merge({}, input.config, cli.flags));
-    return availableCommands[firstArg].call(null, cli, input, merged);
+    return availableCommands[firstArg].call(null, cli, input, merged, reporter);
 }
 
 function processConfigs (config, flags) {

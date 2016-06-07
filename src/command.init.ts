@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI} from './index';
+import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
 import * as utils from "./task.utils";
@@ -126,12 +126,13 @@ export default function execute(trigger: CommandTrigger): any {
     return output; 
 }
 
-export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     return execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.command
     });
 }

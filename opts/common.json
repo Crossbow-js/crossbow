@@ -5,6 +5,12 @@
     "alias": "c",
     "default": []
   },
+  "reporters": {
+    "desc": "Paths to modules that contain a reporter",
+    "type": "array",
+    "alias": "reporter",
+    "default": []
+  },
   "cwd": {
     "desc": "Current Working directory",
     "type": "string"

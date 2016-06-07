@@ -5,7 +5,7 @@ const inquirer = require('inquirer');
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {compile} from './logger';
-import {CLI, CrossbowInput} from './index';
+import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
@@ -17,13 +17,14 @@ export interface Answers {
     tasks: string[]
 }
 
-export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
+export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
     const resolved = resolveTasks(Object.keys(input.tasks), {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.command
     });
     if (resolved.invalid.length) {

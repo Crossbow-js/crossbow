@@ -4,14 +4,14 @@ const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 const merge = require('../lodash.custom').merge;
 
-import {CLI, CrossbowInput} from './index';
+import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks, TaskRunModes, maybeTaskNames} from './task.resolve';
 import {TaskRunner, TaskReport} from './task.runner';
 import Immutable = require('immutable');
 
 import * as seq from "./task.sequence";
-import * as reporter from './reporters/defaultReporter';
+import * as _reporter from './reporters/defaultReporter';
 import promptForRunCommand from './command.run.interactive';
 import {Tasks} from "./task.resolve.d";
 import {SequenceItem} from "./task.sequence.factories";
@@ -26,7 +26,8 @@ export interface CommandTrigger {
     config: CrossbowConfiguration
     tracker?: any
     tracker$?: any
-    shared?: Rx.BehaviorSubject<Immutable.Map<string, any>>
+    shared?: Rx.BehaviorSubject<Immutable.Map<string, any>>,
+    reporter: CrossbowReporter
 }
 
 export enum TriggerTypes {
@@ -54,7 +55,7 @@ export interface RunCommandCompletionReport extends RunCommandErrorReport {
 
 type RunCommandErrorStream = RunCommandErrorReport|Error;
 
-function getRunCommandSetup (trigger) {
+function getRunCommandSetup (trigger: CommandTrigger) {
     const cliInput = trigger.cli.input.slice(1);
 
     /**
@@ -119,7 +120,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
      * off
      */
     if (tasks.invalid.length) {
-        reporter.reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
+        _reporter.reportTaskErrors(tasks.all, cli.input.slice(1), input, config);
         return Rx.Observable.concat<RunCommandErrorStream>(
             Rx.Observable.just(<RunCommandErrorReport>{
                 type: RunCommandReportTypes.InvalidTasks,
@@ -137,7 +138,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     /**
      * Report task list that's about to run
      */
-    reporter.reportTaskList(sequence, cli, '', config);
+    _reporter.reportTaskList(sequence, cli, '', config);
 
     /**
      * A generic timestamp to mark the beginning of the tasks
@@ -151,7 +152,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
         .do(report => trigger.tracker.onNext(report))
         .do((x: TaskReport) => {
             if (trigger.config.progress) {
-                reporter.taskReport(x, trigger);
+                _reporter.taskReport(x, trigger);
             }
         })
         .toArray()
@@ -162,7 +163,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
             const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
             complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner, decoratedSequence});
             complete$.onCompleted();
-            reporter.reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
+            _reporter.reportSummary(decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
         })
         .subscribe(_ => {
 
@@ -180,7 +181,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     return complete$;
 }
 
-export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration):any {
+export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter):any {
 
     /**
      * Array of top-level task names that are available
@@ -202,6 +203,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
             cli,
             input,
             config,
+            reporter,
             type
         });
     }
@@ -232,6 +234,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
                 cli: cliMerged,
                 input,
                 config,
+                reporter,
                 type: TriggerTypes.command
             });
         }
@@ -261,17 +264,18 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
      */
     function enterInteractive() {
         if (!topLevelTasks.length) {
-            reporter.reportNoTasksAvailable();
+            _reporter.reportNoTasksAvailable();
             return;
         }
-        reporter.reportNoTasksProvided();
-        return promptForRunCommand(cli, input, config).subscribe(function (answers) {
+        _reporter.reportNoTasksProvided();
+        return promptForRunCommand(cli, input, config, reporter).subscribe(function (answers) {
             const cliMerged = merge({}, cli, {input: ['run', ...answers.tasks]});
             const configMerged = merge({}, config, {runMode: TaskRunModes.parallel});
             return execute({
                 shared: sharedMap,
                 cli: cliMerged,
                 input,
+                reporter,
                 config: configMerged,
                 type
             });
@@ -289,6 +293,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
         cli,
         input,
         config,
+        reporter,
         type
     });
 }

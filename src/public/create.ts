@@ -67,6 +67,7 @@ var input = {
     env: {},
     config: <CrossbowConfiguration>{}, // to be set by lib
     cli: <CLI>{}, // to be set by lib
+    reporter: ()=>{} // to be set by lib
 };
 
 function incomingOptions (taskname: string, hash?:any): {} {
@@ -114,7 +115,7 @@ export const api = {
             ]
         };
         const cliInput = ['watch', identifer];
-        const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config);
+        const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
         return output;
     },
     watcher: function (patterns: string[], options: CBWatchOptions) {

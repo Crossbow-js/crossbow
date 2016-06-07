@@ -30,6 +30,10 @@ import {dirname} from "path";
 import {join} from "path";
 import {writeFileSync} from "fs";
 import {twoColWatchers} from "./task.list";
+import {
+    ReportNames, Reporters, Reporter, ReporterErrorTypes, ReporterTypes,
+    ReporterFileNotFoundError
+} from "../reporter.resolve";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -44,20 +48,6 @@ function nl() {
 export const enum LogLevel {
     Short = 2,
     Verbose
-}
-
-export function reportUsingConfigFile(inputs: ExternalFileInput[]) {
-    inputs.forEach(function (input) {
-        logger.info(`Using: {cyan.bold:${input.relative}}`);
-    });
-}
-
-export function reportMissingConfigFile(inputs: ExternalFileInput[]) {
-    heading(`Sorry, there were errors resolving your input files`);
-    inputs.forEach(function (item) {
-        logger.info(`{red.bold:x ${item.path}}`);
-        multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
-    });
 }
 
 export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {
@@ -726,4 +716,38 @@ function maybeErrorLabel (task: Task, label: string): string {
 
 function duration (ms) {
     return String((Number(ms)/1000).toFixed(2)) + 's';
+}
+
+const reporterFunctions = {
+    [ReportNames.UsingConfigFile]: function (inputs: ExternalFileInput[]) {
+        inputs.forEach(function (input) {
+            logger.info(`Using: {cyan.bold:${input.relative}}`);
+        });
+    },
+    [ReportNames.InputFileNotFound]: function (inputs: ExternalFileInput[]) {
+        heading(`Sorry, there were errors resolving your input files`);
+        inputs.forEach(function (item) {
+            logger.info(`{red.bold:x ${item.path}}`);
+            multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
+        });
+    },
+    [ReportNames.InvalidReporter]: function (reporters: Reporters) {
+        heading(`{red.bold:x} Sorry, there were problems resolving your reporters`);
+        reporters.all.forEach(function (reporter: Reporter) {
+            if (reporter.errors.length) {
+                reporter.errors.forEach(function (err: ReporterFileNotFoundError) {
+                    heading(`{red.bold:x ${err.file.resolved}`);
+                    multiLine(getExternalError(err.type, err));
+                })
+            }
+        });
+    }
+};
+
+export default function (name, ...args) {
+    if (typeof reporterFunctions[name] === 'function') {
+        return reporterFunctions[name].apply(null, args);
+    }
+
+    console.log(`Reporter not defined for '${name}' Please implement this method`);
 }

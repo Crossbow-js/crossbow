@@ -1,8 +1,8 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import * as reporter from './reporters/defaultReporter';
-import {CrossbowInput, CLI} from './index';
+import * as _reporter from './reporters/defaultReporter';
+import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
 import Rx = require('rx');
@@ -16,7 +16,7 @@ export default function execute(trigger: CommandTrigger): void {
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
 
     if (!topLevelWatchers.length) {
-        reporter.reportNoWatchersAvailable();
+        _reporter.reportNoWatchersAvailable();
         return;
     }
 
@@ -31,25 +31,26 @@ export default function execute(trigger: CommandTrigger): void {
          * Log valid runners first, so that errors are not lost in the console output
          */
         runners.valid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
         });
         /**
          * Now log the invalid runners
          */
         runners.invalid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
         });
         return;
     }
     logWatcherNames(runners, trigger);
 }
 
-export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.command
     });
 }
