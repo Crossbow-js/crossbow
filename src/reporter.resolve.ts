@@ -29,12 +29,15 @@ export interface Reporters {
 }
 
 export enum ReportNames {
-    TaskTree          = <any> "TaskTree",
-    InvalidReporter   = <any>"InvalidReporter",
-    UsingConfigFile   = <any>"UsingConfigFile",
-    InputFileNotFound = <any>"InputFileNotFound",
-    SimpleTaskList    = <any>"SimpleTaskList",
-    NoTasksAvailable  = <any>"NoTasksAvailable",
+    DuplicateConfigFile        = <any"DuplicateConfigFile",
+    ConfigFileCreated          = <any"ConfigFileCreated",
+    InitConfigTypeNotSupported = <any"InitConfigTypeNotSupported",
+    TaskTree                   = <any> "TaskTree",
+    InvalidReporter            = <any>"InvalidReporter",
+    UsingConfigFile            = <any>"UsingConfigFile",
+    InputFileNotFound          = <any>"InputFileNotFound",
+    SimpleTaskList             = <any>"SimpleTaskList",
+    NoTasksAvailable           = <any>"NoTasksAvailable",
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {

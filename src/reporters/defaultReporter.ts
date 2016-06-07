@@ -740,7 +740,10 @@ const reporterFunctions = {
         lines.forEach(line => logger.info(line));
     },
     [ReportNames.TaskTree]: reportTaskTree,
-    [ReportNames.NoTasksAvailable]: reportNoTasksAvailable
+    [ReportNames.NoTasksAvailable]: reportNoTasksAvailable,
+    [ReportNames.DuplicateConfigFile]: reportDuplicateConfigFile,
+    [ReportNames.ConfigFileCreated]: reportConfigFileCreated,
+    [ReportNames.InitConfigTypeNotSupported]: reportInitConfigTypeNotSupported,
 };
 
 export default function (name, ...args) {

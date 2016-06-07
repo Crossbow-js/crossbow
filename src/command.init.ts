@@ -7,11 +7,8 @@ import Rx = require('rx');
 import * as utils from "./task.utils";
 import * as fs from "fs";
 import {join} from "path";
-import {
-    reportDuplicateConfigFile, reportConfigFileCreated,
-    reportInitConfigTypeNotSupported
-} from "./reporters/defaultReporter";
 import {parse} from "path";
+import {ReportNames} from "./reporter.resolve";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -33,7 +30,7 @@ export enum InitConfigFileTypes {
 }
 
 export default function execute(trigger: CommandTrigger): any {
-    const {input, config} = trigger;
+    const {config, reporter} = trigger;
 
     const templateDir = join(__dirname, '..', 'templates');
 
@@ -53,7 +50,7 @@ export default function execute(trigger: CommandTrigger): any {
             supportedTypes: maybeExistingFileInputs
         }];
         if (!config.handoff) {
-            reportInitConfigTypeNotSupported(errors[0]);
+            reporter(ReportNames.InitConfigTypeNotSupported, errors[0]);
         }
         return {errors};
     }
@@ -102,7 +99,7 @@ export default function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reportDuplicateConfigFile(errors[0]);
+        reporter(ReportNames.DuplicateConfigFile, errors[0]);
         return {existingFilesInCwd, matchingFiles, errors}; 
     }
     
@@ -121,7 +118,7 @@ export default function execute(trigger: CommandTrigger): any {
         outputFileName
     };
 
-    reportConfigFileCreated(parse(outputFilePath), config.type);
+    reporter(ReportNames.ConfigFileCreated, parse(outputFilePath), config.type);
     
     return output; 
 }
