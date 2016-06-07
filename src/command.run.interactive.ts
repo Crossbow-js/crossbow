@@ -5,30 +5,33 @@ const inquirer = require('inquirer');
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {compile} from './logger';
-import {CLI, CrossbowInput} from './index';
+import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve.d";
 import {twoCol} from "./reporters/task.list";
 import {reportTaskTree} from "./reporters/defaultReporter";
+import {ReportNames} from "./reporter.resolve";
 
 export interface Answers {
     tasks: string[]
 }
 
-export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
+export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
     const resolved = resolveTasks(Object.keys(input.tasks), {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.command
     });
+    
     if (resolved.invalid.length) {
 
-        reportTaskTree(resolved.all, config, 'Available tasks:');
+        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
         return Rx.Observable.empty<Answers>();
 
     } else {

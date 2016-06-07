@@ -1,22 +1,20 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import * as reporter from './reporters/defaultReporter';
-import {CrossbowInput, CLI} from './index';
-import {resolveTasks} from './task.resolve';
+import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
 import {stripBlacklisted} from "./watch.utils";
-import {resolveWatchTasks, Watcher} from "./watch.resolve";
-import {createWatchRunners, WatchRunners} from "./watch.runner";
-import {logWatcherNames} from "./reporters/defaultReporter";
+import {resolveWatchTasks} from "./watch.resolve";
+import {createWatchRunners} from "./watch.runner";
+import {ReportNames} from "./reporter.resolve";
 
 export default function execute(trigger: CommandTrigger): void {
-    const {input, config}   = trigger;
+    const {input, config, reporter}   = trigger;
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
 
     if (!topLevelWatchers.length) {
-        reporter.reportNoWatchersAvailable();
+        reporter(ReportNames.NoWatchersAvailable);
         return;
     }
 
@@ -29,27 +27,29 @@ export default function execute(trigger: CommandTrigger): void {
     if (runners.invalid.length) {
         /**
          * Log valid runners first, so that errors are not lost in the console output
+         * // todo, again, is it confusing to have none-errored watchers listed here
          */
-        runners.valid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
-        });
+        // runners.valid.forEach(runner => {
+        //     _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+        // });
         /**
          * Now log the invalid runners
          */
         runners.invalid.forEach(runner => {
-            reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            reporter(ReportNames.WatchTaskTasksErrors, runner._tasks.all, runner, config)
         });
         return;
     }
-    logWatcherNames(runners, trigger);
+    reporter(ReportNames.WatcherNames, runners, trigger);
 }
 
-export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
         config,
+        reporter,
         type: TriggerTypes.command
     });
 }

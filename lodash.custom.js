@@ -1,7 +1,7 @@
 /**
  * @license
  * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash include="merge,get,assign,values" exports="node"`
+ * Build: `lodash include="merge,get,assign,values,toArray" exports="node"`
  * Copyright jQuery Foundation and other contributors <https://jquery.org/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -94,6 +94,32 @@
 
   /** Used to detect unsigned integer values. */
   var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+  /** Used to compose unicode character classes. */
+  var rsAstralRange = '\\ud800-\\udfff',
+      rsComboMarksRange = '\\u0300-\\u036f\\ufe20-\\ufe23',
+      rsComboSymbolsRange = '\\u20d0-\\u20f0',
+      rsVarRange = '\\ufe0e\\ufe0f';
+
+  /** Used to compose unicode capture groups. */
+  var rsAstral = '[' + rsAstralRange + ']',
+      rsCombo = '[' + rsComboMarksRange + rsComboSymbolsRange + ']',
+      rsFitz = '\\ud83c[\\udffb-\\udfff]',
+      rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
+      rsNonAstral = '[^' + rsAstralRange + ']',
+      rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
+      rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
+      rsZWJ = '\\u200d';
+
+  /** Used to compose unicode regexes. */
+  var reOptMod = rsModifier + '?',
+      rsOptVar = '[' + rsVarRange + ']?',
+      rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
+      rsSeq = rsOptVar + reOptMod + rsOptJoin,
+      rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
+
+  /** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
+  var reComplexSymbol = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
 
   /** Used to identify `toStringTag` values of typed arrays. */
   var typedArrayTags = {};
@@ -424,6 +450,17 @@
     return result;
   }
 
+  /**
+   * Converts `string` to an array.
+   *
+   * @private
+   * @param {string} string The string to convert.
+   * @returns {Array} Returns the converted array.
+   */
+  function stringToArray(string) {
+    return string.match(reComplexSymbol);
+  }
+
   /*--------------------------------------------------------------------------*/
 
   /** Used for built-in method references. */
@@ -459,6 +496,7 @@
       Uint8Array = root.Uint8Array,
       enumerate = Reflect ? Reflect.enumerate : undefined,
       getOwnPropertySymbols = Object.getOwnPropertySymbols,
+      iteratorSymbol = typeof (iteratorSymbol = Symbol && Symbol.iterator) == 'symbol' ? iteratorSymbol : undefined,
       objectCreate = Object.create,
       propertyIsEnumerable = objectProto.propertyIsEnumerable,
       splice = arrayProto.splice;
@@ -2511,6 +2549,45 @@
   }
 
   /**
+   * Converts `value` to an array.
+   *
+   * @static
+   * @since 0.1.0
+   * @memberOf _
+   * @category Lang
+   * @param {*} value The value to convert.
+   * @returns {Array} Returns the converted array.
+   * @example
+   *
+   * _.toArray({ 'a': 1, 'b': 2 });
+   * // => [1, 2]
+   *
+   * _.toArray('abc');
+   * // => ['a', 'b', 'c']
+   *
+   * _.toArray(1);
+   * // => []
+   *
+   * _.toArray(null);
+   * // => []
+   */
+  function toArray(value) {
+    if (!value) {
+      return [];
+    }
+    if (isArrayLike(value)) {
+      return isString(value) ? stringToArray(value) : copyArray(value);
+    }
+    if (iteratorSymbol && value[iteratorSymbol]) {
+      return iteratorToArray(value[iteratorSymbol]());
+    }
+    var tag = getTag(value),
+        func = tag == mapTag ? mapToArray : (tag == setTag ? setToArray : values);
+
+    return func(value);
+  }
+
+  /**
    * Converts `value` to a finite number.
    *
    * @static
@@ -2942,6 +3019,7 @@
   lodash.memoize = memoize;
   lodash.merge = merge;
   lodash.rest = rest;
+  lodash.toArray = toArray;
   lodash.toPlainObject = toPlainObject;
   lodash.values = values;
 
