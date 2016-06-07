@@ -18,27 +18,23 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {
-    InputFiles, InputErrorTypes, _e, isInternal, getFunctionName, ExternalFile,
-    ExternalFileInput, __e
-} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
-import {InitConfigFileExistsError, InitConfigFileTypes, InitConfigFileTypeNotSupported} from "../command.init";
+import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
 import {parse} from "path";
 import {dirname} from "path";
 import {join} from "path";
-import {writeFileSync} from "fs";
 import {twoColWatchers} from "./task.list";
 import {
-    ReportNames, Reporters, Reporter, ReporterErrorTypes, ReporterTypes,
-    ReporterFileNotFoundError
+    ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
+    ReporterError
 } from "../reporter.resolve";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
-const parsed  = parse(__dirname);
+const parsed = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), 'node_modules');
 
 function nl() {
@@ -48,18 +44,6 @@ function nl() {
 export const enum LogLevel {
     Short = 2,
     Verbose
-}
-
-export function reportInitConfigTypeNotSupported(error: InitConfigFileTypeNotSupported) {
-    heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
-    logger.info(`{red.bold:x '${error.providedType}'}`);
-    multiLine(getExternalError(error.type, error));
-}
-
-export function reportDuplicateConfigFile(error: InitConfigFileExistsError) {
-    heading(`Sorry, this would cause an existing file to be overwritten`);
-    logger.info(`{red.bold:x ${error.file.path}}`);
-    multiLine(getExternalError(error.type, error, error.file));
 }
 
 /**
@@ -86,19 +70,10 @@ export function multiLine(input: string) {
         });
 }
 
-export function reportConfigFileCreated(parsed: ParsedPath, type: InitConfigFileTypes) {
-    multiLine(`{green:✔} Created file: {cyan.bold:${parsed.base}}
- 
-Now, try the \`{yellow:hello-world}\` example in that file by running: 
- 
-  {gray:$} crossbow run {bold:hello-world} 
- 
-Or to see multiple tasks running, with some in parallel, try: 
-
-  {gray:$} crossbow run {bold:all}`);
-}
-
-export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
+/**
+ * Summary is a sequence tree with stats overlaid
+ */
+function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
 
@@ -130,11 +105,6 @@ export function reportSummary(sequence: SequenceItem[], cli: CLI, title: string,
     }
 }
 
-export function taskReport(report: TaskReport, trigger: CommandTrigger) {
-    const label = getSequenceLabel(report.item, trigger.config);
-    _taskReport(report, label);
-}
-
 function _taskReport(report: TaskReport, label: string) {
     switch (report.type) {
         case TaskReportType.start:
@@ -149,12 +119,6 @@ function _taskReport(report: TaskReport, label: string) {
     }
 }
 
-export function watchTaskReport(report: TaskReport, trigger: CommandTrigger) {
-    const label = getSequenceLabel(report.item, trigger.config);
-    // todo make loglevel an enum
-    _taskReport(report, label);
-}
-
 function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: string): SequenceItem[] {
     return sequence.filter(function (item) {
         if (item.taskName) {
@@ -167,18 +131,11 @@ function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: str
     });
 }
 
-export function reportWatcherTriggeredTasksCompleted(index: number, taskCollection: TaskCollection, time: number) {
-    l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
-}
-export function reportWatcherTriggeredTasks(index: number, taskCollection: TaskCollection) {
-    l(`{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`);
-}
-
-export function getTaskCollectionList(taskCollection: TaskCollection): string[] {
+function getTaskCollectionList(taskCollection: TaskCollection): string[] {
     return taskCollection.map(incomingTaskItemAsString);
 }
 
-export function incomingTaskItemAsString (x: IncomingTaskItem): string {
+function incomingTaskItemAsString(x: IncomingTaskItem): string {
     if (typeof x === 'string') {
         return _e(x);
     }
@@ -190,7 +147,7 @@ export function incomingTaskItemAsString (x: IncomingTaskItem): string {
     }
 }
 
-export function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
+function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
 
     if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
@@ -201,7 +158,7 @@ export function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix =
     }
 }
 
-export function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
+function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
 
     l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
 
@@ -213,23 +170,13 @@ export function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config:
     }
 }
 
-export function reportBeforeTasksDidNotComplete(error: Error) {
+function reportBeforeTasksDidNotComplete(error: Error) {
     l('{red:x} %s', error.message);
     l('  so none of the watchers started');
 }
 
-export function reportWatchers(watchTasks: WatchTask[], config: CrossbowConfiguration) {
-    nl();
-    l(`{yellow:+} Watching...`);
-    watchTasks.forEach(function (watchTask) {
-        const o = archy({
-            label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
-        });
-        multiLineTree(o);
-    });
-}
 
-export function getWatcherNode(watcher: Watcher) {
+function getWatcherNode(watcher: Watcher) {
     const tasksString = (function () {
         return watcher.tasks.map(incomingTaskItemAsString).join(', ');
     })();
@@ -239,7 +186,7 @@ export function getWatcherNode(watcher: Watcher) {
     ].join('\n');
 }
 
-export function reportTaskErrors(tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration) {
+function reportTaskErrors(tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration) {
 
     l('{gray.bold:------------------------------------------------}');
     l('{err: } Sorry, there were errors resolving your tasks,');
@@ -251,7 +198,7 @@ export function reportTaskErrors(tasks: Task[], taskCollection: TaskCollection, 
     });
 }
 
-export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, config: CrossbowConfiguration) {
+function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, config: CrossbowConfiguration) {
 
     if (runner._tasks.invalid.length) {
         l('{gray.bold:---------------------------------------------------}');
@@ -269,13 +216,13 @@ export function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, confi
     }
 }
 
-export function logWatcher (runner) {
+function logWatcher(runner) {
     l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
     l(`      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`);
     l(`         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`);
 }
 
-export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger) {
+function logWatcherNames(runners: WatchRunners, trigger: CommandTrigger) {
     logger.info('{yellow:Available Watchers:}');
 
     if (trigger.config.verbose === LogLevel.Short) {
@@ -293,7 +240,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
     logger.info(``);
 
     runners.valid.forEach(function (runner) {
-    	logger.info(` {gray:$} crossbow watch {bold:${runner.parent}}`);
+        logger.info(` {gray:$} crossbow watch {bold:${runner.parent}}`);
     });
 
     if (runners.valid.length > 1) {
@@ -305,11 +252,7 @@ export function logWatcherNames (runners: WatchRunners, trigger: CommandTrigger)
     }
 }
 
-export function reportNoFilesMatched(runner) {
-    l('{red:x warning} `{cyan:%s}` did not match any files', runner.patterns.join(' '));
-}
-
-export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, trigger: CommandTrigger): void {
+function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, trigger: CommandTrigger): void {
 
     l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
     l('  So none of them were run, and no watchers have begun either.');
@@ -332,12 +275,7 @@ export function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, trigger: Com
     });
 }
 
-export function reportWatchTaskErrors(tasks: WatchTask[], cli: CLI, input: CrossbowInput) {
-    heading(`Sorry, there were errors resolving your watch tasks`);
-    logWatchErrors(tasks);
-}
-
-export function logWatchErrors(tasks: WatchTask[]): void {
+function logWatchErrors(tasks: WatchTask[]): void {
 
     const errorCount = tasks.reduce(function (acc, item) {
         return acc + item.errors.length;
@@ -363,28 +301,12 @@ function errorSummary(errorCount: number) {
     }
 }
 
-export function reportNoTasksProvided() {
+function reportNoTasksProvided() {
     heading(`Entering interactive mode as you didn't provide a task to run`)
 }
 
 function heading(title) {
     l(`${title}`);
-}
-
-export function reportNoTasksAvailable() {
-    heading('Sorry, there were no tasks available to run');
-    logger.info(`{red.bold:x Input: ''}`);
-    multiLine(getExternalError(InputErrorTypes.NoTasksAvailable, {}));
-}
-
-export function reportNoWatchersAvailable() {
-    heading('Sorry, there were no watchers available to run');
-    logger.info(`{red.bold:x No watchers available}`);
-    multiLine(getExternalError(InputErrorTypes.NoWatchersAvailable, {}));
-}
-
-export function reportNoWatchTasksProvided() {
-    heading(`Entering interactive mode as you didn't provide a watcher to run`)
 }
 
 export interface CrossbowError extends Error {
@@ -427,7 +349,7 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
     return [...head, ...stack, tail].join('\n');
 }
 
-export function getStack (stack: string[], config: CrossbowConfiguration): string[] {
+export function getStack(stack: string[], config: CrossbowConfiguration): string[] {
 
     /**
      * An array of string that can be compared
@@ -492,6 +414,9 @@ function appendStatsToSequenceLabel(label: string, stats: TaskStats, config: Cro
     return `{yellow:x} ` + label + ` {yellow:(didn't complete, ${duration(stats.duration)})}`;
 }
 
+/**
+ * Show a tree of function calls
+ */
 export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
 
     const toLog = getItems(sequence, []);
@@ -564,9 +489,9 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
 export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, title: string) {
 
     let errorCount = 0;
-    const toLog    = getTasks(tasks, [], 0);
-    const archy    = require('archy');
-    const output   = archy({label: `{yellow:${title}}`, nodes: toLog});
+    const toLog = getTasks(tasks, [], 0);
+    const archy = require('archy');
+    const output = archy({label: `{yellow:${title}}`, nodes: toLog});
 
     multiLineTree(output);
     errorSummary(errorCount);
@@ -646,10 +571,6 @@ function getExternalError<A, B>(type, error: A, val2?: B) {
     ].join('\n');
 }
 
-function adaptorLabel(task: Task) {
-    return `{magenta:[@${task.adaptor}]} ${task.command}`;
-}
-
 function moduleLabel(task: Task) {
     const filepath = relative(process.cwd(), task.externalTasks[0].rawInput);
     if (task.taskName === filepath) {
@@ -666,7 +587,7 @@ export function getLabel(task) {
 
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {
-        	if (task.inlineFunctions[0].name !== '') {
+            if (task.inlineFunctions[0].name !== '') {
                 return `[Function: ${task.inlineFunctions[0].name}]`;
             }
             return '[Function]';
@@ -700,15 +621,15 @@ export function getLabel(task) {
     return `${task.taskName}}`;
 }
 
-function maybeErrorLabel (task: Task, label: string): string {
+function maybeErrorLabel(task: Task, label: string): string {
     if (task.errors.length) {
         return `{red.bold:x ${label}}`;
     }
     return label;
 }
 
-function duration (ms) {
-    return String((Number(ms)/1000).toFixed(2)) + 's';
+function duration(ms) {
+    return String((Number(ms) / 1000).toFixed(2)) + 's';
 }
 
 const reporterFunctions = {
@@ -726,24 +647,100 @@ const reporterFunctions = {
     },
     [ReportNames.InvalidReporter]: function (reporters: Reporters) {
         heading(`{red.bold:x} Sorry, there were problems resolving your reporters`);
-        reporters.all.forEach(function (reporter: Reporter) {
-            if (reporter.errors.length) {
-                reporter.errors.forEach(function (err: ReporterFileNotFoundError) {
+        reporters.invalid.forEach(function (reporter: Reporter) {
+            reporter.errors.forEach(function (err: ReporterError) {
+                if (err.type === ReporterErrorTypes.ReporterFileNotFound) {
                     heading(`{red.bold:x ${err.file.resolved}`);
                     multiLine(getExternalError(err.type, err));
-                })
-            }
+                }
+                if (err.type === ReporterErrorTypes.ReporterTypeNotSupported) {
+                    multiLine(getExternalError(err.type, err));
+                }
+            })
         });
+    },
+    [ReportNames.DuplicateConfigFile]: function (error: InitConfigFileExistsError) {
+        heading(`Sorry, this would cause an existing file to be overwritten`);
+        logger.info(`{red.bold:x ${error.file.path}}`);
+        multiLine(getExternalError(error.type, error, error.file));
+    },
+    [ReportNames.ConfigFileCreated]: function (parsed: ParsedPath) {
+        multiLine(`{green:✔} Created file: {cyan.bold:${parsed.base}}
+ 
+Now, try the \`{yellow:hello-world}\` example in that file by running: 
+ 
+  {gray:$} crossbow run {bold:hello-world} 
+ 
+Or to see multiple tasks running, with some in parallel, try: 
+
+  {gray:$} crossbow run {bold:all}`);
+    },
+    [ReportNames.InitConfigTypeNotSupported]: function (error: InitConfigFileTypeNotSupported) {
+        heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
+        logger.info(`{red.bold:x '${error.providedType}'}`);
+        multiLine(getExternalError(error.type, error));
     },
     [ReportNames.SimpleTaskList]: function (lines: string[]) {
         logger.info('{yellow:Available Tasks:');
         lines.forEach(line => logger.info(line));
     },
     [ReportNames.TaskTree]: reportTaskTree,
-    [ReportNames.NoTasksAvailable]: reportNoTasksAvailable,
-    [ReportNames.DuplicateConfigFile]: reportDuplicateConfigFile,
-    [ReportNames.ConfigFileCreated]: reportConfigFileCreated,
-    [ReportNames.InitConfigTypeNotSupported]: reportInitConfigTypeNotSupported,
+    [ReportNames.TaskList]: reportTaskList,
+    [ReportNames.TaskErrors]: reportTaskErrors,
+    [ReportNames.TaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
+        const label = getSequenceLabel(report.item, trigger.config);
+        _taskReport(report, label);
+    },
+    [ReportNames.NoTasksAvailable]: function () {
+        heading('Sorry, there were no tasks available to run');
+        logger.info(`{red.bold:x Input: ''}`);
+        multiLine(getExternalError(InputErrorTypes.NoTasksAvailable, {}));
+    },
+    [ReportNames.NoTasksProvided]: reportNoTasksProvided,
+    [ReportNames.BeforeWatchTaskErrors]: reportBeforeWatchTaskErrors,
+    [ReportNames.BeforeTaskList]: reportBeforeTaskList,
+    [ReportNames.BeforeTasksDidNotComplete]: reportBeforeTasksDidNotComplete,
+    [ReportNames.WatchTaskTasksErrors]: reportWatchTaskTasksErrors,
+    [ReportNames.WatchTaskErrors]: function (tasks: WatchTask[]) {
+        heading(`Sorry, there were errors resolving your watch tasks`);
+        logWatchErrors(tasks);
+    },
+    [ReportNames.WatchTaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
+        const label = getSequenceLabel(report.item, trigger.config);
+        _taskReport(report, label);
+    },
+    [ReportNames.NoWatchersAvailable]: function () {
+        heading('Sorry, there were no watchers available to run');
+        logger.info(`{red.bold:x No watchers available}`);
+        multiLine(getExternalError(InputErrorTypes.NoWatchersAvailable, {}));
+    },
+    [ReportNames.NoWatchTasksProvided]: function () {
+        heading(`Entering interactive mode as you didn't provide a watcher to run`)
+    },
+    [ReportNames.Watchers]: function (watchTasks: WatchTask[]) {
+        nl();
+        l(`{yellow:+} Watching...`);
+        watchTasks.forEach(function (watchTask) {
+            const o = archy({
+                label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
+            });
+            multiLineTree(o);
+        });
+    },
+    [ReportNames.WatcherNames]: logWatcherNames,
+    [ReportNames.NoFilesMatched]: function (watcher: Watcher) {
+        l('{red:x warning} `{cyan:%s}` did not match any files', watcher.patterns.join(' '));
+    },
+
+    [ReportNames.WatcherTriggeredTasks]: function(index: number, taskCollection: TaskCollection) {
+        l(`{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`);
+    },
+    [ReportNames.WatcherTriggeredTasksCompleted]: function (index: number, taskCollection: TaskCollection, time: number) {
+        l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
+    },
+
+
+    [ReportNames.Summary]: reportSummary,
 };
 
 export default function (name, ...args) {

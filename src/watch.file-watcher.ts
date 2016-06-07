@@ -1,11 +1,11 @@
 import {Watcher, CBWatchOptions} from "./watch.resolve";
-import * as reporter from './reporters/defaultReporter';
 import * as seq from './task.sequence';
 import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
-import {isReport} from './task.utils';
 import {SequenceItem} from "./task.sequence.factories";
+import {ReportNames} from "./reporter.resolve";
+import {CrossbowReporter} from "./index";
 
 const debug = require('debug')('cb:watch.runner');
 const chokidar = require('chokidar');
@@ -29,13 +29,14 @@ export interface WatchEventCompletion {
 export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchEventCompletion> {
 
     let paused = [];
+    let {reporter} = trigger;
 
     return Rx.Observable
         /**
          * Take each <Watcher> and create an observable stream for it,
          * merging them all together
          */
-        .merge(watchers.map(createObservableForWatcher))
+        .merge(watchers.map(x => createObservableForWatcher(x, trigger.reporter)))
         /**
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
@@ -55,7 +56,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
         .flatMap((watchEvent: WatchEvent, i) => {
 
             /** LOG **/
-            reporter.reportWatcherTriggeredTasks(i, watchEvent.runner.tasks);
+            reporter(ReportNames.WatcherTriggeredTasks, i, watchEvent.runner.tasks);
             /** LOG END **/
 
             const timer = new Date().getTime();
@@ -70,7 +71,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                 .do((x: TaskReport) => {
                     // todo - simpler/shorter format for task reports on watchers
                     if (trigger.config.progress) {
-                        reporter.watchTaskReport(x, trigger); // always log start/end of tasks
+                        reporter(ReportNames.WatchTaskReport, x, trigger); // always log start/end of tasks
                     }
                     if (x.type === TaskReportType.error) {
                         console.log(x.stats.errors[0].stack);
@@ -83,9 +84,9 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
 
                     /** LOG **/
                     if (errorCount > 0) {
-                        reporter.reportSummary(incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
+                        reporter(ReportNames.Summary, incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
                     } else {
-                        reporter.reportWatcherTriggeredTasksCompleted(i, watchEvent.runner.tasks, new Date().getTime() - timer);
+                        reporter(ReportNames.WatcherTriggeredTasksCompleted, i, watchEvent.runner.tasks, new Date().getTime() - timer);
                     }
                     /** LOG END **/
 
@@ -101,12 +102,12 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher(watcher: Watcher): Rx.Observable<WatchEvent> {
+export function createObservableForWatcher(watcher: Watcher, reporter): Rx.Observable<WatchEvent> {
 
     /**
      * First create a stream of file-watcher events for this Watcher
      */
-    const output$ = getRawOutputStream(watcher);
+    const output$ = getRawOutputStream(watcher, reporter);
 
     /**
      * Specify a mapping from option name -> Rx.Observable operator name
@@ -129,7 +130,7 @@ export function createObservableForWatcher(watcher: Watcher): Rx.Observable<Watc
     return applyOperators(output$, additionalOperators, watcher.options);
 }
 
-export function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> {
+export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<WatchEvent> {
 
     /** DEBUG **/
     debug(`[id:${watcher.watcherUID}] options: ${JSON.stringify(watcher.options, null, 2)}`);
@@ -160,7 +161,7 @@ export function getRawOutputStream(watcher: Watcher): Rx.Observable<WatchEvent> 
             /** DEBUG END **/
 
             if (Object.keys(chokidarWatcher.getWatched()).length === 0) {
-                reporter.reportNoFilesMatched(watcher);
+                reporter(ReportNames.NoFilesMatched, watcher);
             }
         });
 

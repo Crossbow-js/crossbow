@@ -64,11 +64,11 @@ if (!module.parent) {
  */
 function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
-    const mergedConfig      = merge(cli.flags);
-    const userInput         = getInputs(mergedConfig, input);
-    let resolvedReporters   = getReporters(mergedConfig, input);
-    let hasReporters        = resolvedReporters.valid.length;
-    const defaultReporter   = getDefaultReporter();
+    let mergedConfig      = merge(cli.flags);
+    const userInput       = getInputs(mergedConfig, input);
+    let resolvedReporters = getReporters(mergedConfig, input);
+    let hasReporters      = resolvedReporters.valid.length;
+    const defaultReporter = getDefaultReporter();
 
     // Check if any given reporter are invalid
     // and defer to default
@@ -98,8 +98,10 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
     // at this point, there are no invalid reporters or input files
     // so we can reset the reporters to anything that may of come in via config
-    const secondMergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
-    resolvedReporters = getReporters(secondMergedConfig, input);
+    if (userInput.inputs.length) {
+        mergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
+    }
+    resolvedReporters = getReporters(mergedConfig, input);
     hasReporters      = resolvedReporters.valid.length;
 
     // Check if any given reporter are invalid
@@ -118,16 +120,16 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {
-        return handleCBfileMode(cli, secondMergedConfig, reportFn);
+        return handleCBfileMode(cli, mergedConfig, reportFn);
     }
     
     // if the user provided a -c flag, but external files were
     // not return, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
-        return processInput(cli, userInput.inputs[0], secondMergedConfig, reportFn);
+        return processInput(cli, userInput.inputs[0], mergedConfig, reportFn);
     }
 
-    return processInput(cli, userInput.inputs[0], secondMergedConfig, reportFn);
+    return processInput(cli, userInput.inputs[0], mergedConfig, reportFn);
 }
 
 function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: CrossbowReporter) {

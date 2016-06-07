@@ -1,7 +1,7 @@
 watch:
 
-  default:
-    "*.json": ['@npm echo "hello"']
+#  default:
+#    "*.json": ['@npm echo "hello"']
 
   block:
     options:
@@ -13,7 +13,7 @@ watch:
     before: 'watchify'
     watchers:
       - patterns: ['test/fixtures/scss', 'test/fixtures/css']
-        tasks: ['@sh echo "sass file edited"']
+        tasks: ['@ssh echo "sass file edited"']
 
 tasks:
 

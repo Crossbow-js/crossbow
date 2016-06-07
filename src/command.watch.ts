@@ -3,7 +3,6 @@ import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
-import * as _reporter from './reporters/defaultReporter';
 import {TaskReport} from "./task.runner";
 import {resolveWatchTasks} from './watch.resolve';
 import {getModifiedWatchContext} from "./watch.shorthand";
@@ -15,6 +14,7 @@ import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
+import {ReportNames} from "./reporter.resolve";
 
 const debug = require('debug')('cb:command.watch');
 const _ = require('../lodash.custom');
@@ -25,7 +25,7 @@ export interface CrossbowError extends Error {
 
 export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker$:any} {
 
-    const {cli, input, config} = trigger;
+    const {cli, input, config, reporter} = trigger;
 
     /**
      * task Tracker for external observers
@@ -69,39 +69,43 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     debug(`Not handing off, will handle watching internally`);
 
     /**
-     * Never continue if any tasks were flagged as
+     * Never continue if any BEFORE tasks were flagged as invalid
      */
-    if (watchTasks.invalid.length) {
-        _reporter.reportWatchTaskErrors(watchTasks.all, cli, input);
+    if (before.tasks.invalid.length) {
+        reporter(ReportNames.BeforeWatchTaskErrors, watchTasks, trigger);
         return;
     }
 
     /**
-     *
+     * Never continue if any tasks were flagged as
+     * // todo, how do we get here
      */
-    if (before.tasks.invalid.length) {
-        _reporter.reportBeforeWatchTaskErrors(watchTasks, trigger);
+    if (watchTasks.invalid.length) {
+        reporter(ReportNames.WatchTaskErrors, watchTasks.all, cli, input);
         return;
     }
+
 
     /**
      * Never continue if any runners are invalid
      */
     if (runners.invalid.length) {
-        runners.valid.forEach(runner => {
-            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
-        });
+        // it doesn't make any sense to log 'valid' tasks with
+        // WatchTaskTasksErrors - either don't log them, or use a more appropriate name
+        // runners.valid.forEach(runner => {
+        //     reporter(ReportNames.WatchTaskTasksErrors, runner._tasks.all, runner, config)
+        // });
         runners.invalid.forEach(runner => {
-            _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
+            reporter(ReportNames.WatchTaskTasksErrors, runner._tasks.all, runner, config)
         });
         return;
     }
 
     /**
-     *
+     * List the tasks that must complete before any watchers begin
      */
     if (before.tasks.valid.length) {
-        _reporter.reportBeforeTaskList(before.sequence, cli, trigger.config);
+        reporter(ReportNames.BeforeTaskList, before.sequence, cli, trigger.config);
     }
 
     /**
@@ -128,7 +132,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
                 return Rx.Observable.throw(err);
             })
             .do(() => {
-                _reporter.reportWatchers(watchTasks.valid, config);
+                reporter(ReportNames.Watchers, watchTasks.valid, config);
             }),
         createObservablesForWatchers(runners.valid, trigger)).share();
 
@@ -160,14 +164,14 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
          * @type {number}
          */
         const beforeTimestamp = new Date().getTime();
-        const report = (seq: SequenceItem[]) => _reporter.reportSummary(seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
+        const report = (seq: SequenceItem[]) => reporter(ReportNames.Summary, seq, cli, 'Before tasks Total:', trigger.config, new Date().getTime() - beforeTimestamp);
 
         return before
             .runner
             .series()
             .do(report => {
                 if (trigger.config.progress) {
-                    _reporter.taskReport(report, trigger);
+                    reporter(ReportNames.TaskReport, report, trigger);
                 }
             })
             .toArray()
@@ -181,7 +185,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
                      * so we `throw` here to ensure the upstream fails
                      */
                     const cberror = <CrossbowError>new Error('Before tasks did not complete!');
-                    _reporter.reportBeforeTasksDidNotComplete(cberror);
+                    reporter(ReportNames.BeforeTasksDidNotComplete, cberror);
                     cberror._cb = true;
                     return Rx.Observable.throw(cberror);
                 }
@@ -232,10 +236,10 @@ export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, confi
      */
     function enterInteractive() {
         if (!topLevelWatchers.length) {
-            _reporter.reportNoWatchersAvailable();
+            reporter(ReportNames.NoWatchersAvailable);
             return;
         }
-        _reporter.reportNoWatchTasksProvided();
+        reporter(ReportNames.NoWatchTasksProvided);
         return promptForWatchCommand(cli, input, config).then(function (answers) {
             const cliMerged = _.merge({}, cli, {input: answers.watch});
             return execute({

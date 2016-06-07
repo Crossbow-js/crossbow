@@ -128,7 +128,7 @@ export const api = {
             options: merge({}, defaultWatchOptions, options),
             watcherUID: num
         };
-        return getRawOutputStream(watcher);
+        return getRawOutputStream(watcher, input.reporter);
     }
 };
 

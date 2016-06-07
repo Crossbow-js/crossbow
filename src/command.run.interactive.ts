@@ -12,6 +12,7 @@ import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve.d";
 import {twoCol} from "./reporters/task.list";
 import {reportTaskTree} from "./reporters/defaultReporter";
+import {ReportNames} from "./reporter.resolve";
 
 export interface Answers {
     tasks: string[]
@@ -27,9 +28,10 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
         reporter,
         type: TriggerTypes.command
     });
+    
     if (resolved.invalid.length) {
 
-        reportTaskTree(resolved.all, config, 'Available tasks:');
+        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
         return Rx.Observable.empty<Answers>();
 
     } else {
