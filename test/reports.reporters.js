@@ -7,8 +7,9 @@ const ReportNames = require('../dist/reporter.resolve').ReportNames;
 describe('Reporter checks', function () {
     it.only('calls with using Config file... etc', function () {
         var sub = new Rx.Subject();
-        sub.take(1).subscribe(function (value) {
-            assert.equal(value.name, ReportNames.UsingConfigFile);
+        sub.take(2).toArray().subscribe(function (value) {
+            assert.equal(value[0].name, ReportNames.UsingConfigFile);
+            assert.equal(value[1].name, ReportNames.SimpleTaskList);
         });
         cli({
             input: ['tasks'],

@@ -29,9 +29,12 @@ export interface Reporters {
 }
 
 export enum ReportNames {
-    InvalidReporter = <any>"InvalidReporter",
-    UsingConfigFile = <any>"UsingConfigFile",
-    InputFileNotFound = <any>"MissingConfigFile",
+    TaskTree          = <any> "TaskTree",
+    InvalidReporter   = <any>"InvalidReporter",
+    UsingConfigFile   = <any>"UsingConfigFile",
+    InputFileNotFound = <any>"InputFileNotFound",
+    SimpleTaskList    = <any>"SimpleTaskList",
+    NoTasksAvailable  = <any>"NoTasksAvailable",
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {

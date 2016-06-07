@@ -1,20 +1,18 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {
-    reportTaskTree, LogLevel, reportNoTasksAvailable, reportTaskList,
-    reportSimpleTaskList
-} from './reporters/defaultReporter';
+import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
 
 import Immutable = require('immutable');
 import Rx = require('rx');
+import {ReportNames} from "./reporter.resolve";
 
 export default function execute(trigger: CommandTrigger): any {
 
-    const {input, config} = trigger;
+    const {input, config, reporter} = trigger;
     const resolved = resolveTasks(Object.keys(input.tasks), trigger);
 
     if (trigger.config.handoff) {
@@ -22,16 +20,16 @@ export default function execute(trigger: CommandTrigger): any {
     }
 
     if (resolved.all.length === 0) {
-        reportNoTasksAvailable();
+        reporter(ReportNames.NoTasksAvailable);
         return {tasks: resolved};
     }
 
     if (resolved.invalid.length ||
         config.verbose === LogLevel.Verbose
     ) {
-        reportTaskTree(resolved.all, config, 'Available tasks:');
+        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
     } else {
-        reportSimpleTaskList(getSimpleTaskList(resolved.valid));
+        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid));
     }
 
     return {tasks: resolved};

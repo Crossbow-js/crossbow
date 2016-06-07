@@ -190,13 +190,6 @@ export function incomingTaskItemAsString (x: IncomingTaskItem): string {
     }
 }
 
-/**
- * Log the task list
- */
-export function reportSimpleTaskList(lines: string[]) {
-    logger.info('{yellow:Available Tasks:');
-    lines.forEach(line => logger.info(line));
-}
 export function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
 
     if (config.verbose === LogLevel.Verbose) {
@@ -741,7 +734,13 @@ const reporterFunctions = {
                 })
             }
         });
-    }
+    },
+    [ReportNames.SimpleTaskList]: function (lines: string[]) {
+        logger.info('{yellow:Available Tasks:');
+        lines.forEach(line => logger.info(line));
+    },
+    [ReportNames.TaskTree]: reportTaskTree,
+    [ReportNames.NoTasksAvailable]: reportNoTasksAvailable
 };
 
 export default function (name, ...args) {

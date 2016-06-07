@@ -86,7 +86,7 @@ options:
 
 config:
   envPrefix: 'JS'
-  reporters:
-    - test/fixtures/reporters/custom.js
+#  reporters:
+#    - test/fixtures/reporters/custom.js
 env:
   SHANE: 'hello'
