@@ -29,7 +29,7 @@ export default function execute(trigger: CommandTrigger): any {
     ) {
         reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
     } else {
-        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid));
+        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid), resolved.valid);
     }
 
     return {tasks: resolved};
