@@ -38,7 +38,8 @@
     "yargs-parser": "2.4.0"
   },
   "bin": {
-    "crossbow": "dist/index.js"
+    "crossbow": "dist/index.js",
+    "cb": "dist/index.js"
   },
   "devDependencies": {
     "autoprefixer": "6.3.1",

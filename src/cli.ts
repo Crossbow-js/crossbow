@@ -3,13 +3,31 @@ const common = require('../opts/common.json');
 const runcommon = require('../opts/run-common.json');
 const pkg = require('../package.json');
 
+export enum CLICommands {
+    // Run command
+    run = <any>"run",
+    r = <any>"r",
+
+    // Watch command
+    watch = <any>"watch",
+    w = <any>"w",
+
+    // Tasks command
+    tasks = <any>"tasks",
+    t = <any>"t",
+    ls = <any>"ls",
+        
+    watchers = <any>"watchers",
+    init = <any>"init"
+}
+
 export default function (cb) {
     var yargs  = require("yargs")
-        .command("run", "Run a task(s)")
-        .command("watch", "Run a watcher(s)")
-        .command("tasks", "See your available top-level tasks")
-        .command("watchers", "See your available watchers")
-        .command("init", "Create a configuration file")
+        .command(CLICommands.run, "Run a task(s) [r]")
+        .command(CLICommands.watch, "Run a watcher(s) [w]")
+        .command(CLICommands.tasks, "See your available top-level tasks [ls, t]")
+        .command(CLICommands.watchers, "See your available watchers")
+        .command(CLICommands.init, "Create a configuration file")
         .version(function () {
             return pkg.version;
         })
@@ -19,7 +37,7 @@ export default function (cb) {
 
     var argv    = yargs.argv;
     var command = argv._[0];
-    var valid   = ["run", "watch", "watchers", "tasks", "init"];
+    var valid   = Object.keys(CLICommands);
 
     if (valid.indexOf(command) > -1) {
         handleIncoming(command, yargs.reset(), cb);
@@ -30,7 +48,9 @@ export default function (cb) {
 
 function handleIncoming(command, yargs, cb) {
     let out;
-    if (command === "run") {
+    if (command === CLICommands.run ||
+        command === CLICommands.r
+    ) {
         out = yargs
             .usage("Usage: $0 run [tasknames..]")
             .options(merge({}, runcommon, common, require('../opts/command.run.opts.json')))
@@ -41,7 +61,9 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
-    if (command === "watch") {
+    if (command === CLICommands.watch ||
+        command === CLICommands.w
+    ) {
         out = yargs
             .usage("Usage: $0 watch [watchers..]")
             .options(merge({}, runcommon, common, require('../opts/command.watch.opts.json')))
@@ -52,7 +74,9 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
-    if (command === "tasks") {
+    if (command === CLICommands.tasks ||
+        command === CLICommands.ls
+    ) {
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
             .options(merge({}, common, require('../opts/command.tasks.opts.json')))
@@ -61,7 +85,7 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
-    if (command === "watchers") {
+    if (command === CLICommands.watchers) {
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
             .options(merge({}, common, require('../opts/command.tasks.opts.json')))
@@ -70,7 +94,7 @@ function handleIncoming(command, yargs, cb) {
             .help()
             .argv;
     }
-    if (command === "init") {
+    if (command === CLICommands.init) {
         out = yargs
             .usage("Usage: $0 init")
             .options(merge({}, common, require('../opts/command.init.opts.json')))

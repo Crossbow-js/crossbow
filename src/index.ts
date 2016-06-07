@@ -36,9 +36,10 @@ export interface CrossbowReporter {
 
 const availableCommands = {
     run: handleIncomingRunCommand,
+    r: handleIncomingRunCommand,
     tasks: handleIncomingTasksCommand,
-    tree: handleIncomingTasksCommand,
-    doctor: handleIncomingTasksCommand,
+    t: handleIncomingTasksCommand,
+    ls: handleIncomingTasksCommand,
     watch: handleIncomingWatchCommand,
     w: handleIncomingWatchCommand,
     watchers: handleIncomingWatchersCommand,
