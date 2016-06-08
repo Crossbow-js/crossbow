@@ -10,6 +10,7 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve.d";
+import {removeNewlines} from "./task.utils";
 
 export default function execute(trigger: CommandTrigger): any {
 
@@ -22,7 +23,7 @@ export default function execute(trigger: CommandTrigger): any {
         const desc = (function () {
             if (x.description) return x.description;
             if (x.tasks.length) {
-                return ['**Alias for**'].concat(x.tasks.map(x => `- \`${x.baseTaskName}\``)).join('<br>');
+                return ['**Alias for**'].concat(x.tasks.map(x => `- \`${removeNewlines(x.baseTaskName)}\``)).join('<br>');
             }
         })() + '|';
         return [name, desc].join('|');
@@ -43,6 +44,8 @@ export default function execute(trigger: CommandTrigger): any {
         reporter(ReportNames.InvalidTasksSimple);
         return {tasks: resolved};
     }
+
+    console.log(markdown);
 
     // console.log(resolved.invalid);
     //     config.verbose === LogLevel.Verbose

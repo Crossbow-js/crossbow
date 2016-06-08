@@ -691,6 +691,12 @@ Or to see multiple tasks running, with some in parallel, try:
         const label = getSequenceLabel(report.item, trigger.config);
         _taskReport(report, label);
     },
+    [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
+        logger.info('{red.bold:x Invalid tasks');
+        logger.info('Sorry, we cannot generate documentation for you right now');
+        logger.info('as you have invalid tasks. Please run {bold:$ crossbow tasks} to see');
+        logger.info('details about these errors');
+    },
     [ReportNames.NoTasksAvailable]: function () {
         heading('Sorry, there were no tasks available.');
         logger.info(`{red.bold:x Input: ''}`);
