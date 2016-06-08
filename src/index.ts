@@ -13,6 +13,7 @@ import {handleIncomingInitCommand} from "./command.init";
 import cli from "./cli";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
+import {handleIncomingDocsCommand} from "./command.docs";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -43,7 +44,8 @@ const availableCommands = {
     watch: handleIncomingWatchCommand,
     w: handleIncomingWatchCommand,
     watchers: handleIncomingWatchersCommand,
-    init: handleIncomingInitCommand
+    init: handleIncomingInitCommand,
+    docs: handleIncomingDocsCommand,
 };
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
