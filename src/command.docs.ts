@@ -69,12 +69,13 @@ export default function execute(trigger: CommandTrigger): any {
         return {tasks: resolved};
     }
 
-    // todo: 1 - look for readme.md files
-    // todo: 2 - look for comments in readme to signify start/end positions for docs
-    // todo: 3 - if start/end positions are not in the doc, append to end of file
-    // todo: 4 - allow --file flag to choose a different file (for the comment search)
-    // todo: 5 - allow --output flag to instead output to a brand new file
+    // todo: 1 - look for readme.md files in cwd
+    // todo: 1.1 - look for comments in any found files that signify start/end positions for docs
+    // todo: 2 - if start/end positions are not in the doc, append to end of file
     
+    // todo: 3 - allow --file flag to choose a different file (for the comment search)
+    // todo: 4 - allow --output flag to instead output to a brand new file
+
     return 'shane';
 }
 
