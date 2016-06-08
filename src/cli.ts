@@ -18,7 +18,9 @@ export enum CLICommands {
     ls = <any>"ls",
         
     watchers = <any>"watchers",
-    init = <any>"init"
+    init = <any>"init",
+        
+    docs = <any>"docs",
 }
 
 export default function (cb) {
@@ -26,6 +28,7 @@ export default function (cb) {
         .command(CLICommands.run, "Run a task(s) [r]")
         .command(CLICommands.watch, "Run a watcher(s) [w]")
         .command(CLICommands.tasks, "See your available top-level tasks [ls, t]")
+        .command(CLICommands.docs, "Generate documentation automatically")
         .command(CLICommands.watchers, "See your available watchers")
         .command(CLICommands.init, "Create a configuration file")
         .version(function () {
@@ -101,6 +104,16 @@ function handleIncoming(command, yargs, cb) {
             .example("$0 init", "Creates the default crossbow.yaml file")
             .example("$0 init --type cbfile", "Create a 'cbfile.js'")
             .example("$0 init --type js", "Create a module.exports style config")
+            .help()
+            .argv;
+    }
+    if (command === CLICommands.docs) {
+        out = yargs
+            .usage("Usage: $0 docs")
+            .options(merge({}, common, require('../opts/command.docs.opts.json')))
+            .example("$0 docs", "Add documentation to this projects README.md file")
+            // .example("$0 init --type cbfile", "Create a 'cbfile.js'")
+            // .example("$0 init --type js", "Create a module.exports style config")
             .help()
             .argv;
     }

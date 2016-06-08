@@ -692,7 +692,7 @@ Or to see multiple tasks running, with some in parallel, try:
         _taskReport(report, label);
     },
     [ReportNames.NoTasksAvailable]: function () {
-        heading('Sorry, there were no tasks available to run');
+        heading('Sorry, there were no tasks available.');
         logger.info(`{red.bold:x Input: ''}`);
         multiLine(getExternalError(InputErrorTypes.NoTasksAvailable, {}));
     },

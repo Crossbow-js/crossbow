@@ -41,8 +41,10 @@ export enum ReportNames {
     TaskErrors                     = <any>"TaskErrors",
     TaskReport                     = <any>"TaskReport",
 
+    InvalidTasksSimple             = <any>"InvalidTasksSimple",
     NoTasksAvailable               = <any>"NoTasksAvailable",
     NoTasksProvided                = <any>"NoTasksProvided",
+        
     SimpleTaskList                 = <any>"SimpleTaskList",
     BeforeWatchTaskErrors          = <any>"BeforeWatchTaskErrors",
     BeforeTaskList                 = <any>"BeforeTaskList",
