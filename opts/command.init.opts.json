@@ -1,6 +1,6 @@
 {
   "type": {
-    "desc": "Specify tasks that must complete before watchers begin [cbfile|yaml|js|json]",
+    "desc": "Specify the type of config file [cbfile|yaml|js|json]",
     "default": "yaml"
   }
 }
