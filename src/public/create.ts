@@ -1,7 +1,5 @@
 import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
-import {handleIncomingWatchCommand} from "../command.watch";
-import {handleIncomingRunCommand} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {getRawOutputStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
@@ -115,7 +113,7 @@ export const api = {
             ]
         };
         const cliInput = ['watch', identifer];
-        const output   = handleIncomingWatchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
+        const output   = require('../command.watch').default({input: cliInput, flags:{}}, input, input.config, input.reporter);
         return output;
     },
     watcher: function (patterns: string[], options: CBWatchOptions) {

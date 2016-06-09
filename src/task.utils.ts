@@ -6,10 +6,7 @@ import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
 import {statSync} from "fs";
-import {Tasks} from "./task.resolve.d";
-
 const yml = require('js-yaml');
-const readPkgUp = require('read-pkg-up');
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -326,43 +323,6 @@ export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
     const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
     const global = join(__dirname, 'public', 'create.js');
     return readInputFiles([local, global], config.cwd);
-}
-
-/**
- * @param cwd
- * @returns {{}}
- */
-export function createCrossbowTasksFromNpmScripts(cwd: string): any {
-    /**
-     * Ready package.json from current project
-     */
-    const pkg = readPkgUp.sync({
-        cwd: cwd,
-        normalize: false
-    }).pkg;
-
-    /**
-     * Try to retrieve `scripts`
-     */
-    const npmScripts = _.get(pkg, ['scripts'], {});
-
-    /**
-     * Return if anything failed with package.json or scripts prop
-     */
-    if (!isPlainObject(npmScripts)) {
-        return {};
-    }
-
-    /**
-     * Now create @npm adaptor tasks for each script found
-     */
-    const transformed = Object.keys(npmScripts)
-        .reduce((acc, key) => {
-            acc[key] = '@npm ' + npmScripts[key];
-            return acc;
-        }, {});
-
-    return transformed;
 }
 
 export function getFunctionName (fn) {

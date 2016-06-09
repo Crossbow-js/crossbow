@@ -25,7 +25,7 @@ describe('Running docs commands', function () {
 |**\`css\`**|**Alias for**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|`;
         assert.equal(expected, output.markdown);
     });
-    it.only('writes to a new file', function () {
+    it('writes to a new file', function () {
         const output = cli.default({
             input: ['docs'],
             flags: {

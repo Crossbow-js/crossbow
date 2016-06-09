@@ -12,7 +12,7 @@ import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve.d";
 import {removeNewlines} from "./task.utils";
 
-export default function execute(trigger: CommandTrigger): any {
+function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
     const resolved = resolveTasks(Object.keys(input.tasks), trigger);
@@ -74,14 +74,14 @@ export default function execute(trigger: CommandTrigger): any {
     // todo: 1 - look for readme.md files in cwd
     // todo: 1.1 - look for comments in any found files that signify start/end positions for docs
     // todo: 2 - if start/end positions are not in the doc, append to end of file
-    
+
     // todo: 3 - allow --file flag to choose a different file (for the comment search)
     // todo: 4 - allow --output flag to instead output to a brand new file
 
     return 'shane';
 }
 
-export function handleIncomingDocsCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingDocsCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     return execute({
         cli,
         input,

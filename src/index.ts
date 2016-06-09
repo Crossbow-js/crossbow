@@ -4,12 +4,6 @@ import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
 import {getRequirePaths} from './task.utils';
-import {handleIncomingRunCommand} from "./command.run";
-import {handleIncomingWatchCommand} from "./command.watch";
-import {handleIncomingTasksCommand} from "./command.tasks";
-import {handleIncomingWatchersCommand} from "./command.watchers";
-import {handleIncomingInitCommand} from "./command.init";
-import {handleIncomingDocsCommand} from "./command.docs";
 import cli from "./cli";
 import {getInputs, InputTypes} from "./input.resolve";
 import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
@@ -37,15 +31,16 @@ export interface CrossbowReporter {
 const availableCommands = {
     run: './command.run',
     r: './command.run',
-    tasks: handleIncomingTasksCommand,
-    t: handleIncomingTasksCommand,
-    ls: handleIncomingTasksCommand,
-    watch: handleIncomingWatchCommand,
-    w: handleIncomingWatchCommand,
-    watchers: handleIncomingWatchersCommand,
-    init: handleIncomingInitCommand,
-    docs: handleIncomingDocsCommand,
+    tasks: './command.tasks',
+    t: './command.tasks',
+    ls: './command.tasks',
+    watch: './command.watch',
+    w: './command.watch',
+    watchers: './command.watchers',
+    init: './command.init',
+    docs: './command.docs',
 };
+
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
 /**
@@ -124,7 +119,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.type === InputTypes.CBFile) {
         return handleCBfileMode(cli, mergedConfig, reportFn);
     }
-    
+
     // if the user provided a -c flag, but external files were
     // not return, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
@@ -143,12 +138,12 @@ function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: Cro
     input.default.reporter = reportFn;
 
     if (isCommand(cli.input[0])) {
-        return availableCommands[cli.input[0]].call(null, cli, input.default, input.default.config, reportFn);
+        return require(availableCommands[cli.input[0]]).default.call(null, cli, input.default, input.default.config, reportFn);
     }
 
     cli.input = ['run'].concat(cli.input);
 
-    return availableCommands['run'].call(null, cli, input.default, input.default.config, reportFn);
+    return require(availableCommands['run']).default.call(null, cli, input.default, input.default.config, reportFn);
 }
 
 /**
@@ -156,7 +151,7 @@ function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: Cro
  */
 function processInput(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reportFn: CrossbowReporter): any {
     const firstArg = cli.input[0];
-    return availableCommands[firstArg].call(null, cli, input, config, reportFn);
+    return require(availableCommands[firstArg]).default.call(null, cli, input, config, reportFn);
 }
 
 function processConfigs (config, flags) {

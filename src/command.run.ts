@@ -102,7 +102,7 @@ function getRunCommandSetup (trigger: CommandTrigger) {
     return {tasks, sequence, runner};
 }
 
-export default function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
+export function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner} = getRunCommandSetup(trigger);
@@ -192,7 +192,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
     const sharedMap     = new Rx.BehaviorSubject(Immutable.Map({}));
 
     const type = TriggerTypes.command;
-    
+
     debug('top level tasks available', topLevelTasks);
 
     if (config.handoff) {

@@ -29,7 +29,7 @@ export enum InitConfigFileTypes {
     cbfile = <any>"cbfile"
 }
 
-export default function execute(trigger: CommandTrigger): any {
+function execute(trigger: CommandTrigger): any {
     const {config, reporter} = trigger;
 
     const templateDir = join(__dirname, '..', 'templates');
@@ -94,22 +94,22 @@ export default function execute(trigger: CommandTrigger): any {
     if (config.handoff) {
         return {existingFilesInCwd, matchingFiles, errors};
     }
-    
+
     /**
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
         reporter(ReportNames.DuplicateConfigFile, errors[0]);
-        return {existingFilesInCwd, matchingFiles, errors}; 
+        return {existingFilesInCwd, matchingFiles, errors};
     }
-    
+
     const templateFilePath = join(templateDir, outputFileName);
     const outputFilePath   = join(config.cwd, outputFileName);
-    
+
     fs.writeFileSync(outputFilePath,
         fs.readFileSync(templateFilePath)
     );
-    
+
     const output = {
         existingFilesInCwd,
         matchingFiles,
@@ -119,11 +119,11 @@ export default function execute(trigger: CommandTrigger): any {
     };
 
     reporter(ReportNames.ConfigFileCreated, parse(outputFilePath), config.type);
-    
-    return output; 
+
+    return output;
 }
 
-export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     return execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
