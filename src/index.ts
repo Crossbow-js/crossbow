@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
-import * as reporter from './reporters/defaultReporter';
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
 import {getRequirePaths} from './task.utils';
@@ -10,10 +9,10 @@ import {handleIncomingWatchCommand} from "./command.watch";
 import {handleIncomingTasksCommand} from "./command.tasks";
 import {handleIncomingWatchersCommand} from "./command.watchers";
 import {handleIncomingInitCommand} from "./command.init";
-import cli from "./cli";
-import {getInputs, InputTypes, UserInput} from "./input.resolve";
-import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
 import {handleIncomingDocsCommand} from "./command.docs";
+import cli from "./cli";
+import {getInputs, InputTypes} from "./input.resolve";
+import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -36,8 +35,8 @@ export interface CrossbowReporter {
 }
 
 const availableCommands = {
-    run: handleIncomingRunCommand,
-    r: handleIncomingRunCommand,
+    run: './command.run',
+    r: './command.run',
     tasks: handleIncomingTasksCommand,
     t: handleIncomingTasksCommand,
     ls: handleIncomingTasksCommand,

@@ -1,7 +1,7 @@
 const merge = require('../lodash.custom').merge;
 const common = require('../opts/common.json');
 const runcommon = require('../opts/run-common.json');
-const pkg = require('../package.json');
+const globalcommon = require('../opts/global-common.json');
 
 export enum CLICommands {
     // Run command
@@ -32,7 +32,8 @@ export default function (cb) {
         .command(CLICommands.watchers, "See your available watchers")
         .command(CLICommands.init, "Create a configuration file")
         .version(function () {
-            return pkg.version;
+            console.log(Object.keys(require.cache));
+            return require('../package.json').version;
         })
         .example("$0 run task1 task2", "Run 2 tasks in sequence")
         .example("$0 tasks", "List your available tasks")
@@ -54,9 +55,10 @@ function handleIncoming(command, yargs, cb) {
     if (command === CLICommands.run ||
         command === CLICommands.r
     ) {
+        const opts = merge({}, require('../opts/command.run.opts.json'), runcommon, common);
         out = yargs
             .usage("Usage: $0 run [tasknames..]")
-            .options(merge({}, runcommon, common, require('../opts/command.run.opts.json')))
+            .options(opts)
             .example("$0 run task1 task2 task3", "Run 3 tasks in sequence")
             .example("$0 run task1 task2 -p", "Run 2 tasks in parallel")
             .example("$0 run -i", "Run in interactive mode (aso you can select tasks")
@@ -67,9 +69,10 @@ function handleIncoming(command, yargs, cb) {
     if (command === CLICommands.watch ||
         command === CLICommands.w
     ) {
+        const opts = merge({}, require('../opts/command.watch.opts.json'), runcommon, common);
         out = yargs
             .usage("Usage: $0 watch [watchers..]")
-            .options(merge({}, runcommon, common, require('../opts/command.watch.opts.json')))
+            .options(opts)
             .example("$0 watch default docker", "Run 2 watchers (default+docker)")
             .example("$0 watch", "Runs the 'default' watcher if available")
             .example("$0 watch -i", "Choose a watcher interactively")
@@ -80,27 +83,30 @@ function handleIncoming(command, yargs, cb) {
     if (command === CLICommands.tasks ||
         command === CLICommands.ls
     ) {
+        const opts = merge({}, require('../opts/command.tasks.opts.json'), common, globalcommon);
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
-            .options(merge({}, common, require('../opts/command.tasks.opts.json')))
+            .options(opts)
             .example("$0 tasks", "Shows tasks with minimal info")
             .example("$0 tasks -v", "Shows tasks with maximum info")
             .help()
             .argv;
     }
     if (command === CLICommands.watchers) {
+        const opts = merge({}, require('../opts/command.watchers.opts.json'), globalcommon);
         out = yargs
             .usage("Usage: $0 tasks\nShows a list of top-level task names that can be run")
-            .options(merge({}, common, require('../opts/command.tasks.opts.json')))
+            .options(opts)
             .example("$0 watchers", "Show available Watchers")
             .example("$0 watchers -v", "Shows tasks with maximum info")
             .help()
             .argv;
     }
     if (command === CLICommands.init) {
+        const opts = merge({}, require('../opts/command.init.opts.json'), globalcommon);
         out = yargs
             .usage("Usage: $0 init")
-            .options(merge({}, common, require('../opts/command.init.opts.json')))
+            .options(opts)
             .example("$0 init", "Creates the default crossbow.yaml file")
             .example("$0 init --type cbfile", "Create a 'cbfile.js'")
             .example("$0 init --type js", "Create a module.exports style config")
@@ -108,12 +114,13 @@ function handleIncoming(command, yargs, cb) {
             .argv;
     }
     if (command === CLICommands.docs) {
+        const opts = merge({}, require('../opts/command.docs.opts.json'), globalcommon);
         out = yargs
             .usage("Usage: $0 docs")
-            .options(merge({}, common, require('../opts/command.docs.opts.json')))
-            .example("$0 docs", "Add documentation to this projects README.md file")
-            // .example("$0 init --type cbfile", "Create a 'cbfile.js'")
-            // .example("$0 init --type js", "Create a module.exports style config")
+            .options(merge({}, opts))
+            .example("$0 docs", "Add docs to README.md in cwd")
+            .example("$0 docs --output myfile.md", "CREATE myfile.md in cwd")
+            .example("$0 docs --file myfile", "ADD TO myfile.md in cwd")
             .help()
             .argv;
     }

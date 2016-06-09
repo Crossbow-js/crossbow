@@ -69,6 +69,8 @@ export default function execute(trigger: CommandTrigger): any {
         return {tasks: resolved};
     }
 
+    console.log(markdown);
+
     // todo: 1 - look for readme.md files in cwd
     // todo: 1.1 - look for comments in any found files that signify start/end positions for docs
     // todo: 2 - if start/end positions are not in the doc, append to end of file
