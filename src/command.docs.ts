@@ -15,7 +15,24 @@ import {removeNewlines} from "./task.utils";
 function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
-    const resolved = resolveTasks(Object.keys(input.tasks), trigger);
+    const tasks = resolveTasks(Object.keys(input.tasks), trigger);
+
+    /**
+     * If there were 0 tasks, exit with error
+     */
+    if (tasks.all.length === 0) {
+        reporter(ReportNames.NoTasksAvailable);
+        return {tasks};
+    }
+
+    /**
+     * If any tasks were invalid, refuse to generate docs
+     * and prompt to run tasks command (for the full error output)
+     */
+    if (tasks.invalid.length) {
+        reporter(ReportNames.InvalidTasksSimple);
+        return {tasks};
+    }
 
     /**
      * Create the header for the markdown table
@@ -27,16 +44,17 @@ function execute(trigger: CommandTrigger): any {
      * Create the body for the table with taskname + description
      * @type {string[]}
      */
-    const body     = resolved.valid.map((x: Task) => {
+    const body     = tasks.valid.map((x: Task) => {
         const name = `|**\`${x.baseTaskName}\`**`;
         const desc = (function () {
-            if (x.description) return x.description;
-            if (x.tasks.length) {
-                return ['**Alias for**'].concat(x.tasks.map(x => `- \`${removeNewlines(x.baseTaskName)}\``)).join('<br>');
-            }
-        })() + '|';
+                if (x.description) return x.description;
+                if (x.tasks.length) {
+                    return ['**Alias for**'].concat(x.tasks.map(x => `- \`${removeNewlines(x.baseTaskName)}\``)).join('<br>');
+                }
+            })() + '|';
         return [name, desc].join('|');
     });
+
 
     /**
      * Join the lines with a \n for correct formatting in markdown
@@ -49,27 +67,10 @@ function execute(trigger: CommandTrigger): any {
      * to skip any IO
      */
     if (trigger.config.handoff) {
-        return {tasks: resolved, markdown};
+        return {tasks, markdown};
     }
-
-    /**
-     * If there were 0 tasks, exit with error
-     */
-    if (resolved.all.length === 0) {
-        reporter(ReportNames.NoTasksAvailable);
-        return {tasks: resolved};
-    }
-
-    /**
-     * If any tasks were invalid, refuse to generate docs
-     * and prompt to run tasks command (for the full error output)
-     */
-    if (resolved.invalid.length) {
-        reporter(ReportNames.InvalidTasksSimple);
-        return {tasks: resolved};
-    }
-
-    console.log(markdown);
+    
+    reporter(ReportNames.DocsMarkdownGenerated, tasks, markdown);
 
     // todo: 1 - look for readme.md files in cwd
     // todo: 1.1 - look for comments in any found files that signify start/end positions for docs
@@ -78,7 +79,7 @@ function execute(trigger: CommandTrigger): any {
     // todo: 3 - allow --file flag to choose a different file (for the comment search)
     // todo: 4 - allow --output flag to instead output to a brand new file
 
-    return 'shane';
+    return {tasks, markdown};
 }
 
 export default function handleIncomingDocsCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
