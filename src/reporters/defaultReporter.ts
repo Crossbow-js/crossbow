@@ -747,7 +747,8 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.DocsGenerated]: function docsGenerated(tasks, markdown) {
 
         // Todo - should we always output to the console?
-        console.log(markdown);
+        // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
+        // console.log(markdown);
     },
     [ReportNames.Summary]: reportSummary,
 };

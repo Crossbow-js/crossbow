@@ -18,18 +18,28 @@ describe('Running docs commands', function () {
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const expected = `|Name|Description|
+        const expected = `## Crossbow tasks
+
+The following tasks have been defined by this project's Crossbow configuration.
+Run any of them in the following way
+ 
+\`\`\`shell
+$ crossbow run <taskname>
+\`\`\`
+|Task name|Description|
 |---|---|
-|**\`build-css\`**|**Alias for**<br>- \`css\`<br>- \`version-rev\`|
-|**\`version-rev\`**|**Alias for**<br>- \`@sh versioner | xargs ls\`|
-|**\`css\`**|**Alias for**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|`;
+|<pre>\`build-css\`</pre>|**Alias for:**<br>- \`css\`<br>- \`version-rev\`|
+|<pre>\`version-rev\`</pre>|**Alias for:**<br>- \`@sh versioner | xargs ls\`|
+|<pre>\`css\`</pre>|**Alias for:**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|`;
         assert.equal(expected, output.markdown);
     });
-    it('writes to a new file', function () {
+    it.only('handles missing file', function () {
+        const testfile = 'test/fixtures/docs/readme-typo.md';
         const output = cli.default({
             input: ['docs'],
             flags: {
-                output: 'shane.md'
+                file: testfile,
+                handoff: true
             }
         }, {
             tasks: {
@@ -38,12 +48,30 @@ describe('Running docs commands', function () {
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-//             const expected = `|Name|Description|
-// |---|---|
-// |**\`build-css\`**|**Alias for**<br>- \`css\`<br>- \`version-rev\`|
-// |**\`version-rev\`**|**Alias for**<br>- \`@sh versioner | xargs ls\`|
-// |**\`css\`**|**Alias for**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|`;
-//             assert.equal(expected, output.markdown);
 
+        console.log(output);
+        // const before = require('fs').readFileSync(testfile, 'utf8');
+
+        // assert.equal([before, output.markdown].join('\n'), output.output[0].content);
+    });
+    it('Looks at an existing file', function () {
+        const testfile = 'test/fixtures/docs/readme-no-existing.md';
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                file: testfile,
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['css', 'version-rev'],
+                'version-rev': '@sh versioner | xargs ls',
+                css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+
+        const before = require('fs').readFileSync(testfile, 'utf8');
+
+        assert.equal([before, output.markdown].join('\n'), output.output[0].content);
     });
 });

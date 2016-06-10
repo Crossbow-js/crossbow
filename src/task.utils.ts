@@ -19,6 +19,10 @@ export interface ExternalFile {
     parsed: ParsedPath
 }
 
+export interface ExternalFileContent extends ExternalFile {
+    content: string
+}
+
 export interface ExternalFileInput extends ExternalFile {
     input: CrossbowInput|any,
 }
@@ -263,6 +267,17 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
         valid: inputs.filter(x => x.errors.length === 0),
         invalid: inputs.filter(x => x.errors.length > 0)
     };
+}
+
+export function readFilesFromDiskWithContent(paths: string[], cwd: string): ExternalFileContent[] {
+    const files = readFilesFromDisk(paths, cwd);
+    return files
+        .map((x: ExternalFileContent) => {
+            if (x.errors.length) return x;
+
+            x.content = readFileSync(x.resolved, 'utf8');
+            return x;
+        });
 }
 
 /**
