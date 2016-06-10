@@ -60,7 +60,7 @@ export enum ReportNames {
     WatcherTriggeredTasksCompleted = <any>"WatcherTriggeredTasksCompleted",
     WatcherTriggeredTasks          = <any>"WatcherTriggeredTasks",
 
-    DocsMarkdownGenerated          = <any>"DocsMarkdownGenerated",
+    DocsGenerated                  = <any>"DocsMarkdownGenerated",
         
     Summary                        = <any>"Summary",
 }

@@ -744,7 +744,7 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.WatcherTriggeredTasksCompleted]: function (index: number, taskCollection: TaskCollection, time: number) {
         l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
     },
-    [ReportNames.DocsMarkdownGenerated]: function (tasks, markdown) {
+    [ReportNames.DocsGenerated]: function docsGenerated(tasks, markdown) {
 
         // Todo - should we always output to the console?
         console.log(markdown);

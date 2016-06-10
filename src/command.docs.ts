@@ -70,7 +70,7 @@ function execute(trigger: CommandTrigger): any {
         return {tasks, markdown};
     }
     
-    reporter(ReportNames.DocsMarkdownGenerated, tasks, markdown);
+    reporter(ReportNames.DocsGenerated, tasks, markdown);
 
     // todo: 1 - look for readme.md files in cwd
     // todo: 1.1 - look for comments in any found files that signify start/end positions for docs
