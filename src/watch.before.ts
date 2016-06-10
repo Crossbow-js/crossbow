@@ -1,7 +1,7 @@
 import {CLI} from "./index";
 import {WatchTasks, resolveBeforeTasks} from "./watch.resolve";
 import {resolveTasks} from "./task.resolve";
-import {Tasks} from "./task.resolve.d";
+import {Tasks} from "./task.resolve";
 import * as seq from "./task.sequence";
 import {SequenceItem} from "./task.sequence.factories";
 const debug = require("debug");

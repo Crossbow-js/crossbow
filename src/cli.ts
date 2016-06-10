@@ -32,7 +32,6 @@ export default function (cb) {
         .command(CLICommands.watchers, "See your available watchers")
         .command(CLICommands.init, "Create a configuration file")
         .version(function () {
-            console.log(Object.keys(require.cache));
             return require('../package.json').version;
         })
         .example("$0 run task1 task2", "Run 2 tasks in sequence")

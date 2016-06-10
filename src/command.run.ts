@@ -12,7 +12,7 @@ import {TaskReport} from './task.runner';
 import Immutable = require('immutable');
 import * as seq from "./task.sequence";
 import promptForRunCommand from './command.run.interactive';
-import {Tasks} from "./task.resolve.d";
+import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {ReportNames} from "./reporter.resolve";
@@ -179,7 +179,7 @@ export function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorS
     return complete$;
 }
 
-export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter):any {
+export default function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter):any {
 
     /**
      * Array of top-level task names that are available

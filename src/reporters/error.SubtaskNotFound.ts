@@ -1,5 +1,5 @@
-import {Task} from "../task.resolve.d";
-import {SubtaskNotFoundError} from "../task.errors.d";
+import {Task} from "../task.resolve";
+import {SubtaskNotFoundError} from "../task.errors";
 
 module.exports = (error: SubtaskNotFoundError, task: Task) =>
 

@@ -9,7 +9,7 @@ import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
 import {reportTaskTree} from "./reporters/defaultReporter";
 import {ReportNames} from "./reporter.resolve";

@@ -1,6 +1,6 @@
 import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand, teardown, getStdio, handleExit} from './@npm';
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 import {CrossbowError} from "../reporters/defaultReporter";
 import {getCBEnv} from "../task.utils";
 const merge = require('../../lodash.custom').merge;

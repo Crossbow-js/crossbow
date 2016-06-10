@@ -3,7 +3,7 @@
     "module": "commonjs",
     "target": "es5",
     "noImplicitAny": false,
-    "sourceMap": false,
+    "sourceMap": true,
     "outDir": "dist"
   },
   "exclude": [
@@ -11,6 +11,10 @@
     "lib",
     "typings",
     "test",
-    "cli.js"
+    "cli.js",
+    "dist",
+    "opts",
+    "templates",
+    "examples"
   ]
 }

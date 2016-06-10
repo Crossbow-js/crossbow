@@ -1,6 +1,6 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
 import {relative} from 'path';

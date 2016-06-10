@@ -1,6 +1,6 @@
 import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand, teardown, getEnv} from './@npm';
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 import {envifyObject, getCBEnv} from "../task.utils";
 const debug = require('debug')('cb:@bg');
 const merge = require('../../lodash.custom').merge;

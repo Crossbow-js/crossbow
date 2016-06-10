@@ -3,7 +3,7 @@ const cli = require("../");
 const errorTypes = require('../dist/task.errors').TaskErrorTypes;
 
 describe('Gathering run tasks with errors', function () {
-    it('reports single missing module', function () {
+    it.only('reports single missing module', function () {
     	const runner = cli.getRunner(['list']);
         assert.equal(runner.tasks.invalid[0].errors[0].type, errorTypes.TaskNotFound);
     });

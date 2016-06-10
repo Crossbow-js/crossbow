@@ -9,7 +9,7 @@ import {WatchOptions} from "chokidar";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
 import {CrossbowInput} from "./index";
-import {Tasks} from "./task.resolve.d";
+import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {CommandTrigger} from "./command.run";

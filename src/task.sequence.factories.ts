@@ -1,6 +1,6 @@
 const _ = require('../lodash.custom');
 
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {CommandTrigger} from "./command.run";
 import {TaskStats} from "./task.runner";
 

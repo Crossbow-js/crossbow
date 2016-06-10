@@ -1,4 +1,4 @@
-import {FileTypeNotSupportedError} from "../task.errors.d";
+import {FileTypeNotSupportedError} from "../task.errors";
 
 module.exports = (error: FileTypeNotSupportedError, task) =>
     `{red:-} {bold:Description}: {cyan:'${error.externalTask.relative}'} Not Supported

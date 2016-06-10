@@ -9,7 +9,7 @@ import {getSimpleTaskList, twoCol} from "./reporters/task.list";
 import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportNames} from "./reporter.resolve";
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {removeNewlines} from "./task.utils";
 
 function execute(trigger: CommandTrigger): any {

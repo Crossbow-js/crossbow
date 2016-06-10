@@ -2,15 +2,15 @@ import {applyTransforms} from "./task.transforms";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task.resolve');
 
-import {AdaptorNotFoundError, CircularReferenceError} from "./task.errors.d";
+import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
+import {locateModule, removeTrailingNewlines, isPlainObject, ExternalTask} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
-import {Task, TasknameWithOrigin, Tasks} from "./task.resolve.d";
+import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
 
 /**
  * Function.name is es6 & >
@@ -484,4 +484,41 @@ export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTri
 
     return output;
 
+}
+
+export interface Task {
+    adaptor?: string
+    command?: string
+    valid: boolean
+    taskName: string
+    baseTaskName: string
+    subTasks: string[]
+    externalTasks: ExternalTask[]
+    tasks: Task[]
+    rawInput: string
+    parents: string[]
+    errors: TaskError[]
+    runMode: TaskRunModes
+    startTime?: number
+    endTime?: number
+    duration?: number
+    query: any
+    flags: any
+    cbflags: string[]
+    origin: TaskOriginTypes
+    type: TaskTypes
+    inlineFunctions: Array<CBFunction>
+    env: any
+    description: string
+}
+
+export interface TasknameWithOrigin {
+    items: string[]
+    origin: TaskOriginTypes
+}
+
+export interface Tasks {
+    valid: Task[]
+    invalid: Task[],
+    all: Task[]
 }

@@ -1,4 +1,4 @@
-import {CircularReferenceError} from "../task.errors.d";
+import {CircularReferenceError} from "../task.errors";
 
 module.exports = (error: CircularReferenceError) => {
     return `{red:-} {bold:Description}: Circular Reference detected!

@@ -1,5 +1,5 @@
-import {SubtasksNotInConfigError} from "../task.errors.d";
-import {Task} from "../task.resolve.d";
+import {SubtasksNotInConfigError} from "../task.errors";
+import {Task} from "../task.resolve";
 
 module.exports = (error: SubtasksNotInConfigError, task: Task) => {
     return `{red:-} {bold:Description}: Configuration not provided for this task!
