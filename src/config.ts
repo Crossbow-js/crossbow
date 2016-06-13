@@ -30,6 +30,7 @@ export interface CrossbowConfiguration {
 
     // docs command
     file?: string
+    output?: string
 }
 
 /**

@@ -1,7 +1,6 @@
 /// <reference path="../typings/main.d.ts" />
 import {isInternal} from "./task.utils";
 const debug = require('debug')('cb:command.run');
-const inquirer = require('inquirer');
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {compile} from './logger';
@@ -20,6 +19,7 @@ export interface Answers {
 
 export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
+    const inquirer = require('inquirer');
     const resolved = resolveTasks(Object.keys(input.tasks), {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
@@ -28,7 +28,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
         reporter,
         type: TriggerTypes.command
     });
-    
+
     if (resolved.invalid.length) {
 
         reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');

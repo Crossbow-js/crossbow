@@ -4,7 +4,6 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
-import Rx = require('rx');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
 import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent} from "./task.utils";
@@ -16,6 +15,12 @@ const debug = require("debug")("cb:command:docs");
 function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
+
+    /**
+     * Resolve all top-level tasks as these are the ones
+     * that will used in the docs
+     * @type {Tasks}
+     */
     const tasks = resolveTasks(Object.keys(input.tasks), trigger);
 
     /**
@@ -73,22 +78,35 @@ $ crossbow run <taskname>
         return [name, desc].join('|');
     });
 
-
     /**
      * Join the lines with a \n for correct formatting in markdown
      * @type {string}
      */
     const markdown = [docStartComment, tasksHeader, ...tableHeader].concat(body, docEndComment).join('\n');
 
-    reporter(ReportNames.DocsGenerated, tasks, markdown);
+    // reporter(ReportNames.DocsGenerated, tasks, markdown);
 
-    // Handle config.file use-case
+    /**
+     * If the user provided the --file flag
+     */
     if (config.file) {
-        // console.log(readFilesFromDiskWithContent([config.file], config.cwd));
-        // return readFilesFromDiskWithContent([config.file], config.cwd);
+        /**
+         * Try to read the file from disk with content appended
+         * @type {ExternalFileContent[]}
+         */
         const maybes = readFilesFromDiskWithContent([config.file], config.cwd);
-        if (maybes.filter(x => x.errors.length > 0)) {
-            console.log(maybes);
+        const errors = maybes.map(x => x.errors);
+
+        /**
+         * If the --file flag produced an error,
+         * eg: --file shane.md -> but shane.md did not exist
+         */
+        if (errors.length) {
+            return {
+                errors,
+                tasks,
+                markdown
+            }
         }
         return {}
     }
