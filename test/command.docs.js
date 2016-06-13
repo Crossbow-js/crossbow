@@ -48,11 +48,7 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-
-        console.log(output);
-        // const before = require('fs').readFileSync(testfile, 'utf8');
-
-        // assert.equal([before, output.markdown].join('\n'), output.output[0].content);
+        assert.equal(output.errors.length, 1);
     });
     it('Looks at an existing file', function () {
         const testfile = 'test/fixtures/docs/readme-no-existing.md';
