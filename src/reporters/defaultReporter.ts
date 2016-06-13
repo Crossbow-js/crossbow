@@ -30,6 +30,7 @@ import {
     ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
     ReporterError
 } from "../reporter.resolve";
+import {DocsInputFileNotFoundError} from "../command.docs";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -644,6 +645,11 @@ const reporterFunctions = {
             logger.info(`{red.bold:x ${item.path}}`);
             multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
         });
+    },
+    [ReportNames.DocsInputFileNotFound]: function (error: DocsInputFileNotFoundError) {
+        heading(`Sorry, there were errors resolving your input files`);
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
     },
     [ReportNames.InvalidReporter]: function (reporters: Reporters) {
         heading(`{red.bold:x} Sorry, there were problems resolving your reporters`);

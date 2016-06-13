@@ -9,9 +9,14 @@ import {Task} from "./task.resolve";
 import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent} from "./task.utils";
 import {readdirSync} from "fs";
 import {writeFileSync} from "fs";
+import * as utils from "./task.utils";
 
 const debug = require("debug")("cb:command:docs");
-
+export interface DocsError {type: DocsErrorTypes}
+export interface DocsInputFileNotFoundError extends DocsError {file: utils.ExternalFile}
+export enum DocsErrorTypes {
+    DocsInputFileNotFound = <any>"DocsInputFileNotFound"
+}
 
 function execute(trigger: CommandTrigger): any {
 
@@ -96,7 +101,14 @@ $ crossbow run <taskname>
          * @type {ExternalFileContent[]}
          */
         const maybes = readFilesFromDiskWithContent([config.file], config.cwd);
-        const withErrors = maybes.filter(x => x.errors.length);
+        const withErrors: Array<DocsInputFileNotFoundError> = maybes
+            .filter(x => x.errors.length > 0)
+            .map(x => {
+                return {
+                    type: DocsErrorTypes.DocsInputFileNotFound,
+                    file: x
+                }
+            });
 
         /**
          * If the --file flag produced an error,
@@ -105,7 +117,7 @@ $ crossbow run <taskname>
         if (withErrors.length) {
 
             if (!config.handoff) {
-                console.log('Shouold log sometng');
+                reporter(ReportNames.DocsInputFileNotFound, withErrors[0]);
             }
 
             return {
