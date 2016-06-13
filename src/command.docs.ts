@@ -12,6 +12,7 @@ import {writeFileSync} from "fs";
 
 const debug = require("debug")("cb:command:docs");
 
+
 function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
@@ -95,15 +96,20 @@ $ crossbow run <taskname>
          * @type {ExternalFileContent[]}
          */
         const maybes = readFilesFromDiskWithContent([config.file], config.cwd);
-        const errors = maybes.map(x => x.errors);
+        const withErrors = maybes.filter(x => x.errors.length);
 
         /**
          * If the --file flag produced an error,
          * eg: --file shane.md -> but shane.md did not exist
          */
-        if (errors.length) {
+        if (withErrors.length) {
+
+            if (!config.handoff) {
+                console.log('Shouold log sometng');
+            }
+
             return {
-                errors,
+                errors: withErrors,
                 tasks,
                 markdown
             }
