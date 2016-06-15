@@ -6,9 +6,8 @@ import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent} from "./task.utils";
+import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk} from "./task.utils";
 import {readdirSync} from "fs";
-import {writeFileSync} from "fs";
 import * as utils from "./task.utils";
 
 const debug = require("debug")("cb:command:docs");
@@ -116,6 +115,9 @@ $ crossbow run <taskname>
          */
         if (withErrors.length) {
 
+            /**
+             * If we're not handing off, report the error
+             */
             if (!config.handoff) {
                 reporter(ReportNames.DocsInputFileNotFound, withErrors[0]);
             }
@@ -128,13 +130,24 @@ $ crossbow run <taskname>
             }
         }
 
+        /**
+         * At this point we have files to work with so we
+         * either append the docs or insert them between existing
+         * comments
+         * @type {{content: string, file: ExternalFileContent}[]}
+         */
         const output = maybes.map(getOutput);
 
+        /**
+         * If not handing off, we actually write to disk here
+         */
         if (!config.handoff) {
-            // console.log(maybes.map(getOutput));
-            // todo write new content to disk
+            output.forEach(x => writeFileToDisk(x.file, x.content));
         }
 
+        /**
+         * Always return everything gathered
+         */
         return {
             errors: [],
             tasks,

@@ -6,6 +6,7 @@ import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
 import {statSync} from "fs";
+import {writeFileSync} from "fs";
 const yml = require('js-yaml');
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
@@ -278,6 +279,10 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
             x.content = readFileSync(x.resolved, 'utf8');
             return x;
         });
+}
+
+export function writeFileToDisk(file: ExternalFile, content: string) {
+    writeFileSync(file.resolved, content);
 }
 
 /**
