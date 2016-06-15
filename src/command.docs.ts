@@ -17,6 +17,11 @@ export interface DocsInputFileNotFoundError extends DocsError {file: utils.Exter
 export enum DocsErrorTypes {
     DocsInputFileNotFound = <any>"DocsInputFileNotFound"
 }
+export const docStartComment = '<!--crossbow-docs-start-->';
+export const docEndComment   = '<!--crossbow-docs-end-->';
+export const hasRegExp       = /<!--crossbow-docs-start-->([\s\S]+?)?<!--crossbow-docs-end-->/g;
+export const hasExistingComments = (string) => hasRegExp.test(string);
+export const readmeRegExp        = /readme\.(md|markdown)$/i;
 
 function execute(trigger: CommandTrigger): any {
 
@@ -53,11 +58,6 @@ function execute(trigger: CommandTrigger): any {
      * Create the header for the markdown table
      * @type {string|string[]}
      */
-    const docStartComment     = '<!--crossbow-docs-start-->';
-    const docEndComment       = '<!--crossbow-docs-end-->';
-    const hasRegExp           = /<!--crossbow-docs-start-->([\s\S]+?)?<!--crossbow-docs-end-->/g;
-    const hasExistingComments = (string) => hasRegExp.test(string);
-    const readmeRegExp        = /readme\.(md|markdown)$/i;
     const tasksHeader         = [`## Crossbow tasks
 
 The following tasks have been defined by this project's Crossbow configuration.
@@ -128,13 +128,18 @@ $ crossbow run <taskname>
             }
         }
 
-        // 1. read file from disk
-        // 2. replace content
+        const output = maybes.map(getOutput);
+
+        if (!config.handoff) {
+            // console.log(maybes.map(getOutput));
+            // todo write new content to disk
+        }
+
         return {
             errors: [],
             tasks,
             markdown,
-            output: maybes.map(getOutput)
+            output
         }
     }
 
