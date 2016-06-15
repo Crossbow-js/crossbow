@@ -2,7 +2,7 @@ const assert = require('chai').assert;
 const Rx = require('rx');
 const cli = require("../dist/index");
 const errorTypes = require('../dist/task.errors').TaskErrorTypes;
-const RunCommandReportTypes = require('../dist/command.run').RunCommandReportTypes;
+const DocsErrorTypes = require('../dist/command.docs').DocsErrorTypes;
 
 describe('Running docs commands', function () {
     it('reports when a task is completed', function () {
@@ -49,6 +49,7 @@ $ crossbow run <taskname>
             }
         });
         assert.equal(output.errors.length, 1);
+        assert.equal(output.errors[0].type, DocsErrorTypes.DocsInputFileNotFound);
     });
     it('Looks at an existing file', function () {
         const testfile = 'test/fixtures/docs/readme-no-existing.md';
