@@ -33,7 +33,7 @@ $ crossbow run <taskname>
 |<pre>\`css\`</pre>|**Alias for:**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|`;
         assert.equal(expected, output.markdown);
     });
-    it.only('handles missing file', function () {
+    it('handles missing file', function () {
         const testfile = 'test/fixtures/docs/readme-typo.md';
         const output = cli.default({
             input: ['docs'],
@@ -51,7 +51,7 @@ $ crossbow run <taskname>
         assert.equal(output.errors.length, 1);
         assert.equal(output.errors[0].type, DocsErrorTypes.DocsInputFileNotFound);
     });
-    it('Looks at an existing file', function () {
+    it.only('Looks at an existing file', function () {
         const testfile = 'test/fixtures/docs/readme-no-existing.md';
         const output = cli.default({
             input: ['docs'],
@@ -68,7 +68,7 @@ $ crossbow run <taskname>
         });
 
         const before = require('fs').readFileSync(testfile, 'utf8');
-
+        
         assert.equal([before, output.markdown].join('\n'), output.output[0].content);
     });
 });

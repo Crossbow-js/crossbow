@@ -123,11 +123,19 @@ $ crossbow run <taskname>
             return {
                 errors: withErrors,
                 tasks,
-                markdown
+                markdown,
+                output: []
             }
         }
-        
-        return {}
+
+        // 1. read file from disk
+        // 2. replace content
+        return {
+            errors: [],
+            tasks,
+            markdown,
+            output: maybes.map(getOutput)
+        }
     }
 
     // Handle config.output use-case
@@ -177,6 +185,22 @@ $ crossbow run <taskname>
     //         }]
     //     }
     // })();
+
+    function getOutput(file: ExternalFileContent): {content: string, file: ExternalFileContent} {
+        if (hasExistingComments(file.content)) {
+            debug(`${file.relative} has the comments already in the file, so will replace`);
+            const replaced = file.content.replace(hasRegExp, markdown);
+            return {
+                file,
+                content: replaced
+            };
+        }
+        debug(`${file.relative} DOES NOT have the comments, so will append to the end of the file`);
+        return {
+            file,
+            content: file.content + '\n' + markdown
+        };
+    }
 
     /**
      * If config.handoff, just return the tasks + markdown string
