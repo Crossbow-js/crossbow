@@ -143,8 +143,8 @@ $ crossbow run <taskname>
          */
         if (!config.handoff) {
             output.forEach(x => {
-                reporter(ReportNames.DocsAddedToFile, withErrors[0]);
-                writeFileToDisk(x.file, x.content)
+                reporter(ReportNames.DocsAddedToFile, x.file, x.content);
+                writeFileToDisk(x.file, x.content);
             });
         }
 

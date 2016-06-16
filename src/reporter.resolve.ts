@@ -60,8 +60,9 @@ export enum ReportNames {
     WatcherTriggeredTasksCompleted = <any>"WatcherTriggeredTasksCompleted",
     WatcherTriggeredTasks          = <any>"WatcherTriggeredTasks",
 
+    DocsAddedToFile                = <any>"DocsAddedToFile",
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
-    DocsInputFileNotFound               = <any>"DocsInputFileNotFound",
+    DocsInputFileNotFound          = <any>"DocsInputFileNotFound",
 
     Summary                        = <any>"Summary",
 }

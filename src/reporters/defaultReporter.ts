@@ -18,7 +18,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e, ExternalFileContent} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
@@ -755,6 +755,9 @@ Or to see multiple tasks running, with some in parallel, try:
         // Todo - should we always output to the console?
         // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
         // console.log(markdown);
+    },
+    [ReportNames.DocsAddedToFile]: function (file: ExternalFileContent, content: string) {
+        logger.info(`{green:✔} Docs added to : {cyan.bold:${file.relative}}`);
     },
     [ReportNames.Summary]: reportSummary,
 };
