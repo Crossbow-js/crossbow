@@ -93,4 +93,38 @@ $ crossbow run <taskname>
 
         assert.equal(expected, output.output[0].content);
     });
+    it('bails when --output flag given to existing file', function () {
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                output: 'package.json',
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['css', 'version-rev'],
+                'version-rev': '@sh versioner | xargs ls',
+                css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+        assert.equal(output.errors.length, 1);
+        assert.equal(output.errors[0].type, DocsErrorTypes.DocsOutputFileExists);
+    });
+    it('Creates output for a new file ready to be created', function () {
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                output: 'name.md',
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['css', 'version-rev'],
+                'version-rev': '@sh versioner | xargs ls',
+                css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+        assert.equal(output.errors.length, 0);
+        assert.equal(output.output[0].content, output.markdown);
+    });
 });

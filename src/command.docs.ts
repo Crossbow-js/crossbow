@@ -6,7 +6,7 @@ import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk, readFilesFromDisk, FileNotFoundError, InputErrorTypes} from "./task.utils";
+import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk, readFilesFromDisk, FileNotFoundError, InputErrorTypes, ExternalFile} from "./task.utils";
 import {readdirSync} from "fs";
 import * as utils from "./task.utils";
 
@@ -91,8 +91,6 @@ $ crossbow run <taskname>
      */
     const markdown = [docStartComment, tasksHeader, ...tableHeader].concat(body, docEndComment).join('\n');
 
-    // reporter(ReportNames.DocsGenerated, tasks, markdown);
-
     /**
      * If the user provided the --file flag
      */
@@ -141,14 +139,9 @@ $ crossbow run <taskname>
         const output = maybes.map(getOutput);
 
         /**
-         * If not handing off, we actually write to disk here
+         * Now write to file
          */
-        if (!config.handoff) {
-            output.forEach(x => {
-                reporter(ReportNames.DocsAddedToFile, x.file, x.content);
-                writeFileToDisk(x.file, x.content);
-            });
-        }
+        addDocsToFile(output);
 
         /**
          * Always return everything gathered
@@ -165,22 +158,52 @@ $ crossbow run <taskname>
      * If a user provides the 'output' flag, it means they want a new file creating
      */
     if (config.output) {
-        const maybe = readFilesFromDisk([config.output], config.cwd);
+        const maybe = readFilesFromDiskWithContent([config.output], config.cwd);
         const available = maybe
             .filter(x => x.errors.length > 0)
             .filter(x => x.errors[0].type === InputErrorTypes.FileNotFound);
 
         if (!available.length) {
+
             const error = <DocsOutputFileExistsError>{type: DocsErrorTypes.DocsOutputFileExists, file: maybe[0]};
+
             if (!config.handoff) {
                 reporter(ReportNames.DocsOutputFileExists, error);
             }
+            
             return {
                 errors: [error],
                 tasks,
                 markdown,
                 output: []
             }
+        }
+
+        const output = [{
+            file: maybe[0],
+            content: markdown
+        }];
+
+        // Now we can write to disk
+        addDocsToFile(output);
+
+        return {
+            errors: [],
+            tasks,
+            markdown,
+            output
+        }
+    }
+
+    function addDocsToFile(output: {file: ExternalFileContent, content:string}[]) {
+        /**
+         * If not handing off, we actually write to disk here
+         */
+        if (!config.handoff) {
+            output.forEach(x => {
+                reporter(ReportNames.DocsAddedToFile, x.file, x.content);
+                writeFileToDisk(x.file, x.content);
+            });
         }
     }
 
