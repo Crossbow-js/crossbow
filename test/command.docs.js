@@ -127,4 +127,37 @@ $ crossbow run <taskname>
         assert.equal(output.errors.length, 0);
         assert.equal(output.output[0].content, output.markdown);
     });
+    it('Uses an existing readme.md from a directory when --file && --output missing', function () {
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['css', 'version-rev'],
+                'version-rev': '@sh versioner | xargs ls',
+                css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+
+        assert.include(output.output[0].content, output.markdown);
+    });
+    it('Creates a new readme.md file when nothing is found in cwd', function () {
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                cwd: 'test',
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['css', 'version-rev'],
+                'version-rev': '@sh versioner | xargs ls',
+                css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+
+        assert.equal(output.output[0].content, output.markdown);
+    });
 });

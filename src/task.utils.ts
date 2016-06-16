@@ -285,6 +285,17 @@ export function writeFileToDisk(file: ExternalFile, content: string) {
     writeFileSync(file.resolved, content);
 }
 
+export function getStubFile(path:string, cwd:string): ExternalFile {
+    const resolved = resolve(cwd, path);
+    return {
+        errors: [],
+        path: path,
+        resolved,
+        parsed: parse(path),
+        relative: relative(cwd, resolved)
+    }
+}
+
 /**
  * Take an array of paths and return file info + errors if they don't exist
  * @param paths
@@ -294,13 +305,7 @@ export function writeFileToDisk(file: ExternalFile, content: string) {
 export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] {
     return paths
         .map(String)
-        .map((path: string): ExternalFile => ({
-            errors: [],
-            path: path,
-            resolved: resolve(cwd, path),
-            parsed: parse(path),
-            relative: relative(cwd, path)
-        }))
+        .map(x => getStubFile(x, cwd))
         .map((incoming): ExternalFile => {
 
             const {resolved} = incoming;
