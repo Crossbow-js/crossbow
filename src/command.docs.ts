@@ -142,7 +142,10 @@ $ crossbow run <taskname>
          * If not handing off, we actually write to disk here
          */
         if (!config.handoff) {
-            output.forEach(x => writeFileToDisk(x.file, x.content));
+            output.forEach(x => {
+                reporter(ReportNames.DocsAddedToFile, withErrors[0]);
+                writeFileToDisk(x.file, x.content)
+            });
         }
 
         /**
