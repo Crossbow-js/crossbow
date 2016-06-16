@@ -18,7 +18,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e, ExternalFileContent} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e, ExternalFileContent, ExternalFile} from "../task.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
 import {ParsedPath} from "path";
@@ -30,7 +30,7 @@ import {
     ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
     ReporterError
 } from "../reporter.resolve";
-import {DocsInputFileNotFoundError} from "../command.docs";
+import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "../command.docs";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -646,11 +646,6 @@ const reporterFunctions = {
             multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
         });
     },
-    [ReportNames.DocsInputFileNotFound]: function (error: DocsInputFileNotFoundError) {
-        heading(`Sorry, there were errors resolving your input files`);
-        logger.info(`{red.bold:x '${error.file.resolved}'}`);
-        multiLine(getExternalError(error.type, error));
-    },
     [ReportNames.InvalidReporter]: function (reporters: Reporters) {
         heading(`{red.bold:x} Sorry, there were problems resolving your reporters`);
         reporters.invalid.forEach(function (reporter: Reporter) {
@@ -756,8 +751,17 @@ Or to see multiple tasks running, with some in parallel, try:
         // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
         // console.log(markdown);
     },
+    [ReportNames.DocsInputFileNotFound]: function (error: DocsInputFileNotFoundError) {
+        heading(`Sorry, there were errors resolving your input files`);
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
+    },
     [ReportNames.DocsAddedToFile]: function (file: ExternalFileContent, content: string) {
         logger.info(`{green:✔} Docs added to : {cyan.bold:${file.relative}}`);
+    },
+    [ReportNames.DocsOutputFileExists]: function (error: DocsOutputFileExistsError) {
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
     },
     [ReportNames.Summary]: reportSummary,
 };

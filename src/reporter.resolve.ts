@@ -63,6 +63,7 @@ export enum ReportNames {
     DocsAddedToFile                = <any>"DocsAddedToFile",
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
     DocsInputFileNotFound          = <any>"DocsInputFileNotFound",
+    DocsOutputFileExists           = <any>"DocsOutputFileExists",
 
     Summary                        = <any>"Summary",
 }

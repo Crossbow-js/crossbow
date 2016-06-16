@@ -6,15 +6,17 @@ import {resolveTasks} from './task.resolve';
 import Immutable = require('immutable');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk} from "./task.utils";
+import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk, readFilesFromDisk, FileNotFoundError, InputErrorTypes} from "./task.utils";
 import {readdirSync} from "fs";
 import * as utils from "./task.utils";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
 export interface DocsInputFileNotFoundError extends DocsError {file: utils.ExternalFile}
+export interface DocsOutputFileExistsError extends DocsInputFileNotFoundError {};
 export enum DocsErrorTypes {
-    DocsInputFileNotFound = <any>"DocsInputFileNotFound"
+    DocsInputFileNotFound = <any>"DocsInputFileNotFound",
+    DocsOutputFileExists = <any>"DocsOutputFileExists"
 }
 export const docStartComment = '<!--crossbow-docs-start-->';
 export const docEndComment   = '<!--crossbow-docs-end-->';
@@ -159,9 +161,27 @@ $ crossbow run <taskname>
         }
     }
 
-    // Handle config.output use-case
+    /**
+     * If a user provides the 'output' flag, it means they want a new file creating
+     */
     if (config.output) {
+        const maybe = readFilesFromDisk([config.output], config.cwd);
+        const available = maybe
+            .filter(x => x.errors.length > 0)
+            .filter(x => x.errors[0].type === InputErrorTypes.FileNotFound);
 
+        if (!available.length) {
+            const error = <DocsOutputFileExistsError>{type: DocsErrorTypes.DocsOutputFileExists, file: maybe[0]};
+            if (!config.handoff) {
+                reporter(ReportNames.DocsOutputFileExists, error);
+            }
+            return {
+                errors: [error],
+                tasks,
+                markdown,
+                output: []
+            }
+        }
     }
 
     // finally, handle looking up files in current cwd
