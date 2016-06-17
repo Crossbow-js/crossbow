@@ -7,8 +7,8 @@ import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
 
-const _ = require('../lodash.custom');
-const yml = require('js-yaml');
+const _    = require('../lodash.custom');
+import yml = require('js-yaml');
 
 export interface ExternalFile {
     path: string
@@ -17,6 +17,7 @@ export interface ExternalFile {
     errors: InputError[],
     parsed: ParsedPath
 }
+
 export interface FileNotFoundError extends InputError {}
 
 export interface ExternalFileContent extends ExternalFile {
@@ -53,6 +54,11 @@ export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
     return readInputFiles(maybes, config.cwd);
 }
 
+/**
+ * Try to retrieve input files from disk.
+ * This is different from regular file reading as
+ * we deliver errors with context
+ */
 export function readInputFiles(paths: string[], cwd: string): InputFiles {
 
     /**
@@ -65,14 +71,14 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
      * Add parsed input keys to them
      * @type {}
      */
-    const inputs = inputFiles.map(file => {
+    const inputs = inputFiles.map(inputFile => {
 
         /**
          * If the file does not exist, change the error to be an InputFileNotFound error
          * as this will allow more descriptive logging when needed
          */
-        if (file.errors.length) {
-            return _.assign({}, file, {
+        if (inputFile.errors.length) {
+            return _.assign({}, inputFile, {
                 // here there may be any types of file error,
                 // but we only care that was an error, and normalise it
                 // here for logging. We can added nice per-error messages later.
@@ -84,17 +90,17 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
         /**
          * If the input file was yaml, load it & translate to JS
          */
-        if (file.parsed.ext.match(/ya?ml$/i)) {
-            return _.assign(file, {
-                input: yml.safeLoad(readFileSync(file.resolved))
+        if (inputFile.parsed.ext.match(/ya?ml$/i)) {
+            return _.assign(inputFile, {
+                input: yml.safeLoad(readFileSync(inputFile.resolved))
             })
         }
 
         /**
          * Finally assume a JS/JSON file and 'require' it as normal
          */
-        return _.assign({}, file, {
-            input: require(file.resolved)
+        return _.assign({}, inputFile, {
+            input: require(inputFile.resolved)
         });
     });
 
