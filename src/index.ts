@@ -3,7 +3,7 @@
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
 import {TaskRunner} from './task.runner';
-import {getRequirePaths} from './task.utils';
+import {getRequirePaths} from './file.utils';
 import cli from "./cli";
 import {getInputs, InputTypes} from "./input.resolve";
 import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";

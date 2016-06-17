@@ -1,7 +1,9 @@
-import {CrossbowConfiguration} from "./config";
-import * as utils from "./task.utils";
 import {CrossbowInput} from "./index";
-import {ExternalFileInput} from "./task.utils";
+import {CrossbowConfiguration} from "./config";
+
+import * as utils from "./task.utils";
+import * as file from "./file.utils";
+
 const debug = require('debug')('cb:input');
 const _ = require('../lodash.custom');
 
@@ -14,7 +16,7 @@ export enum InputTypes {
 
 export interface UserInput {
     errors: any[],
-    sources: utils.ExternalFileInput[],
+    sources: file.ExternalFileInput[],
     type: InputTypes,
     inputs: CrossbowInput[]
 }
@@ -27,7 +29,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      */
     if (config.config.length) {
         debug(`config flag provided ${config.config}`);
-        const inputs = utils.readInputFiles(config.config, config.cwd);
+        const inputs = file.readInputFiles(config.config, config.cwd);
         if (inputs.invalid.length) {
             return {
                 type: InputTypes.ExternalFile,
@@ -46,7 +48,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
                  * This is to allow, for example, production
                  * configuration to override dev etc..
                  */
-                inputs.valid.reduce((acc, file: ExternalFileInput) => {
+                inputs.valid.reduce((acc, file: file.ExternalFileInput) => {
                     return _.merge(acc, generateBaseInput(file.input));
                 }, {})
             ],
@@ -59,7 +61,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      */
     if (config.cbfile) {
         debug(`'cbfile' flag provided ${config.cbfile}`);
-        const cbfiles = utils.retrieveCBFiles(config);
+        const cbfiles = file.retrieveCBFiles(config);
         if (cbfiles.invalid.length) {
             return {
                 type: InputTypes.CBFile,
@@ -93,7 +95,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
     /**
      * Finally, try any cbfiles in the cwd
      */
-    const defaultCbFiles = utils.retrieveCBFiles(config);
+    const defaultCbFiles = file.retrieveCBFiles(config);
     if (defaultCbFiles.valid.length) {
         debug(`Default cbfile found ${defaultCbFiles.valid[0].resolved}`);
         return {
@@ -108,7 +110,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * At this point, the user has not attempted to load any config files manually
      * so we try to load any defaults that are in the CWD
      */
-    const defaultInputputFiles = utils.retrieveDefaultInputFiles(config);
+    const defaultInputputFiles = file.retrieveDefaultInputFiles(config);
     if (defaultInputputFiles.valid.length) {
         debug(`Default input found ${defaultInputputFiles.valid[0].resolved}`);
         return {

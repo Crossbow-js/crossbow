@@ -18,13 +18,11 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e, ExternalFileContent, ExternalFile} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
+import {ExternalFileInput, ExternalFileContent, ExternalFile} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
-import {ParsedPath} from "path";
-import {parse} from "path";
-import {dirname} from "path";
-import {join} from "path";
+import {ParsedPath, parse, dirname, join} from "path";
 import {twoColWatchers} from "./task.list";
 import {
     ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,

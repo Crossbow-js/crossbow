@@ -6,13 +6,13 @@ import {resolveTasks, Tasks} from './task.resolve';
 import Immutable = require('immutable');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, readFilesFromDiskWithContent, ExternalFileContent, writeFileToDisk, InputErrorTypes, getStubFile, ExternalFile} from "./task.utils";
+import {removeNewlines, InputErrorTypes} from "./task.utils";
 import {readdirSync} from "fs";
-import * as utils from "./task.utils";
+import * as file from "./file.utils";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
-export interface DocsInputFileNotFoundError extends DocsError {file: utils.ExternalFile}
+export interface DocsInputFileNotFoundError extends DocsError {file: file.ExternalFile}
 export interface DocsOutputFileExistsError extends DocsInputFileNotFoundError {};
 export enum DocsErrorTypes {
     DocsInputFileNotFound = <any>"DocsInputFileNotFound",
@@ -25,7 +25,7 @@ export const hasExistingComments = (string) => hasRegExp.test(string);
 export const readmeRegExp        = /readme\.(md|markdown)$/i;
 
 export interface DocsFileOutput {
-    file: ExternalFile,
+    file: file.ExternalFile,
     content: string,
 }
 export interface DocsCommandOutput {
@@ -93,7 +93,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     const existingReadmeFiles = readdirSync(process.cwd())
         .filter(x => readmeRegExp.test(x))
-        .reduce((acc, item) => acc.concat(readFilesFromDiskWithContent([item], config.cwd)), []);
+        .reduce((acc, item) => acc.concat(file.readFilesFromDiskWithContent([item], config.cwd)), []);
 
     if (existingReadmeFiles.length) {
         const output = existingReadmeFiles.map(x => getFileOutput(x, markdown));
@@ -117,7 +117,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * so, create a new one :)
      */
     const output = [{
-        file: getStubFile('readme.md', config.cwd),
+        file: file.getStubFile('readme.md', config.cwd),
         content: markdown
     }];
 
@@ -137,7 +137,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
  * 2. if docs exist, replace them
  * 3. if 1 & 2 fail, append
  */
-function getFileOutput(file: ExternalFileContent, markdown): DocsFileOutput {
+function getFileOutput(file: file.ExternalFileContent, markdown): DocsFileOutput {
 
     /**
      * If there's no exisitng file content, just use the markdown
@@ -176,7 +176,7 @@ function getFileOutput(file: ExternalFileContent, markdown): DocsFileOutput {
  */
 function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigger): DocsCommandOutput {
     const {config, reporter} = trigger;
-    const maybe = readFilesFromDiskWithContent([config.output], config.cwd);
+    const maybe = file.readFilesFromDiskWithContent([config.output], config.cwd);
     const available = maybe
         .filter(x => x.errors.length > 0)
         .filter(x => x.errors[0].type === InputErrorTypes.FileNotFound);
@@ -224,9 +224,9 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
     const {config, reporter} = trigger;
     /**
      * Try to read the file from disk with content appended
-     * @type {ExternalFileContent[]}
+     * @type {file.ExternalFileContent[]}
      */
-    const maybes = readFilesFromDiskWithContent([config.file], config.cwd);
+    const maybes = file.readFilesFromDiskWithContent([config.file], config.cwd);
     const withErrors: Array<DocsInputFileNotFoundError> = maybes
         .filter(x => x.errors.length > 0)
         .map(x => {
@@ -261,7 +261,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
      * At this point we have files to work with so we
      * either append the docs or insert them between existing
      * comments
-     * @type {{content: string, file: ExternalFileContent}[]}
+     * @type {{content: string, file: file.ExternalFileContent}[]}
      */
     const output = maybes.map(x => getFileOutput(x, markdown));
 
@@ -327,7 +327,7 @@ function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
     if (!config.handoff) {
         output.forEach(x => {
             trigger.reporter(ReportNames.DocsAddedToFile, x.file, x.content);
-            writeFileToDisk(x.file, x.content);
+            file.writeFileToDisk(x.file, x.content);
         });
     }
 }

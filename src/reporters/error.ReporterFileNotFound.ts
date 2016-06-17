@@ -1,4 +1,3 @@
-import {ExternalFileInput} from "../task.utils";
 import {ReporterFileNotFoundError} from "../reporter.resolve";
 
 module.exports = (error: ReporterFileNotFoundError) => {

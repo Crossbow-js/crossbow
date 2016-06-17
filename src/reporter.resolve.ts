@@ -1,6 +1,6 @@
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
-import {readFilesFromDisk, ExternalFile} from "./task.utils";
+import {readFilesFromDisk, ExternalFile} from "./file.utils";
 
 export interface Reporter {
     errors: {}[]

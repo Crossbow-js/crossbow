@@ -1,4 +1,3 @@
-import {ExternalFileInput, _e, __e} from "../task.utils";
 import {InvalidTaskInputError} from "../task.errors";
 
 module.exports = (error: InvalidTaskInputError) => {
