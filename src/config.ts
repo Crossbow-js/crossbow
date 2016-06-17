@@ -27,6 +27,10 @@ export interface CrossbowConfiguration {
     type?: InitConfigFileTypes
     debug: boolean
     reporters: Array<string|Function>
+
+    // docs command
+    file?: string
+    output?: string
 }
 
 /**

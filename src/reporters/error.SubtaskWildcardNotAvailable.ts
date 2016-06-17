@@ -1,5 +1,5 @@
-import {Task} from "../task.resolve.d";
-import {SubtaskWildcardNotAvailableError} from "../task.errors.d";
+import {Task} from "../task.resolve";
+import {SubtaskWildcardNotAvailableError} from "../task.errors";
 
 module.exports = (error: SubtaskWildcardNotAvailableError, task: Task) =>
 

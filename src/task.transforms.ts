@@ -1,6 +1,6 @@
 const debug = require('debug')('cb:task.transform');
 import {readFileSync} from "fs";
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {TaskTypes, TaskOriginTypes} from "./task.resolve";
 
 export interface TaskTransform {

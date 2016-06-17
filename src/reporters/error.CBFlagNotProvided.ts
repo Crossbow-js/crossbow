@@ -1,5 +1,5 @@
-import {Task} from "../task.resolve.d";
-import {CBFlagNotProvidedError} from "../task.errors.d";
+import {Task} from "../task.resolve";
+import {CBFlagNotProvidedError} from "../task.errors";
 
 module.exports = (error: CBFlagNotProvidedError, task: Task) =>
 

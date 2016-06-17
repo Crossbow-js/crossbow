@@ -1,17 +1,6 @@
-import {CrossbowInput} from "./index";
-import {
-    TaskError,
-    TaskNotFoundError,
-    CBFlagNotProvidedError,
-    SubtaskNotProvidedError,
-    SubtasksNotInConfigError,
-    SubtaskNotFoundError,
-    SubtaskWildcardNotAvailableError,
-    FileTypeNotSupportedError
-} from "./task.errors.d";
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {TaskTypes} from "./task.resolve";
-import {isSupportedFileType} from "./task.utils";
+import {isSupportedFileType, ExternalTask} from "./task.utils";
 import {CommandTrigger} from "./command.run";
 const _ = require('../lodash.custom');
 
@@ -167,4 +156,48 @@ function handleWildcardSubtask(configKeys: string[], name: string): SubtaskWildc
         type: TaskErrorTypes.SubtaskWildcardNotAvailable,
         name: name
     }];
+}
+
+export interface TaskError {
+    type: TaskErrorTypes
+}
+export interface TaskNotFoundError extends TaskError {
+    taskName: string
+    cwd: string
+}
+export interface SubtasksNotInConfigError extends TaskError {
+    name: string
+}
+export interface SubtaskNotProvidedError extends TaskError {
+    name: string
+}
+export interface SubtaskWildcardNotAvailableError extends TaskError {
+    name: string
+}
+export interface SubtaskNotFoundError extends TaskError {
+    name: string
+}
+export interface AdaptorNotFoundError extends TaskError {
+    taskName: string
+}
+export interface InvalidTaskInputError extends TaskError {
+    input: any
+}
+
+export interface CBFlagNotFoundError extends TaskError {
+    taskName: string
+}
+
+export interface CBFlagNotProvidedError extends TaskError {
+    taskName: string
+}
+
+export interface CircularReferenceError extends TaskError {
+    incoming: Task
+    parents: string[]
+}
+
+export interface FileTypeNotSupportedError extends TaskError {
+    taskName: string,
+    externalTask: ExternalTask
 }

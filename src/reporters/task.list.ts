@@ -1,5 +1,5 @@
 import {longestString, padLine, escapeNewLines} from "../task.utils";
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
 

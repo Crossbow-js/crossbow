@@ -1,6 +1,6 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
 import {relative} from 'path';
@@ -18,18 +18,17 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
+import {ExternalFileInput, ExternalFileContent, ExternalFile} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
-import {ParsedPath} from "path";
-import {parse} from "path";
-import {dirname} from "path";
-import {join} from "path";
+import {ParsedPath, parse, dirname, join} from "path";
 import {twoColWatchers} from "./task.list";
 import {
     ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
     ReporterError
 } from "../reporter.resolve";
+import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "../command.docs";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -691,8 +690,14 @@ Or to see multiple tasks running, with some in parallel, try:
         const label = getSequenceLabel(report.item, trigger.config);
         _taskReport(report, label);
     },
+    [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
+        logger.info('{red.bold:x Invalid tasks');
+        logger.info('Sorry, we cannot generate documentation for you right now');
+        logger.info('as you have invalid tasks. Please run {bold:$ crossbow tasks} to see');
+        logger.info('details about these errors');
+    },
     [ReportNames.NoTasksAvailable]: function () {
-        heading('Sorry, there were no tasks available to run');
+        heading('Sorry, there were no tasks available.');
         logger.info(`{red.bold:x Input: ''}`);
         multiLine(getExternalError(InputErrorTypes.NoTasksAvailable, {}));
     },
@@ -738,8 +743,24 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.WatcherTriggeredTasksCompleted]: function (index: number, taskCollection: TaskCollection, time: number) {
         l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
     },
+    [ReportNames.DocsGenerated]: function docsGenerated(tasks, markdown) {
 
-
+        // Todo - should we always output to the console?
+        // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
+        // console.log(markdown);
+    },
+    [ReportNames.DocsInputFileNotFound]: function (error: DocsInputFileNotFoundError) {
+        heading(`Sorry, there were errors resolving your input files`);
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
+    },
+    [ReportNames.DocsAddedToFile]: function (file: ExternalFileContent, content: string) {
+        logger.info(`{green:✔} Docs added to: {cyan.bold:${file.relative}}`);
+    },
+    [ReportNames.DocsOutputFileExists]: function (error: DocsOutputFileExistsError) {
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
+    },
     [ReportNames.Summary]: reportSummary,
 };
 

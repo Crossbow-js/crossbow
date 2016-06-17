@@ -1,11 +1,11 @@
-import {Task} from "./task.resolve.d";
+import {Task} from "./task.resolve";
 import {CrossbowInput} from "./index";
 import {
     TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction,
     IncomingTaskItem
 } from "./task.resolve";
 import {isPlainObject, stringifyObj} from "./task.utils";
-import {InvalidTaskInputError} from "./task.errors.d";
+import {InvalidTaskInputError} from "./task.errors";
 import {TaskErrorTypes} from "./task.errors";
 
 const _ = require('../lodash.custom');

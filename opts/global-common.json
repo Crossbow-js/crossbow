@@ -1,0 +1,18 @@
+{
+  "config": {
+    "desc": "Path to your input file.",
+    "type": "array",
+    "alias": "c",
+    "default": []
+  },
+  "reporters": {
+    "desc": "Paths to modules that contain a reporter",
+    "type": "array",
+    "alias": ["reporter", "r"],
+    "default": []
+  },
+  "cwd": {
+    "desc": "Current Working directory",
+    "type": "string"
+  }
+}

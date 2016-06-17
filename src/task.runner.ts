@@ -1,7 +1,7 @@
 import {TaskTypes} from "./task.resolve";
 const Rx = require('rx');
 
-import {Tasks} from "./task.resolve.d";
+import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {CommandTrigger} from './command.run';

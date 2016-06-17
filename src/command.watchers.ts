@@ -9,7 +9,7 @@ import {resolveWatchTasks} from "./watch.resolve";
 import {createWatchRunners} from "./watch.runner";
 import {ReportNames} from "./reporter.resolve";
 
-export default function execute(trigger: CommandTrigger): void {
+function execute(trigger: CommandTrigger): void {
     const {input, config, reporter}   = trigger;
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
 
@@ -43,7 +43,7 @@ export default function execute(trigger: CommandTrigger): void {
     reporter(ReportNames.WatcherNames, runners, trigger);
 }
 
-export function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,

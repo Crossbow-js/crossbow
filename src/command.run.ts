@@ -12,7 +12,7 @@ import {TaskReport} from './task.runner';
 import Immutable = require('immutable');
 import * as seq from "./task.sequence";
 import promptForRunCommand from './command.run.interactive';
-import {Tasks} from "./task.resolve.d";
+import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {ReportNames} from "./reporter.resolve";
@@ -102,7 +102,7 @@ function getRunCommandSetup (trigger: CommandTrigger) {
     return {tasks, sequence, runner};
 }
 
-export default function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
+export function execute(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner} = getRunCommandSetup(trigger);
@@ -179,7 +179,7 @@ export default function execute(trigger: CommandTrigger): Rx.Observable<RunComma
     return complete$;
 }
 
-export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter):any {
+export default function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter):any {
 
     /**
      * Array of top-level task names that are available
@@ -192,7 +192,7 @@ export function handleIncomingRunCommand(cli: CLI, input: CrossbowInput, config:
     const sharedMap     = new Rx.BehaviorSubject(Immutable.Map({}));
 
     const type = TriggerTypes.command;
-    
+
     debug('top level tasks available', topLevelTasks);
 
     if (config.handoff) {

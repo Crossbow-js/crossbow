@@ -1,0 +1,6 @@
+{
+  "output": {
+    "desc": "Specify a new filename where the docs will be written",
+    "alias": "o"
+  }
+}

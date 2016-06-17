@@ -10,7 +10,7 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportNames} from "./reporter.resolve";
 
-export default function execute(trigger: CommandTrigger): any {
+function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
     const resolved = resolveTasks(Object.keys(input.tasks), trigger);
@@ -29,13 +29,13 @@ export default function execute(trigger: CommandTrigger): any {
     ) {
         reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
     } else {
-        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid));
+        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid), resolved.valid);
     }
 
     return {tasks: resolved};
 }
 
-export function handleIncomingTasksCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingTasksCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     execute({
         cli,
         input,

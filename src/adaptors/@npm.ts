@@ -1,9 +1,9 @@
 import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
-import {Task} from "../task.resolve.d";
+import {Task} from "../task.resolve";
 
-const spawn = require('child_process').spawn;
-const EventEmitter = require('events').EventEmitter;
+import {EventEmitter} from 'events';
+import {spawn} from 'child_process';
 const debug = require('debug')('cb:adaptors.npm');
 const _ = require('../../lodash.custom');
 
@@ -32,9 +32,17 @@ interface CrossbowSpawnError extends Error {
     file: string
 }
 
+interface CBEmitter extends EventEmitter {
+    stdin: any
+    stdout: any
+    stderr: any
+    raw: any
+    kill: any
+}
+
 function runCommand(args: string[], options: CommandOptions) {
     const raw = spawn(sh, args, options);
-    const cooked = new EventEmitter();
+    const cooked = <CBEmitter>new EventEmitter();
 
     raw.on('error', function (er) {
         er.file = [sh, args].join(' ');
@@ -52,11 +60,11 @@ function runCommand(args: string[], options: CommandOptions) {
         }
     });
 
-    cooked.stdin = raw.stdin;
+    cooked.stdin  = raw.stdin;
     cooked.stdout = raw.stdout;
     cooked.stderr = raw.stderr;
-    cooked.raw = raw;
-    cooked.kill = function (sig) {
+    cooked.raw    = raw;
+    cooked.kill   =  function (sig) {
         return raw.kill(sig);
     };
 

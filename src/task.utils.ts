@@ -1,30 +1,12 @@
-import {relative, resolve, extname, basename, join, parse} from 'path';
-import {existsSync, readFileSync, lstatSync} from 'fs';
+import {relative, resolve, join, parse} from 'path';
+import {existsSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
-import {CrossbowInput} from "./index";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
-import {statSync} from "fs";
-import {Tasks} from "./task.resolve.d";
-
-const yml = require('js-yaml');
-const readPkgUp = require('read-pkg-up');
+import {ExternalFileInput} from "./file.utils";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
-
-
-export interface ExternalFile {
-    path: string
-    resolved: string
-    relative: string
-    errors: InputError[],
-    parsed: ParsedPath
-}
-
-export interface ExternalFileInput extends ExternalFile {
-    input: CrossbowInput|any,
-}
 
 export enum InputErrorTypes {
     InputFileNotFound = <any>"InputFileNotFound",
@@ -35,7 +17,6 @@ export enum InputErrorTypes {
 }
 
 export interface InputFileNotFoundError extends InputError {}
-export interface FileNotFoundError extends InputError {}
 export interface NoTasksAvailableError extends InputError {}
 export interface NoWatchersAvailableError extends InputError {}
 export interface InputError {
@@ -188,181 +169,6 @@ function replaceOne(item, root) {
         }
         return match;
     });
-}
-
-/**
- * Try to auto-load configuration files
- * from the users CWD
- */
-export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultConfigFiles = ['crossbow.yaml', 'crossbow.js', 'crossbow.yml', 'crossbow.json'];
-    return readInputFiles(defaultConfigFiles, config.cwd);
-}
-
-/**
- * Try to load cbfiles (like gulp) from the users
- * working directory
- * @param config
- * @returns {InputFiles}
- */
-export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultCBFiles = ['cbfile.js', 'crossbowfile.js'];
-    const maybes = (function () {
-    	if (config.cbfile) {
-            return [config.cbfile];
-        }
-        return defaultCBFiles;
-    })();
-    return readInputFiles(maybes, config.cwd);
-}
-
-export function readInputFiles(paths: string[], cwd: string): InputFiles {
-
-    /**
-     * Get files that exist on disk
-     * @type {ExternalFile[]}
-     */
-    const inputFiles = readFilesFromDisk(paths, cwd);
-
-    /**
-     * Add parsed input keys to them
-     * @type {}
-     */
-    const inputs = inputFiles.map(file => {
-
-        /**
-         * If the file does not exist, change the error to be an InputFileNotFound error
-         * as this will allow more descriptive logging when needed
-         */
-        if (file.errors.length) {
-            return _.assign({}, file, {
-                // here there may be any types of file error,
-                // but we only care that was an error, and normalise it
-                // here for logging. We can added nice per-error messages later.
-                errors: [{type: InputErrorTypes.InputFileNotFound}],
-                input: undefined
-            });
-        }
-
-        /**
-         * If the input file was yaml, load it & translate to JS
-         */
-        if (file.parsed.ext.match(/ya?ml$/i)) {
-            return _.assign(file, {
-                input: yml.safeLoad(readFileSync(file.resolved))
-            })
-        }
-
-        /**
-         * Finally assume a JS/JSON file and 'require' it as normal
-         */
-        return _.assign({}, file, {
-            input: require(file.resolved)
-        });
-    });
-
-    return {
-        all: inputs,
-        valid: inputs.filter(x => x.errors.length === 0),
-        invalid: inputs.filter(x => x.errors.length > 0)
-    };
-}
-
-/**
- * Take an array of paths and return file info + errors if they don't exist
- * @param paths
- * @param cwd
- * @returns {ExternalFile[]}
- */
-export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] {
-    return paths
-        .map(String)
-        .map((path: string): ExternalFile => ({
-            errors: [],
-            path: path,
-            resolved: resolve(cwd, path),
-            parsed: parse(path),
-            relative: relative(cwd, path)
-        }))
-        .map((incoming): ExternalFile => {
-
-            const {resolved} = incoming;
-
-            /**
-             * If the path does not exist, it's a FileNotFound error
-             */
-            if (!existsSync(resolved)) {
-                return _.assign(incoming, {
-                    errors: [{type: InputErrorTypes.FileNotFound}]
-                });
-            }
-
-            /**
-             * Not check it's a file & NOT a dir
-             * @type {Stats}
-             */
-            const stat = statSync(resolved);
-            if (!stat.isFile()) {
-                return _.assign(incoming, {
-                    errors: [{type: InputErrorTypes.NotAFile}],
-                });
-            }
-
-            /**
-             * At this point the file DOES exist
-             */
-            return incoming;
-        });
-}
-
-/**
- * Attempt to use the LOCALLY installed crossbow-cli version
- * first, this will ensure anything registered with .task etc
- * can be picked up by global installs too.
- * @param config
- * @returns {InputFiles}
- */
-export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
-    const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
-    const global = join(__dirname, 'public', 'create.js');
-    return readInputFiles([local, global], config.cwd);
-}
-
-/**
- * @param cwd
- * @returns {{}}
- */
-export function createCrossbowTasksFromNpmScripts(cwd: string): any {
-    /**
-     * Ready package.json from current project
-     */
-    const pkg = readPkgUp.sync({
-        cwd: cwd,
-        normalize: false
-    }).pkg;
-
-    /**
-     * Try to retrieve `scripts`
-     */
-    const npmScripts = _.get(pkg, ['scripts'], {});
-
-    /**
-     * Return if anything failed with package.json or scripts prop
-     */
-    if (!isPlainObject(npmScripts)) {
-        return {};
-    }
-
-    /**
-     * Now create @npm adaptor tasks for each script found
-     */
-    const transformed = Object.keys(npmScripts)
-        .reduce((acc, key) => {
-            acc[key] = '@npm ' + npmScripts[key];
-            return acc;
-        }, {});
-
-    return transformed;
 }
 
 export function getFunctionName (fn) {

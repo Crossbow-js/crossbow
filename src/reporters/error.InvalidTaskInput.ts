@@ -1,5 +1,4 @@
-import {ExternalFileInput, _e, __e} from "../task.utils";
-import {InvalidTaskInputError} from "../task.errors.d";
+import {InvalidTaskInputError} from "../task.errors";
 
 module.exports = (error: InvalidTaskInputError) => {
     return `{red:-} {bold:Description}: Invalid Object Literal given as task.

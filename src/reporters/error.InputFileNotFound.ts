@@ -1,4 +1,5 @@
-import {ExternalFileInput, InputFileNotFoundError} from "../task.utils";
+import {InputFileNotFoundError} from "../task.utils";
+import {ExternalFileInput} from "../file.utils";
 
 module.exports = (error: InputFileNotFoundError, input: ExternalFileInput) => {
     return `{red:-} {bold:Description}: {cyan:'${input.resolved}'} not found.

@@ -23,7 +23,7 @@ export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker$:any} {
+function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker$:any} {
 
     const {cli, input, config, reporter} = trigger;
 
@@ -194,7 +194,7 @@ export default function execute(trigger: CommandTrigger): WatchTaskRunner|{watch
     }
 }
 
-export function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
 

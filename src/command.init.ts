@@ -5,9 +5,9 @@ import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
 import * as utils from "./task.utils";
+import * as file from "./file.utils";
 import * as fs from "fs";
-import {join} from "path";
-import {parse} from "path";
+import {join, parse} from "path";
 import {ReportNames} from "./reporter.resolve";
 const _ = require('../lodash.custom');
 
@@ -16,7 +16,7 @@ export enum InitConfigFileErrorTypes {
     InitConfigFileTypeNotSupported = <any>"InitConfigFileTypeNotSupported"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
-export interface InitConfigFileExistsError extends InitConfigError {file: utils.ExternalFile}
+export interface InitConfigFileExistsError extends InitConfigError {file: file.ExternalFile}
 export interface InitConfigFileTypeNotSupported extends InitConfigError {
     providedType: InitConfigFileTypes,
     supportedTypes: {}
@@ -29,7 +29,7 @@ export enum InitConfigFileTypes {
     cbfile = <any>"cbfile"
 }
 
-export default function execute(trigger: CommandTrigger): any {
+function execute(trigger: CommandTrigger): any {
     const {config, reporter} = trigger;
 
     const templateDir = join(__dirname, '..', 'templates');
@@ -59,7 +59,7 @@ export default function execute(trigger: CommandTrigger): any {
      * Attempt to load existing config files from the CWD
      * @type {ExternalFile[]}
      */
-    const existingFilesInCwd = utils.readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
+    const existingFilesInCwd = file.readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
 
     /**
      * Now check if any of the existing files match the one the user
@@ -94,22 +94,22 @@ export default function execute(trigger: CommandTrigger): any {
     if (config.handoff) {
         return {existingFilesInCwd, matchingFiles, errors};
     }
-    
+
     /**
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
         reporter(ReportNames.DuplicateConfigFile, errors[0]);
-        return {existingFilesInCwd, matchingFiles, errors}; 
+        return {existingFilesInCwd, matchingFiles, errors};
     }
-    
+
     const templateFilePath = join(templateDir, outputFileName);
     const outputFilePath   = join(config.cwd, outputFileName);
-    
+
     fs.writeFileSync(outputFilePath,
         fs.readFileSync(templateFilePath)
     );
-    
+
     const output = {
         existingFilesInCwd,
         matchingFiles,
@@ -119,11 +119,11 @@ export default function execute(trigger: CommandTrigger): any {
     };
 
     reporter(ReportNames.ConfigFileCreated, parse(outputFilePath), config.type);
-    
-    return output; 
+
+    return output;
 }
 
-export function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
     return execute({
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
