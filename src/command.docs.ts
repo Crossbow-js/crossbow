@@ -6,7 +6,7 @@ import {resolveTasks, Tasks} from './task.resolve';
 import Immutable = require('immutable');
 import {ReportNames} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, InputErrorTypes} from "./task.utils";
+import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
 
@@ -44,7 +44,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * that will used in the docs
      * @type {Tasks}
      */
-    const tasks = resolveTasks(Object.keys(input.tasks), trigger);
+    const tasks = resolveTasks(Object.keys(input.tasks).filter(isPublicTask), trigger);
 
     /**
      * If there were 0 tasks, exit with error
