@@ -92,7 +92,7 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
          */
         if (inputFile.parsed.ext.match(/ya?ml$/i)) {
             return _.assign(inputFile, {
-                input: yml.safeLoad(readFileSync(inputFile.resolved))
+                input: yml.safeLoad(readFileSync(inputFile.resolved, 'utf8'))
             })
         }
 
