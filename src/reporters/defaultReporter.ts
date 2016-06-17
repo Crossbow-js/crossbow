@@ -755,7 +755,7 @@ Or to see multiple tasks running, with some in parallel, try:
         multiLine(getExternalError(error.type, error));
     },
     [ReportNames.DocsAddedToFile]: function (file: ExternalFileContent, content: string) {
-        logger.info(`{green:✔} Docs added to : {cyan.bold:${file.relative}}`);
+        logger.info(`{green:✔} Docs added to: {cyan.bold:${file.relative}}`);
     },
     [ReportNames.DocsOutputFileExists]: function (error: DocsOutputFileExistsError) {
         logger.info(`{red.bold:x '${error.file.resolved}'}`);
