@@ -1,6 +1,6 @@
 import {CrossbowConfiguration} from "./config";
 import {CrossbowInput} from "./index";
-import {readFilesFromDisk, ExternalFile} from "./task.utils";
+import {readFilesFromDisk, ExternalFile} from "./file.utils";
 
 export interface Reporter {
     errors: {}[]
@@ -44,7 +44,7 @@ export enum ReportNames {
     InvalidTasksSimple             = <any>"InvalidTasksSimple",
     NoTasksAvailable               = <any>"NoTasksAvailable",
     NoTasksProvided                = <any>"NoTasksProvided",
-        
+
     SimpleTaskList                 = <any>"SimpleTaskList",
     BeforeWatchTaskErrors          = <any>"BeforeWatchTaskErrors",
     BeforeTaskList                 = <any>"BeforeTaskList",
@@ -60,8 +60,11 @@ export enum ReportNames {
     WatcherTriggeredTasksCompleted = <any>"WatcherTriggeredTasksCompleted",
     WatcherTriggeredTasks          = <any>"WatcherTriggeredTasks",
 
+    DocsAddedToFile                = <any>"DocsAddedToFile",
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
-        
+    DocsInputFileNotFound          = <any>"DocsInputFileNotFound",
+    DocsOutputFileExists           = <any>"DocsOutputFileExists",
+
     Summary                        = <any>"Summary",
 }
 
@@ -89,7 +92,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
             }
         }
         /**
-         * If the reporter was not a string or function 
+         * If the reporter was not a string or function
          * it's definitely an unsupported type
          */
         if (typeof reporter !== 'string') {
@@ -99,7 +102,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
                 sources: [reporter]
             }
         }
-        
+
         const files = readFilesFromDisk([reporter], config.cwd);
         const errors = files
             .reduce((acc, item) => {

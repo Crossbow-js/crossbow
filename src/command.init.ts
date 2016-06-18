@@ -5,9 +5,9 @@ import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
 import * as utils from "./task.utils";
+import * as file from "./file.utils";
 import * as fs from "fs";
-import {join} from "path";
-import {parse} from "path";
+import {join, parse} from "path";
 import {ReportNames} from "./reporter.resolve";
 const _ = require('../lodash.custom');
 
@@ -16,7 +16,7 @@ export enum InitConfigFileErrorTypes {
     InitConfigFileTypeNotSupported = <any>"InitConfigFileTypeNotSupported"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
-export interface InitConfigFileExistsError extends InitConfigError {file: utils.ExternalFile}
+export interface InitConfigFileExistsError extends InitConfigError {file: file.ExternalFile}
 export interface InitConfigFileTypeNotSupported extends InitConfigError {
     providedType: InitConfigFileTypes,
     supportedTypes: {}
@@ -59,7 +59,7 @@ function execute(trigger: CommandTrigger): any {
      * Attempt to load existing config files from the CWD
      * @type {ExternalFile[]}
      */
-    const existingFilesInCwd = utils.readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
+    const existingFilesInCwd = file.readFilesFromDisk(_.values(maybeExistingFileInputs), config.cwd);
 
     /**
      * Now check if any of the existing files match the one the user

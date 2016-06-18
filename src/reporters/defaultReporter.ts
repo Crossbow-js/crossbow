@@ -18,18 +18,17 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, ExternalFileInput, __e} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
+import {ExternalFileInput, ExternalFileContent, ExternalFile} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
-import {ParsedPath} from "path";
-import {parse} from "path";
-import {dirname} from "path";
-import {join} from "path";
+import {ParsedPath, parse, dirname, join} from "path";
 import {twoColWatchers} from "./task.list";
 import {
     ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
     ReporterError
 } from "../reporter.resolve";
+import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "../command.docs";
 
 const l = logger.info;
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
@@ -749,6 +748,18 @@ Or to see multiple tasks running, with some in parallel, try:
         // Todo - should we always output to the console?
         // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
         // console.log(markdown);
+    },
+    [ReportNames.DocsInputFileNotFound]: function (error: DocsInputFileNotFoundError) {
+        heading(`Sorry, there were errors resolving your input files`);
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
+    },
+    [ReportNames.DocsAddedToFile]: function (file: ExternalFileContent, content: string) {
+        logger.info(`{green:✔} Docs added to: {cyan.bold:${file.relative}}`);
+    },
+    [ReportNames.DocsOutputFileExists]: function (error: DocsOutputFileExistsError) {
+        logger.info(`{red.bold:x '${error.file.resolved}'}`);
+        multiLine(getExternalError(error.type, error));
     },
     [ReportNames.Summary]: reportSummary,
 };

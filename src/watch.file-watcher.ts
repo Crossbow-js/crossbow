@@ -8,7 +8,6 @@ import {ReportNames} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
 
 const debug = require('debug')('cb:watch.runner');
-const chokidar = require('chokidar');
 
 export interface WatchEvent {
     event: string
@@ -143,7 +142,7 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
         debug(`└─ ${watcher.tasks.length} tasks (${watcher.tasks})`);
         /** DEBUG END **/
 
-        const chokidarWatcher = chokidar.watch(watcher.patterns, watcher.options)
+        const chokidarWatcher = require('chokidar').watch(watcher.patterns, watcher.options)
             .on('all', function (event, path) {
                 observer.onNext({
                     event: event,
