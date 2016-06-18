@@ -1,10 +1,34 @@
-const docStart = '<\!--crossbow-docs-start-->';
-const docEnd   = '<\!--crossbow-docs-end-->';
+// console.log(process.argv);
+const sliced = process.argv.slice(2);
+const command = sliced[0];
+const args = sliced.slice(1);
 
-const reg = new RegExp('<\!--crossbow-docs-start-->([\s\S]+?)<\!--crossbow-docs-end-->', 'g');
+const isFlag = (incoming) => incoming.slice(0, 2) === '--' || incoming[0] === '-';
 
-const str = `<!--cb-docs-start--><!--cb-docs-end-->`;
+const flags = args.reduce((acc, item, i) => {
+    if (isFlag(item)) {
+        return acc.concat([args.slice(i)]);
+    }
+    return acc;
+}, [])
+    .map(function (flag) {
+        const slicePoint = flag.slice(1)
+            .reduce(function (acc, item, i) {
+                if (acc === -1) {
+                    // not set
+                    if (isFlag(item)) return i + 1;
+                }
+                return acc;
+            }, -1);
+        if (slicePoint === -1) {
+            return flag;
+        }
+        return flag.slice(0, slicePoint);
+    });
 
-console.log(/<!--cb-docs-start-->([\s\S]+?)?<!--cb-docs-end-->/g.test(str));
+console.log(flags);
 
-console.log(new RegExp(`<!--cb-docs-start-->([\s\S]+?)?<!--cb-docs-end-->`, 'g').test(str));
+
+// const doubleflags = args.filter(x => x.slice(0, 2) === '--');
+// const singleFlags = args.filter(x => x.slice(0, 2) === '--');
+// console.log('doubleflags', doubleflags);
