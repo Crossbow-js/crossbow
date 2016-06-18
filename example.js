@@ -26,7 +26,28 @@ const flags = args.reduce((acc, item, i) => {
         return flag.slice(0, slicePoint);
     });
 
-console.log(flags);
+const transformed = flags.map(function (item) {
+	if (item.length === 1) {
+        return item[0].split(/=/);
+    }
+    return item;
+}).reduce(function (acc, item) {
+    if (item.length === 1) {
+
+        // Double flag
+        if (item[0].slice(0, 2) === '--') {
+            const name = item[0].slice(2);
+            return acc.concat([[`--${name}`, 'true']]);
+        }
+
+        //Single flag
+        const current = item[0].slice(1);
+        return acc.concat(current.split('').map(x => [`-${x}`, 'true']));
+    }
+    return acc.concat([item]);
+}, []);
+
+console.log(transformed);
 
 
 // const doubleflags = args.filter(x => x.slice(0, 2) === '--');
