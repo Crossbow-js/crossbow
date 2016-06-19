@@ -1,10 +1,11 @@
 const _ = require('../lodash.custom');
 
-export default function parse(input) {
-    return parseArray(tokenize(input))
+export default function parse(input, opts?) {
+    opts = opts || {};
+    return parseArray(tokenize(input), opts)
 }
 
-function parseArray (incoming: string[]) {
+function parseArray (incoming: string[], opts) {
 
     const command   = incoming[0];
     const args      = incoming.slice(1);
@@ -13,7 +14,7 @@ function parseArray (incoming: string[]) {
     /**
      * Input is args directly after the command, or at the end
      * eg:
-     *     $ crossbow run task1 task2 -p 8000 task3
+     *     $ crossbow run task1 task2 -p 8000
      * ->
      *      ['task1', 'task2']
      * eg:
@@ -22,7 +23,11 @@ function parseArray (incoming: string[]) {
      *      ['task1', 'task2', 'task3', 'task4']
      */
     let input = (function () {
+        // no flags given
+        if (firstFlag === -1) return args.slice();
+        // flag given at first position, so no input
         if (firstFlag === 0) return [];
+        // flag at later point, so slice items upto it
         return args.slice(0, firstFlag);
     })();
 
@@ -106,8 +111,8 @@ function parseArray (incoming: string[]) {
                 return flag;
             }
             /**
-             * Outooing array is the sliced subsection, 
-             * eg: 
+             * Outgoing array is the sliced subsection,
+             * eg:
              *     [ '--before', 'task2', 'task3' ]
              */
             const outgoing = flag.slice(0, slicePoint);
@@ -115,7 +120,7 @@ function parseArray (incoming: string[]) {
             /**
              * A final check if the first item was a setter (ie, it contained an equals = sign).
              * If so, we only want that item and again shove the other items into the input
-             * eg: 
+             * eg:
              *
              *   [ '--beep=boop', 'task1', 'task2' ]
              *
@@ -212,33 +217,25 @@ function parseArray (incoming: string[]) {
         command,
         input: input,
         rawFlags: flags,
-        flags: resolveValues(flags)
+        flagValues: resolveValues(flags, opts),
+        flags: {}
     }
 }
 
-function resolveValues(flags) {
-    // console.log(flags);
-    // console.log(flags);
-    const opts = {
-        // 'v': {
-        //     'count': true
-        // },
-        'port': {
-            alias: 'p',
-            type: 'number',
-            values: []
-        },
-        "server": {
-            alias: 's',
-            type: 'string',
-            values: []
-        }
-    };
+function resolveValues(flags, opts) {
 
-    const output = _.assign({}, opts);
     const keys = Object.keys(opts);
 
-    function addToKey(key:string, values: any[]) {
+    /**
+     * Create a matching object as given options, but with
+     * 'values' array
+     */
+    const output = keys.reduce(function (obj, key) {
+    	obj[key] = _.assign({}, opts[key], {values: []});
+        return obj;
+    }, {});
+
+    function addValuesToKey(key:string, values: any[]) {
         const current = output[key];
 
         // add 'true' where there's no value
@@ -260,48 +257,24 @@ function resolveValues(flags) {
         const key = flag[0];
         const match = opts[key];
 
-        if (flag.length === 1) {
-            addToKey(key, []);
-            return;
-        }
-
-        // direct match
-        if (match !== undefined) {
-            // console.log('+ Direct match');
-            // console.log(`--${key}`);
-            addToKey(key, flag.slice(1));
-            return;
-        }
-
         // key === p
         const aliasMatch = keys.filter(x => opts[x].alias === key);
-        if (aliasMatch.length) {
-            // console.log('+ Alias Match');
-            // console.log(`-${key} === --${aliasMatch[0]}`);
-            addToKey(aliasMatch[0], flag.slice(1));
+        const keyToAdd = (function () {
+        	if (aliasMatch.length) return aliasMatch[0];
+            return key;
+        })();
+
+        if (flag.length === 1) {
+            addValuesToKey(keyToAdd, []);
             return;
         }
 
-        // match via alias
-        if (flag.length === 1) {
-            // console.log('boolean', flag[0]);
-        } else {
-            // console.log(`values: ${flag[0]}=${flag.slice(1)}`);
-        }
+        // Here the current flag was not specified
+        // in the options, so just add it
+        addValuesToKey(keyToAdd, flag.slice(1));
     });
 
-    // console.log(output);
-    // console.log(bools);
-    // return _.merge.apply(null, flags);
-    // const names = flags.reduce(function (acc, item) {
-    //     const key = Object.keys(item)[0];
-    //     if (acc.indexOf(key) === -1) {
-    //         return acc.concat(key);
-    //     }
-    //     return acc;
-    // }, []);
-    // const obj = names.reduce()
-    // return flags;
+    return output;
 }
 
 function isFlag (incoming: string): boolean {
@@ -344,7 +317,7 @@ function tokenize (argString: any): string[] {
 }
 
 function firstFlagPos (items: string[]): number {
-    let i = 0;
+    let i = -1;
     items.some((x, index) => {
         if (isFlag(x)) {
             i = index;
