@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const parse = require("../dist/cli.parse").default;
+const CliFlagTypes = require("../dist/cli.parse").CliFlagTypes;
 
 describe.only('cli parser', function () {
     it('handles simple command + 2 inputs', function () {
@@ -88,5 +89,70 @@ describe.only('cli parser', function () {
         assert.deepEqual(output.flagValues.before.values[1], 'task4'); // -b task3 task4
         assert.deepEqual(output.flagValues.server.values[0], './app'); // --server ./app ./tmp
         assert.deepEqual(output.flagValues.server.values[1], './tmp'); // --server ./app ./tmp
+    });
+    it('flattens strings', function () {
+        const input = 'run task-1 -v=verbose';
+        const output = parse(input);
+        assert.deepEqual(output.command, 'run');
+        assert.deepEqual(output.input, ['task-1']);
+        assert.deepEqual(output.flags.v, 'verbose');
+    });
+    it('flattens booleans', function () {
+        const input = 'run task-1 -v --logger';
+        const output = parse(input);
+        assert.deepEqual(output.flags.v, true);
+        assert.deepEqual(output.flags.logger, true);
+    });
+    it('flattens multi arg', function () {
+        const input = 'run task-1 -vvv --before t1 t2';
+        const output = parse(input);
+        assert.deepEqual(output.flags.v[0], true);
+        assert.deepEqual(output.flags.v[1], true);
+        assert.deepEqual(output.flags.v[2], true);
+        assert.deepEqual(output.flags.before[0], 't1');
+        assert.deepEqual(output.flags.before[1], 't2');
+    });
+    it('uses count to tally up amount of values for a flag', function () {
+        const input = 'run task-1 -vvv --before t1 t2';
+        const output = parse(input, {
+            v: {
+                type: CliFlagTypes.Count
+            }
+        });
+        assert.deepEqual(output.flags.v, 3);
+        assert.deepEqual(output.flags.before, ['t1', 't2']);
+    });
+    it('converts to number', function () {
+        const input = 'run task-1 -p 8000 -v 10 20 30';
+        const output = parse(input, {
+            port: {
+                alias: 'p',
+                type: CliFlagTypes.Number
+            },
+            v: {
+                type: CliFlagTypes.Number
+            }
+        });
+        assert.deepEqual(output.flags.v[0], 10);
+        assert.deepEqual(output.flags.v[1], 20);
+        assert.deepEqual(output.flags.v[2], 30);
+    });
+    it('converts to boolean', function () {
+        const input = 'run task-1 --doc=true';
+        const output = parse(input, {
+            doc: {
+                type: CliFlagTypes.Boolean
+            }
+        });
+        assert.deepEqual(output.flags.doc, true);
+    });
+    it('converts to string', function () {
+        const input = 'run task-1 --doc';
+        const output = parse(input, {
+            doc: {
+                type: CliFlagTypes.String
+            }
+        });
+        assert.deepEqual(output.flags.doc, 'true');
     });
 });

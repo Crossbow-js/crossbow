@@ -1,11 +1,46 @@
 const _ = require('../lodash.custom');
 
+export interface FlagOption {
+    alias?: string
+    type?: CliFlagTypes
+}
+
+export interface FlagWithValues {
+    name?: string
+    type?: CliFlagTypes
+    values?: any[]
+}
+
+export interface FlagOptions {
+    [flagname: string]: FlagOption
+}
+export interface FlagsWithValues extends FlagOption {}
+
+export interface Flags {
+    [flagname: string]: any
+}
+
+export interface FlagsOutput {
+    command:    string
+    input:      string[]
+    rawFlags:   Array<string[]>,
+    flagValues: FlagWithValues,
+    flags:      Flags
+}
+
+export enum CliFlagTypes {
+    String  = <any>"string",
+    Boolean = <any>"boolean",
+    Number  = <any>"number",
+    Count   = <any>"count"
+}
+
 export default function parse(input, opts?) {
     opts = opts || {};
     return parseArray(tokenize(input), opts)
 }
 
-function parseArray (incoming: string[], opts) {
+function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
 
     const command   = incoming[0];
     const args      = incoming.slice(1);
@@ -31,10 +66,11 @@ function parseArray (incoming: string[], opts) {
         return args.slice(0, firstFlag);
     })();
 
-    // console.log('firstFlagPos(args)', firstFlag);
-    // console.log(input);
-
-    const flags = args
+    /**
+     * Create the raw flags array
+     * @type {any[][]}
+     */
+    const rawFlags = args
         /**
          * Look at each item, discard none-flags & and trim to the right
          * for every one. This is what will allow the multi options later
@@ -186,43 +222,111 @@ function parseArray (incoming: string[], opts) {
             return acc.concat([item]);
         }, [])
         /**
-         * Now create an object for each option.
-         * This is done to allow merging of objects separately later.
-         * If we created a single obj here now, it would mean having to handle the merge.
-         * Each object has a single property (the name) and a collection of values.
-         *
-         *  eg: 'crossbow run -p 8000 -v --before task-1 task-3 -d'
-         *
-         * ->
-         *   [
-         *      {
-         *          p: [ '8000' ]
-         *      },
-         *      {
-         *          v: []
-         *      },
-         *      {
-         *          before: ['task-1', 'task-3']
-         *      },
-         *      {
-         *          d: []
-         *      }
-         *   ]
+         * Now simplify into [propname, ..rest]
          */
         .map(function createObject(x) {
             return [propName(x[0]), ...x.slice(1)];
         });
 
+    const flagValues = resolveValues(rawFlags, opts);
+
     return {
         command,
-        input: input,
-        rawFlags: flags,
-        flagValues: resolveValues(flags, opts),
-        flags: {}
+        input,
+        rawFlags,
+        flagValues,
+        flags: flattenValues(flagValues)
     }
 }
 
-function resolveValues(flags, opts) {
+/**
+ * At this stage, every flag has a values collections.
+ * Depending on the type (if given) - try to set the value to
+ * what the user expects.
+ * eg:
+ *     -vvv
+ *
+ * config: {v: {type: count}}
+ *
+ * ->
+ *     {v: 3}
+ *
+ * @param flagValues
+ * @returns {{}}
+ */
+function flattenValues (flagValues) {
+    return Object.keys(flagValues).reduce(function (obj, key) {
+        const current: FlagWithValues = flagValues[key];
+        const value = (function () {
+            let outgoing = current.values;
+            /**
+             * If type === 'count'
+             */
+        	if (current.type === CliFlagTypes.Count) {
+                return outgoing.length;
+            }
+
+            /**
+             * If the users always wants a number
+             */
+            if (current.type === CliFlagTypes.Number) {
+                outgoing = current.values.map(Number);
+            }
+
+            /**
+             * If the users always wants a number
+             */
+            if (current.type === CliFlagTypes.Boolean) {
+                outgoing = current.values.map(Boolean);
+            }
+
+            /**
+             * If the users always wants a number
+             */
+            if (current.type === CliFlagTypes.String) {
+                outgoing = current.values.map(String);
+            }
+
+            /**
+             * If there was only a single value, just return the single value
+             */
+            if (outgoing.length === 1) return outgoing[0];
+
+            /**
+             * Return everything in the values array (this accounts for multiples)
+             */
+            return outgoing;
+        })();
+
+        obj[key] = value;
+
+        return obj;
+    }, {});
+}
+
+
+/**
+ * Either add a value to an existing values[] or create a new one.
+ */
+function addValuesToKey(key:string, values: any[], target: Flags) {
+    const current = target[key];
+
+    // add 'true' where there's no value
+    const valuesToAdd = (function () {
+        if (values.length === 0) return [true];
+        return values;
+    })();
+
+    // new
+    if (current === undefined) {
+        target[key] = {values: valuesToAdd};
+        return;
+    }
+    // existing
+    current.values.push.apply(current.values, valuesToAdd);
+}
+
+function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValues {
 
     const keys = Object.keys(opts);
 
@@ -230,32 +334,22 @@ function resolveValues(flags, opts) {
      * Create a matching object as given options, but with
      * 'values' array
      */
-    const output = keys.reduce(function (obj, key) {
-    	obj[key] = _.assign({}, opts[key], {values: []});
-        return obj;
-    }, {});
+    const output = <Flags>(function () {
+        return keys.reduce(function (obj, key) {
+            obj[key] = _.assign({}, opts[key], {
+                values: []
+            });
+            return obj;
+        }, {});
+    })();
 
-    function addValuesToKey(key:string, values: any[]) {
-        const current = output[key];
-
-        // add 'true' where there's no value
-        const valuesToAdd = (function () {
-            if (values.length === 0) return [true];
-            return values;
-        })();
-
-        // new
-        if (current === undefined) {
-            output[key] = {values: valuesToAdd};
-            return;
-        }
-        // existing
-        current.values.push.apply(current.values, valuesToAdd);
-    }
-
+    /**
+     * Look at each item and decide how to add this value
+     * (it may be an alias etc)
+     */
     flags.forEach(function (flag) {
+
         const key = flag[0];
-        const match = opts[key];
 
         // key === p
         const aliasMatch = keys.filter(x => opts[x].alias === key);
@@ -265,13 +359,13 @@ function resolveValues(flags, opts) {
         })();
 
         if (flag.length === 1) {
-            addValuesToKey(keyToAdd, []);
+            addValuesToKey(keyToAdd, [], output);
             return;
         }
 
         // Here the current flag was not specified
         // in the options, so just add it
-        addValuesToKey(keyToAdd, flag.slice(1));
+        addValuesToKey(keyToAdd, flag.slice(1), output);
     });
 
     return output;
