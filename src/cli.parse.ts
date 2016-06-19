@@ -64,7 +64,6 @@ function parseArray (incoming: string[]) {
          *    ['-pc']
          */
         .map(function getSubSection(flag) {
-            // console.log('f', flag);
             /**
              * Get the slice index (if followed by another flag at some point
              */
@@ -221,20 +220,77 @@ function resolveValues(flags) {
     // console.log(flags);
     // console.log(flags);
     const opts = {
-        'v': {
-            'count': true
+        // 'v': {
+        //     'count': true
+        // },
+        'port': {
+            alias: 'p',
+            type: 'number',
+            values: []
+        },
+        "server": {
+            alias: 's',
+            type: 'string',
+            values: []
         }
     };
 
+    const output = _.assign({}, opts);
+    const keys = Object.keys(opts);
+
+    function addToKey(key:string, values: any[]) {
+        const current = output[key];
+
+        // add 'true' where there's no value
+        const valuesToAdd = (function () {
+            if (values.length === 0) return [true];
+            return values;
+        })();
+
+        // new
+        if (current === undefined) {
+            output[key] = {values: valuesToAdd};
+            return;
+        }
+        // existing
+        current.values.push.apply(current.values, valuesToAdd);
+    }
+
     flags.forEach(function (flag) {
-        // console.log(flag);
-        // console.log(flag);
+        const key = flag[0];
+        const match = opts[key];
+
+        if (flag.length === 1) {
+            addToKey(key, []);
+            return;
+        }
+
+        // direct match
+        if (match !== undefined) {
+            // console.log('+ Direct match');
+            // console.log(`--${key}`);
+            addToKey(key, flag.slice(1));
+            return;
+        }
+
+        // key === p
+        const aliasMatch = keys.filter(x => opts[x].alias === key);
+        if (aliasMatch.length) {
+            // console.log('+ Alias Match');
+            // console.log(`-${key} === --${aliasMatch[0]}`);
+            addToKey(aliasMatch[0], flag.slice(1));
+            return;
+        }
+
+        // match via alias
         if (flag.length === 1) {
             // console.log('boolean', flag[0]);
         } else {
             // console.log(`values: ${flag[0]}=${flag.slice(1)}`);
         }
-    })
+    });
+
+    // console.log(output);
     // console.log(bools);
     // return _.merge.apply(null, flags);
     // const names = flags.reduce(function (acc, item) {
