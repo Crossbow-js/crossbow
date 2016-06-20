@@ -4,7 +4,7 @@ const DocsErrorTypes = require('../dist/command.docs').DocsErrorTypes;
 const docs = require('../dist/command.docs');
 
 describe('Running docs commands', function () {
-    it('reports when a task is completed', function () {
+    it('creates valid markdown', function () {
     	const output = cli.default({
             input: ['docs'],
             flags: {
@@ -33,6 +33,34 @@ $ crossbow run <taskname>
 |<pre>\`css\`</pre>|**Alias for:**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|
 <!--crossbow-docs-end-->`;
         assert.equal(expected, output.markdown);
+    });
+    it('skips private tasks', function () {
+        const output = cli.default({
+            input: ['docs'],
+            flags: {
+                handoff: true
+            }
+        }, {
+            tasks: {
+                "build-css": ['_css', '_version-rev'],
+                '_version-rev': '@sh versioner | xargs ls',
+                _css: ['@npm node-sass', '@npm cssmin']
+            }
+        });
+        const expected = `<!--crossbow-docs-start-->
+## Crossbow tasks
+
+The following tasks have been defined by this project's Crossbow configuration.
+Run any of them in the following way
+ 
+\`\`\`shell
+$ crossbow run <taskname>
+\`\`\`
+|Task name|Description|
+|---|---|
+|<pre>\`build-css\`</pre>|**Alias for:**<br>- \`_css\`<br>- \`_version-rev\`|
+<!--crossbow-docs-end-->`;
+        assert.equal(output.markdown, expected);
     });
     it('handles missing file', function () {
         const testfile = 'test/fixtures/docs/readme-typo.md';

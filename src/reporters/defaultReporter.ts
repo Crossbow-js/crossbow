@@ -1,17 +1,15 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import {Task} from "../task.resolve";
 import {CLI, CrossbowInput} from "../index";
-import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem} from "../task.resolve";
-import {relative} from 'path';
+import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem, Task} from "../task.resolve";
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
 
 import * as taskErrors from "../task.errors";
 import * as watchErrors from "../watch.errors";
 
-import logger from "../logger";
-import {compile, prefix} from '../logger';
+import logger, {compile} from "../logger";
+import {ParsedPath, parse, dirname, join, relative} from "path";
 import {WatchTasks} from "../watch.resolve";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
@@ -19,15 +17,11 @@ import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
-import {ExternalFileInput, ExternalFileContent, ExternalFile} from "../file.utils";
+import {ExternalFileInput, ExternalFileContent} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
-import {ParsedPath, parse, dirname, join} from "path";
 import {twoColWatchers} from "./task.list";
-import {
-    ReportNames, Reporters, Reporter, ReporterFileNotFoundError, ReporterErrorTypes,
-    ReporterError
-} from "../reporter.resolve";
+import {ReportNames, Reporters, Reporter, ReporterErrorTypes, ReporterError} from "../reporter.resolve";
 import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "../command.docs";
 
 const l = logger.info;
