@@ -1,7 +1,9 @@
+import {CliFlagTypes} from "./cli.parse";
 const merge = require('../lodash.custom').merge;
 const common = require('../opts/common.json');
 const runcommon = require('../opts/run-common.json');
 const globalcommon = require('../opts/global-common.json');
+import parse from './cli.parse';
 
 export enum CLICommands {
     // Run command
@@ -16,37 +18,46 @@ export enum CLICommands {
     tasks = <any>"tasks",
     t = <any>"t",
     ls = <any>"ls",
-        
+
     watchers = <any>"watchers",
     init = <any>"init",
-        
+
     docs = <any>"docs",
 }
 
 export default function (cb) {
-    var yargs  = require("yargs")
-        .command(CLICommands.run, "Run a task(s) [r]")
-        .command(CLICommands.watch, "Run a watcher(s) [w]")
-        .command(CLICommands.tasks, "See your available top-level tasks [ls, t]")
-        .command(CLICommands.docs, "Generate documentation automatically")
-        .command(CLICommands.watchers, "See your available watchers")
-        .command(CLICommands.init, "Create a configuration file")
-        .version(function () {
-            return require('../package.json').version;
-        })
-        .example("$0 run task1 task2", "Run 2 tasks in sequence")
-        .example("$0 tasks", "List your available tasks")
-        .epilogue("For help running a certain command, type <command> --help\neg: $0 run --help");
+    // var yargs  = require("yargs")
+    //     .command(CLICommands.run, "Run a task(s) [r]")
+    //     .command(CLICommands.watch, "Run a watcher(s) [w]")
+    //     .command(CLICommands.tasks, "See your available top-level tasks [ls, t]")
+    //     .command(CLICommands.docs, "Generate documentation automatically")
+    //     .command(CLICommands.watchers, "See your available watchers")
+    //     .command(CLICommands.init, "Create a configuration file")
+    //     .version(function () {
+    //         return require('../package.json').version;
+    //     })
+    //     .example("$0 run task1 task2", "Run 2 tasks in sequence")
+    //     .example("$0 tasks", "List your available tasks")
+    //     .epilogue("For help running a certain command, type <command> --help\neg: $0 run --help");
 
-    var argv    = yargs.argv;
-    var command = argv._[0];
-    var valid   = Object.keys(CLICommands);
+    // var argv    = yargs.argv;
+    // var command = argv._[0];
+    const cli = parse(process.argv.slice(2), {
+        'verbose': {
+            alias: 'v',
+            type: CliFlagTypes.Count
+        }
+    });
+    console.log(cli);
 
-    if (valid.indexOf(command) > -1) {
-        handleIncoming(command, yargs.reset(), cb);
-    } else {
-        yargs.showHelp();
-    }
+
+    // var valid   = Object.keys(CLICommands);
+
+    // if (valid.indexOf(cli.command) > -1) {
+    //     handleIncoming(cli.command, cli.flags, cb);
+    // } else {
+    //     console.log('Show help');
+    // }
 }
 
 function handleIncoming(command, yargs, cb) {
