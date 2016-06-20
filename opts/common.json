@@ -1,8 +1,7 @@
 {
   "cbfile": {
     "desc": "Path to your cbfile.js (gulp mode)",
-    "type": "string",
-    "default": ""
+    "type": "string"
   },
   "debug": {
     "desc": "Enable full error stacks in reports",
@@ -10,8 +9,7 @@
   },
   "dump": {
     "desc": "Dump task/sequence/config info to files in cwd",
-    "type": "boolean",
-    "default": false
+    "type": "boolean"
   },
   "e": {
     "desc": "Global Environment vars (eg: NAME=docker)",
@@ -19,10 +17,8 @@
   },
   "verbose": {
     "desc": "Increase Verbosity level of output",
-    "type": "boolean",
     "alias": "v",
-    "count": true,
-    "default": false
+    "type": "count"
   },
   "envPrefix": {
     "desc": "Prefix to use before any auto-generated ENV vars",

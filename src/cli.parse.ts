@@ -29,6 +29,7 @@ export interface FlagsWithValues extends FlagOption {
 }
 
 export enum CliFlagTypes {
+    Array   = <any>"array",
     String  = <any>"string",
     Boolean = <any>"boolean",
     Number  = <any>"number",
@@ -72,7 +73,7 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
 
     return {
         command,
-        input: split.input,
+        input: [command, ...split.input],
         rawFlags: split.flags,
         flagValues,
         flags: flattenValues(flagValues)
@@ -288,6 +289,15 @@ function flattenValues (flagValues) {
         const current = flagValues[key];
         const value = (function () {
             let outgoing = current.values;
+
+            /**
+             * If type is array, never touch the values, return them
+             * directly instead
+             */
+            if (current.type === CliFlagTypes.Array) {
+                return outgoing;
+            }
+
             /**
              * If type === 'count'
              */
@@ -380,7 +390,10 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
         const key = flag[0];
 
         // key === p
-        const aliasMatch = keys.filter(x => opts[x].alias === key);
+        const aliasMatch = keys.filter(x => {
+            return [].concat(opts[x].alias).indexOf(key) > -1;
+        });
+
         const keyToAdd = (function () {
         	if (aliasMatch.length) return aliasMatch[0];
             return key;
@@ -396,7 +409,16 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
         addValuesToKey(keyToAdd, flag.slice(1), output);
     });
 
-    return output;
+    /**
+     * Finally, strip anything that does not contain a
+     * value. This happens when a user provided an option,
+     * but no flag was given.
+     */
+    return Object.keys(output).reduce(function (obj, key) {
+        if (!output[key].values.length) return obj;
+        obj[key] = output[key];
+        return obj;
+    }, <FlagsWithValues>{});
 }
 
 function isFlag (incoming: string): boolean {

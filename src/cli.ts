@@ -42,15 +42,13 @@ export default function (cb) {
 
     // var argv    = yargs.argv;
     // var command = argv._[0];
-    const cli = parse(process.argv.slice(2), {
-        'verbose': {
-            alias: 'v',
-            type: CliFlagTypes.Count
-        }
-    });
+    const args = process.argv.slice(2);
+    const command = args[0];
+    const opts = merge({}, common, globalcommon, runcommon);
+    const cli = parse(args, opts);
+
     console.log(cli);
-
-
+    cb(cli);
     // var valid   = Object.keys(CLICommands);
 
     // if (valid.indexOf(cli.command) > -1) {

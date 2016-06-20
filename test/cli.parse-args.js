@@ -155,4 +155,44 @@ describe.only('cli parser', function () {
         });
         assert.deepEqual(output.flags.doc, 'true');
     });
+    it('ensures an array', function () {
+        const input = 'run task-1 -c example.js';
+        const output = parse(input, {
+            config: {
+                alias: 'c',
+                type: CliFlagTypes.Array
+            }
+        });
+        assert.deepEqual(output.flags.config[0], 'example.js');
+    });
+    it('Allows array of alias', function () {
+        const input = 'run task-1 --conf example.js -c another.js -r out.js';
+        const output = parse(input, {
+            config: {
+                alias: ['c', 'conf'],
+                type: CliFlagTypes.Array
+            },
+            reporters: {
+                type: CliFlagTypes.Array,
+                alias: ['r']
+            }
+        });
+        assert.deepEqual(output.flags.config[0], 'example.js');
+        assert.deepEqual(output.flags.config[1], 'another.js');
+    });
+    it('strips opts that were not present in the command', function () {
+        const input = 'run task-1 --conf example.js';
+        const output = parse(input, {
+            config: {
+                alias: ['c', 'conf'],
+                type: CliFlagTypes.Array
+            },
+            reporters: {
+                type: CliFlagTypes.Boolean,
+                alias: ['r']
+            }
+        });
+        assert.deepEqual(output.flags.config[0], 'example.js');
+        assert.isUndefined(output.flags.reporters);
+    })
 });

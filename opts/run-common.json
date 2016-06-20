@@ -16,7 +16,6 @@
   },
   "fail": {
     "desc": "Use --no-fail to stop failures affecting sibling tasks ",
-    "type": "boolean",
-    "default": true
+    "type": "boolean"
   }
 }
