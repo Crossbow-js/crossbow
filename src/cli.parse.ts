@@ -11,13 +11,33 @@ export interface FlagWithValues {
     values?: any[]
 }
 
+/**
+ * As given by the user, eg:
+ *
+ * { verbose: {alias: 'v', count: true } }
+ */
 export interface FlagOptions {
     [flagname: string]: FlagOption
 }
-export interface FlagsWithValues extends FlagOption {}
 
 export interface Flags {
-    [flagname: string]: any
+    [flagname: string]: FlagWithValues
+}
+
+export interface FlagsWithValues extends FlagOption {
+    values: string[]
+}
+
+export enum CliFlagTypes {
+    String  = <any>"string",
+    Boolean = <any>"boolean",
+    Number  = <any>"number",
+    Count   = <any>"count"
+}
+
+export interface CliInputAndFlags {
+    input: string[]
+    flags: Array<string[]>
 }
 
 export interface FlagsOutput {
@@ -28,22 +48,39 @@ export interface FlagsOutput {
     flags:      Flags
 }
 
-export enum CliFlagTypes {
-    String  = <any>"string",
-    Boolean = <any>"boolean",
-    Number  = <any>"number",
-    Count   = <any>"count"
-}
+/**
+ * Accept either string or array input
+ */
+export default function parse(input: string|string[], opts?: FlagOptions): FlagsOutput {
+    opts = opts || <FlagOptions>{};
 
-export default function parse(input, opts?) {
-    opts = opts || {};
+    if (Array.isArray(input)) {
+        return parseArray(input, opts)
+    }
+
+    // string given
     return parseArray(tokenize(input), opts)
 }
 
 function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
 
-    const command   = incoming[0];
-    const args      = incoming.slice(1);
+    const command    = incoming[0];
+    const args       = incoming.slice(1);
+    const split      = splitInputFromFlags(args);
+
+    const flagValues = resolveValues(split.flags, opts);
+
+    return {
+        command,
+        input: split.input,
+        rawFlags: split.flags,
+        flagValues,
+        flags: flattenValues(flagValues)
+    }
+}
+
+function splitInputFromFlags(args: string[]): CliInputAndFlags {
+
     const firstFlag = firstFlagPos(args);
 
     /**
@@ -70,19 +107,19 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
      * Create the raw flags array
      * @type {any[][]}
      */
-    const rawFlags = args
-        /**
-         * Look at each item, discard none-flags & and trim to the right
-         * for every one. This is what will allow the multi options later
-         * eg:
-         *    'task1 -p --before task2 task3 -pc
-         *  ->
-         *      [
-         *          ['-p', '--before', 'task2', 'task3', '-pc],
-         *          ['--before', 'task2', 'task3', '-pc'],
-         *          ['-pc']
-         *      ]
-         */
+    const flags = args
+    /**
+     * Look at each item, discard none-flags & and trim to the right
+     * for every one. This is what will allow the multi options later
+     * eg:
+     *    'task1 -p --before task2 task3 -pc
+     *  ->
+     *      [
+     *          ['-p', '--before', 'task2', 'task3', '-pc],
+     *          ['--before', 'task2', 'task3', '-pc'],
+     *          ['-pc']
+     *      ]
+     */
         .reduce(function groupRight(acc, item, i) {
             if (isFlag(item)) {
                 return acc.concat([args.slice(i)]);
@@ -228,15 +265,7 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
             return [propName(x[0]), ...x.slice(1)];
         });
 
-    const flagValues = resolveValues(rawFlags, opts);
-
-    return {
-        command,
-        input,
-        rawFlags,
-        flagValues,
-        flags: flattenValues(flagValues)
-    }
+    return {input, flags};
 }
 
 /**
@@ -256,7 +285,7 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
  */
 function flattenValues (flagValues) {
     return Object.keys(flagValues).reduce(function (obj, key) {
-        const current: FlagWithValues = flagValues[key];
+        const current = flagValues[key];
         const value = (function () {
             let outgoing = current.values;
             /**
@@ -301,14 +330,14 @@ function flattenValues (flagValues) {
         obj[key] = value;
 
         return obj;
-    }, {});
+    }, <Flags>{});
 }
 
 
 /**
  * Either add a value to an existing values[] or create a new one.
  */
-function addValuesToKey(key:string, values: any[], target: Flags) {
+function addValuesToKey(key:string, values: any[], target: FlagsWithValues) {
     const current = target[key];
 
     // add 'true' where there's no value
@@ -334,13 +363,12 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
      * Create a matching object as given options, but with
      * 'values' array
      */
-    const output = <Flags>(function () {
+    const output = (function () {
         return keys.reduce(function (obj, key) {
-            obj[key] = _.assign({}, opts[key], {
-                values: []
-            });
+            obj[key] = _.assign({}, opts[key]);
+            obj[key].values = [];
             return obj;
-        }, {});
+        }, <FlagsWithValues>{});
     })();
 
     /**
