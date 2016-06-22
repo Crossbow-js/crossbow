@@ -8,7 +8,6 @@ import {statSync} from "fs";
 import {join} from "path";
 
 const _    = require('../lodash.custom');
-import yml = require('js-yaml');
 
 export interface ExternalFile {
     path: string
@@ -91,6 +90,7 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
          * If the input file was yaml, load it & translate to JS
          */
         if (inputFile.parsed.ext.match(/ya?ml$/i)) {
+            const yml = require('js-yaml');
             return _.assign(inputFile, {
                 input: yml.safeLoad(readFileSync(inputFile.resolved, 'utf8'))
             })
