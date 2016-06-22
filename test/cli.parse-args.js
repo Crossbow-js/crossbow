@@ -2,10 +2,11 @@ const assert = require('chai').assert;
 const parse = require("../dist/cli.parse").default;
 const CliFlagTypes = require("../dist/cli.parse").CliFlagTypes;
 
-describe.only('cli parser', function () {
-    it('handles simple command + 2 inputs', function () {
+describe('cli parser', function () {
+    it.only('handles simple command + 2 inputs', function () {
         const input = 'run task-1 task2';
         const output = parse(input);
+        console.log(output);
         assert.deepEqual(output.command, 'run');
         assert.deepEqual(output.input, ['task-1', 'task2']);
     });
