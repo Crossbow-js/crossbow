@@ -12,7 +12,7 @@ const common       = '../opts/common.json';
 const runcommon    = '../opts/run-common.json';
 const globalcommon = '../opts/global-common.json';
 
-export const cliCommands: CLICommands = {
+export const commands: CLICommands = {
 
     run: {
         alias: ['run', 'r'],

@@ -1,4 +1,4 @@
-import {cliCommands, CLICommands} from "./cli.commands";
+import {commands, CLICommands} from "./cli.commands";
 const _ = require('../lodash.custom');
 
 import parse from './cli.parse';
@@ -9,11 +9,11 @@ export default function (cb) {
 
     const args          = process.argv.slice(2);
     const command       = args[0];
-    const match         = getCommand(command, cliCommands);
+    const match         = getCommand(command, commands);
 
     if (match.length) {
         console.log('Got a match', match);
-        const opts = _.merge({}, ...cliCommands[match[0]].opts.map(require));
+        const opts = _.merge({}, ...commands[match[0]].opts.map(require));
         const cli  = parse(args, opts);
         cb(cli);
     } else {
