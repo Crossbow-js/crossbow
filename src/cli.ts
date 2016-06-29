@@ -1,95 +1,63 @@
+import {cliCommands, CLICommands} from "./cli.commands";
 const _ = require('../lodash.custom');
-const common = '../opts/common.json';
-const runcommon = '../opts/run-common.json';
-const globalcommon = '../opts/global-common.json';
+
 import parse from './cli.parse';
 
-export const CLICommands  = {
 
-    run: {
-        alias: ['run', 'r'],
-        description: 'Run a task(s)',
-        opts: [
-            '../opts/command.run.opts.json',
-            runcommon,
-            globalcommon,
-            common,
-        ]
-    },
-
-    watch: {
-        alias: ["watch", "w"],
-        description: 'Run a watcher(s)',
-        opts: [
-            '../opts/command.watch.opts.json',
-            runcommon,
-            common
-        ]
-    },
-
-    tasks: {
-        alias: ["tasks", "t", "ls"],
-        description: 'See your available top-level tasks',
-        opts: [
-            '../opts/command.tasks.opts.json',
-            common,
-            globalcommon
-        ]
-    },
-
-    watchers: {
-        alias: ['watchers'],
-        description: 'See your available watchers',
-        opts: [
-            '../opts/command.watchers.opts.json',
-            globalcommon
-        ]
-    },
-
-    init: {
-        alias: ['init', 'i'],
-        description: 'Create a configuration file',
-        opts: [
-            '../opts/command.init.opts.json',
-            globalcommon
-        ]
-    },
-
-    docs: {
-        alias: ['docs'],
-        description: 'Generate documentation automatically',
-        opts: [
-            '../opts/command.docs.opts.json',
-            globalcommon
-        ]
-    }
-};
 
 export default function (cb) {
 
     const args          = process.argv.slice(2);
     const command       = args[0];
-    const match         = getCommand(command);
+    const match         = getCommand(command, cliCommands);
 
     if (match.length) {
-        // console.log('Got a match', match);
-        const opts = _.merge({}, ...CLICommands[match[0]].opts.map(require));
-        const cli = parse(args, opts);
+        console.log('Got a match', match);
+        const opts = _.merge({}, ...cliCommands[match[0]].opts.map(require));
+        const cli  = parse(args, opts);
         cb(cli);
     } else {
         console.log('Show help, no match');
     }
 }
 
-export function getCommand(incoming) {
-    return Object.keys(CLICommands).reduce(function (acc, item) {
+export function getCommand(incoming: string, commands: CLICommands): string[] {
 
-        const selected = CLICommands[item];
+    return Object.keys(commands).reduce(function (acc, item) {
 
-        // direct match
-        if (item === incoming) return acc.concat(item);
+        const selected = commands[item];
 
-        if (selected.alias && selected.alias.indexOf(incoming) > -1) return acc.concat(item);
+        /**
+         * A direct match - this means the typed command matches
+         * an command name exactly.
+         *
+         * eg:
+         *  $ crossbow run
+         *
+         * -> ['run']
+         */
+        if (item === incoming) {
+            return acc.concat(item);
+        }
+
+        /**
+         * An alias match is when a short-hand command was given
+         * and it existed in the 'alias' array for a command.
+         *
+         * eg:
+         *
+         *  $ crossbow run
+         *
+         * commands:
+         *
+         * run: { alias:['run', 'r'] }
+         *
+         * -> ['run']
+         *
+         */
+        if (selected.alias && selected.alias.indexOf(incoming) > -1) {
+            return acc.concat(item);
+        }
 
         return acc;
     }, []);
