@@ -3,9 +3,11 @@ import {CBWatchOptions} from "../watch.resolve";
 import {CrossbowConfiguration} from "../config";
 import {getRawOutputStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
+import watchCommand from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
 const merge = require('../../lodash.custom').merge;
+import {WatchEvent} from '../watch.file-watcher';
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
@@ -113,7 +115,7 @@ export const api = {
             ]
         };
         const cliInput = ['watch', identifer];
-        const output   = require('../command.watch').default({input: cliInput, flags:{}}, input, input.config, input.reporter);
+        const output   = watchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
         return output;
     },
     watcher: function (patterns: string[], options: CBWatchOptions) {

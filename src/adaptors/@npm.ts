@@ -25,14 +25,14 @@ export interface CommandOptions {
     stdio: any
 }
 
-interface CrossbowSpawnError extends Error {
+export interface CrossbowSpawnError extends Error {
     code: string
     errno: string
     syscall: string
     file: string
 }
 
-interface CBEmitter extends EventEmitter {
+export interface CBEmitter extends EventEmitter {
     stdin: any
     stdout: any
     stderr: any

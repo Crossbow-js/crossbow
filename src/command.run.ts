@@ -51,7 +51,7 @@ export interface RunCommandCompletionReport extends RunCommandErrorReport {
     decoratedSequence: SequenceItem[]
 }
 
-type RunCommandErrorStream = RunCommandErrorReport|Error;
+export type RunCommandErrorStream = RunCommandErrorReport|Error;
 
 function getRunCommandSetup (trigger: CommandTrigger) {
     const cliInput = trigger.cli.input.slice(1);
