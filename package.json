@@ -66,6 +66,7 @@
     "through2": "2.0.0",
     "typescript": "1.8.10",
     "typings": "0.6.6",
-    "watchify": "3.7.0"
+    "watchify": "3.7.0",
+    "webpack": "1.13.1"
   }
 }

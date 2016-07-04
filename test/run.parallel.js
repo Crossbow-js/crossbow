@@ -15,6 +15,8 @@ describe('Running in parallel', function () {
             .subscribe(function (report) {
                 assert.equal(report[0].type, 'start');
                 assert.equal(report[1].type, 'start');
+                assert.equal(report[2].type, 'end');
+                assert.equal(report[3].type, 'end');
                 done();
             });
     });
