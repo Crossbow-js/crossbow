@@ -3,8 +3,6 @@ const _ = require('../lodash.custom');
 
 import parse from './cli.parse';
 
-
-
 export default function (cb) {
 
     const args          = process.argv.slice(2);
@@ -12,12 +10,23 @@ export default function (cb) {
     const match         = getCommand(command, commands);
 
     if (match.length) {
-        console.log('Got a match', match);
         const opts = _.merge({}, ...commands[match[0]].opts.map(require));
         const cli  = parse(args, opts);
-        cb(cli);
+
+        /**
+         * Here, the user gave the --help flag along with a valid
+         * command. So we show command-specific help
+         */
+        if (cli.flags.help) {
+            // console.log(`Show help for ${cli.command}`);
+            console.log(commands[match[0]].help);
+        } else {
+            console.log(cli);
+            // cb(cli);
+        }
     } else {
-        console.log('Show help, no match');
+        // console.log(commands);
+        console.log('Show global help, no match');
     }
 }
 

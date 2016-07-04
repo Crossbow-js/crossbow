@@ -1,7 +1,9 @@
+import {twoCol} from "./reporters/task.list";
 export interface CommandOption {
     alias: string[],
     description: string,
     opts: string[]
+    help: string
 }
 
 export interface CLICommands {
@@ -11,6 +13,21 @@ export interface CLICommands {
 const common       = '../opts/common.json';
 const runcommon    = '../opts/run-common.json';
 const globalcommon = '../opts/global-common.json';
+
+function twoColFromJson(json) {
+    const cols = Object.keys(json).map(function(key) {
+        return [key, json[key].desc]
+    });
+    const longest = cols.reduce(function (acc, item) {
+        if (item[0].length > acc) return item[0].length;
+        return acc;
+    }, 0);
+    const padded = cols.map(function () {
+        // todo padded lines
+    });
+    return 'cols';
+
+}
 
 export const commands: CLICommands = {
 
@@ -22,7 +39,16 @@ export const commands: CLICommands = {
             runcommon,
             globalcommon,
             common,
-        ]
+        ],
+        help: `Usage: crossbow run [...tasks] [OPTIONS]
+Options:
+${twoColFromJson(require(runcommon))}
+Example: run 2 named tasks in parallel 
+    $ crossbow run task1 task2 -p
+
+Example: run 1 named task, 1 inline task in order 
+    $ crossbow run task1 '@npm webpack'
+    `
     },
 
     watch: {
@@ -32,7 +58,8 @@ export const commands: CLICommands = {
             '../opts/command.watch.opts.json',
             runcommon,
             common
-        ]
+        ],
+        help: `Watch Help`
     },
 
     tasks: {
@@ -42,7 +69,8 @@ export const commands: CLICommands = {
             '../opts/command.tasks.opts.json',
             common,
             globalcommon
-        ]
+        ],
+        help: `Tasks Help`
     },
 
     watchers: {
@@ -51,7 +79,8 @@ export const commands: CLICommands = {
         opts: [
             '../opts/command.watchers.opts.json',
             globalcommon
-        ]
+        ],
+        help: `Watchers Help`
     },
 
     init: {
@@ -60,7 +89,8 @@ export const commands: CLICommands = {
         opts: [
             '../opts/command.init.opts.json',
             globalcommon
-        ]
+        ],
+        help: `Init Help`
     },
 
     docs: {
@@ -69,6 +99,7 @@ export const commands: CLICommands = {
         opts: [
             '../opts/command.docs.opts.json',
             globalcommon
-        ]
+        ],
+        help: `docs help`
     }
 };
