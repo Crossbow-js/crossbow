@@ -7,7 +7,7 @@
   "reporters": {
     "desc": "Paths to modules that contain a reporter",
     "type": "array",
-    "alias": ["reporter", "r"]
+    "alias": ["r"]
   },
   "cwd": {
     "desc": "Current Working directory",

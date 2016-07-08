@@ -29,8 +29,8 @@ export const commands: CLICommands = {
         ],
         help: `Usage: crossbow run [...tasks] [OPTIONS]
 
-Run Specific Options:
-${twoColFromJson(_.merge({}, require(runcommon)))}
+Run Options:
+${twoColFromJson(_.merge({}, require('../opts/command.run.opts.json'), require(runcommon)))}
 
 Global Options:
 ${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
@@ -51,7 +51,20 @@ Example: use a config file from another folder
             runcommon,
             common
         ],
-        help: `Watch Help`
+        help: `Usage: crossbow watch [...watcher] [OPTIONS]
+
+Watch Options:
+${twoColFromJson(_.merge({}, require('../opts/command.watch.opts.json'), require('../opts/run-common.json')))}
+
+Global Options:
+${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+
+Example: run 2 named tasks in parallel 
+    $ crossbow run task1 task2 -p
+
+Example: use a config file from another folder 
+    $ crossbow run <task-name> -c .conf/crossbow.yaml
+    `
     },
 
     tasks: {
@@ -62,7 +75,17 @@ Example: use a config file from another folder
             common,
             globalcommon
         ],
-        help: `Tasks Help`
+        help: `Usage: crossbow tasks [OPTIONS]
+
+Options:
+${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+
+Example: show all available tasks 
+    $ crossbow tasks
+
+Example: show all tasks different config file 
+    $ crossbow tasks -c conf/config.js
+    `
     },
 
     watchers: {
