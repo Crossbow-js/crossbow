@@ -18,11 +18,9 @@ export default function (cb) {
          * command. So we show command-specific help
          */
         if (cli.flags.help) {
-            // console.log(`Show help for ${cli.command}`);
             console.log(commands[match[0]].help);
         } else {
-            console.log(cli);
-            // cb(cli);
+            cb(cli);
         }
     } else {
         // console.log(commands);

@@ -2,7 +2,7 @@
   "parallel": {
     "desc": "Run top-level tasks in parallel",
     "type": "boolean",
-    "alias": "p",
+    "alias": ["p"],
     "default": false
   }
 }

@@ -17,7 +17,7 @@
   },
   "verbose": {
     "desc": "Increase Verbosity level of output",
-    "alias": "v",
+    "alias": ["v"],
     "type": "count"
   },
   "envPrefix": {

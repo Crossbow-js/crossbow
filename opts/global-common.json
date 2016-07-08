@@ -2,7 +2,7 @@
   "config": {
     "desc": "Path to your input file.",
     "type": "array",
-    "alias": ["c", "conf"]
+    "alias": ["c"]
   },
   "reporters": {
     "desc": "Paths to modules that contain a reporter",

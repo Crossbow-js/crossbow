@@ -3,12 +3,14 @@ const _ = require('../lodash.custom');
 export interface FlagOption {
     alias?: string
     type?: CliFlagTypes
+    help?: string
 }
 
 export interface FlagWithValues {
     name?: string
     type?: CliFlagTypes
     values?: any[]
+    help?: string
 }
 
 /**
@@ -22,6 +24,7 @@ export interface FlagOptions {
 
 export interface Flags {
     [flagname: string]: FlagWithValues
+    help?: boolean
 }
 
 export interface FlagsWithValues extends FlagOption {

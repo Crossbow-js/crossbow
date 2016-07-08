@@ -1,4 +1,6 @@
 import {twoCol} from "./reporters/task.list";
+import {log} from "debug/node";
+const _ = require('../lodash.custom');
 export interface CommandOption {
     alias: string[],
     description: string,
@@ -14,21 +16,6 @@ const common       = '../opts/common.json';
 const runcommon    = '../opts/run-common.json';
 const globalcommon = '../opts/global-common.json';
 
-function twoColFromJson(json) {
-    const cols = Object.keys(json).map(function(key) {
-        return [key, json[key].desc]
-    });
-    const longest = cols.reduce(function (acc, item) {
-        if (item[0].length > acc) return item[0].length;
-        return acc;
-    }, 0);
-    const padded = cols.map(function () {
-        // todo padded lines
-    });
-    return 'cols';
-
-}
-
 export const commands: CLICommands = {
 
     run: {
@@ -41,13 +28,18 @@ export const commands: CLICommands = {
             common,
         ],
         help: `Usage: crossbow run [...tasks] [OPTIONS]
-Options:
-${twoColFromJson(require(runcommon))}
+
+Run Specific Options:
+${twoColFromJson(_.merge({}, require(runcommon)))}
+
+Global Options:
+${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+
 Example: run 2 named tasks in parallel 
     $ crossbow run task1 task2 -p
 
-Example: run 1 named task, 1 inline task in order 
-    $ crossbow run task1 '@npm webpack'
+Example: use a config file from another folder 
+    $ crossbow run <task-name> -c .conf/crossbow.yaml
     `
     },
 
@@ -103,3 +95,30 @@ Example: run 1 named task, 1 inline task in order
         help: `docs help`
     }
 };
+
+function twoColFromJson(json) {
+    const cols = Object.keys(json).map(function(key) {
+        const subject = json[key];
+        const leftSide = (function () {
+            const open = '--' + key;
+            if (subject.alias && subject.alias.length) {
+                return [open, ', ', ...subject.alias.map(x => '-' + x).join(', ')].join('')
+            }
+            return open;
+        })();
+        return [leftSide, json[key].desc]
+    });
+    const longest = cols.reduce(function (acc, item) {
+        if (item[0].length > acc) return item[0].length;
+        return acc;
+    }, 0);
+    const padded = cols.map(function (tuple) {
+        if (tuple[0].length < longest) {
+            return [tuple[0] + new Array(longest - tuple[0].length).join(' ') + ' ', tuple[1]];
+        }
+        return tuple;
+    });
+    return padded.reduce(function (acc, item) {
+        return acc.concat('  ' + item.join('  '));
+    }, []).join('\n');
+}
