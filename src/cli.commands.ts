@@ -30,10 +30,10 @@ export const commands: CLICommands = {
         help: `Usage: crossbow run [...tasks] [OPTIONS]
 
 Run Options:
-${twoColFromJson(_.merge({}, require('../opts/command.run.opts.json'), require(runcommon)))}
+${optionsList(_.merge({}, require('../opts/command.run.opts.json'), require(runcommon)))}
 
 Global Options:
-${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+${optionsList(_.merge({}, require(globalcommon), require(common)))}
 
 Example: run 2 named tasks in parallel 
     $ crossbow run task1 task2 -p
@@ -54,10 +54,10 @@ Example: use a config file from another folder
         help: `Usage: crossbow watch [...watcher] [OPTIONS]
 
 Watch Options:
-${twoColFromJson(_.merge({}, require('../opts/command.watch.opts.json'), require('../opts/run-common.json')))}
+${twoColFromJson(_.merge({}, require('../opts/command.watch.opts.json'), require('../opts/run-common.json')), 'desc')}
 
 Global Options:
-${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+${twoColFromJson(_.merge({}, require(globalcommon), require(common)), 'desc')}
 
 Example: run 2 named tasks in parallel 
     $ crossbow run task1 task2 -p
@@ -78,7 +78,7 @@ Example: use a config file from another folder
         help: `Usage: crossbow tasks [OPTIONS]
 
 Options:
-${twoColFromJson(_.merge({}, require(globalcommon), require(common)))}
+${twoColFromJson(_.merge({}, require(globalcommon), require(common)), 'desc')}
 
 Example: show all available tasks 
     $ crossbow tasks
@@ -98,7 +98,7 @@ Example: show all tasks different config file
         help: `Usage: crossbow watchers [OPTIONS]
         
 Options: 
-${twoColFromJson(_.merge({}, require(globalcommon)))}
+${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
 Example: Show watchers from a config file
     $ crossbow watchers -c conf/config.js
@@ -115,10 +115,10 @@ Example: Show watchers from a config file
         help: `Usage: crossbow init [OPTIONS]
 
 Init Options:
-${twoColFromJson(_.merge({}, require('../opts/command.init.opts.json')))}
+${twoColFromJson(_.merge({}, require('../opts/command.init.opts.json')), 'desc')}
 
 Options:
-${twoColFromJson(_.merge({}, require(globalcommon)))}
+${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
 Examples: Create a config file in default format (yaml)
     $ crossbow init
@@ -138,10 +138,10 @@ Examples: Create a config file in JSON format
         help: `Usage: crossbow docs [OPTIONS]
 
 Docs Options:
-${twoColFromJson(_.merge({}, require('../opts/command.docs.opts.json')))}
+${twoColFromJson(_.merge({}, require('../opts/command.docs.opts.json')), 'desc')}
 
 Options:
-${twoColFromJson(_.merge({}, require(globalcommon)))}
+${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
 Examples: Create a config file in default format (yaml)
     $ crossbow init
@@ -152,17 +152,21 @@ Examples: Create a config file in JSON format
     }
 };
 
-function twoColFromJson(json) {
+function optionsList (obj) {
+    return twoColFromJson(obj, 'desc', function (key, subject) {
+        const open = '--' + key;
+        if (subject.alias && subject.alias.length) {
+            return [open, ', ', ...subject.alias.map(x => '-' + x).join(', ')].join('')
+        }
+        return open;
+    })
+}
+
+export function twoColFromJson(json, rightSidePropertyName: string, leftside?: Function) {
+    if (!leftside) leftside = (subject) => subject;
     const cols = Object.keys(json).map(function(key) {
         const subject = json[key];
-        const leftSide = (function () {
-            const open = '--' + key;
-            if (subject.alias && subject.alias.length) {
-                return [open, ', ', ...subject.alias.map(x => '-' + x).join(', ')].join('')
-            }
-            return open;
-        })();
-        return [leftSide, json[key].desc]
+        return [leftside(key, subject), json[key][rightSidePropertyName]]
     });
     const longest = cols.reduce(function (acc, item) {
         if (item[0].length > acc) return item[0].length;

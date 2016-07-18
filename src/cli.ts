@@ -1,4 +1,4 @@
-import {commands, CLICommands} from "./cli.commands";
+import {commands, CLICommands, twoColFromJson} from "./cli.commands";
 const _ = require('../lodash.custom');
 
 import parse from './cli.parse';
@@ -23,8 +23,27 @@ export default function (cb) {
             cb(cli);
         }
     } else {
-        // console.log(commands);
-        console.log('Show global help, no match');
+        console.log(`
+Usage: crossbow [command] [..args] [OPTIONS]
+
+Commands: 
+${twoColFromJson(commands, 'description')}
+
+Example: Run the task 'build-js'
+
+    $ crossbow run build-js
+    
+Example: Run the tasks build-css and build-js in sequence
+
+    $ crossbow run build-css build-js
+        
+For more detailed help, use the command name + the --help flag.
+
+    $ crossbow run --help
+    $ crossbow init --help
+`);
+
+
     }
 }
 
