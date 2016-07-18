@@ -95,7 +95,14 @@ Example: show all tasks different config file
             '../opts/command.watchers.opts.json',
             globalcommon
         ],
-        help: `Watchers Help`
+        help: `Usage: crossbow watchers [OPTIONS]
+        
+Options: 
+${twoColFromJson(_.merge({}, require(globalcommon)))}
+
+Example: Show watchers from a config file
+    $ crossbow watchers -c conf/config.js
+`
     },
 
     init: {
@@ -105,7 +112,20 @@ Example: show all tasks different config file
             '../opts/command.init.opts.json',
             globalcommon
         ],
-        help: `Init Help`
+        help: `Usage: crossbow init [OPTIONS]
+
+Init Options:
+${twoColFromJson(_.merge({}, require('../opts/command.init.opts.json')))}
+
+Options:
+${twoColFromJson(_.merge({}, require(globalcommon)))}
+
+Examples: Create a config file in default format (yaml)
+    $ crossbow init
+
+Examples: Create a config file in JSON format
+    $ crossbow init --type json
+`
     },
 
     docs: {
@@ -115,7 +135,20 @@ Example: show all tasks different config file
             '../opts/command.docs.opts.json',
             globalcommon
         ],
-        help: `docs help`
+        help: `Usage: crossbow docs [OPTIONS]
+
+Docs Options:
+${twoColFromJson(_.merge({}, require('../opts/command.docs.opts.json')))}
+
+Options:
+${twoColFromJson(_.merge({}, require(globalcommon)))}
+
+Examples: Create a config file in default format (yaml)
+    $ crossbow init
+
+Examples: Create a config file in JSON format
+    $ crossbow init --type json
+`
     }
 };
 

@@ -13,7 +13,7 @@ watch:
     before: 'watchify'
     watchers:
       - patterns: ['test/fixtures/scss', 'test/fixtures/css']
-        tasks: ['@ssh echo "sass file edited"']
+        tasks: ['@sh echo "sass file edited"']
 
 tasks:
 

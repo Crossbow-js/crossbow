@@ -1,6 +1,10 @@
 {
   "output": {
-    "desc": "Specify a new filename where the docs will be written",
-    "alias": "o"
+    "desc": "Specify a NEW filename where the docs will be written",
+    "alias": ["o"]
+  },
+  "file": {
+    "desc": "Specify an EXISTING file to place docs",
+    "alias": ["f"]
   }
 }
