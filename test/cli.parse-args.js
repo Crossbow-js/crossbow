@@ -39,7 +39,8 @@ describe('cli parser', function () {
         const input = 'run task-1 -p 8080 -- task2 task3';
         const output = parse(input);
         assert.deepEqual(output.command, 'run');
-        assert.deepEqual(output.input, ['run', 'task-1', 'task2', 'task3']);
+        assert.deepEqual(output.trailing, 'task2 task3');
+        assert.deepEqual(output.input, ['run', 'task-1']);
         assert.deepEqual(output.flagValues.p.values[0], '8080');
     });
     it('Works with alias in opts', function () {
@@ -207,5 +208,12 @@ describe('cli parser', function () {
         });
 
         assert.deepEqual(output.flags.conf, 'example.js');
+    });
+    it('Stops parsing after `--` ', function () {
+        const input = 'run --conf example.js task-1 task-2 -- composer update --config';
+        const output = parse(input);
+        assert.deepEqual(output.input, ['run', 'task-1', 'task-2']);
+        assert.deepEqual(output.flags.conf, 'example.js');
+        assert.deepEqual(output.trailing, 'composer update --config');
     });
 });

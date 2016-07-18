@@ -49,7 +49,8 @@ export interface FlagsOutput {
     input:      string[]
     rawFlags:   Array<string[]>,
     flagValues: FlagWithValues,
-    flags:      Flags
+    flags:      Flags,
+    trailing:   string
 }
 
 /**
@@ -68,9 +69,23 @@ export default function parse(input: string|string[], opts?: FlagOptions): Flags
 
 function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
 
-    const command    = incoming[0];
-    const args       = incoming.slice(1);
-    const split      = splitInputFromFlags(args);
+    const command = incoming[0];
+    const args    = (function () {
+        const _incoming = incoming.slice(1);
+        const _terminator = _incoming.indexOf('--');
+        if (_terminator > -1) {
+            return {
+                args: _incoming.slice(0, _terminator),
+                trailing: _incoming.slice(_terminator+1).join(' ')
+            };
+        }
+        return {
+            args: _incoming,
+            trailing: ''
+        };
+    })();
+
+    const split: CliInputAndFlags = splitInputFromFlags(args.args);
 
     const flagValues = resolveValues(split.flags, opts);
     const flattened  = flattenValues(flagValues.flags);
@@ -80,13 +95,15 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
         input: [command, ...split.input, ...flagValues.input],
         rawFlags: split.flags,
         flagValues: flagValues.flags,
-        flags: flattened
+        flags: flattened,
+        trailing: args.trailing
     }
 }
 
 function splitInputFromFlags(args: string[]): CliInputAndFlags {
 
     const firstFlag = firstFlagPos(args);
+    const trailing   = [];
 
     /**
      * Input is args directly after the command, or at the end
@@ -258,7 +275,7 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
              * If -- encountered at the end, push items onto input
              */
             if (item[0] === '--') {
-                input = input.concat(item.slice(1));
+                trailing.push.apply(trailing, item.slice(1));
                 return acc;
             }
             return acc.concat([item]);
@@ -269,6 +286,7 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
         .map(function createObject(x) {
             return [propName(x[0]), ...x.slice(1)];
         });
+
 
     return {input, flags};
 }
