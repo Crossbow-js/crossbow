@@ -73,13 +73,14 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
     const split      = splitInputFromFlags(args);
 
     const flagValues = resolveValues(split.flags, opts);
+    const flattened  = flattenValues(flagValues.flags);
 
     return {
         command,
-        input: [command, ...split.input],
+        input: [command, ...split.input, ...flagValues.input],
         rawFlags: split.flags,
-        flagValues,
-        flags: flattenValues(flagValues)
+        flagValues: flagValues.flags,
+        flags: flattened
     }
 }
 
@@ -368,7 +369,7 @@ function addValuesToKey(key:string, values: any[], target: FlagsWithValues) {
     current.values.push.apply(current.values, valuesToAdd);
 }
 
-function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValues {
+function resolveValues(flags:Array<string[]>, opts: FlagOptions): {flags: FlagsWithValues, input: string[]} {
 
     const keys = Object.keys(opts);
 
@@ -384,6 +385,8 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
         }, <FlagsWithValues>{});
     })();
 
+    const dangling = [];
+
     /**
      * Look at each item and decide how to add this value
      * (it may be an alias etc)
@@ -391,7 +394,7 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
     flags.forEach(function (flag) {
 
         const key = flag[0];
-
+        
         // key === p
         const aliasMatch = keys.filter(x => {
             return [].concat(opts[x].alias).indexOf(key) > -1;
@@ -405,6 +408,12 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
         if (flag.length === 1) {
             addValuesToKey(keyToAdd, [], output);
             return;
+        } else if (flag.length > 1) {
+            if (!opts[keyToAdd] || (opts[keyToAdd].type !== CliFlagTypes.Array)) {
+                addValuesToKey(keyToAdd, flag.slice(1, 2), output);
+                dangling.push.apply(dangling, flag.slice(2));
+                return;
+            }
         }
 
         // Here the current flag was not specified
@@ -417,11 +426,13 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): FlagsWithValue
      * value. This happens when a user provided an option,
      * but no flag was given.
      */
-    return Object.keys(output).reduce(function (obj, key) {
+    const outgoing = Object.keys(output).reduce(function (obj, key) {
         if (!output[key].values.length) return obj;
         obj[key] = output[key];
         return obj;
     }, <FlagsWithValues>{});
+
+    return {flags: outgoing, input: dangling};
 }
 
 function isFlag (incoming: string): boolean {

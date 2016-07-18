@@ -12,7 +12,6 @@ describe('cli parser', function () {
     it('handles simple command + input + flag', function () {
         const input = 'run task-1 -v';
         const output = parse(input);
-        assert.deepEqual(output.command, 'run');
         assert.deepEqual(output.input, ['run', 'task-1']);
         assert.deepEqual(output.flagValues.v.values[0], true);
     });
@@ -72,7 +71,7 @@ describe('cli parser', function () {
             },
             "server": {
                 alias: 's',
-                type: 'string'
+                type: 'array'
             },
             "before": {
                 alias: 'b',
@@ -105,7 +104,7 @@ describe('cli parser', function () {
     });
     it('flattens multi arg', function () {
         const input = 'run task-1 -vvv --before t1 t2';
-        const output = parse(input);
+        const output = parse(input, {before: {type: 'array'}});
         assert.deepEqual(output.flags.v[0], true);
         assert.deepEqual(output.flags.v[1], true);
         assert.deepEqual(output.flags.v[2], true);
@@ -117,6 +116,9 @@ describe('cli parser', function () {
         const output = parse(input, {
             v: {
                 type: CliFlagTypes.Count
+            },
+            before: {
+                type: CliFlagTypes.Array
             }
         });
         assert.deepEqual(output.flags.v, 3);
@@ -130,12 +132,13 @@ describe('cli parser', function () {
                 type: CliFlagTypes.Number
             },
             v: {
-                type: CliFlagTypes.Number
+                type: CliFlagTypes.Array
             }
         });
-        assert.deepEqual(output.flags.v[0], 10);
-        assert.deepEqual(output.flags.v[1], 20);
-        assert.deepEqual(output.flags.v[2], 30);
+
+        assert.deepEqual(output.flags.v[0], '10');
+        assert.deepEqual(output.flags.v[1], '20');
+        assert.deepEqual(output.flags.v[2], '30');
     });
     it('converts to boolean', function () {
         const input = 'run task-1 --doc=true';
@@ -194,5 +197,15 @@ describe('cli parser', function () {
         });
         assert.deepEqual(output.flags.config[0], 'example.js');
         assert.isUndefined(output.flags.reporters);
-    })
+    });
+    it('Allows flag-first', function () {
+        const input = 'run --conf example.js task-1';
+        const output = parse(input, {
+            reporter: {
+                type: "array"
+            }
+        });
+
+        assert.deepEqual(output.flags.conf, 'example.js');
+    });
 });
