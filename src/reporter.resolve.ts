@@ -17,9 +17,10 @@ export interface ReporterError {type: ReporterErrorTypes, file?: ExternalFile}
 export interface ReporterFileNotFoundError extends ReporterError {}
 export interface ReporterTypeNotSupportedError extends ReporterError {}
 export enum ReporterTypes {
-    InlineFunction = <any>"InlineFunction",
-    ExternalFile = <any>"ExternalFile",
-    UnsupportedValue = <any>"UnsupportedValue"
+    InlineFunction   = <any>"InlineFunction",
+    ExternalFile     = <any>"ExternalFile",
+    UnsupportedValue = <any>"UnsupportedValue",
+    Muted            = <any>"Muted"
 }
 
 export interface Reporters {
@@ -70,7 +71,28 @@ export enum ReportNames {
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {
 
-    const reporters = [].concat(config.reporters).map(getOneReporter);
+    const reporters = (function () {
+        /**
+         * If -q or --outputOnly was given, the user wants NO
+         * output, other than output from child processes - this
+         * is used for shell expansion within other tasks where
+         * the 'using crossbow.yaml' or completions summaries are
+         * unwanted.
+         */
+        if (config.outputOnly) {
+            return [{
+                type: ReporterTypes.Muted,
+                callable: () => {},
+                errors: [],
+                sources: []
+            }]
+        }
+        /**
+         * At this point, a user may of provided a string (as a path to lookup)
+         * or a function directly, so we use those to resolve the reporters.
+         */
+        return [].concat(config.reporters).map(getOneReporter);
+    })();
 
     return {
         all: reporters,
@@ -79,6 +101,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
     };
 
     function getOneReporter(reporter): Reporter {
+
         /**
          * If a function was given as a reported (eg: inline)
          * then it's ALWAYS a valid reporter

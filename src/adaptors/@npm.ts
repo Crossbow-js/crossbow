@@ -112,9 +112,10 @@ export function teardown (emitter) {
 }
 
 export function getStdio (trigger: CommandTrigger) {
-    if (trigger.config.suppressOutput) {
-        return ['pipe', 'pipe', 'pipe'];
-    }
+    // todo - prefixed logging
+    // if (trigger.config.outputOnly) {
+    //     return ['pipe', 'pipe', 'pipe'];
+    // }
     return [process.stdin, process.stdout, 'pipe'];
 }
 

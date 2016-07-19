@@ -1,5 +1,5 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown, getEnv} from './@npm';
+import {getArgs, runCommand, teardown, getEnv, getStdio} from './@npm';
 import {Task} from "../task.resolve";
 import {envifyObject, getCBEnv} from "../task.utils";
 const debug = require('debug')('cb:@bg');
@@ -13,9 +13,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv  = getCBEnv(trigger);
         const env    = merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
-        const stdio  = trigger.config.suppressOutput
-            ? ['pipe', 'pipe', 'pipe']
-            : 'inherit';
+        const stdio  = getStdio(trigger);
 
         debug(`running %s`, args.cmd);
 

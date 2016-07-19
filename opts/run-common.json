@@ -9,7 +9,7 @@
     "type": "boolean",
     "alias": ["P"]
   },
-  "suppressOutput": {
+  "outputOnly": {
     "desc": "Don't show child_process where possible",
     "type": "boolean",
     "alias": ["q"]

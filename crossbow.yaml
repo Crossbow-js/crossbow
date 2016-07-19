@@ -80,6 +80,9 @@ tasks:
   shell: test/fixtures/files/run.sh
   jsfile: '@sh node test/fixtures/files/one.js'
 
+  print-name: '@sh echo "Before: $(node dist/index.js run get-name -q) After:"'
+  get-name: '@sh echo $SHANE'
+
 options:
   docker:
     port: '8000'

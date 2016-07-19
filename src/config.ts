@@ -17,7 +17,7 @@ export interface CrossbowConfiguration {
     handoff: boolean
     config: string[]
     interactive: boolean
-    suppressOutput: boolean
+    outputOnly: boolean
     progress: boolean
     cbfile?: string
     dump: boolean
@@ -67,7 +67,7 @@ const defaults = <CrossbowConfiguration>{
     /**
      *
      */
-    suppressOutput: false,
+    outputOnly: false,
     /**
      * Log when tasks start/end
      */
