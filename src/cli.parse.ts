@@ -306,10 +306,47 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
  * @param flagValues
  * @returns {{}}
  */
+const negatedBool = /^no-(.*)/;
 function flattenValues (flagValues) {
     return Object.keys(flagValues).reduce(function (obj, key) {
+
+        /**
+         * Here, current would be the values associated with
+         * a flag.
+         *  eg: values: [true, true]
+         */
         const current = flagValues[key];
-        const value = (function () {
+
+        /**
+         * The keyToSet may be the same as the current item,
+         * or if negated could be minus the no-(.*) section
+         *  eg:
+         *    no-fail -> fail
+         *    suppress -> suppress
+         */
+        let keyToSet: string = key;
+
+        /**
+         * Now we determine which value should
+         * be set on the current item.
+         */
+        const valueToSet = (function () {
+
+            /**
+             * Did the used try to negate a boolean.
+             *
+             * eg:
+             *
+             *  property name = `fail`
+             *  user provided = `--no-fail`
+             *
+             *    => fail: false
+             */
+            if (negatedBool.test(key)) {
+                keyToSet = key.slice(3);
+                return false;
+            }
+
             let outgoing = current.values;
 
             /**
@@ -359,9 +396,14 @@ function flattenValues (flagValues) {
             return outgoing;
         })();
 
-        obj[key] = value;
+        /**
+         * And finally we use the key & value
+         * determined to set this item on the flags
+         */
+        obj[keyToSet] = valueToSet;
 
         return obj;
+
     }, <Flags>{});
 }
 

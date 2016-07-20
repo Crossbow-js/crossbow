@@ -216,4 +216,10 @@ describe('cli parser', function () {
         assert.deepEqual(output.flags.conf, 'example.js');
         assert.deepEqual(output.trailing, 'composer update --config');
     });
+    it('Works with negated props ', function () {
+        const input = 'run task1 task2 --no-fail --other';
+        const output = parse(input);
+        assert.deepEqual(output.flags.fail, false);
+        assert.deepEqual(output.flags.other, true);
+    });
 });
