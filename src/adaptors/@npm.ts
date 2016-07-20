@@ -136,7 +136,10 @@ export function handleExit (emitter, done) {
             } else {
                 err.stack = `Previous command failed with exit code ${code}`
             }
-            err._cbError = true;
+            
+            err._cbError    = true;
+            err._cbExitCode = code;
+            
             return done(err);
         }
         done();

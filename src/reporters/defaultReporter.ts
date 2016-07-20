@@ -304,6 +304,7 @@ function heading(title) {
 
 export interface CrossbowError extends Error {
     _cbError?: boolean
+    _cbExitCode?: number
 }
 
 function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowError, config: CrossbowConfiguration): string {

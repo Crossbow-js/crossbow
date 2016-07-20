@@ -6,6 +6,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {Runner} from "./runner";
 import {CommandTrigger} from './command.run';
 import handleReturnType from "./task.return.values";
+import {CrossbowError} from "./reporters/defaultReporter";
 
 const debug = require('debug')('cb:task.runner');
 const _ = require('../lodash.custom');
@@ -22,6 +23,8 @@ export interface TaskErrorStats {
     endTime: number
     completed: boolean
     errors: Error[]
+    cbError?: boolean
+    cbExitCode?: number
 }
 
 export interface TaskStats {
@@ -71,7 +74,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type === TaskTypes.ExternalTask
         || item.task.type === TaskTypes.Adaptor) {
-
 
             const argCount = item.factory.length;
             const cb = once(function (err) {
@@ -188,8 +190,20 @@ function getTaskErrorReport(item: SequenceItem, stats: TaskErrorStats): TaskErro
 /**
  * Get basic stats for a task error
  */
-function getErrorStats(error: Error): TaskErrorStats {
+function getErrorStats(error: CrossbowError): TaskErrorStats {
+
     const now = new Date().getTime();
+
+    if (error._cbError) {
+        return {
+            endTime: now,
+            completed: false,
+            errors: [error],
+            cbError: true,
+            cbExitCode: error._cbExitCode
+        }
+    }
+
     return {
         endTime: now,
         completed: false,
