@@ -54,8 +54,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 type: RunCommandReportTypes.InvalidTasks,
                 tasks,
                 sequence,
-                runner,
-                name: 'shame'
+                runner
             }),
             Rx.Observable.throw(new Error(`RunCommandErrorTypes.InvalidTasks`))
         );
@@ -84,16 +83,22 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             }
         })
         .toArray()
-        .share();
-
-    run$
         .do(reports => {
 
             const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
             const errors            = reports.filter(x => x.type === TaskReportType.error);
             const runtime           = new Date().getTime() - timestamp;
 
-            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner, decoratedSequence, runtime});
+            complete$.onNext({
+                type: RunCommandReportTypes.Complete,
+                reports,
+                tasks,
+                sequence,
+                runner,
+                decoratedSequence,
+                runtime
+            });
+
             reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
 
             if (errors.length > 0 && config.fail) {
@@ -106,18 +111,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 complete$.onCompleted();
             }
         })
-        .subscribe(_ => {
-
-        }, e => {
-            // Task running should never reach here
-            if (e.stack) {
-                console.error(e.stack);
-            } else {
-                console.log(e);
-            }
-        }, _ => {
-            debug('All tasks finished');
-        });
+        .subscribe();
 
     return complete$;
 }
