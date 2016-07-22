@@ -27,6 +27,7 @@ export interface RunCommandCompletionReport extends RunCommandErrorReport {
     type: RunCommandReportTypes
     reports: TaskReport[]
     decoratedSequence: SequenceItem[]
+    runtime: number
 }
 
 export type RunCommandErrorStream = RunCommandErrorReport|Error;
@@ -90,9 +91,10 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
             const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
             const errors            = reports.filter(x => x.type === TaskReportType.error);
+            const runtime           = new Date().getTime() - timestamp;
 
-            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner, decoratedSequence});
-            reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, new Date().getTime() - timestamp);
+            complete$.onNext({type: RunCommandReportTypes.Complete, reports, tasks, sequence, runner, decoratedSequence, runtime});
+            reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
 
             if (errors.length > 0 && config.fail) {
                 const lastError = errors[errors.length-1];
