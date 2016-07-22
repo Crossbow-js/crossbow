@@ -2,7 +2,7 @@ const assert = require('chai').assert;
 const Rx = require('rx');
 const cli = require("../");
 const errorTypes = require('../dist/task.errors').TaskErrorTypes;
-const RunCommandReportTypes = require('../dist/command.run').RunCommandReportTypes;
+const RunCommandReportTypes = require('../dist/command.run.execute').RunCommandReportTypes;
 
 describe('Running with task stats', function () {
     it('reports when a task is completed', function (done) {
