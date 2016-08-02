@@ -83,7 +83,7 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(proc.rawInput, 'crossbow-sass --env=dev');
         assert.deepEqual(proc.taskName, 'crossbow-sass');
     });
-    it('can single handle cli flags with dots', function () {
+    it('can single handle cli flags with dots (1)', function () {
         const proc = preprocess('crossbow-sass --my.env=dev', {tasks:{}});
         assert.deepEqual(proc.flags, {
             my: {env: 'dev'}
@@ -91,7 +91,7 @@ describe('can pre-process incoming task names', function () {
         assert.deepEqual(proc.rawInput, 'crossbow-sass --my.env=dev');
         assert.deepEqual(proc.taskName, 'crossbow-sass');
     });
-    it('can single handle cli flags with dots', function () {
+    it('can single handle cli flags with dots (2)', function () {
         const proc = preprocess('crossbow-sass --my.array=shane --my.array=kittie', {tasks:{}});
         assert.deepEqual(proc.flags, {
             my: {array: ['shane', 'kittie']}

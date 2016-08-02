@@ -44,7 +44,7 @@ const availableCommands = {
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
 /**
- * If running from the CLI, hand off to 'yargs' for parsing options
+ * If running from the CLI
  */
 if (!module.parent) {
     cli(handleIncoming);

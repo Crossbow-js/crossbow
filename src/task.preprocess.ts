@@ -1,4 +1,5 @@
 import {Task} from "./task.resolve";
+import parse from './cli.parse';
 import {CrossbowInput} from "./index";
 import {
     TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction,
@@ -7,6 +8,7 @@ import {
 import {isPlainObject, stringifyObj} from "./task.utils";
 import {InvalidTaskInputError} from "./task.errors";
 import {TaskErrorTypes} from "./task.errors";
+import {Flags} from "./cli.parse";
 
 const _ = require('../lodash.custom');
 const qs = require('qs');
@@ -294,18 +296,31 @@ function withoutCommand(obj: {}) {
  * @param taskName
  * @returns {{baseName: any, flags: {}}}
  */
-function getBaseNameAndFlags(taskName: string): {baseName: string, flags: {}} {
+function getBaseNameAndFlags(taskName: string): {baseName: string, flags: Flags} {
     const splitFlags = taskName.trim().split(/^(.+?) /);
-    let baseName;
-    let flags = {};
-    if (splitFlags.length === 1) {
-        baseName = splitFlags[0];
-    } else {
-        baseName = splitFlags[1];
-        if (splitFlags.length === 3) {
-            const yargsParser = require('yargs-parser');
-            flags = withoutCommand(yargsParser(splitFlags[2]));
+
+    /**
+     * Basename is everything upto the first space
+     * @type {string}
+     */
+    const baseName = (function () {
+        if (splitFlags.length === 1) {
+            return splitFlags[0];
         }
-    }
+        return splitFlags[1];
+    })();
+
+    /**
+     * Flags is an object containing anything after the first space,
+     * parsed as CLI input
+     * @type {Flags|{}}
+     */
+    const flags = (function () {
+        if (splitFlags.length === 3) {
+            return parse(splitFlags[1] +  ' ' + splitFlags[2]).flags;
+        }
+        return <Flags>{};
+    })();
+
     return {baseName, flags};
 }

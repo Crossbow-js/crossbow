@@ -9,7 +9,7 @@
     "lint": "eslint lib",
     "ts": "tsc",
     "prepublish": "npm run test",
-    "lodash": "lodash include=merge,get,assign,values,toArray exports=node"
+    "lodash": "lodash include=merge,get,set,assign,values,toArray exports=node"
   },
   "repository": "crossbow-js/crossbow-cli",
   "files": [
@@ -33,9 +33,7 @@
     "read-pkg-up": "1.0.1",
     "rx": "4.1.0",
     "rx-node": "1.0.2",
-    "traverse": "0.6.6",
-    "yargs": "4.7.1",
-    "yargs-parser": "2.4.0"
+    "traverse": "0.6.6"
   },
   "bin": {
     "crossbow": "dist/index.js",
@@ -64,7 +62,7 @@
     "rimraf": "2.5.2",
     "sinon": "1.17.2",
     "through2": "2.0.0",
-    "typescript": "1.8.10",
+    "typescript": "^1.8.10",
     "typings": "0.6.6",
     "watchify": "3.7.0",
     "webpack": "1.13.1"

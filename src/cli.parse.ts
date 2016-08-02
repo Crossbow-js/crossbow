@@ -400,7 +400,7 @@ function flattenValues (flagValues) {
          * And finally we use the key & value
          * determined to set this item on the flags
          */
-        obj[keyToSet] = valueToSet;
+        _.set(obj, keyToSet, valueToSet);
 
         return obj;
 
