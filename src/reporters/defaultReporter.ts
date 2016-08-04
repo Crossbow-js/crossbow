@@ -35,7 +35,7 @@ function nl() {
 }
 
 export const enum LogLevel {
-    Short = 2,
+    Short = 0,
     Verbose
 }
 
