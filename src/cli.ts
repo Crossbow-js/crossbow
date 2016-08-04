@@ -5,25 +5,32 @@ import parse from './cli.parse';
 
 export default function (cb) {
 
-    const args          = process.argv.slice(2);
-    const command       = args[0];
-    const match         = getCommand(command, commands);
+    const args    = process.argv.slice(2);
+    const command = args[0];
+    const match   = getCommand(command, commands);
 
-    if (match.length) {
-        const opts = _.merge({}, ...commands[match[0]].opts.map(require));
-        const cli  = parse(args, opts);
+    if (!match.length) {
+        printHelp(commands);
+    }
 
-        /**
-         * Here, the user gave the --help flag along with a valid
-         * command. So we show command-specific help
-         */
-        if (cli.flags.help) {
-            console.log(commands[match[0]].help);
-        } else {
-            cb(cli);
-        }
+    const commandName    = match[0];
+    const commandOptions = commands[commandName].opts.map(require);
+    const opts           = _.merge({}, ...commandOptions);
+    const cli            = parse(args, opts);
+
+    /**
+     * Here, the user gave the --help flag along with a valid
+     * command. So we show command-specific help
+     */
+    if (cli.flags.help) {
+        console.log(commands[match[0]].help);
     } else {
-        console.log(`
+        cb(cli);
+    }
+}
+
+function printHelp (commands) {
+    console.log(`
 Usage: crossbow [command] [..args] [OPTIONS]
 
 Commands: 
@@ -42,9 +49,6 @@ For more detailed help, use the command name + the --help flag.
     $ crossbow run --help
     $ crossbow init --help
 `);
-
-
-    }
 }
 
 export function getCommand(incoming: string, commands: CLICommands): string[] {
