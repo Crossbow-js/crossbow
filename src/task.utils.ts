@@ -130,14 +130,14 @@ const traverse = require('traverse');
  * ->
  *    CB_OPTIONS_DOCKER_PORT=8000
  */
-export function envifyObject(object:any, prefix:string, topLevel: string) {
+export function envifyObject(object:any, prefix:string, objectKeyName: string) {
     return traverse(object).reduce(function (acc, x) {
         if (this.circular) {
             this.remove();
             return acc;
         }
         if (this.isLeaf) {
-            acc[[prefix, topLevel, ...this.path].join('_').toUpperCase()] = String(this.node);
+            acc[[prefix, objectKeyName, ...this.path].join('_').toUpperCase()] = String(this.node);
         }
         return acc;
     }, {});
@@ -148,12 +148,24 @@ const merge = require('../lodash.custom').merge;
  * Currently we add the following from the toplevel of inputs
  * 1. options
  * 2. config
- * 3. env
+ * 3. CLI trailing args + command
+ * 4. env
  */
 export function getCBEnv (trigger: CommandTrigger): {} {
-    const cbOptionsEnv = envifyObject(trigger.input.options, trigger.config.envPrefix, 'options');
-    const cbConfigEnv  = envifyObject(trigger.config, trigger.config.envPrefix, 'config');
-    return merge(cbOptionsEnv, cbConfigEnv, trigger.input.env);
+    const prefix = trigger.config.envPrefix;
+
+    // 1. Crossbow options (from cbfile etc)
+    const cbOptionsEnv = envifyObject(trigger.input.options, prefix, 'options');
+
+    // 2. Crossbow config (from config key or CLI flags)
+    const cbConfigEnv  = envifyObject(trigger.config, prefix, 'config');
+
+    // 3. command + trailing cli args
+    const {trailing, command} = trigger.cli;
+    const cbCliEnv     = envifyObject({trailing, command}, prefix, 'cli');
+
+                                                      // 4. env key from input file
+    return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, trigger.input.env);
 }
 
 /**

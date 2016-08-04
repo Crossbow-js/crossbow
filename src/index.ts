@@ -14,6 +14,8 @@ const debug = require('debug')('cb:init');
 export interface CLI {
     input: string[]
     flags: any
+    trailing?: string
+    command?: string
 }
 
 export interface CrossbowInput {
