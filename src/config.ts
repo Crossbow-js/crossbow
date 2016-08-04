@@ -18,6 +18,7 @@ export interface CrossbowConfiguration {
     config: string[]
     interactive: boolean
     outputOnly: boolean
+    suppressOutput: boolean
     progress: boolean
     cbfile?: string
     dump: boolean
@@ -65,9 +66,14 @@ const defaults = <CrossbowConfiguration>{
      */
     reporter: 'default',
     /**
+     * Will eliminate any crossbow output.
      *
      */
     outputOnly: false,
+    /**
+     * What to do with child process output
+     */
+    suppressOutput: false,
     /**
      * Log when tasks start/end
      */
