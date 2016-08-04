@@ -3,7 +3,6 @@ const Rx = require('rx');
 
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner} from "./runner";
 import {CommandTrigger} from './command.run';
 import handleReturnType from "./task.return.values";
 import {CrossbowError} from "./reporters/defaultReporter";
@@ -12,6 +11,12 @@ const debug = require('debug')('cb:task.runner');
 const _ = require('../lodash.custom');
 const once = require('once');
 const domain = require('domain');
+
+export interface Runner {
+    series: ()   => Rx.Observable<TaskReport>
+    parallel: () => Rx.Observable<TaskReport>,
+    sequence:    SequenceItem[]
+}
 
 export interface TaskRunner {
     tasks: Tasks

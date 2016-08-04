@@ -11,7 +11,7 @@ import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
 import {CrossbowInput} from "./index";
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner} from "./runner";
+import {Runner} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {TaskCollection} from "./task.resolve";
 

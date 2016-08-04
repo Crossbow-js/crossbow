@@ -6,7 +6,7 @@ const Observable = Rx.Observable;
 import * as adaptors from "./adaptors";
 import {Task} from "./task.resolve";
 import {CommandTrigger} from "./command.run";
-import {Runner} from "./runner";
+import {Runner} from "./task.runner";
 import {
     SequenceItemTypes,
     SequenceItem,

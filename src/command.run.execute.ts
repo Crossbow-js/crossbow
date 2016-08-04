@@ -2,7 +2,7 @@ import {CommandTrigger, getRunCommandSetup} from "./command.run";
 import {ReportNames} from "./reporter.resolve";
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner} from "./runner";
+import {Runner} from "./task.runner";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {writeFileSync} from "fs";
 import {join} from "path";
