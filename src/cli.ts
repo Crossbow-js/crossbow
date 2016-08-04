@@ -11,6 +11,7 @@ export default function (cb) {
 
     if (!match.length) {
         printHelp(commands);
+        return;
     }
 
     const commandName    = match[0];
