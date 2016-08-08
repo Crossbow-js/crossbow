@@ -25,6 +25,7 @@ export interface FlagOptions {
 export interface Flags {
     [flagname: string]: FlagWithValues
     help?: boolean
+    version?: boolean
 }
 
 export interface FlagsWithValues extends FlagOption {
