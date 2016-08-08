@@ -22,9 +22,9 @@ import {isInternal} from "./task.utils";
 
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
-    return flatten(tasks, []);
+    return flatten(tasks, [], false);
 
-    function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
+    function flatten(items: Task[], initial: SequenceItem[], skipped: boolean): SequenceItem[] {
 
         return items.reduce((all, task: Task) => {
 
@@ -42,7 +42,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 if (task.runMode === TaskRunModes.parallel) {
                     return all.concat(createSequenceParallelGroup({
                         taskName: task.taskName,
-                        items: flatten(task.tasks, [])
+                        items: flatten(task.tasks, [], task.skipped)
                     }));
                 }
                 /**
@@ -53,7 +53,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 if (task.runMode === TaskRunModes.series) {
                     return all.concat(createSequenceSeriesGroup({
                         taskName: task.taskName,
-                        items: flatten(task.tasks, []),
+                        items: flatten(task.tasks, [], task.skipped)
                     }));
                 }
             }
@@ -67,7 +67,8 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                     task,
                     trigger,
                     adaptors[task.adaptor].create(task, trigger),
-                    {}
+                    {},
+                    skipped
                 ));
             }
 
@@ -84,7 +85,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 }
                 return require(task.externalTasks[0].resolved);
             })();
-            return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
+            return all.concat(resolveFromFunction(task, callable, trigger, localOptions, skipped));
         }, initial);
     }
 }
@@ -93,7 +94,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
  * If the current TaskType is an InlineFunction or
  * module to be run,
  */
-function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:{}): SequenceItem[] {
+function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:{}, skipped: boolean): SequenceItem[] {
 
     /**
      * If the current item has no sub-tasks, we can return early
@@ -111,7 +112,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
      *    {input: "core.scss", output: "core.css"}
      */
     if (!task.subTasks.length) {
-        return getSequenceItemWithOptions(task, trigger, callable, localOptions);
+        return getSequenceItemWithOptions(task, trigger, callable, localOptions, skipped);
     }
 
     /**
@@ -148,7 +149,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * in the options that matched it.
          * */
         const currentOptionObject = _.get(localOptions, optionKey);
-        const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
+        const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject, skipped)
                 .map(seqItem => {
                     seqItem.subTaskName = optionKey;
                     return seqItem;
@@ -158,7 +159,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     }, []);
 }
 
-function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options): SequenceItem[] {
+function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options, skipped:boolean): SequenceItem[] {
 
     /**
      * Merge incoming options with query + flags
@@ -168,7 +169,6 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
      *          input: css/core.css
      *          production: true
      */
-
     const mergedOptionsWithQuery = _.merge({}, options, task.query, task.flags);
 
     /**
@@ -183,7 +183,8 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
                 fnName: getFunctionName(imported, i + 1),
                 factory: importedFn,
                 task: task,
-                options: mergedOptionsWithQuery
+                options: mergedOptionsWithQuery,
+                skipped: skipped
             })
         });
     }
@@ -200,6 +201,7 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
             factory: imported,
             task: task,
             options: mergedOptionsWithQuery,
+            skipped: skipped
         })]
     }
 }

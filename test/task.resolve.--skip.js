@@ -7,15 +7,17 @@ describe('task.resolve with --skip', function () {
         const runner = cli.getRunner(['build'], {
             tasks: {
                 build: ['js', 'css'],
-                js: 'test/fixtures/tasks/simple.js',
+                js: 'test/fixtures/tasks/simple.multi.js',
                 css: '@npm sleep 1',
             }
         }, {
             skip: ['css']
         });
 
+        // console.log(runner.tasks.all[0].tasks);
+
         runner.runner.series().toArray().subscribe(x => {
-            console.log(x.map(x => [x.type]));
+            // console.log(x.map(x => [x.type]));
             done();
         })
 

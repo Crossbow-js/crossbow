@@ -36,6 +36,7 @@ export interface SequenceTask {
     factory: TaskFactory,
     task: Task,
     options: any
+    skipped: boolean
 }
 
 export interface TaskFactory {

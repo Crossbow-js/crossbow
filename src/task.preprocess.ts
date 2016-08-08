@@ -9,6 +9,7 @@ import {isPlainObject, stringifyObj} from "./task.utils";
 import {InvalidTaskInputError} from "./task.errors";
 import {TaskErrorTypes} from "./task.errors";
 import {Flags} from "./cli.parse";
+import {CommandTrigger} from "./command.run";
 
 const _ = require('../lodash.custom');
 const qs = require('qs');
@@ -16,17 +17,28 @@ const flagRegex = /(.+?)@(.+)?$/;
 
 let inlineFnCount = 0;
 
-export function preprocessTask(taskName: IncomingTaskItem, input: CrossbowInput, parents: string[]): Task {
+export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigger, parents: string[]): Task {
 
-    if (typeof taskName === 'function') {
-        return handleFunctionInput(taskName, input, parents);
+    let output = (function () {
+        if (typeof taskName === 'function') {
+            return handleFunctionInput(taskName, trigger.input, parents);
+        }
+        if (typeof taskName === 'string') {
+            return handleStringInput(taskName, trigger.input, parents);
+        }
+        if (isPlainObject(taskName)) {
+            return handleObjectInput(taskName, trigger.input, parents);
+        }
+    })();
+
+    if (trigger.config.skip.length) {
+        if (trigger.config.skip.indexOf(output.baseTaskName) > -1) {
+            // console.log('setting', output);
+            output.skipped = true;
+        }
     }
-    if (typeof taskName === 'string') {
-        return handleStringInput(taskName, input, parents);
-    }
-    if (isPlainObject(taskName)) {
-        return handleObjectInput(taskName, input, parents);
-    }
+
+    return output;
 }
 
 export interface TaskLiteral {

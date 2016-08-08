@@ -57,6 +57,7 @@ const defaultTask = <Task>{
     env:             {},
     taskName:        undefined,
     runMode:         TaskRunModes.series,
+    skipped:         false
 };
 
 /**
@@ -76,7 +77,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - object literal
      * @type {Task}
      */
-    let incoming = preprocessTask(taskItem, trigger.input, parents);
+    let incoming = preprocessTask(taskItem, trigger, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
@@ -84,8 +85,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
     /**
      * We exit very quickly if the pre-process step has delivered
-     * an 'adaptor' task - which means that's absolutely nothing left
-     * to determine.
+     * an 'adaptor' task - which means that's nothing left to determine.
      */
     if (incoming.type === TaskTypes.Adaptor) {
         return incoming;
@@ -510,6 +510,7 @@ export interface Task {
     inlineFunctions: Array<CBFunction>
     env: any
     description: string
+    skipped: boolean
 }
 
 export interface TasknameWithOrigin {

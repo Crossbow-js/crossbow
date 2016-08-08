@@ -66,6 +66,8 @@ export interface TaskErrorReport extends Report {
  */
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
 
+    console.log(item);
+
     return Rx.Observable.create(observer => {
 
         const stats = getStartStats(new Date().getTime());
