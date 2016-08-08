@@ -66,7 +66,15 @@ export interface TaskErrorReport extends Report {
  */
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
 
-    console.log(item);
+    if (item.skipped) {
+        const stats = getStartStats(new Date().getTime());
+        debug(`> seqUID ${item.seqUID} skipped`);
+
+        return Rx.Observable.concat(
+            Rx.Observable.just(stats),
+            Rx.Observable.just(getTaskReport(TaskReportType.end, item, getEndStats(stats)))
+        );
+    }
 
     return Rx.Observable.create(observer => {
 

@@ -21,6 +21,7 @@ export interface SequenceItem {
     subTaskName?: string
     stats?: TaskStats
     seqUID: number
+    skipped: boolean
 }
 
 export interface SequenceSeriesGroup {
