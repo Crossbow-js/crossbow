@@ -28,6 +28,7 @@ export interface CrossbowConfiguration {
     type?: InitConfigFileTypes
     debug: boolean
     reporters: Array<string|Function>
+    skip: string[]
 
     // docs command
     file?: string
@@ -117,6 +118,10 @@ const defaults = <CrossbowConfiguration>{
      * Tasks that should be run before any watchers begin
      */
     before: [],
+    /**
+     * Any tasks that should be skipped
+     */
+    skip: [],
     /**
      *
      */

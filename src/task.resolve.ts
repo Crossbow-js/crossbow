@@ -57,6 +57,7 @@ const defaultTask = <Task>{
     env:             {},
     taskName:        undefined,
     runMode:         TaskRunModes.series,
+    skipped:         false
 };
 
 /**
@@ -76,7 +77,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      *  - object literal
      * @type {Task}
      */
-    let incoming = preprocessTask(taskItem, trigger.input, parents);
+    let incoming = preprocessTask(taskItem, trigger, parents);
 
     /** DEBUG **/
     debug(`preprocessed '${taskItem}'`, incoming);
@@ -84,8 +85,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
     /**
      * We exit very quickly if the pre-process step has delivered
-     * an 'adaptor' task - which means that's absolutely nothing left
-     * to determine.
+     * an 'adaptor' task - which means that's nothing left to determine.
      */
     if (incoming.type === TaskTypes.Adaptor) {
         return incoming;
@@ -160,10 +160,24 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
         return toConvert.map(x => {
             if (parents.indexOf(x) > -1) {
-                // todo - create log output for circular reference errors
                 return createCircularReferenceTask(incoming, parents);
             }
+
+            /**
+             * Create the flattened tasks
+             * @type {Task}
+             */
+            const flattenedTask = createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+
+            /**
+             * Child tasks *always* inherit the 'skipped' property from the parents.
+             * This allows entire 'branches' of tasks to be skipped at any level
+             * @type {Task}
+             */
+            flattenedTask.skipped = incoming.skipped;
+
             return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+
         });
     })();
 
@@ -465,12 +479,32 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
 
 export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTrigger): Tasks {
     const taskList = taskCollection
-    /**
-     * Now begin making the nested task tree
-     */
+        /**
+         * Now begin making the nested task tree
+         */
         .map(task => {
             return createFlattenedTask(task, [], trigger)
         });
+
+    addSkipped(taskList, false);
+
+    function addSkipped (tasks: Task[], skipped: boolean) {
+        tasks.forEach(function (task) {
+            if (skipped) {
+                task.skipped = true;
+            }
+            if (task.skipped) {
+                if (task.tasks.length) {
+                    addSkipped(task.tasks, true);
+                    return;
+                }
+            }
+            if (task.tasks.length) {
+                addSkipped(task.tasks, false);
+            }
+        });
+    }
+
     /**
      * Return both valid & invalid tasks. We want to let consumers
      * handle errors/successes
@@ -510,6 +544,7 @@ export interface Task {
     inlineFunctions: Array<CBFunction>
     env: any
     description: string
+    skipped: boolean
 }
 
 export interface TasknameWithOrigin {

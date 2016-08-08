@@ -21,11 +21,13 @@ export interface SequenceItem {
     subTaskName?: string
     stats?: TaskStats
     seqUID: number
+    skipped?: boolean
 }
 
 export interface SequenceSeriesGroup {
     taskName: string
     items: any[]
+    skipped: boolean
 }
 
 export interface SequenceParallelGroup extends SequenceSeriesGroup {

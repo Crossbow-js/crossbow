@@ -42,7 +42,8 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 if (task.runMode === TaskRunModes.parallel) {
                     return all.concat(createSequenceParallelGroup({
                         taskName: task.taskName,
-                        items: flatten(task.tasks, [])
+                        items: flatten(task.tasks, []),
+                        skipped: task.skipped
                     }));
                 }
                 /**
@@ -54,6 +55,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                     return all.concat(createSequenceSeriesGroup({
                         taskName: task.taskName,
                         items: flatten(task.tasks, []),
+                        skipped: task.skipped
                     }));
                 }
             }

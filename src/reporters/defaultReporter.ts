@@ -99,11 +99,19 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
 }
 
 function _taskReport(report: TaskReport, label: string) {
+    const skipped = report.item.task.skipped;
     switch (report.type) {
         case TaskReportType.start:
-            l(`{yellow:> +} ${label}`);
+            if (skipped) {
+                l(`{yellow:- -} ${label} {yellow:(skipped)}`);
+            } else {
+                l(`{yellow:> +} ${label}`);
+            }
             break;
         case TaskReportType.end:
+            if (skipped) {
+                return;
+            }
             l(`{green:> ✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
@@ -422,8 +430,13 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
             let label = getSequenceLabel(item, config);
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
-                label = appendStatsToSequenceLabel(label, item.stats, config);
+                if (item.task.skipped) {
+                    label += ' {yellow:(skipped)}';
+                } else {
+                    label = appendStatsToSequenceLabel(label, item.stats, config);
+                }
             }
+
             let nodes = getItems(item.items, []);
             return acc.concat({
                 label: label,
@@ -434,50 +447,65 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
 }
 
 function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
+
     /**
      * Get the sequence label for a runnable task
      */
     if (item.type === SequenceItemTypes.Task) {
-        if (item.subTaskName) {
-            if (item.fnName) {
-                return `${item.task.rawInput} - ${item.task.taskName} [Function: {bold:${item.fnName}}] with config {bold:${item.subTaskName}}`;
-            } else {
-                return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
+        let baseName = (function () {
+            if (item.subTaskName) {
+                if (item.fnName) {
+                    return `${item.task.rawInput} - ${item.task.taskName} [Function: {bold:${item.fnName}}] with config {bold:${item.subTaskName}}`;
+                } else {
+                    return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
+                }
             }
-        }
-        if (item.task.type === TaskTypes.InlineFunction) {
-            return `${item.task.rawInput} ${getFunctionName(item.task.inlineFunctions[0])}`;
-        }
-        if (item.task.type === TaskTypes.ExternalTask) {
-            return `${item.task.rawInput}`;
-        }
-        if (item.task.type === TaskTypes.Adaptor) {
-            return `${item.task.rawInput}`;
-        }
-        if (item.task.externalTasks.length) {
-            return moduleLabel(item.task);
-        }
-        return item.task.taskName;
+            if (item.task.type === TaskTypes.InlineFunction) {
+                return `${item.task.rawInput} ${getFunctionName(item.task.inlineFunctions[0])}`;
+            }
+            if (item.task.type === TaskTypes.ExternalTask) {
+                return `${item.task.rawInput}`;
+            }
+            if (item.task.type === TaskTypes.Adaptor) {
+                return `${item.task.rawInput}`;
+            }
+            if (item.task.externalTasks.length) {
+                return moduleLabel(item.task);
+            }
+            return item.task.taskName;
+        })();
+
+        return baseName;
     }
 
-    /**
-     * Here we are dealing with a ParallelGroup or a SeriesGroup
-     */
-    if (item.items.length === 1) {
+    let baseName = (function () {
+
         /**
-         * Don't append 'series' or 'parallel' if this group
-         * only consists of 1 item
+         * Here we are dealing with a ParallelGroup or a SeriesGroup
          */
-        return compile(`{bold:${item.taskName}}`);
-    } else {
+        if (item.items.length === 1) {
+            /**
+             * Don't append 'series' or 'parallel' if this group
+             * only consists of 1 item
+             */
+            return compile(`{bold:${item.taskName}}`);
+        }
+
         const typeLabel = (() => {
             if (item.type === SequenceItemTypes.ParallelGroup) {
                 return '<parallel>';
             }
             return '<series>';
         })();
+
         return compile(`{bold:${item.taskName}} ${typeLabel}`);
+    })();
+
+    if (item.skipped) {
+        baseName += ' {yellow:(skipped)}'
     }
+
+    return baseName;
 }
 
 export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, title: string) {
