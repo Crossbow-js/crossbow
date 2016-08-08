@@ -17,5 +17,9 @@
   "fail": {
     "desc": "Use --no-fail to stop failures affecting sibling tasks ",
     "type": "boolean"
+  },
+  "skip": {
+    "desc": "Skip certain tasks",
+    "type": "array"
   }
 }

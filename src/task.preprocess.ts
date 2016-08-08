@@ -31,6 +31,15 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
         }
     })();
 
+    /**
+     * Mark this item as 'skipped' if the task name matches
+     * one given in the --skip flag
+     *
+     *  eg:
+     *      crossbow run deploy --skip build-js
+     *
+     *  -> All tasks under deploy still run, but build-js will be skipped
+     */
     if (trigger.config.skip.length) {
         if (trigger.config.skip.indexOf(output.baseTaskName) > -1) {
             // console.log('setting', output);
