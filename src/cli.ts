@@ -10,8 +10,16 @@ export default function (cb) {
     const match   = getCommand(command, commands);
 
     if (!match.length) {
-        printHelp(commands);
-        return;
+
+        // first look if the user provided a --version flag
+        const cli = parse(['no-command', ...args], require('../opts/global-common.json'));
+
+        if (cli.flags.version) {
+            return console.log(require('../package.json').version);
+        }
+
+        // if not, show global help
+        return printHelp(commands);
     }
 
     const commandName    = match[0];

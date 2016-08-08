@@ -12,5 +12,8 @@
   "cwd": {
     "desc": "Current Working directory",
     "type": "string"
+  },
+  "version": {
+    "desc": "Show the current Crossbow version"
   }
 }
