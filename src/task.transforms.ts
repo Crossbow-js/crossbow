@@ -31,6 +31,7 @@ export const transforms = {
         }
     }
 };
+
 /**
  * Allow transformations on tasks before error collections
  */

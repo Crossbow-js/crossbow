@@ -11,6 +11,7 @@ import {preprocessTask} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
+import {applyTreeTransforms} from "./task.tree.transforms";
 
 /**
  * Function.name is es6 & >
@@ -478,32 +479,19 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
 }
 
 export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTrigger): Tasks {
-    const taskList = taskCollection
-        /**
-         * Now begin making the nested task tree
-         */
+
+    /**
+     * Now begin making the nested task tree
+     */
+    let taskList = taskCollection
         .map(task => {
             return createFlattenedTask(task, [], trigger)
         });
 
-    addSkipped(taskList, false);
-
-    function addSkipped (tasks: Task[], skipped: boolean) {
-        tasks.forEach(function (task) {
-            if (skipped) {
-                task.skipped = true;
-            }
-            if (task.skipped) {
-                if (task.tasks.length) {
-                    addSkipped(task.tasks, true);
-                    return;
-                }
-            }
-            if (task.tasks.length) {
-                addSkipped(task.tasks, false);
-            }
-        });
-    }
+    /**
+     * Now apply any last-minute tree transformations
+     */
+    taskList = applyTreeTransforms(taskList);
 
     /**
      * Return both valid & invalid tasks. We want to let consumers
@@ -517,7 +505,6 @@ export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTri
     };
 
     return output;
-
 }
 
 export interface Task {
