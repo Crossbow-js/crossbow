@@ -1,6 +1,6 @@
 {
   "name": "crossbow-cli",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
