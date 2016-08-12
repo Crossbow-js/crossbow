@@ -1,5 +1,5 @@
 import {longestString, padLine, escapeNewLines} from "../task.utils";
-import {Task} from "../task.resolve";
+import {Task, TaskOriginTypes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
 
@@ -39,12 +39,29 @@ export function twoCol (tasks: Task[]): Array<string[]> {
         const name = padLine(item.baseTaskName, longest + 1);
         const desclength = (cols - 6) - longest;
 
-        if (item.description) {
-            const desc = limit(item.description, desclength);
-            return [`{bold:${name}}`, desc];
-        }
+        const desc = (function () {
 
-        const desc = limit(taskPreviews(item), desclength);
+            if (item.description) {
+                return limit(item.description, desclength);
+            }
+
+            /**
+             * .js files on disk
+             */
+            if (item.type === TaskTypes.ExternalTask) {
+                return limit(`Run via: ${item.externalTasks[0].parsed.name}`, desclength);
+            }
+
+            /**
+             * .sh files on disk
+             */
+            if (item.origin === TaskOriginTypes.FileSystem) {
+                return limit(`Run via: ${item.externalTasks[0].parsed.name}`, desclength);
+            }
+
+            return limit(taskPreviews(item), desclength);
+        })();
+
         return [`{bold:${name}}`, desc];
     });
 }

@@ -9,11 +9,19 @@ import {getSimpleTaskList} from "./reporters/task.list";
 import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportNames} from "./reporter.resolve";
+import {getPossibleTasksFromDir} from "./file.utils";
 
 function execute(trigger: CommandTrigger): any {
 
     const {input, config, reporter} = trigger;
-    const resolved = resolveTasks(Object.keys(input.tasks), trigger);
+
+    /**
+     * Top level task names on the input
+     */
+    const taskNamesToResolve    = Object.keys(input.tasks);
+    const taskNamesFromTasksDir = getPossibleTasksFromDir(['tasks'], config.cwd);
+
+    const resolved = resolveTasks([...taskNamesToResolve, ...taskNamesFromTasksDir], trigger);
 
     if (trigger.config.handoff) {
         return {tasks: resolved};
