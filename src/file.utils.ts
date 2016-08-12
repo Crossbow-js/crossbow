@@ -6,8 +6,11 @@ import {CrossbowInput} from "./index";
 import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
+import {readdirSync} from "fs";
 
-const _    = require('../lodash.custom');
+const _ = require('../lodash.custom');
+// todo windows support
+const supportedTaskFileExtensions = ['.js', '.sh'];
 
 export interface ExternalFile {
     path: string
@@ -189,4 +192,34 @@ export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
     const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
     const global = join(__dirname, 'public', 'create.js');
     return readInputFiles([local, global], config.cwd);
+}
+
+export function getExternalFiles (dirpaths: string[], cwd: string): ExternalFile[] {
+    return dirpaths
+        .map(dirpath => {
+            return resolve(cwd, dirpath);
+        })
+        .filter(existsSync)
+        .reduce(function (acc, dirPath) {
+            return acc.concat(readdirSync(dirPath).map(filepath => {
+                const resolved = join(dirPath, filepath);
+                const parsed = parse(resolved);
+                const output : ExternalFile = {
+                    path: filepath,
+                    resolved,
+                    relative: relative(cwd, resolved),
+                    parsed,
+                    errors: []
+                };
+                return output;
+            }));
+        }, []);
+}
+
+export function getPossibleTasksFromDir(dirpaths: string[], cwd: string): string[] {
+    return getExternalFiles(dirpaths, cwd)
+        .filter(x => supportedTaskFileExtensions.indexOf(x.parsed.ext) > -1)
+        .map(x => {
+            return x.relative;
+        })
 }
