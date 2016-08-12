@@ -1,8 +1,12 @@
 {
   "config": {
-    "desc": "Path to your input file.",
+    "desc": "Path(s) to your input file.",
     "type": "array",
     "alias": ["c"]
+  },
+  "tasksDir": {
+    "desc": "Path(s) that will be auto-loaded for task resolution",
+    "type": "array"
   },
   "reporters": {
     "desc": "Paths to modules that contain a reporter",

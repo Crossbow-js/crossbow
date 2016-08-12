@@ -29,6 +29,7 @@ export interface CrossbowConfiguration {
     debug: boolean
     reporters: Array<string|Function>
     skip: string[]
+    tasksDir: string[]
 
     // docs command
     file?: string
@@ -126,7 +127,8 @@ const defaults = <CrossbowConfiguration>{
      *
      */
     type: InitConfigFileTypes.yaml,
-    reporters: []
+    reporters: [],
+    tasksDir: ['tasks']
 };
 
 /**

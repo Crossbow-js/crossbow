@@ -32,7 +32,7 @@ function incomingTask (taskname: string, deps: any, fn?:any): any {
         if (deps.tasks) {
             outgoing[taskname] = deps;
         } else {
-            throw new Error('Object literally must contain at least a "tasks" key');
+            throw new Error('Object literal must contain at least a "tasks" key');
         }
         if (fn) {
             const fnname = `${taskname}_internal_fn_${fncount++}`;

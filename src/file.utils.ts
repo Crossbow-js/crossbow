@@ -216,7 +216,7 @@ export function getExternalFiles (dirpaths: string[], cwd: string): ExternalFile
         }, []);
 }
 
-export function getPossibleTasksFromDir(dirpaths: string[], cwd: string): string[] {
+export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string): string[] {
     return getExternalFiles(dirpaths, cwd)
         .filter(x => supportedTaskFileExtensions.indexOf(x.parsed.ext) > -1)
         .map(x => {

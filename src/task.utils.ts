@@ -54,10 +54,14 @@ export interface ExternalTask {
     relative: string
 }
 
-function locateExternalTask (config:CrossbowConfiguration, name:string): ExternalTask[] {
+function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalTask[] {
+
+    const dirLookups = config.tasksDir.reduce((acc, dir) => {
+        return acc.concat([[dir, name + '.js'], [dir, name]]);
+    }, []);
+
     const lookups = [
-        ['tasks', name + '.js'],
-        ['tasks', name],
+        ...dirLookups,
         [name + '.js'],
         [name]
     ];
