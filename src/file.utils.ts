@@ -7,6 +7,7 @@ import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
 import {readdirSync} from "fs";
+import TextSpan = ts.TextSpan;
 
 const _ = require('../lodash.custom');
 // todo windows support
@@ -24,6 +25,7 @@ export interface FileNotFoundError extends InputError {}
 
 export interface ExternalFileContent extends ExternalFile {
     content: string
+    data?: any
 }
 
 export interface ExternalFileInput extends ExternalFile {
@@ -127,6 +129,27 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
 
 export function writeFileToDisk(file: ExternalFile, content: string) {
     writeFileSync(file.resolved, content);
+}
+
+export function getStubFileWithContent(path:string, cwd:string): ExternalFileContent {
+    const file : any = getStubFile(path, cwd);
+    file.content = '';
+    return file;
+}
+
+export function readOrCreateJsonFile (path:string, cwd: string): ExternalFileContent {
+    const existing = readFilesFromDiskWithContent([path], cwd)[0];
+    if (existing.errors.length) {
+        if (existing.errors[0].type === InputErrorTypes.FileNotFound) {
+            const stub = getStubFileWithContent(path, cwd);
+            stub.content = '{}';
+            stub.data    = JSON.parse(stub.content);
+            return stub;
+        }
+    } else {
+        existing.data = JSON.parse(existing.content);
+    }
+    return existing;
 }
 
 export function getStubFile(path:string, cwd:string): ExternalFile {

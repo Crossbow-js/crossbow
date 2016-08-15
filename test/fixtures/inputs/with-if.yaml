@@ -1,0 +1,14 @@
+tasks:
+  js:
+      if: ['test/fixtures/js']
+      tasks: [
+          'css'
+          'test/fixtures/tasks/simple.js'
+      ]
+  css:
+      if: ['test']
+      tasks: ['@npm sleep 0.1', 'img']
+  img:
+      if: ['examples']
+      tasks: ['@npm sleep 0.1']
+  svg: '@sh printenv'

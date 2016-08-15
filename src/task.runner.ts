@@ -6,6 +6,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {CommandTrigger} from './command.run';
 import handleReturnType from "./task.return.values";
 import {CrossbowError} from "./reporters/defaultReporter";
+import {join} from "path";
 
 const debug = require('debug')('cb:task.runner');
 const _ = require('../lodash.custom');
@@ -144,7 +145,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 }
             }
         }
-
 
     }).catch(error => {
         /**

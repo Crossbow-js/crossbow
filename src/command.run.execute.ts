@@ -8,6 +8,8 @@ import {writeFileSync} from "fs";
 import {join} from "path";
 import Rx = require('rx');
 import * as seq from "./task.sequence";
+import * as file from "./file.utils";
+import {InputErrorTypes} from "./task.utils";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -74,44 +76,104 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     const timestamp = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
 
-    const run$ = runner[trigger.config.runMode]
-        .call()
-        .do(report => trigger.tracker.onNext(report))
-        .do((report: TaskReport) => {
-            if (trigger.config.progress) {
-                reporter(ReportNames.TaskReport, report, trigger);
+    function getIfs(tasks, initial) {
+        return tasks.reduce(function (acc, task) {
+            if (task.tasks.length) {
+                return acc.concat(getIfs(task.tasks, []));
             }
-        })
-        .toArray()
-        .do(reports => {
+            if (task.if.length) return acc.concat(task.if);
+            return acc;
+        }, initial);
+    }
 
-            const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-            const errors            = reports.filter(x => x.type === TaskReportType.error);
-            const runtime           = new Date().getTime() - timestamp;
+    function unique (incoming: string[]) {
+        const output = [];
+        incoming.forEach(function (inc) {
+            if (output.indexOf(inc) === -1) output.push(inc);
+        });
+        return output;
+    }
 
-            complete$.onNext({
-                type: RunCommandReportTypes.Complete,
-                reports,
-                tasks,
-                sequence,
-                runner,
-                decoratedSequence,
-                runtime
+    const ifLookups = unique(getIfs(tasks.all, []));
+
+    if (ifLookups.length) {
+        const hd = require('hash-dir');
+        const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
+        const existing = file.readOrCreateJsonFile('.crossbow/history.json', trigger.config.cwd);
+        console.log(existing);
+
+        Rx.Observable
+            .fromArray(ifLookups)
+            .withLatestFrom(trigger.shared)
+            .flatMap(x => {
+
+                let itemPath = x[0];
+                let shared   = x[1];
+
+                return hdAsAbservable(itemPath).map(tree => {
+                    return {
+                        path: itemPath,
+                        hash: tree.hash
+                    }
+                });
+            })
+            .catch(function (e) {
+                console.log(e); // todo - report directory not found
+                return Rx.Observable.empty();
+            })
+            .toArray()
+            .do(x => {
+                console.log(x);
+            })
+            .subscribe(function (value) {
+                // console.log(value);
+                run();
             });
+    } else {
+        run();
+    }
 
-            reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
-
-            if (errors.length > 0 && config.fail) {
-                const lastError = errors[errors.length-1];
-                if (lastError.stats.cbExitCode !== undefined) {
-                    process.exit(lastError.stats.cbExitCode);
+    function run() {
+        runner[trigger.config.runMode] // .series or .parallel
+            .call()
+            .do(report => trigger.tracker.onNext(report))
+            .do((report: TaskReport) => {
+                if (trigger.config.progress) {
+                    reporter(ReportNames.TaskReport, report, trigger);
                 }
-                process.exit(1);
-            } else {
-                complete$.onCompleted();
-            }
-        })
-        .subscribe();
+            })
+            .toArray()
+            .do(reports => {
+
+                const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+                const errors            = reports.filter(x => x.type === TaskReportType.error);
+                const runtime           = new Date().getTime() - timestamp;
+
+                complete$.onNext({
+                    type: RunCommandReportTypes.Complete,
+                    reports,
+                    tasks,
+                    sequence,
+                    runner,
+                    decoratedSequence,
+                    runtime
+                });
+
+                reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
+
+                if (errors.length > 0 && config.fail) {
+                    const lastError = errors[errors.length-1];
+                    if (lastError.stats.cbExitCode !== undefined) {
+                        process.exit(lastError.stats.cbExitCode);
+                    }
+                    process.exit(1);
+                } else {
+                    complete$.onCompleted();
+                }
+            })
+            .subscribe();
+    }
+
 
     return complete$;
 }

@@ -3,7 +3,7 @@ const cli = require("../");
 const exec = require('child_process').exec;
 
 describe("skipping tasks", function () {
-    it("writes a .crossbow/manifest.json file on first run (nothing to compare)", function () {
+    it("resolves tasks with children + if props", function () {
 
         const runner = cli.getRunner(['js', 'svg'], {
             tasks: {
@@ -44,5 +44,31 @@ describe("skipping tasks", function () {
         // }, function (err) {
         //     done(err);
         // });
+    });
+    it.only("writes a .crossbow/manifest.json file on first run (nothing to compare)", function (done) {
+        cli.run(['js', 'svg'], {
+            tasks: {
+                js: {
+                    if: ['test/fixtures/js'],
+                    tasks: [
+                        'css',
+                        'test/fixtures/tasks/simple.js'
+                    ]
+                },
+                css: {
+                    if: ['test'],
+                    tasks: ['@npm sleep 0.1', 'img']
+                },
+                img: {
+                    if: ['examples'],
+                    tasks: ['@npm sleep 0.2']
+                },
+                svg: '@sh sleep 0.02'
+            }
+        }).subscribe(function (output) {
+            // console.log(output.reports);
+            done();
+        });
+
     });
 });

@@ -25,6 +25,7 @@
     "chokidar": "1.4.3",
     "debug": "2.2.0",
     "eazy-logger": "3.0.2",
+    "hash-dir": "0.0.0",
     "immutable": "3.8.0",
     "inquirer": "1.0.1",
     "js-yaml": "3.6.0",
