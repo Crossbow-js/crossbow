@@ -6,6 +6,23 @@ export interface TaskTreeTransform {
     fn: (incoming:Task[]) => Task[]
 }
 
+function applyBooleanPropertyToChildren (tasks: Task[], skipped: boolean) {
+    tasks.forEach(function (task) {
+        if (skipped) {
+            task.skipped = true;
+        }
+        if (task.skipped) {
+            if (task.tasks.length) {
+                applyBooleanPropertyToChildren(task.tasks, true);
+                return;
+            }
+        }
+        if (task.tasks.length) {
+            applyBooleanPropertyToChildren(task.tasks, false);
+        }
+    });
+}
+
 export const transforms = {
 
     'Add skipped property to children' : {
@@ -13,22 +30,33 @@ export const transforms = {
             return true;
         },
         fn (tasks: Task[]): Task[] {
+            applyBooleanPropertyToChildren(tasks, false);
+            return tasks;
+        }
+    },
+    'Add if property to children' : {
+        predicate (tasks: Task[]): boolean {
+            return true;
+        },
+        fn (tasks: Task[]): Task[] {
 
-            addSkipped(tasks, false);
+            // const property = 'if';
 
-            function addSkipped (tasks: Task[], skipped: boolean) {
+            applyBooleanPropertyToChildren(tasks, false, 'if', '');
+
+            function applyBooleanPropertyToChildren (tasks: Task[], add: boolean, property, value?) {
                 tasks.forEach(function (task) {
-                    if (skipped) {
-                        task.skipped = true;
+                    if (add) {
+                        task[property] = value;
                     }
-                    if (task.skipped) {
+                    if (task[property]) {
                         if (task.tasks.length) {
-                            addSkipped(task.tasks, true);
+                            applyBooleanPropertyToChildren(task.tasks, true, property, task.if);
                             return;
                         }
                     }
                     if (task.tasks.length) {
-                        addSkipped(task.tasks, false);
+                        applyBooleanPropertyToChildren(task.tasks, false, property);
                     }
                 });
             }

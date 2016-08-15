@@ -532,6 +532,7 @@ export interface Task {
     env: any
     description: string
     skipped: boolean
+    if: string
 }
 
 export interface TasknameWithOrigin {
