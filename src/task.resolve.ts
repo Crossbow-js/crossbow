@@ -58,7 +58,8 @@ const defaultTask = <Task>{
     env:             {},
     taskName:        undefined,
     runMode:         TaskRunModes.series,
-    skipped:         false
+    skipped:         false,
+    if:              []
 };
 
 /**
@@ -532,7 +533,7 @@ export interface Task {
     env: any
     description: string
     skipped: boolean
-    if: string
+    if: string[]
 }
 
 export interface TasknameWithOrigin {

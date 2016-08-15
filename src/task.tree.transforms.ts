@@ -40,16 +40,14 @@ export const transforms = {
         },
         fn (tasks: Task[]): Task[] {
 
-            // const property = 'if';
-
             applyBooleanPropertyToChildren(tasks, false, 'if', '');
 
             function applyBooleanPropertyToChildren (tasks: Task[], add: boolean, property, value?) {
                 tasks.forEach(function (task) {
                     if (add) {
-                        task[property] = value;
+                        task[property].unshift.apply(task[property], value);
                     }
-                    if (task[property]) {
+                    if (task[property].length) {
                         if (task.tasks.length) {
                             applyBooleanPropertyToChildren(task.tasks, true, property, task.if);
                             return;
