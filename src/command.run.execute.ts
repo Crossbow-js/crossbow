@@ -11,8 +11,6 @@ import Immutable = require('immutable');
 const {fromJS} = Immutable;
 import * as seq from "./task.sequence";
 import * as file from "./file.utils";
-import {InputErrorTypes} from "./task.utils";
-import {getHashes} from "./file.utils";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -79,24 +77,6 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     const timestamp = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
 
-    function getIfs(tasks, initial) {
-        return tasks.reduce(function (acc, task) {
-            if (task.tasks.length) {
-                return acc.concat(getIfs(task.tasks, []));
-            }
-            if (task.if.length) return acc.concat(task.if);
-            return acc;
-        }, initial);
-    }
-
-    function unique (incoming: string[]): string[] {
-        const output = [];
-        incoming.forEach(function (inc) {
-            if (output.indexOf(inc) === -1) output.push(inc);
-        });
-        return output;
-    }
-
     const ifLookups = unique(getIfs(tasks.all, []));
 
     if (ifLookups.length) {
@@ -106,7 +86,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             existing.data.hashes = [];
         }
 
-        getHashes(ifLookups)
+        file.getHashes(ifLookups)
             .withLatestFrom(trigger.shared)
             .subscribe(function (x) {
 
@@ -176,4 +156,25 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
 
     return complete$;
+}
+
+
+function getIfs(tasks, initial: string[]): string[] {
+    return tasks.reduce(function (acc, task) {
+        if (task.tasks.length) {
+            return acc.concat(getIfs(task.tasks, []));
+        }
+        if (task.if.length) return acc.concat(task.if);
+        return acc;
+    }, initial);
+}
+
+function unique (incoming: string[]): string[] {
+    const output = [];
+    incoming.forEach(function (inc) {
+        if (output.indexOf(inc) === -1) {
+            output.push(inc);
+        }
+    });
+    return output;
 }

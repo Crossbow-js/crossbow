@@ -40,6 +40,8 @@ export interface TaskStats {
     started: boolean
     completed: boolean
     errors: Error[]
+    skipped?: boolean
+    skippedReadon?: TaskSkipReasons
 }
 
 export interface Report {
