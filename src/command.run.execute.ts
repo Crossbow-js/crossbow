@@ -89,7 +89,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         }, initial);
     }
 
-    function unique (incoming: string[]): any[] {
+    function unique (incoming: string[]): string[] {
         const output = [];
         incoming.forEach(function (inc) {
             if (output.indexOf(inc) === -1) output.push(inc);
@@ -102,9 +102,11 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     if (ifLookups.length) {
 
         const existing = file.readOrCreateJsonFile('.crossbow/history.json', trigger.config.cwd);
-        if (!existing.data.hashes) existing.data.hashes = [];
-        const hashes   = getHashes(ifLookups)
+        if (!existing.data.hashes) {
+            existing.data.hashes = [];
+        }
 
+        getHashes(ifLookups)
             .withLatestFrom(trigger.shared)
             .subscribe(function (x) {
 

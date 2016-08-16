@@ -255,7 +255,7 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         })
 }
 
-export function getHashes(dirs: string[]): Rx.Observable<any> {
+export function getHashes(dirs: any): Rx.Observable<any> {
     const hd = require('hash-dir');
     const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
     return Rx.Observable

@@ -1,5 +1,8 @@
 const assert = require('chai').assert;
 const cli = require("../");
+const fs = require("fs");
+const Rx = require("rx");
+const path = require("path");
 const exec = require('child_process').exec;
 
 describe("skipping tasks", function () {
@@ -45,7 +48,8 @@ describe("skipping tasks", function () {
         //     done(err);
         // });
     });
-    it.only("writes a .crossbow/manifest.json file on first run (nothing to compare)", function (done) {
+    it("writes a .crossbow/manifest.json file on first run (nothing to compare)", function (done) {
+        require('rimraf').sync('.crossbow');
         cli.run(['js', 'svg'], {
             tasks: {
                 js: {
@@ -66,8 +70,52 @@ describe("skipping tasks", function () {
                 svg: '@sh sleep 0.02'
             }
         }).subscribe(function (output) {
+            const history = require(path.join(process.cwd(), '.crossbow/history.json'));
+            assert.equal(history.hashes.length, 3);
+            assert.equal(history.hashes[0].changed, true);
+            assert.equal(history.hashes[1].changed, true);
+            assert.equal(history.hashes[2].changed, true);
             done();
         });
+    });
+    it("skips tasks when history file exists and nothing changed", function (done) {
+        require('rimraf').sync('.crossbow');
+        const input = {
+            tasks: {
+                js: {
+                    if: ['test/fixtures/js'],
+                    tasks: [
+                        'css',
+                        'test/fixtures/tasks/simple.js'
+                    ]
+                },
+                css: {
+                    if: ['test'],
+                    tasks: ['@npm sleep 0.1']
+                },
+                svg: '@sh sleep 0.02'
+            }
+        };
 
+        cli.run(['js', 'svg'], input)
+            .subscribe(function (output) {
+
+                const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
+                assert.equal(ends[0].skipped, false, 'none skipped on first run');
+                assert.equal(ends[1].skipped, false, 'none skipped on first run');
+                assert.equal(ends[2].skipped, false, 'none skipped on first run');
+
+                cli.run(['js', 'svg'], input)
+                    .subscribe(function (output) {
+                        const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
+
+                        assert.equal(ends[0].skipped, true,  'first task skipped on second run');
+                        assert.equal(ends[1].skipped, true,  'second task skipped on second run');
+                        assert.equal(ends[2].skipped, false, '3rd task didnt have "if"');
+
+                        done();
+                    });
+
+            });
     });
 });

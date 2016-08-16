@@ -53,6 +53,11 @@ export enum TaskReportType {
     error = <any>"error"
 }
 
+export enum TaskSkipReasons {
+    SkipFlag = <any>"SkipFlag",
+    IfChanged = <any>"IfChanged"
+}
+
 export interface TaskReport extends Report {
     stats: TaskStats
 }
@@ -69,22 +74,27 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
     return Rx.Observable.create(observer => {
 
-        const stats = getStartStats(new Date().getTime());
-
-        debug(`> seqUID ${item.seqUID} started`);
-
-        observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         /**
          * Complete immediately if this item was marked
          * as 'skipped'
          */
         if (item.task.skipped) {
-            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+            const additionalStats = {
+                skipped: true,
+                skippedReason: TaskSkipReasons.SkipFlag
+            };
+            const stats = getStartStats(new Date().getTime(), additionalStats);
+            observer.onNext(getTaskReport(TaskReportType.start, item, stats));
+            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
             observer.onCompleted();
             return;
         }
 
+        /**
+         * Complete immediately if this item was marked
+         * with an 'if' predicate
+         */
         if (item.task.if.length && trigger.shared.getValue().hasIn(['if'])) {
             const hasChanges = trigger.shared
                 .getValue()
@@ -95,11 +105,30 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 .some(x => x.get('changed'));
 
             if (!hasChanges) {
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+                const additionalStats = {
+                    skipped: true,
+                    skippedReason: TaskSkipReasons.IfChanged
+                };
+                const stats = getStartStats(new Date().getTime(), additionalStats);
+                observer.onNext(getTaskReport(TaskReportType.start, item, stats));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
                 observer.onCompleted();
                 return;
             }
         }
+
+
+        /**
+         * Timestamp when this task starts
+         * @type {TaskStats}
+         */
+        const stats = getStartStats(new Date().getTime(), {skipped: false});
+        debug(`> seqUID ${item.seqUID} started`);
+
+        /**
+         * Task started
+         */
+        observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type === TaskTypes.ExternalTask
@@ -186,27 +215,36 @@ function getTaskReport(type: TaskReportType, item: SequenceItem, stats: TaskStat
 /**
  * Create a new stats object with startTime
  */
-export function getStartStats(startTime: number): TaskStats {
-    return {
-        startTime,
-        started: true,
-        endTime: 0,
-        duration: 0,
-        completed: false,
-        errors: []
-    }
+export function getStartStats(startTime: number, additional?:{[index: string]: any}): TaskStats {
+    return _.assign(
+        {},
+        additional,
+        {
+            startTime,
+            started: true,
+            endTime: 0,
+            duration: 0,
+            completed: false,
+            errors: []
+        }
+    );
 }
 
 /**
  * Create a new stats object with completed/duration flags etc
  */
-function getEndStats(stats: TaskStats) {
+function getEndStats(stats: TaskStats, additional?:{[index: string]: any}) {
     const now = new Date().getTime();
-    return _.assign({}, stats, {
-        endTime: now,
-        duration: now - stats.startTime,
-        completed: true
-    })
+    return _.assign(
+        {},
+        stats,
+        additional,
+        {
+            endTime:   now,
+            duration:  now - stats.startTime,
+            completed: true
+        }
+    );
 }
 
 /**
