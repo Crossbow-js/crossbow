@@ -7,7 +7,8 @@ import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
 import {readdirSync} from "fs";
-import TextSpan = ts.TextSpan;
+import Rx = require('rx');
+import {dirname} from "path";
 
 const _ = require('../lodash.custom');
 // todo windows support
@@ -128,6 +129,8 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
 }
 
 export function writeFileToDisk(file: ExternalFile, content: string) {
+    const mkdirp = require('mkdirp').sync;
+    mkdirp(dirname(file.resolved));
     writeFileSync(file.resolved, content);
 }
 
@@ -147,7 +150,12 @@ export function readOrCreateJsonFile (path:string, cwd: string): ExternalFileCon
             return stub;
         }
     } else {
-        existing.data = JSON.parse(existing.content);
+        try {
+            existing.data = JSON.parse(existing.content);
+        } catch (e) {
+            console.log('ERROR PARSING JSON');
+            existing.data = {};
+        }
     }
     return existing;
 }
@@ -245,4 +253,24 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         .map(x => {
             return x.relative;
         })
+}
+
+export function getHashes(dirs: string[]): Rx.Observable<any> {
+    const hd = require('hash-dir');
+    const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
+    return Rx.Observable
+        .fromArray(dirs)
+        .flatMap(x => {
+            return hdAsAbservable(x).map((tree: {hash:string}) => {
+                return {
+                    path: x,
+                    hash: tree.hash
+                }
+            });
+        })
+        .catch(function (e) {
+            console.log(e, 'ERROR'); // todo - report directory not found
+            return Rx.Observable.empty();
+        })
+        .toArray();
 }

@@ -85,6 +85,22 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             return;
         }
 
+        if (item.task.if.length && trigger.shared.getValue().hasIn(['if'])) {
+            const hasChanges = trigger.shared
+                .getValue()
+                .getIn(['if'])
+                .filter(x => {
+                    return item.task.if.indexOf(x.get('path')) !== -1;
+                })
+                .some(x => x.get('changed'));
+
+            if (!hasChanges) {
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+                observer.onCompleted();
+                return;
+            }
+        }
+
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type === TaskTypes.ExternalTask
         || item.task.type === TaskTypes.Adaptor) {

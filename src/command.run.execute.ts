@@ -7,9 +7,12 @@ import {TaskReport, TaskReportType} from "./task.runner";
 import {writeFileSync} from "fs";
 import {join} from "path";
 import Rx = require('rx');
+import Immutable = require('immutable');
+const {fromJS} = Immutable;
 import * as seq from "./task.sequence";
 import * as file from "./file.utils";
 import {InputErrorTypes} from "./task.utils";
+import {getHashes} from "./file.utils";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -86,7 +89,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         }, initial);
     }
 
-    function unique (incoming: string[]) {
+    function unique (incoming: string[]): any[] {
         const output = [];
         incoming.forEach(function (inc) {
             if (output.indexOf(inc) === -1) output.push(inc);
@@ -97,38 +100,33 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     const ifLookups = unique(getIfs(tasks.all, []));
 
     if (ifLookups.length) {
-        const hd = require('hash-dir');
-        const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
+
         const existing = file.readOrCreateJsonFile('.crossbow/history.json', trigger.config.cwd);
-        console.log(existing);
+        if (!existing.data.hashes) existing.data.hashes = [];
+        const hashes   = getHashes(ifLookups)
 
-        Rx.Observable
-            .fromArray(ifLookups)
             .withLatestFrom(trigger.shared)
-            .flatMap(x => {
+            .subscribe(function (x) {
 
-                let itemPath = x[0];
-                let shared   = x[1];
+                const hashes = x[0];
+                const shared = x[1];
 
-                return hdAsAbservable(itemPath).map(tree => {
-                    return {
-                        path: itemPath,
-                        hash: tree.hash
-                    }
+                const markedHashes = hashes.map(function (newHash) {
+                    const match = existing.data.hashes.filter(x => x.path === newHash.path);
+                    newHash.changed = (function () {
+                        if (match.length) {
+                            return match[0].hash !== newHash.hash;
+                        }
+                        return true; // return true by default so that new entries always run
+                    })();
+                    return newHash
                 });
+
+                existing.data.hashes = hashes;
+                trigger.shared.onNext(shared.setIn(['if'], fromJS(markedHashes)));
+                file.writeFileToDisk(existing, JSON.stringify(existing.data, null, 2));
+                run()
             })
-            .catch(function (e) {
-                console.log(e); // todo - report directory not found
-                return Rx.Observable.empty();
-            })
-            .toArray()
-            .do(x => {
-                console.log(x);
-            })
-            .subscribe(function (value) {
-                // console.log(value);
-                run();
-            });
     } else {
         run();
     }

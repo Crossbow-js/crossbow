@@ -66,7 +66,6 @@ describe("skipping tasks", function () {
                 svg: '@sh sleep 0.02'
             }
         }).subscribe(function (output) {
-            // console.log(output.reports);
             done();
         });
 
