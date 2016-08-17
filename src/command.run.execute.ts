@@ -81,38 +81,18 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     if (ifLookups.length) {
 
         const existing = file.readOrCreateJsonFile('.crossbow/history.json', trigger.config.cwd);
+
         if (!existing.data.hashes) {
             existing.data.hashes = [];
         }
 
-        file.hashDir(ifLookups)
+        file.hashDirs(ifLookups, existing.data.hashes)
             .withLatestFrom(trigger.shared)
             .subscribe(function (x) {
-
-                const newHashes = x[0];
-                const newHashPaths = newHashes.map(x => x.path);
-                const shared    = x[1];
-
-                const markedHashes = newHashes.map(function (newHash) {
-                    const match = existing.data.hashes.filter(x => x.path === newHash.path);
-                    newHash.changed = (function () {
-                        if (match.length) {
-                            return match[0].hash !== newHash.hash;
-                        }
-                        return true; // return true by default so that new entries always run
-                    })();
-                    return newHash
-                });
-
-                const otherHashes = existing.data.hashes.filter(function (hash) {
-                    return newHashPaths.indexOf(hash.path) === -1;
-                });
-
-                const output = [...otherHashes, ...newHashes].filter(Boolean);
-
-                trigger.shared.onNext(shared.setIn(['if'], fromJS(markedHashes)));
-                file.writeFileToDisk(existing, JSON.stringify({hashes: output}, null, 2));
-
+                const result = x[0];
+                const shared = x[1];
+                trigger.shared.onNext(shared.setIn(['if'], fromJS(result.markedHashes)));
+                file.writeFileToDisk(existing, JSON.stringify({hashes: result.output}, null, 2));
                 run()
             })
     } else {

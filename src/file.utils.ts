@@ -255,7 +255,13 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         })
 }
 
-export function hashDir(dirs: string[]) : any {
+export interface IHashItem {
+    path: string
+    hash: string
+    changed: boolean
+}
+
+export function hashDirs(dirs: string[], existing: IHashItem[]): any {
     const hd = require('hash-dir');
     const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
     return Rx.Observable
@@ -270,8 +276,34 @@ export function hashDir(dirs: string[]) : any {
             });
         })
         .catch(function (e) {
-            console.log(e, 'ERROR'); // todo - report directory not found
+            console.log(e, 'ERROR'); // todo - report errors from HASH fn
             return Rx.Observable.empty();
         })
-        .toArray();
+        .toArray()
+        .map(function (newHashes) {
+
+            const newHashPaths = newHashes.map(x => x.path);
+
+            const markedHashes = newHashes.map(function (newHash) {
+                const match = existing.filter(x => x.path === newHash.path);
+                newHash.changed = (function () {
+                    if (match.length) {
+                        return match[0].hash !== newHash.hash;
+                    }
+                    return true; // return true by default so that new entries always run
+                })();
+                return newHash
+            });
+
+            const otherHashes = existing.filter(function (hash) {
+                return newHashPaths.indexOf(hash.path) === -1;
+            });
+
+            const output = [...otherHashes, ...newHashes].filter(Boolean);
+
+            return {
+                output,
+                markedHashes
+            }
+        })
 }
