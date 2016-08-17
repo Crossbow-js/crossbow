@@ -255,11 +255,12 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         })
 }
 
-export function getHashes(dirs) {
+export function hashDir(dirs: string[]) : any {
     const hd = require('hash-dir');
     const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
     return Rx.Observable
-        .fromArray(dirs)
+        .from(dirs)
+        .distinct()
         .flatMap(x => {
             return hdAsAbservable(x).map((tree: {hash:string}) => {
                 return {

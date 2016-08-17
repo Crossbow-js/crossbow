@@ -79,7 +79,9 @@ describe("skipping tasks", function () {
         });
     });
     it("skips tasks when history file exists and nothing changed", function (done) {
+
         require('rimraf').sync('.crossbow');
+
         const input = {
             tasks: {
                 js: {
@@ -97,6 +99,7 @@ describe("skipping tasks", function () {
             }
         };
 
+        // First run
         cli.run(['js', 'svg'], input)
             .subscribe(function (output) {
 
@@ -105,13 +108,14 @@ describe("skipping tasks", function () {
                 assert.equal(ends[1].skipped, false, 'none skipped on first run');
                 assert.equal(ends[2].skipped, false, 'none skipped on first run');
 
+                // Second run
                 cli.run(['js', 'svg'], input)
                     .subscribe(function (output) {
-                        const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
 
+                        const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
                         assert.equal(ends[0].skipped, true,  'first task skipped on second run');
                         assert.equal(ends[1].skipped, true,  'second task skipped on second run');
-                        assert.equal(ends[2].skipped, false, '3rd task didnt have "if"');
+                        assert.equal(ends[2].skipped, false, '3rd task didn\'t have "if"');
 
                         done();
                     });

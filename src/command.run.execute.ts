@@ -76,8 +76,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      */
     const timestamp = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
-
-    const ifLookups = unique(getIfs(tasks.all, []));
+    const ifLookups = concatProps(tasks.all, [], 'if');
 
     if (ifLookups.length) {
 
@@ -86,14 +85,15 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             existing.data.hashes = [];
         }
 
-        file.getHashes(ifLookups)
+        file.hashDir(ifLookups)
             .withLatestFrom(trigger.shared)
             .subscribe(function (x) {
 
-                const hashes = x[0];
-                const shared = x[1];
+                const newHashes = x[0];
+                const newHashPaths = newHashes.map(x => x.path);
+                const shared    = x[1];
 
-                const markedHashes = hashes.map(function (newHash) {
+                const markedHashes = newHashes.map(function (newHash) {
                     const match = existing.data.hashes.filter(x => x.path === newHash.path);
                     newHash.changed = (function () {
                         if (match.length) {
@@ -104,9 +104,15 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                     return newHash
                 });
 
-                existing.data.hashes = hashes;
+                const otherHashes = existing.data.hashes.filter(function (hash) {
+                    return newHashPaths.indexOf(hash.path) === -1;
+                });
+
+                const output = [...otherHashes, ...newHashes].filter(Boolean);
+
                 trigger.shared.onNext(shared.setIn(['if'], fromJS(markedHashes)));
-                file.writeFileToDisk(existing, JSON.stringify(existing.data, null, 2));
+                file.writeFileToDisk(existing, JSON.stringify({hashes: output}, null, 2));
+
                 run()
             })
     } else {
@@ -158,23 +164,22 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     return complete$;
 }
 
-
-function getIfs(tasks, initial: string[]): string[] {
+function concatProps(tasks, initial: string[], propname: string): string[] {
     return tasks.reduce(function (acc, task) {
         if (task.tasks.length) {
-            return acc.concat(getIfs(task.tasks, []));
+            return acc.concat(concatProps(task.tasks, [], propname));
         }
-        if (task.if.length) return acc.concat(task.if);
+        if (task[propname].length) return acc.concat(task[propname]);
         return acc;
     }, initial);
 }
 
-function unique (incoming: string[]): string[] {
-    const output = [];
-    incoming.forEach(function (inc) {
-        if (output.indexOf(inc) === -1) {
-            output.push(inc);
-        }
-    });
-    return output;
-}
+// function unique (incoming: string[]): string[] {
+//     const output = [];
+//     incoming.forEach(function (inc) {
+//         if (output.indexOf(inc) === -1) {
+//             output.push(inc);
+//         }
+//     });
+//     return output;
+// }
