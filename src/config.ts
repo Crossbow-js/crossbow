@@ -13,6 +13,7 @@ export interface CrossbowConfiguration {
     verbose: LogLevel
     parallel: boolean
     fail: boolean
+    force: boolean
     reporter: string
     handoff: boolean
     config: string[]
@@ -58,6 +59,7 @@ const defaults = <CrossbowConfiguration>{
      */
     dump: false,
     debug: false,
+    force: false,
     /**
      * How much task information should be output
      * following task completion/setup

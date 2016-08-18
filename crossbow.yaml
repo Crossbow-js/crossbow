@@ -46,7 +46,7 @@ tasks:
     - slow-stream
 
   sleep1@p:
-    ifChanged: ['./tedd']
+    ifChanged: ['./test']
     tasks:
       - '@npm sleep 1'
       - '@npm sleep 1'

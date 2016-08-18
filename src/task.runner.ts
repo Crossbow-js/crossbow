@@ -78,12 +78,11 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
     return Rx.Observable.create(observer => {
 
-
         /**
          * Complete immediately if this item was marked
          * as 'skipped'
          */
-        if (item.task.skipped) {
+        if (!trigger.config.force && item.task.skipped) {
             const additionalStats = {
                 skipped: true,
                 skippedReason: TaskSkipReasons.SkipFlag
@@ -99,7 +98,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Complete immediately if this item was marked
          * with an 'ifChanged' predicate
          */
-        if (item.task.ifChanged.length && ctx.hasIn(['ifChanged'])) {
+        if (!trigger.config.force && item.task.ifChanged.length && ctx.hasIn(['ifChanged'])) {
             const hasChanges = ctx
                 .get('ifChanged')
                 .filter(x => {

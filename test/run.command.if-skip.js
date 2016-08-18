@@ -38,15 +38,6 @@ describe("skipping tasks", function () {
         assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[0], 'test/fixtures/js');
         assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[1], 'test');
         assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[2], 'examples');
-
-        // runner.runner.series().toArray().subscribe(reports => {
-        //     // assert.equal(report.item.task.skipped, true);
-        //     // assert.ok(report.stats.duration < 10);
-        //     console.log(reports);
-        //     done();
-        // }, function (err) {
-        //     done(err);
-        // });
     });
     it("writes a .crossbow/manifest.json file on first run (nothing to compare)", function (done) {
         require('rimraf').sync('.crossbow');
@@ -116,6 +107,50 @@ describe("skipping tasks", function () {
                         assert.equal(ends[0].skipped, true,  'first task skipped on second run');
                         assert.equal(ends[1].skipped, true,  'second task skipped on second run');
                         assert.equal(ends[2].skipped, false, '3rd task didn\'t have "if"');
+
+                        done();
+                    });
+
+            });
+    });
+    it("Still runs when no changes, but --force flag given", function (done) {
+
+        require('rimraf').sync('.crossbow');
+
+        const input = {
+            tasks: {
+                js: {
+                    ifChanged: ['test/fixtures/js'],
+                    tasks: [
+                        'css',
+                        'test/fixtures/tasks/simple.js'
+                    ]
+                },
+                css: {
+                    ifChanged: ['test'],
+                    tasks: ['@npm sleep 0.1']
+                },
+                svg: '@sh sleep 0.02'
+            }
+        };
+
+        // First run
+        cli.run(['js', 'svg'], input, {force: true})
+            .subscribe(function (output) {
+
+                const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
+                assert.equal(ends[0].skipped, false, 'none skipped on first run');
+                assert.equal(ends[1].skipped, false, 'none skipped on first run');
+                assert.equal(ends[2].skipped, false, 'none skipped on first run');
+
+                // Second run
+                cli.run(['js', 'svg'], input, {force: true})
+                    .subscribe(function (output) {
+
+                        const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
+                        assert.equal(ends[0].skipped, false,  'STILL not skipped on second run');
+                        assert.equal(ends[1].skipped, false,  'STILL not skipped on second run');
+                        assert.equal(ends[2].skipped, false, '3rd task didn\'t have "ifChanged anyway"');
 
                         done();
                     });
