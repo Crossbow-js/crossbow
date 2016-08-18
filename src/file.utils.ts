@@ -266,51 +266,62 @@ export interface IHashResults {
     markedHashes: IHashItem[]
 }
 
-export function hashDirs(dirs: string[], existing: IHashItem[]): any {
+export enum HashDirErrorTypes  {
+    HashNotADirectory = <any>"HashNotADirectory",
+    HashNotFound = <any>"HashNotFound"
+}
+
+export interface HashDirError extends Error {
+    code: string
+    path: string
+    syscall: string
+}
+export function hashDirs(dirs: string[], cwd:string): any {
+
+    const existingFile = readOrCreateJsonFile(join('.crossbow', 'history.json'), cwd);
+    if (!existingFile.data.hashes) {
+        existingFile.data.hashes = [];
+    }
+
     const hd = require('hash-dir');
-    const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
-    return Rx.Observable
-        .from(dirs)
-        .distinct()
-        .flatMap(x => {
-            return hdAsAbservable(x).map((tree: {hash:string}) => {
-                return {
-                    path: x,
-                    hash: tree.hash
-                }
-            });
-        })
-        .catch(function (e) {
-            console.log(e, 'ERROR'); // todo - report errors from HASH fn
-            return Rx.Observable.empty();
-        })
-        .toArray()
-        .map(function (newHashes: {path: string, hash: string, changed?:boolean}[]) {
-
-            const newHashPaths = newHashes.map(x => x.path);
-
-            const markedHashes = newHashes.map(function (newHash) {
-                const match = existing.filter(x => x.path === newHash.path);
-                newHash.changed = (function () {
-                    if (match.length) {
-                        return match[0].hash !== newHash.hash;
-                    }
-                    return true; // return true by default so that new entries always run
-                })();
-                return newHash
-            });
-
-            const otherHashes = existing.filter(function (hash) {
-                return newHashPaths.indexOf(hash.path) === -1;
-            });
-
-            const output = [...otherHashes, ...newHashes].filter(Boolean);
-
+    const hashDirAsObservable = Rx.Observable.fromNodeCallback(hd);
+    return Rx.Observable.from(dirs).distinct().flatMap(inputPath => {
+        return hashDirAsObservable(inputPath).map((tree: {hash:string}) => {
             return {
-                output,
-                markedHashes
+                path: inputPath,
+                hash: tree.hash
             }
-        })
+        });
+    })
+    .toArray()
+    .map(function (newHashes: IHashItem[]): IHashResults {
+        const newHashPaths = newHashes.map(x => x.path);
+        const markedHashes = newHashes.map(function (newHash) {
+            const match = existingFile.data.hashes.filter(x => x.path === newHash.path);
+            newHash.changed = (function () {
+                if (match.length) {
+                    return match[0].hash !== newHash.hash;
+                }
+                return true; // return true by default so that new entries always run
+            })();
+            return newHash
+        });
+
+        const otherHashes = existingFile.data.hashes.filter(function (hash) {
+            return newHashPaths.indexOf(hash.path) === -1;
+        });
+
+        const output = [...otherHashes, ...newHashes].filter(Boolean);
+
+        return {
+            output,
+            markedHashes
+        }
+    })
+    // Write the hashes to disk
+    .do(function (hashResults: IHashResults) {
+        writeFileToDisk(existingFile, JSON.stringify({hashes: hashResults.output}, null, 2));
+    });
 }
 
 export function concatProps(tasks, initial: string[], propname: string): string[] {

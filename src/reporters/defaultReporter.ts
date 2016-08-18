@@ -792,6 +792,11 @@ Or to see multiple tasks running, with some in parallel, try:
         multiLine(getExternalError(error.type, error));
     },
     [ReportNames.Summary]: reportSummary,
+    [ReportNames.HashDirError]: function (error) {
+        // const message = error.toString();
+        logger.info(`{red.bold:x CB-History hash failed} (tasks will still run)`);
+        multiLine(getExternalError(error.type, error));
+    }
 };
 
 export default function (name, ...args) {

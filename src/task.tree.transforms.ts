@@ -40,7 +40,7 @@ export const transforms = {
         },
         fn (tasks: Task[]): Task[] {
 
-            applyBooleanPropertyToChildren(tasks, false, 'if', '');
+            applyBooleanPropertyToChildren(tasks, false, 'ifChanged', '');
 
             function applyBooleanPropertyToChildren (tasks: Task[], add: boolean, property, value?) {
                 tasks.forEach(function (task) {
@@ -49,7 +49,7 @@ export const transforms = {
                     }
                     if (task[property].length) {
                         if (task.tasks.length) {
-                            applyBooleanPropertyToChildren(task.tasks, true, property, task.if);
+                            applyBooleanPropertyToChildren(task.tasks, true, property, task[property]);
                             return;
                         }
                     }

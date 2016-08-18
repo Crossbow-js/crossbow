@@ -11,33 +11,33 @@ describe("skipping tasks", function () {
         const runner = cli.getRunner(['js', 'svg'], {
             tasks: {
                 js: {
-                    if: ['test/fixtures/js'],
+                    ifChanged: ['test/fixtures/js'],
                     tasks: [
                         'css',
                         'test/fixtures/tasks/simple.js'
                     ]
                 },
                 css: {
-                    if: ['test'],
+                    ifChanged: ['test'],
                     tasks: ['@npm sleep 0.1', 'img']
                 },
                 img: {
-                    if: ['examples'],
+                    ifChanged: ['examples'],
                     tasks: ['@npm sleep 0.1']
                 },
                 svg: '@sh printenv'
             }
         });
 
-        assert.equal(runner.tasks.all[0].if[0], 'test/fixtures/js', 'JS Task added level task not added');
-        assert.equal(runner.tasks.all[0].tasks[0].if[0], 'test/fixtures/js');
-        assert.equal(runner.tasks.all[0].tasks[0].if[1], 'test');
-        assert.equal(runner.tasks.all[0].tasks[0].tasks[0].if.length, 2, 'same as parent');
-        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].if.length, 3, '1 extra from parent');
+        assert.equal(runner.tasks.all[0].ifChanged[0], 'test/fixtures/js', 'JS Task added level task not added');
+        assert.equal(runner.tasks.all[0].tasks[0].ifChanged[0], 'test/fixtures/js');
+        assert.equal(runner.tasks.all[0].tasks[0].ifChanged[1], 'test');
+        assert.equal(runner.tasks.all[0].tasks[0].tasks[0].ifChanged.length, 2, 'same as parent');
+        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged.length, 3, '1 extra from parent');
 
-        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].if[0], 'test/fixtures/js');
-        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].if[1], 'test');
-        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].if[2], 'examples');
+        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[0], 'test/fixtures/js');
+        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[1], 'test');
+        assert.equal(runner.tasks.all[0].tasks[0].tasks[1].ifChanged[2], 'examples');
 
         // runner.runner.series().toArray().subscribe(reports => {
         //     // assert.equal(report.item.task.skipped, true);
@@ -53,18 +53,18 @@ describe("skipping tasks", function () {
         cli.run(['js', 'svg'], {
             tasks: {
                 js: {
-                    if: ['test/fixtures/js'],
+                    ifChanged: ['test/fixtures/js'],
                     tasks: [
                         'css',
                         'test/fixtures/tasks/simple.js'
                     ]
                 },
                 css: {
-                    if: ['test'],
+                    ifChanged: ['test'],
                     tasks: ['@npm sleep 0.1', 'img']
                 },
                 img: {
-                    if: ['examples'],
+                    ifChanged: ['examples'],
                     tasks: ['@npm sleep 0.2']
                 },
                 svg: '@sh sleep 0.02'
@@ -85,14 +85,14 @@ describe("skipping tasks", function () {
         const input = {
             tasks: {
                 js: {
-                    if: ['test/fixtures/js'],
+                    ifChanged: ['test/fixtures/js'],
                     tasks: [
                         'css',
                         'test/fixtures/tasks/simple.js'
                     ]
                 },
                 css: {
-                    if: ['test'],
+                    ifChanged: ['test'],
                     tasks: ['@npm sleep 0.1']
                 },
                 svg: '@sh sleep 0.02'

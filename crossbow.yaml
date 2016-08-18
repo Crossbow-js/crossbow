@@ -46,7 +46,7 @@ tasks:
     - slow-stream
 
   sleep1@p:
-    if: ['test']
+    ifChanged: ['./tedd']
     tasks:
       - '@npm sleep 1'
       - '@npm sleep 1'
@@ -76,7 +76,7 @@ tasks:
     tasks: ['multiline', 'shell']
 
   multiline:
-    if: ['examples']
+    ifChanged: ['examples']
     tasks:
      - |
        @sh sleep 1

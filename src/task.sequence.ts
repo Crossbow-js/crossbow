@@ -244,7 +244,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 
             Observable.from(flattened)
                 .concatAll()
-                .catch(x => {
+                .catch(() => {
                     subject.onCompleted();
                     return Rx.Observable.empty();
                 })
@@ -261,16 +261,17 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], true, ctx);
-            const subject = new Rx.ReplaySubject(2000);
+            const subject   = new Rx.ReplaySubject(2000);
 
             Observable.from(flattened)
                 .mergeAll()
                 .do(subject)
-                .subscribe(x => {
-                }, e=> {
-                }, _=> {
+                .subscribe(() => {
+                    // values are proxied to subject
+                }, () => {
+                    // errors handled via error reports
+                }, () => {
                     subject.onCompleted();
-                    // debug('Parallel sequence complete');
                 });
 
             return subject;

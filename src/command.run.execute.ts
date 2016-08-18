@@ -2,7 +2,7 @@ import {CommandTrigger, getRunCommandSetup} from "./command.run";
 import {ReportNames} from "./reporter.resolve";
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner} from "./task.runner";
+import {Runner, RunContext} from "./task.runner";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {writeFileSync} from "fs";
 import {join} from "path";
@@ -11,8 +11,7 @@ import Immutable = require('immutable');
 const {fromJS} = Immutable;
 import * as seq from "./task.sequence";
 import * as file from "./file.utils";
-import {IHashResults} from "./file.utils";
-import {concatProps} from "./file.utils";
+import {HashDirErrorTypes} from "./file.utils";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -78,27 +77,30 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      */
     const timestamp = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
-    const ifLookups = concatProps(tasks.all, [], 'if');
+    const ifLookups = file.concatProps(tasks.all, [], "ifChanged");
 
     if (ifLookups.length) {
-
-        const existing = file.readOrCreateJsonFile('.crossbow/history.json', trigger.config.cwd);
-
-        if (!existing.data.hashes) {
-            existing.data.hashes = [];
-        }
-
-        file.hashDirs(ifLookups, existing.data.hashes)
-            .subscribe(function (hashResults: IHashResults) {
-                const result = hashResults;
-                file.writeFileToDisk(existing, JSON.stringify({hashes: result.output}, null, 2));
-                run(fromJS({"if": result.markedHashes}));
-            });
+        file.hashDirs(ifLookups, trigger.config.cwd)
+            .map(function (hashResults: file.IHashResults) {
+                // Send in the marked hashes to the run context
+                // so that matching tasks can be ignored
+                return fromJS({
+                    "ifChanged": hashResults.markedHashes
+                });
+            })
+            .take(1)
+            .catch(function (e) {
+                if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
+                if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashNotFound;
+                reporter(ReportNames.HashDirError, e);
+                return Rx.Observable.just(Immutable.Map({}));
+            })
+            .subscribe(run);
     } else {
         run();
     }
 
-    function run(ctx?) {
+    function run(ctx?: RunContext) {
         runner[trigger.config.runMode] // .series or .parallel
             .call(null, ctx)
             .do(report => trigger.tracker.onNext(report))

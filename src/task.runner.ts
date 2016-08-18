@@ -97,13 +97,13 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
 
         /**
          * Complete immediately if this item was marked
-         * with an 'if' predicate
+         * with an 'ifChanged' predicate
          */
-        if (item.task.if.length && ctx.hasIn(['if'])) {
+        if (item.task.ifChanged.length && ctx.hasIn(['ifChanged'])) {
             const hasChanges = ctx
-                .get('if')
+                .get('ifChanged')
                 .filter(x => {
-                    return item.task.if.indexOf(x.get('path')) !== -1;
+                    return item.task.ifChanged.indexOf(x.get('path')) !== -1;
                 })
                 .some(x => x.get('changed'));
 
