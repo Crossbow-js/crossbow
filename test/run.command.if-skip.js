@@ -78,7 +78,7 @@ describe("skipping tasks", function () {
             done();
         });
     });
-    it.only("skips tasks when history file exists and nothing changed", function (done) {
+    it("skips tasks when history file exists and nothing changed", function (done) {
 
         require('rimraf').sync('.crossbow');
 

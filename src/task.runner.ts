@@ -14,9 +14,9 @@ const once = require('once');
 const domain = require('domain');
 
 export interface Runner {
-    series: ()   => Rx.Observable<TaskReport>
-    parallel: () => Rx.Observable<TaskReport>,
-    sequence:    SequenceItem[]
+    series:   (ctx?: RunContext)   => Rx.Observable<TaskReport>
+    parallel: (ctx?: RunContext) => Rx.Observable<TaskReport>,
+    sequence: SequenceItem[]
 }
 
 export interface TaskRunner {
@@ -68,11 +68,13 @@ export interface TaskErrorReport extends Report {
     stats: TaskErrorStats
 }
 
+export type RunContext = Immutable.Map<string, any>;
+
 /**
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
-export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
+export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
 
     return Rx.Observable.create(observer => {
 
@@ -97,10 +99,9 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Complete immediately if this item was marked
          * with an 'if' predicate
          */
-        if (item.task.if.length && trigger.shared.getValue().hasIn(['if'])) {
-            const hasChanges = trigger.shared
-                .getValue()
-                .getIn(['if'])
+        if (item.task.if.length && ctx.hasIn(['if'])) {
+            const hasChanges = ctx
+                .get('if')
                 .filter(x => {
                     return item.task.if.indexOf(x.get('path')) !== -1;
                 })

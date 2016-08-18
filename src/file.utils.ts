@@ -261,6 +261,11 @@ export interface IHashItem {
     changed: boolean
 }
 
+export interface IHashResults {
+    output: IHashItem[]
+    markedHashes: IHashItem[]
+}
+
 export function hashDirs(dirs: string[], existing: IHashItem[]): any {
     const hd = require('hash-dir');
     const hdAsAbservable = Rx.Observable.fromNodeCallback(hd);
@@ -280,7 +285,7 @@ export function hashDirs(dirs: string[], existing: IHashItem[]): any {
             return Rx.Observable.empty();
         })
         .toArray()
-        .map(function (newHashes) {
+        .map(function (newHashes: {path: string, hash: string, changed?:boolean}[]) {
 
             const newHashPaths = newHashes.map(x => x.path);
 
@@ -306,4 +311,14 @@ export function hashDirs(dirs: string[], existing: IHashItem[]): any {
                 markedHashes
             }
         })
+}
+
+export function concatProps(tasks, initial: string[], propname: string): string[] {
+    return tasks.reduce(function (acc, task) {
+        if (task.tasks.length) {
+            return acc.concat(concatProps(task.tasks, [], propname));
+        }
+        if (task[propname].length) return acc.concat(task[propname]);
+        return acc;
+    }, initial);
 }

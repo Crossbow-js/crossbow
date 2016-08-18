@@ -11,6 +11,8 @@ import Immutable = require('immutable');
 const {fromJS} = Immutable;
 import * as seq from "./task.sequence";
 import * as file from "./file.utils";
+import {IHashResults} from "./file.utils";
+import {concatProps} from "./file.utils";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -87,21 +89,18 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         }
 
         file.hashDirs(ifLookups, existing.data.hashes)
-            .withLatestFrom(trigger.shared)
-            .subscribe(function (x) {
-                const result = x[0];
-                const shared = x[1];
-                trigger.shared.onNext(shared.setIn(['if'], fromJS(result.markedHashes)));
+            .subscribe(function (hashResults: IHashResults) {
+                const result = hashResults;
                 file.writeFileToDisk(existing, JSON.stringify({hashes: result.output}, null, 2));
-                run()
-            })
+                run(fromJS({"if": result.markedHashes}));
+            });
     } else {
         run();
     }
 
-    function run() {
+    function run(ctx?) {
         runner[trigger.config.runMode] // .series or .parallel
-            .call()
+            .call(null, ctx)
             .do(report => trigger.tracker.onNext(report))
             .do((report: TaskReport) => {
                 if (trigger.config.progress) {
@@ -143,23 +142,3 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
     return complete$;
 }
-
-function concatProps(tasks, initial: string[], propname: string): string[] {
-    return tasks.reduce(function (acc, task) {
-        if (task.tasks.length) {
-            return acc.concat(concatProps(task.tasks, [], propname));
-        }
-        if (task[propname].length) return acc.concat(task[propname]);
-        return acc;
-    }, initial);
-}
-
-// function unique (incoming: string[]): string[] {
-//     const output = [];
-//     incoming.forEach(function (inc) {
-//         if (output.indexOf(inc) === -1) {
-//             output.push(inc);
-//         }
-//     });
-//     return output;
-// }
