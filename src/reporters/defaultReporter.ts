@@ -99,7 +99,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
 }
 
 function _taskReport(report: TaskReport, label: string) {
-    const skipped = report.item.task.skipped;
+    const skipped = report.item.task.skipped || report.stats.skipped;
     switch (report.type) {
         case TaskReportType.start:
             if (skipped) {
@@ -396,6 +396,13 @@ function appendStatsToSequenceLabel(label: string, stats: TaskStats, config: Cro
     }
 
     /**
+     * If this item was skipped, there cannot be anything to append
+     */
+    if (stats.skipped) {
+        return `{yellow:-} ${label} {yellow:(skipped)}`;
+    }
+
+    /**
      * the item did not start if `started` is falsey
      */
     if (!stats.started) {
@@ -430,11 +437,7 @@ export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowCon
             let label = getSequenceLabel(item, config);
             const stats = item.stats;
             if (showStats && item.type === SequenceItemTypes.Task) {
-                if (item.task.skipped) {
-                    label += ' {yellow:(skipped)}';
-                } else {
-                    label = appendStatsToSequenceLabel(label, item.stats, config);
-                }
+                label = appendStatsToSequenceLabel(label, item.stats, config);
             }
 
             let nodes = getItems(item.items, []);
@@ -502,6 +505,10 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     })();
 
     if (item.skipped) {
+        baseName += ' {yellow:(skipped)}'
+    }
+
+    if (item.stats && item.stats.skipped) {
         baseName += ' {yellow:(skipped)}'
     }
 
@@ -785,6 +792,11 @@ Or to see multiple tasks running, with some in parallel, try:
         multiLine(getExternalError(error.type, error));
     },
     [ReportNames.Summary]: reportSummary,
+    [ReportNames.HashDirError]: function (error) {
+        // const message = error.toString();
+        logger.info(`{red.bold:x CB-History hash failed} (tasks will still run)`);
+        multiLine(getExternalError(error.type, error));
+    }
 };
 
 export default function (name, ...args) {

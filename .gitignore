@@ -7,9 +7,12 @@ npm-debug.log
 /_tasks.json
 /_config.json
 /_sequence.json
+/sequence.json
 /reports.json
+/_reports.json
 /runner.json
 /cbfile.js
 /_cbfile.js
 /lodash.custom.min.js
 /r.js
+/.crossbow

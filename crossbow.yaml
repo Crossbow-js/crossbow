@@ -46,8 +46,10 @@ tasks:
     - slow-stream
 
   sleep1@p:
-    - '@npm sleep'
-    - '@npm sleep 3'
+    ifChanged: ['./test']
+    tasks:
+      - '@npm sleep 1'
+      - '@npm sleep 1'
 
   sleep2: '@npm sleep 1'
   sleep3: '@npm sleep 1'
@@ -73,9 +75,12 @@ tasks:
     description: 'Produce production-ready JS assets'
     tasks: ['multiline', 'shell']
 
-  multiline: |
-    @sh sleep 1
-    echo 'hey'
+  multiline:
+    ifChanged: ['examples']
+    tasks:
+     - |
+       @sh sleep 1
+       echo 'hey'
 
   shell: test/fixtures/files/run.sh
   jsfile: '@sh node test/fixtures/files/one.js'

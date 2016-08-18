@@ -67,6 +67,7 @@ export enum ReportNames {
     DocsOutputFileExists           = <any>"DocsOutputFileExists",
 
     Summary                        = <any>"Summary",
+    HashDirError                   = <any>"HashDirError",
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {

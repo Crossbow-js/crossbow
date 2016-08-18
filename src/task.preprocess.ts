@@ -18,7 +18,7 @@ const flagRegex = /(.+?)@(.+)?$/;
 let inlineFnCount = 0;
 
 export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigger, parents: string[]): Task {
-
+    
     let output = (function () {
         if (typeof taskName === 'function') {
             return handleFunctionInput(taskName, trigger.input, parents);
@@ -33,7 +33,9 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
 
     /**
      * Mark this item as 'skipped' if the task name matches
-     * one given in the --skip flag
+     * one given in the --skip flag via CLI
+     *
+     * Note: this is separate to individual task config
      *
      *  eg:
      *      crossbow run deploy --skip build-js
@@ -46,7 +48,7 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
             output.skipped = true;
         }
     }
-
+    
     return output;
 }
 

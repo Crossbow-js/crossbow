@@ -6,6 +6,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {CommandTrigger} from './command.run';
 import handleReturnType from "./task.return.values";
 import {CrossbowError} from "./reporters/defaultReporter";
+import {join} from "path";
 
 const debug = require('debug')('cb:task.runner');
 const _ = require('../lodash.custom');
@@ -13,9 +14,9 @@ const once = require('once');
 const domain = require('domain');
 
 export interface Runner {
-    series: ()   => Rx.Observable<TaskReport>
-    parallel: () => Rx.Observable<TaskReport>,
-    sequence:    SequenceItem[]
+    series:   (ctx?: RunContext)   => Rx.Observable<TaskReport>
+    parallel: (ctx?: RunContext) => Rx.Observable<TaskReport>,
+    sequence: SequenceItem[]
 }
 
 export interface TaskRunner {
@@ -39,6 +40,8 @@ export interface TaskStats {
     started: boolean
     completed: boolean
     errors: Error[]
+    skipped?: boolean
+    skippedReadon?: TaskSkipReasons
 }
 
 export interface Report {
@@ -52,6 +55,11 @@ export enum TaskReportType {
     error = <any>"error"
 }
 
+export enum TaskSkipReasons {
+    SkipFlag = <any>"SkipFlag",
+    IfChanged = <any>"IfChanged"
+}
+
 export interface TaskReport extends Report {
     stats: TaskStats
 }
@@ -60,29 +68,69 @@ export interface TaskErrorReport extends Report {
     stats: TaskErrorStats
 }
 
+export type RunContext = Immutable.Map<string, any>;
+
 /**
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
-export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger) {
+export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
 
     return Rx.Observable.create(observer => {
-
-        const stats = getStartStats(new Date().getTime());
-
-        debug(`> seqUID ${item.seqUID} started`);
-
-        observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         /**
          * Complete immediately if this item was marked
          * as 'skipped'
          */
-        if (item.task.skipped) {
-            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+        if (!trigger.config.force && item.task.skipped) {
+            const additionalStats = {
+                skipped: true,
+                skippedReason: TaskSkipReasons.SkipFlag
+            };
+            const stats = getStartStats(new Date().getTime(), additionalStats);
+            observer.onNext(getTaskReport(TaskReportType.start, item, stats));
+            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
             observer.onCompleted();
             return;
         }
+
+        /**
+         * Complete immediately if this item was marked
+         * with an 'ifChanged' predicate
+         */
+        if (!trigger.config.force && item.task.ifChanged.length && ctx.hasIn(['ifChanged'])) {
+            const hasChanges = ctx
+                .get('ifChanged')
+                .filter(x => {
+                    return item.task.ifChanged.indexOf(x.get('path')) !== -1;
+                })
+                .some(x => x.get('changed'));
+
+            if (!hasChanges) {
+                const additionalStats = {
+                    skipped: true,
+                    skippedReason: TaskSkipReasons.IfChanged
+                };
+                const stats = getStartStats(new Date().getTime(), additionalStats);
+                observer.onNext(getTaskReport(TaskReportType.start, item, stats));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
+                observer.onCompleted();
+                return;
+            }
+        }
+
+
+        /**
+         * Timestamp when this task starts
+         * @type {TaskStats}
+         */
+        const stats = getStartStats(new Date().getTime(), {skipped: false});
+        debug(`> seqUID ${item.seqUID} started`);
+
+        /**
+         * Task started
+         */
+        observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type === TaskTypes.ExternalTask
@@ -145,7 +193,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             }
         }
 
-
     }).catch(error => {
         /**
          * **--**--MAGIC--**--**
@@ -170,27 +217,36 @@ function getTaskReport(type: TaskReportType, item: SequenceItem, stats: TaskStat
 /**
  * Create a new stats object with startTime
  */
-export function getStartStats(startTime: number): TaskStats {
-    return {
-        startTime,
-        started: true,
-        endTime: 0,
-        duration: 0,
-        completed: false,
-        errors: []
-    }
+export function getStartStats(startTime: number, additional?:{[index: string]: any}): TaskStats {
+    return _.assign(
+        {},
+        additional,
+        {
+            startTime,
+            started: true,
+            endTime: 0,
+            duration: 0,
+            completed: false,
+            errors: []
+        }
+    );
 }
 
 /**
  * Create a new stats object with completed/duration flags etc
  */
-function getEndStats(stats: TaskStats) {
+function getEndStats(stats: TaskStats, additional?:{[index: string]: any}) {
     const now = new Date().getTime();
-    return _.assign({}, stats, {
-        endTime: now,
-        duration: now - stats.startTime,
-        completed: true
-    })
+    return _.assign(
+        {},
+        stats,
+        additional,
+        {
+            endTime:   now,
+            duration:  now - stats.startTime,
+            completed: true
+        }
+    );
 }
 
 /**

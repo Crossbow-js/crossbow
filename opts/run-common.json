@@ -18,6 +18,11 @@
     "desc": "Use --no-fail to stop failures affecting sibling tasks ",
     "type": "boolean"
   },
+  "force": {
+    "desc": "Force tasks to run that would be otherwise skipped",
+    "type": "boolean",
+    "alias": ["f"]
+  },
   "skip": {
     "desc": "Skip certain tasks",
     "type": "array"

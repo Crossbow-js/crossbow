@@ -7,6 +7,8 @@ import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
 import {readdirSync} from "fs";
+import Rx = require('rx');
+import {dirname} from "path";
 
 const _ = require('../lodash.custom');
 // todo windows support
@@ -24,6 +26,7 @@ export interface FileNotFoundError extends InputError {}
 
 export interface ExternalFileContent extends ExternalFile {
     content: string
+    data?: any
 }
 
 export interface ExternalFileInput extends ExternalFile {
@@ -126,7 +129,35 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
 }
 
 export function writeFileToDisk(file: ExternalFile, content: string) {
+    const mkdirp = require('mkdirp').sync;
+    mkdirp(dirname(file.resolved));
     writeFileSync(file.resolved, content);
+}
+
+export function getStubFileWithContent(path:string, cwd:string): ExternalFileContent {
+    const file : any = getStubFile(path, cwd);
+    file.content = '';
+    return file;
+}
+
+export function readOrCreateJsonFile (path:string, cwd: string): ExternalFileContent {
+    const existing = readFilesFromDiskWithContent([path], cwd)[0];
+    if (existing.errors.length) {
+        if (existing.errors[0].type === InputErrorTypes.FileNotFound) {
+            const stub = getStubFileWithContent(path, cwd);
+            stub.content = '{}';
+            stub.data    = JSON.parse(stub.content);
+            return stub;
+        }
+    } else {
+        try {
+            existing.data = JSON.parse(existing.content);
+        } catch (e) {
+            console.log('ERROR PARSING JSON');
+            existing.data = {};
+        }
+    }
+    return existing;
 }
 
 export function getStubFile(path:string, cwd:string): ExternalFile {
@@ -222,4 +253,83 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         .map(x => {
             return x.relative;
         })
+}
+
+export interface IHashItem {
+    path: string
+    hash: string
+    changed: boolean
+}
+
+export interface IHashResults {
+    output: IHashItem[]
+    markedHashes: IHashItem[]
+}
+
+export enum HashDirErrorTypes  {
+    HashNotADirectory = <any>"HashNotADirectory",
+    HashNotFound = <any>"HashNotFound"
+}
+
+export interface HashDirError extends Error {
+    code: string
+    path: string
+    syscall: string
+}
+export function hashDirs(dirs: string[], cwd:string): any {
+
+    const existingFile = readOrCreateJsonFile(join('.crossbow', 'history.json'), cwd);
+    if (!existingFile.data.hashes) {
+        existingFile.data.hashes = [];
+    }
+
+    const hd = require('hash-dir');
+    const hashDirAsObservable = Rx.Observable.fromNodeCallback(hd);
+    return Rx.Observable.from(dirs).distinct().flatMap(inputPath => {
+        return hashDirAsObservable(inputPath).map((tree: {hash:string}) => {
+            return {
+                path: inputPath,
+                hash: tree.hash
+            }
+        });
+    })
+    .toArray()
+    .map(function (newHashes: IHashItem[]): IHashResults {
+        const newHashPaths = newHashes.map(x => x.path);
+        const markedHashes = newHashes.map(function (newHash) {
+            const match = existingFile.data.hashes.filter(x => x.path === newHash.path);
+            newHash.changed = (function () {
+                if (match.length) {
+                    return match[0].hash !== newHash.hash;
+                }
+                return true; // return true by default so that new entries always run
+            })();
+            return newHash
+        });
+
+        const otherHashes = existingFile.data.hashes.filter(function (hash) {
+            return newHashPaths.indexOf(hash.path) === -1;
+        });
+
+        const output = [...otherHashes, ...newHashes].filter(Boolean);
+
+        return {
+            output,
+            markedHashes
+        }
+    })
+    // Write the hashes to disk
+    .do(function (hashResults: IHashResults) {
+        writeFileToDisk(existingFile, JSON.stringify({hashes: hashResults.output}, null, 2));
+    });
+}
+
+export function concatProps(tasks, initial: string[], propname: string): string[] {
+    return tasks.reduce(function (acc, task) {
+        if (task.tasks.length) {
+            return acc.concat(concatProps(task.tasks, [], propname));
+        }
+        if (task[propname].length) return acc.concat(task[propname]);
+        return acc;
+    }, initial);
 }

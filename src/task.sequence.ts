@@ -4,9 +4,10 @@ const Rx = require('rx');
 const Observable = Rx.Observable;
 
 import * as adaptors from "./adaptors";
+import Immutable = require("immutable");
 import {Task} from "./task.resolve";
 import {CommandTrigger} from "./command.run";
-import {Runner} from "./task.runner";
+import {Runner, RunContext} from "./task.runner";
 import {
     SequenceItemTypes,
     SequenceItem,
@@ -234,12 +235,16 @@ function getFunctionName(fn: TaskFactory, count = 0): string {
 export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Runner {
     return {
         sequence: items,
-        series: () => {
-            const flattened = createObservableTree(items, [], false);
-            const subject = new Rx.ReplaySubject(2000);
+        series: (ctx: RunContext) => {
+
+            if (!ctx) ctx = Immutable.Map({});
+
+            const flattened = createObservableTree(items, [], false, ctx);
+            const subject   = new Rx.ReplaySubject(2000);
+
             Observable.from(flattened)
                 .concatAll()
-                .catch(x => {
+                .catch(() => {
                     subject.onCompleted();
                     return Rx.Observable.empty();
                 })
@@ -248,20 +253,27 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
                  */
                 .do(subject)
                 .subscribe();
+
             return subject;
         },
-        parallel: () => {
-            const flattened = createObservableTree(items, [], true);
-            const subject = new Rx.ReplaySubject(2000);
+        parallel: (ctx: RunContext) => {
+
+            if (!ctx) ctx = Immutable.Map({});
+
+            const flattened = createObservableTree(items, [], true, ctx);
+            const subject   = new Rx.ReplaySubject(2000);
+
             Observable.from(flattened)
                 .mergeAll()
                 .do(subject)
-                .subscribe(x => {
-                }, e=> {
-                }, _=> {
+                .subscribe(() => {
+                    // values are proxied to subject
+                }, () => {
+                    // errors handled via error reports
+                }, () => {
                     subject.onCompleted();
-                    // debug('Parallel sequence complete');
                 });
+
             return subject;
         }
     };
@@ -297,7 +309,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
      ];
      *
      */
-    function createObservableTree(items: SequenceItem[], initial: SequenceItem[], addCatch = false) {
+    function createObservableTree(items: SequenceItem[], initial: SequenceItem[], addCatch = false, ctx: RunContext) {
 
         return items.reduce((all, item: SequenceItem) => {
 
@@ -307,7 +319,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * of (this task) will be run in `parallel`
              */
             if (item.type === SequenceItemTypes.ParallelGroup) {
-                output = Observable.merge(createObservableTree(item.items, [], shouldCatch(trigger)));
+                output = Observable.merge(createObservableTree(item.items, [], shouldCatch(trigger), ctx));
             }
             /**
              * If the current task was marked as `series`, all immediate child tasks
@@ -315,14 +327,14 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
              * one has completed
              */
             if (item.type === SequenceItemTypes.SeriesGroup) {
-                output = Observable.concat(createObservableTree(item.items, [], false));
+                output = Observable.concat(createObservableTree(item.items, [], false, ctx));
             }
 
             /**
              * Finally is item is a task, create an observable for it.
              */
             if (item.type === SequenceItemTypes.Task && item.factory) {
-                output = createObservableFromSequenceItem(item, trigger);
+                output = createObservableFromSequenceItem(item, trigger, ctx);
             }
 
             /**
