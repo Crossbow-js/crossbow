@@ -14,6 +14,7 @@ import {createHash} from "crypto";
 import input from "./public/create";
 import {lstatSync} from "fs";
 import {lstat} from "fs";
+import {Stats} from "fs";
 const hd = require('hash-dir');
 const hashDirAsObservable  = Rx.Observable.fromNodeCallback(hd);
 const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);
@@ -351,8 +352,8 @@ function hashFile(filepath:string, fn: Function) {
 }
 
 function hashFileOrDir (inputPath: string) {
-    return lstatAsObservable(inputPath).flatMap(function (stat) {
-        if (stat.isDirectory()) {
+    return lstatAsObservable(inputPath).flatMap(function (stats: Stats) {
+        if (stats.isDirectory()) {
             return hashDirAsObservable(inputPath).map((tree: {hash:string}) => {
                 return {
                     path: inputPath,
@@ -360,7 +361,7 @@ function hashFileOrDir (inputPath: string) {
                 }
             });
         }
-        if (stat.isFile()) {
+        if (stats.isFile()) {
             return hashFileAsObservable(inputPath).map((hash: string) => {
                 return {
                     path: inputPath,
