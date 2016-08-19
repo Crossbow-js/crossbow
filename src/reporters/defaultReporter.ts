@@ -31,7 +31,7 @@ const parsed = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), 'node_modules');
 
 function nl() {
-    l(`{gray:-}`);
+    // logger.info('');
 }
 
 export const enum LogLevel {
@@ -77,7 +77,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
         nl();
         reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
     }
-    
+    logger.info('{gray:--------}');
     if (errorCount > 0) {
         nl();
         cli.input.slice(1).forEach(function (input) {
@@ -101,6 +101,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
             l(`{ok: } ${title} {yellow:${duration(runtime)}`);
         }
     }
+    logger.info('{gray:--------}');
 }
 
 function _taskReport(report: TaskReport, label: string) {
@@ -109,19 +110,19 @@ function _taskReport(report: TaskReport, label: string) {
     switch (report.type) {
         case TaskReportType.start:
             if (skipped) {
-                l(`{yellow:- -} ${label} {yellow:(skipped)}`);
+                l(`{yellow:-} ${label} {yellow:(skipped)}`);
             } else {
-                l(`{yellow:> +} ${label}`);
+                l(`{yellow:+} ${label}`);
             }
             break;
         case TaskReportType.end:
             if (skipped) {
                 return;
             }
-            l(`{green:> ✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
+            l(`{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
-            l(`{red:> x} ${label}`);
+            l(`{red:x} ${label}`);
             break;
     }
 }
