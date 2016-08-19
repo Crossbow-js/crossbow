@@ -9,6 +9,15 @@ import {join} from "path";
 import {readdirSync} from "fs";
 import Rx = require('rx');
 import {dirname} from "path";
+import {createReadStream} from "fs";
+import {createHash} from "crypto";
+import input from "./public/create";
+import {lstatSync} from "fs";
+import {lstat} from "fs";
+const hd = require('hash-dir');
+const hashDirAsObservable  = Rx.Observable.fromNodeCallback(hd);
+const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);
+const lstatAsObservable    = Rx.Observable.fromNodeCallback(lstat);
 
 const _ = require('../lodash.custom');
 // todo windows support
@@ -283,45 +292,40 @@ export function hashDirs(dirs: string[], cwd:string): any {
         existingFile.data.hashes = [];
     }
 
-    const hd = require('hash-dir');
-    const hashDirAsObservable = Rx.Observable.fromNodeCallback(hd);
-    return Rx.Observable.from(dirs).distinct().flatMap(inputPath => {
-        return hashDirAsObservable(inputPath).map((tree: {hash:string}) => {
+    return Rx.Observable
+        .from(dirs)
+        .map(x => resolve(cwd, x))
+        .distinct()
+        .flatMap(hashFileOrDir)
+        .toArray()
+        .map(function (newHashes: IHashItem[]): IHashResults {
+            const newHashPaths = newHashes.map(x => x.path);
+            const markedHashes = newHashes.map(function (newHash) {
+                const match = existingFile.data.hashes.filter(x => x.path === newHash.path);
+                newHash.changed = (function () {
+                    if (match.length) {
+                        return match[0].hash !== newHash.hash;
+                    }
+                    return true; // return true by default so that new entries always run
+                })();
+                return newHash
+            });
+
+            const otherHashes = existingFile.data.hashes.filter(function (hash) {
+                return newHashPaths.indexOf(hash.path) === -1;
+            });
+
+            const output = [...otherHashes, ...newHashes].filter(Boolean);
+
             return {
-                path: inputPath,
-                hash: tree.hash
+                output,
+                markedHashes
             }
+        })
+        // Write the hashes to disk
+        .do(function (hashResults: IHashResults) {
+            writeFileToDisk(existingFile, JSON.stringify({hashes: hashResults.output}, null, 2));
         });
-    })
-    .toArray()
-    .map(function (newHashes: IHashItem[]): IHashResults {
-        const newHashPaths = newHashes.map(x => x.path);
-        const markedHashes = newHashes.map(function (newHash) {
-            const match = existingFile.data.hashes.filter(x => x.path === newHash.path);
-            newHash.changed = (function () {
-                if (match.length) {
-                    return match[0].hash !== newHash.hash;
-                }
-                return true; // return true by default so that new entries always run
-            })();
-            return newHash
-        });
-
-        const otherHashes = existingFile.data.hashes.filter(function (hash) {
-            return newHashPaths.indexOf(hash.path) === -1;
-        });
-
-        const output = [...otherHashes, ...newHashes].filter(Boolean);
-
-        return {
-            output,
-            markedHashes
-        }
-    })
-    // Write the hashes to disk
-    .do(function (hashResults: IHashResults) {
-        writeFileToDisk(existingFile, JSON.stringify({hashes: hashResults.output}, null, 2));
-    });
 }
 
 export function concatProps(tasks, initial: string[], propname: string): string[] {
@@ -332,4 +336,38 @@ export function concatProps(tasks, initial: string[], propname: string): string[
         if (task[propname].length) return acc.concat(task[propname]);
         return acc;
     }, initial);
+}
+
+function hashFile(filepath:string, fn: Function) {
+    const hash = createHash('sha256');
+    createReadStream(filepath)
+        .on('data', function(chunk) {
+            hash.update(chunk);
+        })
+        .on('end', function() {
+            fn(null, hash.digest('hex'));
+        })
+        .on('error', fn);
+}
+
+function hashFileOrDir (inputPath: string) {
+    return lstatAsObservable(inputPath).flatMap(function (stat) {
+        if (stat.isDirectory()) {
+            return hashDirAsObservable(inputPath).map((tree: {hash:string}) => {
+                return {
+                    path: inputPath,
+                    hash: tree.hash
+                }
+            });
+        }
+        if (stat.isFile()) {
+            return hashFileAsObservable(inputPath).map((hash: string) => {
+                return {
+                    path: inputPath,
+                    hash
+                }
+            });
+        }
+        return Rx.Observable.empty();
+    });
 }
