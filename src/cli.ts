@@ -8,7 +8,7 @@ export default function (cb) {
     const args    = process.argv.slice(2);
     const command = args[0];
     const match   = getCommand(command, commands);
-
+    
     if (!match.length) {
 
         // first look if the user provided a --version flag
@@ -18,7 +18,20 @@ export default function (cb) {
             return console.log(require('../package.json').version);
         }
 
-        // if not, show global help
+        const commandOptions = commands['run'].opts.map(require);
+        const opts           = _.merge({}, ...commandOptions);
+        const cli2            = parse(['run', ...args], opts);
+
+        /**
+         * If there was additional input, try to run a task
+         */
+        if (cli2.input.length > 1) {
+            return cb(cli2);
+        }
+
+        /**
+         * Show global help
+         */
         return printHelp(commands);
     }
 
