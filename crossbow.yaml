@@ -46,7 +46,7 @@ tasks:
     - slow-stream
 
   sleep1@p:
-    ifChanged: ['package']
+    ifChanged: ['package.json']
     tasks:
       - '@npm sleep 1'
       - '@npm sleep 1'

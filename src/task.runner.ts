@@ -102,7 +102,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             const hasChanges = ctx
                 .get('ifChanged')
                 .filter(x => {
-                    return item.task.ifChanged.indexOf(x.get('path')) !== -1;
+                    return item.task.ifChanged.indexOf(x.get('userInput')) !== -1;
                 })
                 .some(x => x.get('changed'));
 

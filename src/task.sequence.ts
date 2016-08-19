@@ -417,6 +417,17 @@ export function countSequenceErrors(items: SequenceItem[]): number {
     }, 0);
 }
 
+export function collectSkippedTasks (items:SequenceItem[], initial): SequenceItem[] {
+    return items.reduce(function (acc, item) {
+        if (item.type === SequenceItemTypes.Task) {
+            if (item.stats.skipped) {
+                return acc.concat(item);
+            }
+            return acc;
+        }
+        return acc.concat(collectSkippedTasks(item.items, []));
+    }, initial);
+}
 /**
  * Look at the reports array to find stats linked to a
  * given task

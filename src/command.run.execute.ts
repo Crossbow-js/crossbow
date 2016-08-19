@@ -80,7 +80,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     const ifLookups = file.concatProps(tasks.all, [], "ifChanged");
 
     if (ifLookups.length) {
-        file.hashDirs(ifLookups, trigger.config.cwd)
+        file.hashItems(ifLookups, trigger.config.cwd)
             .map(function (hashResults: file.IHashResults) {
                 // Send in the marked hashes to the run context
                 // so that matching tasks can be ignored

@@ -15,7 +15,7 @@ import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
-import {countSequenceErrors} from "../task.sequence";
+import {countSequenceErrors, collectSkippedTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
 import {ExternalFileInput, ExternalFileContent} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
@@ -69,6 +69,7 @@ export function multiLine(input: string) {
 function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
 
     const errorCount = countSequenceErrors(sequence);
+    const skipCount  = collectSkippedTasks(sequence, []);
 
     // todo - show a reduced tree showing only errors
     if (config.verbose === LogLevel.Verbose || errorCount > 0) {
@@ -76,7 +77,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
         nl();
         reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
     }
-
+    
     if (errorCount > 0) {
         nl();
         cli.input.slice(1).forEach(function (input) {
@@ -94,11 +95,16 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
         }
     } else {
         nl();
-        l(`{ok: } ${title} {yellow:${duration(runtime)}`);
+        if (skipCount.length > 0) {
+            l(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped items)`);
+        } else {
+            l(`{ok: } ${title} {yellow:${duration(runtime)}`);
+        }
     }
 }
 
 function _taskReport(report: TaskReport, label: string) {
+
     const skipped = report.item.task.skipped || report.stats.skipped;
     switch (report.type) {
         case TaskReportType.start:
