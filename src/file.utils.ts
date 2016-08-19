@@ -268,7 +268,7 @@ export interface IHashResults {
 
 export enum HashDirErrorTypes  {
     HashNotADirectory = <any>"HashNotADirectory",
-    HashNotFound = <any>"HashNotFound"
+    HashPathNotFound = <any>"HashPathNotFound"
 }
 
 export interface HashDirError extends Error {

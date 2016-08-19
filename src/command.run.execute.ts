@@ -91,8 +91,8 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             .take(1)
             .catch(function (e) {
                 if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
-                if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashNotFound;
-                reporter(ReportNames.HashDirError, e);
+                if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
+                reporter(ReportNames.HashDirError, e, trigger.config.cwd);
                 return Rx.Observable.just(Immutable.Map({}));
             })
             .subscribe(run);
