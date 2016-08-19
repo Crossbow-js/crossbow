@@ -96,7 +96,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
     } else {
         nl();
         if (skipCount.length > 0) {
-            l(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped items)`);
+            l(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped item${skipCount.length === 1 ? '' : 's'}, use -f to force)`);
         } else {
             l(`{ok: } ${title} {yellow:${duration(runtime)}`);
         }
