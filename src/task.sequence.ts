@@ -80,13 +80,16 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * by first resolving the top-level options object for it.
              */
             const localOptions = loadTopLevelOptions(task, trigger);
+
             const callable = (function () {
                 if (task.type === TaskTypes.InlineFunction) {
                     return task.inlineFunctions[0];
                 }
                 return require(task.externalTasks[0].resolved);
             })();
+
             return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
+
         }, initial);
     }
 }
@@ -170,7 +173,6 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
      *          input: css/core.css
      *          production: true
      */
-
     const mergedOptionsWithQuery = _.merge({}, options, task.options, task.query, task.flags);
 
     /**
@@ -356,6 +358,8 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
 
     // todo - more robust way of matching options -> tasks
+
+    if (task.options) return task.options;
 
     const fullMatch = _.get(trigger.input.options, [task.taskName]);
 

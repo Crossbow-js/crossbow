@@ -36,17 +36,43 @@ export const transforms = {
 
             function pullOptions(tasks, toApply?) {
                 tasks.forEach(function (task) {
-                    if (toApply) {
-                        if (task.type !== TaskTypes.TaskGroup) {
-                            task.options = _.assign({}, task.options, toApply);
-                        }
-                    }
-                    if (task.tasks.length) {
+                    // if (toApply) {
+                    //     if (task.type !== TaskTypes.TaskGroup) {
+                    //         task.options = _.assign({}, task.options, toApply);
+                    //     }
+                    // }
+
+                    /**
+                     * If a task is a group + had options
+                     * then they should actually apply to immediate
+                     * children rather than themselves
+                     *
+                     * eg:
+                     *
+                     *  tasks:
+                     *    js:
+                     *      options:
+                     *        input: 'bla';
+                     *        output: 'boo';
+                     *      runMode: 'parallel'
+                     *      tasks:
+                     *        - task1
+                     *        - task2
+                     *
+                     * Now when task1 & task2 run, they should have access to the options
+                     */
+                    if (task.type === TaskTypes.TaskGroup && Object.keys(task.options).length) {
                         if (task.options) {
-                            pullOptions(task.tasks, task.options);
-                        } else {
-                            pullOptions(task.tasks);
+                            // console.log('Item has options', task);
+                            console.log(task.subTasks);
+                            console.log(task.options);
                         }
+                        // if (task.options) {
+                        //     pullOptions(task.tasks, task.options);
+                        // } else {
+                        //     pullOptions(task.tasks);
+                        // }
+                        pullOptions(task.tasks);
                     }
                 })
             }

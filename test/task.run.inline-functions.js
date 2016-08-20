@@ -114,6 +114,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
+
         runner.runner
             .series()
             .toArray()
