@@ -59,7 +59,8 @@ const defaultTask = <Task>{
     taskName:        undefined,
     runMode:         TaskRunModes.series,
     skipped:         false,
-    ifChanged:       []
+    ifChanged:       [],
+    options:         {}
 };
 
 /**
@@ -526,6 +527,7 @@ export interface Task {
     duration?: number
     query: any
     flags: any
+    options: any
     cbflags: string[]
     origin: TaskOriginTypes
     type: TaskTypes

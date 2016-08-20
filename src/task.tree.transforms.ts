@@ -1,4 +1,5 @@
-import {Task} from "./task.resolve";
+import {Task, TaskTypes} from "./task.resolve";
+const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task.tree.transform');
 
 export interface TaskTreeTransform {
@@ -25,6 +26,34 @@ function applyBooleanPropertyToChildren (tasks: Task[], skipped: boolean) {
 
 export const transforms = {
 
+    'Copy options to children' : {
+        predicate (tasks: Task[]): boolean {
+            return true;
+        },
+        fn (tasks: Task[]): Task[] {
+
+            pullOptions(tasks);
+
+            function pullOptions(tasks, toApply?) {
+                tasks.forEach(function (task) {
+                    if (toApply) {
+                        if (task.type !== TaskTypes.TaskGroup) {
+                            task.options = _.assign({}, task.options, toApply);
+                        }
+                    }
+                    if (task.tasks.length) {
+                        if (task.options) {
+                            pullOptions(task.tasks, task.options);
+                        } else {
+                            pullOptions(task.tasks);
+                        }
+                    }
+                })
+            }
+
+            return tasks;
+        }
+    },
     'Add skipped property to children' : {
         predicate (tasks: Task[]): boolean {
             return true;

@@ -93,6 +93,36 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
+    it.only('passes options from inline object', function (done) {
+        const opts = [];
+        const runner = cli.getRunner(['js:dev'], {
+            tasks: {
+                js: {
+                    options: {
+                        dev: {
+                            input: 'kittie'
+                        },
+                        prod: {
+                            input: 'sally'
+                        }
+                    },
+                    tasks: [
+                        function (options) {
+                            opts.push(options);
+                        }
+                    ]
+                }
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function (reports) {
+                // assert.equal(opts[0].name, 'shane');
+                console.log(opts);
+                done();
+            });
+    });
     it('Allows errors when options not defined options ', function () {
         const opts = [];
         const runner = cli.getRunner(['js:dev:typo --production'], {

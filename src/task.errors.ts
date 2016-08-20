@@ -95,7 +95,15 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
      *          dev: 'input.scss'
      */
     return task.subTasks.reduce((all, subTaskName) => {
-        const configKeys = Object.keys(_.get(trigger.input, ['options'].concat(task.baseTaskName), {}));
+
+        const configKeys = (function () {
+            const taskOptions = Object.keys(_.get(task, "options", {}));
+            if (taskOptions.length) {
+                return taskOptions;
+            }
+            return Object.keys(_.get(trigger.input, ['options'].concat(task.baseTaskName), {}));
+        })();
+
         /**
          * if `name` is an empty string, the user provided a colon-separated task
          * name without the right-hand part.
@@ -134,7 +142,8 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          * key.
          */
         const match = _.get(trigger.input, ['options'].concat(task.baseTaskName, subTaskName));
-        if (match === undefined) {
+        const match2 = _.get(task, ['options'].concat(subTaskName));
+        if (match === undefined && match2 === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,
                 name: subTaskName

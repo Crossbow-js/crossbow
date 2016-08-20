@@ -11,10 +11,8 @@ import Rx = require('rx');
 import {dirname} from "path";
 import {createReadStream} from "fs";
 import {createHash} from "crypto";
-import input from "./public/create";
-import {lstatSync} from "fs";
-import {lstat} from "fs";
-import {Stats} from "fs";
+import {lstat, Stats} from "fs";
+
 const hd = require('hash-dir');
 const hashDirAsObservable  = Rx.Observable.fromNodeCallback(hd);
 const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);

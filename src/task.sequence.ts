@@ -28,7 +28,6 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
 
         return items.reduce((all, task: Task) => {
-
             /**
              * If the current task has child tasks, we build a tree of
              * nested observables for it (a task with children cannot itself
@@ -172,7 +171,7 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
      *          production: true
      */
 
-    const mergedOptionsWithQuery = _.merge({}, options, task.query, task.flags);
+    const mergedOptionsWithQuery = _.merge({}, options, task.options, task.query, task.flags);
 
     /**
      * If the module did not export a function, but has a 'tasks'
@@ -356,11 +355,18 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
  */
 function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
 
-    // todo - more robust/featurefull way of matching options -> tasks
+    // todo - more robust way of matching options -> tasks
 
     const fullMatch = _.get(trigger.input.options, [task.taskName]);
 
     if (fullMatch !== undefined) {
+        /**
+         * If this item was given as top-level + options
+         * just return the options here
+         */
+        if (fullMatch.options && fullMatch.tasks) {
+            return fullMatch.options;
+        }
         return fullMatch;
     }
 
