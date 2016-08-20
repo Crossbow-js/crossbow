@@ -167,6 +167,43 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
+    it.only('passes options from inline object with sub task wildcard', function (done) {
+        const opts = [];
+        const runner = cli.getRunner(['js:*'], {
+            tasks: {
+                js: {
+                    options: {
+                        dev: {
+                            input: 'kittie'
+                        },
+                        prod: {
+                            input: 'sally'
+                        }
+                    },
+                    runMode: 'series',
+                    tasks: [
+                        function (options) {
+                            opts.push(options);
+                        },
+                        'css'
+                    ]
+                },
+                css: function (options) {
+                    opts.push(options);
+                }
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function () {
+                assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
+                assert.equal(opts[1].input, 'kittie', 'first CSS "dev" task');
+                assert.equal(opts[2].input, 'sally',  'second CSS "dev" task');
+                assert.equal(opts[3].input, 'sally',  'second CSS "dev" task');
+                done();
+            });
+    });
     it('Allows errors when options not defined options ', function () {
         const opts = [];
         const runner = cli.getRunner(['js:dev:typo --production'], {

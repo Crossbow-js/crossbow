@@ -21,6 +21,7 @@ import {createObservableFromSequenceItem, TaskReportType} from "./task.runner";
 import {TaskReport} from "./task.runner";
 import {isInternal} from "./task.utils";
 
+
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
     return flatten(tasks, []);
@@ -40,23 +41,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                  * of (this task) will be run in `parallel`
                  */
                 if (task.runMode === TaskRunModes.parallel) {
-                    const toAdd = ((): SequenceItem[] => {
-                        if (task.subTasks.length) {
-                            return task.subTasks.map(function (subTaskName: string) {
-                                return createSequenceParallelGroup({
-                                    taskName: task.taskName,
-                                    items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
-                                    skipped: task.skipped
-                                });
-                            });
-                        }
-                        return [createSequenceParallelGroup({
-                            taskName: task.taskName,
-                            items: flatten(task.tasks, [], task.options),
-                            skipped: task.skipped
-                        })]
-                    })();
-                    return all.concat(toAdd);
+                    return all.concat(resolveGroup(task, createSequenceParallelGroup));
                 }
                 /**
                  * If the current task was marked as `series`, all immediate child tasks
@@ -64,25 +49,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                  * one has completed
                  */
                 if (task.runMode === TaskRunModes.series) {
-
-                    const toAdd = ((): SequenceItem[] => {
-                        if (!task.subTasks.length) {
-                            return [createSequenceSeriesGroup({
-                                taskName: task.taskName,
-                                items: flatten(task.tasks, [], task.options),
-                                skipped: task.skipped
-                            })]
-                        }
-                        return task.subTasks.map((subTaskName: string) => {
-                            return createSequenceSeriesGroup({
-                                taskName: task.taskName,
-                                items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
-                                skipped: task.skipped
-                            })
-                        });
-                    })();
-
-                    return all.concat(toAdd);
+                    return all.concat(resolveGroup(task, createSequenceSeriesGroup));
                 }
             }
 
@@ -107,6 +74,11 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              */
             const localOptions = _.assign({}, loadTopLevelOptions(task, trigger), options);
 
+            /**
+             * Decide where the callable function is coming from
+             * (inline function, external task etc)
+             * @type {CBFunction|any}
+             */
             const callable = (function () {
                 if (task.type === TaskTypes.InlineFunction) {
                     return task.inlineFunctions[0];
@@ -114,9 +86,59 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 return require(task.externalTasks[0].resolved);
             })();
 
+            /**
+             * Take the callable and create items with it + options
+             */
             return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
 
         }, initial);
+    }
+
+    /**
+     * Resolve a groupd of tasks
+     * @param task
+     * @param groupCreatorFn
+     * @param continueFn
+     * @returns {any}
+     * todo - this is basically the same functionality as `resolveFromFunction` - refactor
+     */
+    function resolveGroup (task: Task, groupCreatorFn: Function): SequenceItem[] {
+
+        /**
+         * If the group contained subtasks
+         */
+        if (task.subTasks.length) {
+            /**
+             * Use either subtasks directly, or if '*' was given, use
+             * each key in the object to create a task
+             */
+            const subTaskMap = (() => {
+                if (task.subTasks[0] === '*') {
+                    return Object.keys(task.options);
+                }
+                return task.subTasks;
+            })();
+
+            /**
+             * Now for each subtask create a separate task item
+             */
+            return subTaskMap.map(function (subTaskName: string) {
+                return groupCreatorFn({
+                    taskName: task.taskName,
+                    items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
+                    skipped: task.skipped
+                });
+            });
+        }
+
+        /**
+         * Here the group had no direct 'sub tasks', so just return the item
+         */
+        return [groupCreatorFn({
+            taskName: task.taskName,
+            items: flatten(task.tasks, [], task.options),
+            skipped: task.skipped
+        })]
     }
 }
 
