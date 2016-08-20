@@ -25,7 +25,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 
     return flatten(tasks, []);
 
-    function flatten(items: Task[], initial: SequenceItem[]): SequenceItem[] {
+    function flatten(items: Task[], initial: SequenceItem[], options?): SequenceItem[] {
 
         return items.reduce((all, task: Task) => {
             /**
@@ -33,18 +33,30 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * nested observables for it (a task with children cannot itself
              * be a task that should be run)
              */
-            if (task.tasks.length) {
+            if (task.type === TaskTypes.TaskGroup) {
 
                 /**
                  * If the current task was marked as `parallel`, all immediate children
                  * of (this task) will be run in `parallel`
                  */
                 if (task.runMode === TaskRunModes.parallel) {
-                    return all.concat(createSequenceParallelGroup({
-                        taskName: task.taskName,
-                        items: flatten(task.tasks, []),
-                        skipped: task.skipped
-                    }));
+                    const toAdd = ((): SequenceItem[] => {
+                        if (task.subTasks.length) {
+                            return task.subTasks.map(function (subTaskName: string) {
+                                return createSequenceParallelGroup({
+                                    taskName: task.taskName,
+                                    items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
+                                    skipped: task.skipped
+                                });
+                            });
+                        }
+                        return [createSequenceParallelGroup({
+                            taskName: task.taskName,
+                            items: flatten(task.tasks, [], task.options),
+                            skipped: task.skipped
+                        })]
+                    })();
+                    return all.concat(toAdd);
                 }
                 /**
                  * If the current task was marked as `series`, all immediate child tasks
@@ -52,11 +64,25 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                  * one has completed
                  */
                 if (task.runMode === TaskRunModes.series) {
-                    return all.concat(createSequenceSeriesGroup({
-                        taskName: task.taskName,
-                        items: flatten(task.tasks, []),
-                        skipped: task.skipped
-                    }));
+
+                    const toAdd = ((): SequenceItem[] => {
+                        if (!task.subTasks.length) {
+                            return [createSequenceSeriesGroup({
+                                taskName: task.taskName,
+                                items: flatten(task.tasks, [], task.options),
+                                skipped: task.skipped
+                            })]
+                        }
+                        return task.subTasks.map((subTaskName: string) => {
+                            return createSequenceSeriesGroup({
+                                taskName: task.taskName,
+                                items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
+                                skipped: task.skipped
+                            })
+                        });
+                    })();
+
+                    return all.concat(toAdd);
                 }
             }
 
@@ -79,7 +105,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * (or an inline function) so we can begin working with it
              * by first resolving the top-level options object for it.
              */
-            const localOptions = loadTopLevelOptions(task, trigger);
+            const localOptions = _.assign({}, loadTopLevelOptions(task, trigger), options);
 
             const callable = (function () {
                 if (task.type === TaskTypes.InlineFunction) {
@@ -315,6 +341,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
         return items.reduce((all, item: SequenceItem) => {
 
             let output;
+
             /**
              * If the current task was marked as `parallel`, all immediate children
              * of (this task) will be run in `parallel`
@@ -358,8 +385,6 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
 
     // todo - more robust way of matching options -> tasks
-
-    if (task.options) return task.options;
 
     const fullMatch = _.get(trigger.input.options, [task.taskName]);
 

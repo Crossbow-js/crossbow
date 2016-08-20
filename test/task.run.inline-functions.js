@@ -93,9 +93,9 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
-    it.only('passes options from inline object', function (done) {
+    it('passes options from inline object', function (done) {
         const opts = [];
-        const runner = cli.getRunner(['js:dev'], {
+        const runner = cli.getRunner(['js'], {
             tasks: {
                 js: {
                     options: {
@@ -106,21 +106,64 @@ describe('Running tasks from inline-functions', function () {
                             input: 'sally'
                         }
                     },
+                    runMode: 'parallel',
                     tasks: [
                         function (options) {
                             opts.push(options);
-                        }
+                        },
+                        'css'
                     ]
+                },
+                css: function (options) {
+                    opts.push(options);
                 }
             }
         });
-
         runner.runner
             .series()
             .toArray()
-            .subscribe(function (reports) {
-                // assert.equal(opts[0].name, 'shane');
-                console.log(opts);
+            .subscribe(function () {
+                assert.equal(opts[0].dev.input,  'kittie', 'first JS "dev" task');
+                assert.equal(opts[0].prod.input, 'sally', 'first JS "dev" task');
+                assert.equal(opts[1].dev.input,  'kittie', 'first JS "dev" task');
+                assert.equal(opts[1].prod.input, 'sally', 'first JS "dev" task');
+                done();
+            });
+    });
+    it('passes options from inline object with sub tasks', function (done) {
+        const opts = [];
+        const runner = cli.getRunner(['js:dev:prod'], {
+            tasks: {
+                js: {
+                    options: {
+                        dev: {
+                            input: 'kittie'
+                        },
+                        prod: {
+                            input: 'sally'
+                        }
+                    },
+                    runMode: 'parallel',
+                    tasks: [
+                        function (options) {
+                            opts.push(options);
+                        },
+                        'css'
+                    ]
+                },
+                css: function (options) {
+                    opts.push(options);
+                }
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function () {
+                assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
+                assert.equal(opts[1].input, 'kittie', 'first CSS "dev" task');
+                assert.equal(opts[2].input, 'sally',  'second CSS "dev" task');
+                assert.equal(opts[3].input, 'sally',  'second CSS "dev" task');
                 done();
             });
     });
