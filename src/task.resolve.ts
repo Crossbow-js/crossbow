@@ -268,7 +268,11 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
  * @returns {object}
  */
 export function createTask(obj: any): Task {
-    return _.merge({}, defaultTask, obj);
+    return _.mergeWith({}, defaultTask, obj, function customizer(objValue, srcValue) {
+        if (_.isArray(objValue)) {
+            return objValue.concat(srcValue);
+        }
+    });
 }
 
 /**

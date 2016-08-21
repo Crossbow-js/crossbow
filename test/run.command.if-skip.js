@@ -120,7 +120,7 @@ describe("skipping tasks", function () {
         const input = {
             tasks: {
                 js: {
-                    ifChanged: ['test/fixtures/js'],
+                    ifChanged: 'test/fixtures/js',
                     tasks: [
                         'css',
                         'test/fixtures/tasks/simple.js'
@@ -130,7 +130,7 @@ describe("skipping tasks", function () {
                     ifChanged: ['test'],
                     tasks: ['@npm sleep 0.1']
                 },
-                svg: '@sh sleep 0.02'
+                svg: '@sh sleep 0.01'
             }
         };
 

@@ -1,7 +1,7 @@
 /**
  * @license
  * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash include="merge,get,set,assign,values,toArray" exports="node"`
+ * Build: `lodash include="merge,mergeWith,get,set,assign,values,toArray" exports="node"`
  * Copyright jQuery Foundation and other contributors <https://jquery.org/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -2993,6 +2993,48 @@
   });
 
   /**
+   * This method is like `_.merge` except that it accepts `customizer` which
+   * is invoked to produce the merged values of the destination and source
+   * properties. If `customizer` returns `undefined`, merging is handled by the
+   * method instead. The `customizer` is invoked with seven arguments:
+   * (objValue, srcValue, key, object, source, stack).
+   *
+   * **Note:** This method mutates `object`.
+   *
+   * @static
+   * @memberOf _
+   * @since 4.0.0
+   * @category Object
+   * @param {Object} object The destination object.
+   * @param {...Object} sources The source objects.
+   * @param {Function} customizer The function to customize assigned values.
+   * @returns {Object} Returns `object`.
+   * @example
+   *
+   * function customizer(objValue, srcValue) {
+   *   if (_.isArray(objValue)) {
+   *     return objValue.concat(srcValue);
+   *   }
+   * }
+   *
+   * var object = {
+   *   'fruits': ['apple'],
+   *   'vegetables': ['beet']
+   * };
+   *
+   * var other = {
+   *   'fruits': ['banana'],
+   *   'vegetables': ['carrot']
+   * };
+   *
+   * _.mergeWith(object, other, customizer);
+   * // => { 'fruits': ['apple', 'banana'], 'vegetables': ['beet', 'carrot'] }
+   */
+  var mergeWith = createAssigner(function(object, source, srcIndex, customizer) {
+    baseMerge(object, source, srcIndex, customizer);
+  });
+
+  /**
    * Sets the value at `path` of `object`. If a portion of `path` doesn't exist,
    * it's created. Arrays are created for missing index properties while objects
    * are created for all other missing properties. Use `_.setWith` to customize
@@ -3088,6 +3130,7 @@
   lodash.keysIn = keysIn;
   lodash.memoize = memoize;
   lodash.merge = merge;
+  lodash.mergeWith = mergeWith;
   lodash.rest = rest;
   lodash.set = set;
   lodash.toArray = toArray;

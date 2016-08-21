@@ -18,7 +18,7 @@ const flagRegex = /(.+?)@(.+)?$/;
 let inlineFnCount = 0;
 
 export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigger, parents: string[]): Task {
-    
+
     let output = (function () {
         if (typeof taskName === 'function') {
             return handleFunctionInput(taskName, trigger.input, parents);
