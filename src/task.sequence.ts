@@ -103,45 +103,52 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
      * todo - this is basically the same functionality as `resolveFromFunction` - refactor
      */
     function resolveGroup (task: Task, groupCreatorFn: Function): SequenceItem[] {
-
         /**
-         * If the group contained subtasks
+         * If the group contains no subtasks
          */
-        if (task.subTasks.length) {
-            /**
-             * Use either subtasks directly, or if '*' was given, use
-             * each key in the object to create a task
-             */
-            const subTaskMap = (() => {
-                if (task.subTasks[0] === '*') {
-                    return Object.keys(task.options).filter(x => x !== '_shared');
-                }
-                return task.subTasks;
-            })();
+        if (!task.subTasks.length) {
 
             /**
-             * Now for each sub-task create a separate task item
+             * Here the group had no direct 'sub tasks', so just return the item
              */
-            return subTaskMap.map(function (subTaskName: string) {
-
-                const parentOptions = _.merge({}, task.options._shared, _.get(task.options, subTaskName, {}));
-
-                return groupCreatorFn({
-                    taskName: task.taskName,
-                    items: flatten(task.tasks, [], parentOptions),
-                    skipped: task.skipped
-                });
-            });
+            return [groupCreatorFn({
+                taskName: task.taskName,
+                items: flatten(task.tasks, [], task.options),
+                skipped: task.skipped
+            })];
         }
 
         /**
-         * Here the group had no direct 'sub tasks', so just return the item
+         * Use either subtasks directly, or if '*' was given, use
+         * each key in the object to create a task
          */
-        return [groupCreatorFn({
-            taskName: task.taskName,
-            items: flatten(task.tasks, [], task.options),
-            skipped: task.skipped
-        })]
+        const lookupKeys = getLookupKeys(task.subTasks, task.options);
+
+        /**
+         * Now for each sub-task create a separate task item
+         */
+        return lookupKeys.map((subTaskName: string) : SequenceItem => {
+
+            /**
+             * When things like options, flags or query strings
+             * were present on this task-group - pass them into the upcoming task instead
+             * Order of presedence
+             *   flags -> query -> options -> shared
+             */
+            const parentOptions = _.merge(
+                {},
+                task.options._shared,
+                _.get(task.options, subTaskName, {}),
+                task.query,
+                task.flags
+            );
+
+            return groupCreatorFn({
+                taskName: task.taskName,
+                items: flatten(task.tasks, [], parentOptions),
+                skipped: task.skipped
+            });
+        });
     }
 }
 
@@ -175,28 +182,9 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     }
 
     /**
-     * Now we know for sure that this task has `subTasks`
-     * so if the first entry in the subTasks array is a `*` - then
-     * the user wants to run all tasks under this options
-     * object. So we need to get the keys and use each one as a lookup
-     * on the local options.
-     *
-     * eg:
-     *      $ crossbow run sass:*
-     *
-     * options:
-     *   sass:
-     *     site:  {input: "core.scss"}
-     *     debug: {input: "debug.scss"}
-     *
-     * lookupKeys = ['site', 'debug']
+     * Get lookup keys for this task
      */
-    const lookupKeys = (function () {
-        if (task.subTasks[0] === '*') {
-            return Object.keys(localOptions).filter(x => x !== '_shared');
-        }
-        return task.subTasks;
-    })();
+    const lookupKeys = getLookupKeys(task.subTasks, localOptions);
 
     /**
      * Now generate 1 task per lookup key.
@@ -519,4 +507,29 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
     }
 
     return {item: item, errors: []};
+}
+
+/**
+ * When we know a task has `subTasks` we need to check if
+ * if the first entry in the subTasks array is a `*` - then
+ * the user wants to run all tasks under this options
+ * object. So we need to get the keys and use each one as a lookup
+ * on the local options. (minus any excluded tasks)
+ *
+ * eg:
+ *     $ crossbow run sass:*
+ *
+ * options:
+ *   sass:
+ *     site:  {input: "core.scss"}
+ *     debug: {input: "debug.scss"}
+ *
+ * lookupKeys = ['site', 'debug']
+ */
+function getLookupKeys(subTasks: string[], topLevelObject: {}): string[] {
+    if (subTasks[0] === '*') {
+        return Object.keys(topLevelObject)
+            .filter(x => x !== '_shared');
+    }
+    return subTasks;
 }
