@@ -167,7 +167,7 @@ describe('Running tasks from inline-functions', function () {
                 done();
             });
     });
-    it.only('passes options from inline object with sub task wildcard', function (done) {
+    it('passes options from inline object with sub task wildcard', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:*'], {
             tasks: {

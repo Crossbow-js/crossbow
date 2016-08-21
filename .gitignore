@@ -16,3 +16,4 @@ npm-debug.log
 /lodash.custom.min.js
 /r.js
 /.crossbow
+.DS_Store

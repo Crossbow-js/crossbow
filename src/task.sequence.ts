@@ -77,7 +77,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             /**
              * Decide where the callable function is coming from
              * (inline function, external task etc)
-             * @type {CBFunction|any}
+             * @type {CBFunction}
              */
             const callable = (function () {
                 if (task.type === TaskTypes.InlineFunction) {
@@ -114,18 +114,21 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              */
             const subTaskMap = (() => {
                 if (task.subTasks[0] === '*') {
-                    return Object.keys(task.options);
+                    return Object.keys(task.options).filter(x => x !== '_shared');
                 }
                 return task.subTasks;
             })();
 
             /**
-             * Now for each subtask create a separate task item
+             * Now for each sub-task create a separate task item
              */
             return subTaskMap.map(function (subTaskName: string) {
+
+                const parentOptions = _.merge({}, task.options._shared, _.get(task.options, subTaskName, {}));
+
                 return groupCreatorFn({
                     taskName: task.taskName,
-                    items: flatten(task.tasks, [], _.get(task.options, subTaskName, {})),
+                    items: flatten(task.tasks, [], parentOptions),
                     skipped: task.skipped
                 });
             });
@@ -146,8 +149,12 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
  * If the current TaskType is an InlineFunction or
  * module to be run,
  */
-function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:{}): SequenceItem[] {
+export interface ITaskOptions {
+    _shared?: any
+    [index: string]: any
+}
 
+function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:ITaskOptions): SequenceItem[] {
     /**
      * If the current item has no sub-tasks, we can return early
      * with a simple task creation using the global options
@@ -186,7 +193,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
      */
     const lookupKeys = (function () {
         if (task.subTasks[0] === '*') {
-            return Object.keys(localOptions);
+            return Object.keys(localOptions).filter(x => x !== '_shared');
         }
         return task.subTasks;
     })();
@@ -200,7 +207,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * name, so we use that to try and find a child key
          * in the options that matched it.
          * */
-        const currentOptionObject = _.get(localOptions, optionKey);
+        const currentOptionObject = _.merge({}, localOptions._shared, _.get(localOptions, optionKey));
         const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
                 .map(seqItem => {
                     seqItem.subTaskName = optionKey;

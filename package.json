@@ -8,7 +8,6 @@
     "unit": "mocha test",
     "lint": "eslint lib",
     "ts": "tsc",
-    "prepublish": "npm run test",
     "lodash": "lodash include=merge,get,set,assign,values,toArray exports=node"
   },
   "repository": "crossbow-js/crossbow-cli",
