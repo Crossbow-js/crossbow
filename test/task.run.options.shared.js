@@ -272,4 +272,40 @@ describe('Adding options from _default ket', function () {
                 done();
             });
     });
+    it('creates single task when item has default options', function (done) {
+        const opts = [];
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: function (options) {
+                    opts.push(options);
+                }
+            },
+            options: {
+                js: {
+                    _default: {
+                        output: 'app/css',
+                        input: 'app/scss/core.scss'
+                    },
+                    dev: {
+                        input: 'kittie'
+                    },
+                    prod: {
+                        input: 'sally'
+                    }
+                }
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function () {
+
+                assert.equal(opts.length, 1);
+
+                assert.equal(opts[0].input, 'app/scss/core.scss', 'default input');
+                assert.equal(opts[0].output, 'app/css', 'default output');
+
+                done();
+            });
+    });
 });

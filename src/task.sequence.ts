@@ -431,6 +431,15 @@ function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
         if (fullMatch.options && fullMatch.tasks) {
             return fullMatch.options;
         }
+
+        /**
+         * If this task has a _default key, don't pass
+         * all the options in, just pass the stuff under default
+         */
+        if (task.subTasks.length === 0 && fullMatch._default !== undefined) {
+            return fullMatch._default;
+        }
+
         return fullMatch;
     }
 
