@@ -1,0 +1,3 @@
+tasks
+  js:
+    - '@sh sleep 0.01'

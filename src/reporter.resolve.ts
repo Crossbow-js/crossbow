@@ -33,6 +33,7 @@ export enum ReportNames {
     DuplicateConfigFile            = <any>"DuplicateConfigFile",
     ConfigFileCreated              = <any>"ConfigFileCreated",
     InitConfigTypeNotSupported     = <any>"InitConfigTypeNotSupported",
+    InputError                     = <any>"InputFileNotFound",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
     UsingConfigFile                = <any>"UsingConfigFile",

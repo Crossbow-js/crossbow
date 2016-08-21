@@ -90,7 +90,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     // Bail early if a user tried to load a specific file
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
-        reportFn(ReportNames.InputFileNotFound, userInput.sources);
+        reportFn(ReportNames.InputError, userInput.sources);
         return;
     }
 

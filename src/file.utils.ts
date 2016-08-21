@@ -105,17 +105,31 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
          */
         if (inputFile.parsed.ext.match(/ya?ml$/i)) {
             const yml = require('js-yaml');
-            return _.assign(inputFile, {
-                input: yml.safeLoad(readFileSync(inputFile.resolved, 'utf8'))
-            })
+            try {
+                return _.assign(inputFile, {
+                    input: yml.safeLoad(readFileSync(inputFile.resolved, 'utf8'))
+                });
+            } catch (e) {
+                return _.assign(inputFile, {
+                    input: undefined,
+                    errors: [{type: InputErrorTypes.InvalidYaml, error: e}]
+                });
+            }
         }
 
         /**
          * Finally assume a JS/JSON file and 'require' it as normal
          */
-        return _.assign({}, inputFile, {
-            input: require(inputFile.resolved)
-        });
+        try {
+            return _.assign({}, inputFile, {
+                input: require(inputFile.resolved)
+            });
+        } catch (e) {
+            return _.assign(inputFile, {
+                input: undefined,
+                errors: [{type: InputErrorTypes.InvalidInput, error: e}]
+            });
+        }
     });
 
     return {

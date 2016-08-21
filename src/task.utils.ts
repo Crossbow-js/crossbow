@@ -9,11 +9,13 @@ const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
 export enum InputErrorTypes {
-    InputFileNotFound = <any>"InputFileNotFound",
-    NoTasksAvailable = <any>"NoTasksAvailable",
+    InputFileNotFound   = <any>"InputFileNotFound",
+    NoTasksAvailable    = <any>"NoTasksAvailable",
     NoWatchersAvailable = <any>"NoWatchersAvailable",
-    FileNotFound = <any>"FileNotFound",
-    NotAFile = <any>"NotAFile"
+    FileNotFound        = <any>"FileNotFound",
+    NotAFile            = <any>"NotAFile",
+    InvalidYaml         = <any>"InvalidYaml",
+    InvalidInput        = <any>"InvalidInput"
 }
 
 export interface InputFileNotFoundError extends InputError {}
