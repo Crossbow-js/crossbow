@@ -19,7 +19,16 @@
   ],
   "author": "",
   "license": "ISC",
-  "bundledDependencies": ["archy", "js-yaml", "once", "rx", "rx-node", "traverse", "immutable", "hash-dir"],
+  "bundledDependencies": [
+    "archy",
+    "js-yaml",
+    "once",
+    "rx",
+    "rx-node",
+    "traverse",
+    "immutable",
+    "hash-dir"
+  ],
   "dependencies": {
     "archy": "1.0.0",
     "chokidar": "1.4.3",
