@@ -356,7 +356,7 @@ function hashFile(filepath:string, fn: Function) {
 function hashFileOrDir (input: IHashInput) {
     return lstatAsObservable(input.pathObj.resolved).flatMap(function (stats: Stats) {
         if (stats.isDirectory()) {
-            return hashDirAsObservable(input.userInput).map((tree: {hash:string}) => {
+            return hashDirAsObservable(input.pathObj.resolved).map((tree: {hash:string}) => {
                 return {
                     userInput: input.userInput,
                     resolved: input.pathObj.resolved,
@@ -365,7 +365,7 @@ function hashFileOrDir (input: IHashInput) {
             });
         }
         if (stats.isFile()) {
-            return hashFileAsObservable(input.userInput).map((hash: string) => {
+            return hashFileAsObservable(input.pathObj.resolved).map((hash: string) => {
                 return {
                     userInput: input.userInput,
                     resolved: input.pathObj.resolved,

@@ -75,7 +75,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
 
     const reporters = (function () {
         /**
-         * If -q or --outputOnly was given, the user wants NO
+         * If --outputOnly (-q) was given, the user wants NO
          * output, other than output from child processes - this
          * is used for shell expansion within other tasks where
          * the 'using crossbow.yaml' or completions summaries are
@@ -84,7 +84,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
         if (config.outputOnly) {
             return [{
                 type: ReporterTypes.Muted,
-                callable: () => {},
+                callable: () => { /* no op */ },
                 errors: [],
                 sources: []
             }]

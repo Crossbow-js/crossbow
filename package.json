@@ -1,6 +1,6 @@
 {
-  "name": "crossbow-cli",
-  "version": "3.6.1",
+  "name": "crossbow",
+  "version": "3.6.2",
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray exports=node"
   },
-  "repository": "crossbow-js/crossbow-cli",
+  "repository": "crossbow-js/crossbow",
   "files": [
     "reporters",
     "dist",
@@ -19,6 +19,7 @@
   ],
   "author": "",
   "license": "ISC",
+  "bundledDependencies": ["archy", "js-yaml", "once", "rx", "rx-node", "traverse", "immutable", "hash-dir"],
   "dependencies": {
     "archy": "1.0.0",
     "chokidar": "1.4.3",
