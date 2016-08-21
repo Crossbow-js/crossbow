@@ -22,6 +22,7 @@ export interface SequenceItem {
     stats?: TaskStats
     seqUID: number
     skipped?: boolean
+    viaName?: string
 }
 
 export interface SequenceSeriesGroup {
@@ -34,10 +35,12 @@ export interface SequenceParallelGroup extends SequenceSeriesGroup {
 }
 
 export interface SequenceTask {
-    fnName: string,
-    factory: TaskFactory,
-    task: Task,
-    options: any
+    fnName:       string,
+    factory:      TaskFactory,
+    task:         Task,
+    options:      any
+    subTaskName?: string
+    viaName?:     string
 }
 
 export interface TaskFactory {

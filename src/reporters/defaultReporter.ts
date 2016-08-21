@@ -104,9 +104,16 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
     logger.info('{gray:--------}');
 }
 
-function _taskReport(report: TaskReport, label: string) {
+function _taskReport(report: TaskReport) {
 
     const skipped = report.item.task.skipped || report.stats.skipped;
+    const item = report.item;
+    const label   = (function () {
+        if (item.viaName) {
+            return `${item.task.taskName} (via {bold:${item.viaName}})`;
+        }
+        return item.task.taskName;
+    })();
 
     switch (report.type) {
         case TaskReportType.start:
@@ -464,9 +471,12 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
      */
     if (item.type === SequenceItemTypes.Task) {
         let baseName = (function () {
+            // if (item.viaName) {
+            //     return `${item.task.taskName} via {bold:${item.viaName}}`;
+            // }
             if (item.subTaskName) {
                 if (item.fnName) {
-                    return `${item.task.rawInput} - ${item.task.taskName} [Function: {bold:${item.fnName}}] with config {bold:${item.subTaskName}}`;
+                    return `${item.task.taskName} [Function: {bold:${item.fnName}}] with config {bold:${item.subTaskName}}`;
                 } else {
                     return `${item.task.taskName} with config {bold:${item.subTaskName}}`;
                 }
@@ -729,8 +739,7 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.TaskList]: reportTaskList,
     [ReportNames.TaskErrors]: reportTaskErrors,
     [ReportNames.TaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
-        const label = getSequenceLabel(report.item, trigger.config);
-        _taskReport(report, label);
+        _taskReport(report);
     },
     [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
         logger.info('{red.bold:x Invalid tasks');
@@ -753,8 +762,7 @@ Or to see multiple tasks running, with some in parallel, try:
         logWatchErrors(tasks);
     },
     [ReportNames.WatchTaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
-        const label = getSequenceLabel(report.item, trigger.config);
-        _taskReport(report, label);
+        _taskReport(report);
     },
     [ReportNames.NoWatchersAvailable]: function () {
         heading('Sorry, there were no watchers available to run');

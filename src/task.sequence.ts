@@ -26,7 +26,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 
     return flatten(tasks, []);
 
-    function flatten(items: Task[], initial: SequenceItem[], options?): SequenceItem[] {
+    function flatten(items: Task[], initial: SequenceItem[], options?, viaName?): SequenceItem[] {
 
         return items.reduce((all, task: Task) => {
             /**
@@ -89,7 +89,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             /**
              * Take the callable and create items with it + options
              */
-            return all.concat(resolveFromFunction(task, callable, trigger, localOptions));
+            return all.concat(resolveFromFunction(task, callable, trigger, localOptions, viaName));
 
         }, initial);
     }
@@ -162,7 +162,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 
             return groupCreatorFn({
                 taskName: task.taskName,
-                items: flatten(task.tasks, [], parentOptions),
+                items: flatten(task.tasks, [], parentOptions, task.taskName + ':' + subTaskName),
                 skipped: task.skipped,
                 subTaskName: subTaskName
             });
@@ -179,7 +179,7 @@ export interface ITaskOptions {
     [index: string]: any
 }
 
-function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:ITaskOptions): SequenceItem[] {
+function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:ITaskOptions, viaName?: string): SequenceItem[] {
     /**
      * If the current item has no sub-tasks, we can return early
      * with a simple task creation using the global options
@@ -196,7 +196,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
      *    {input: "core.scss", output: "core.css"}
      */
     if (!task.subTasks.length) {
-        return getSequenceItemWithOptions(task, trigger, callable, localOptions);
+        return getSequenceItemWithOptions(task, trigger, callable, localOptions, viaName);
     }
 
     /**
@@ -214,7 +214,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * in the options that matched it.
          * */
         const currentOptionObject = _.merge({}, localOptions._default, _.get(localOptions, optionKey));
-        const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
+        const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject, optionKey)
                 .map(seqItem => {
                     seqItem.subTaskName = optionKey;
                     return seqItem;
@@ -224,7 +224,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     }, []);
 }
 
-function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options): SequenceItem[] {
+function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options, viaName?:string): SequenceItem[] {
 
     /**
      * Merge incoming options with query + flags
@@ -248,7 +248,8 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
                 fnName: getFunctionName(imported, i + 1),
                 factory: importedFn,
                 task: task,
-                options: mergedOptionsWithQuery
+                options: mergedOptionsWithQuery,
+                viaName
             })
         });
     }
@@ -265,6 +266,7 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
             factory: imported,
             task: task,
             options: mergedOptionsWithQuery,
+            viaName
         })]
     }
 }
