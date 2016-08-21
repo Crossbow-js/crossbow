@@ -11,24 +11,24 @@ export enum SequenceItemTypes {
 }
 
 export interface SequenceItem {
-    type: SequenceItemTypes
-    taskName?: string
-    task?: Task
-    items: SequenceItem[]
-    factory?: (opts: any, ctx: CommandTrigger, observer: Rx.Observer<any>) => any
-    fnName?: string
-    options?: any
+    type:         SequenceItemTypes
+    taskName?:    string
+    task?:        Task
+    items:        SequenceItem[]
+    factory?:     (opts: any, ctx: CommandTrigger, observer: Rx.Observer<any>) => any
+    fnName?:      string
+    options?:     any
     subTaskName?: string
-    stats?: TaskStats
-    seqUID: number
-    skipped?: boolean
-    viaName?: string
+    stats?:       TaskStats
+    seqUID:       number
+    skipped?:     boolean
+    viaName?:     string
 }
 
 export interface SequenceSeriesGroup {
     taskName: string
-    items: any[]
-    skipped: boolean
+    skipped:  boolean
+    items:    any[]
 }
 
 export interface SequenceParallelGroup extends SequenceSeriesGroup {
@@ -46,7 +46,7 @@ export interface SequenceTask {
 export interface TaskFactory {
     (task: Task, trigger: CommandTrigger): any
     tasks?: TaskFactory[]
-    name?: string
+    name?:  string
 }
 var seqUID = 0;
 export function createSequenceTaskItem(incoming: SequenceTask): SequenceItem {

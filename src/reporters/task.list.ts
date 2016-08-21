@@ -1,5 +1,5 @@
 import {longestString, padLine, escapeNewLines} from "../task.utils";
-import {Task, TaskOriginTypes} from "../task.resolve";
+import {Task, TaskOriginTypes, TaskRunModes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
 
@@ -31,12 +31,26 @@ export function getSimpleTaskList(tasks) {
 }
 
 export function twoCol (tasks: Task[]): Array<string[]> {
-    const longest = longestString(tasks.map(x => x.baseTaskName));
+    const longest = longestString(tasks.map(x => {
+        if (x.runMode === TaskRunModes.parallel) {
+            return x.baseTaskName + ' <p>';
+        }
+        return x.baseTaskName;
+    }));
+
     const cols = process.stdout.columns;
 
     return tasks.map(function (item) {
 
-        const name = padLine(item.baseTaskName, longest + 1);
+        const outgoingName = (function () {
+            if (item.runMode === TaskRunModes.parallel) {
+                return item.baseTaskName + ' <p>';
+            }
+            return item.baseTaskName;
+        })();
+
+        const name = padLine(outgoingName, longest + 1);
+
         const desclength = (cols - 6) - longest;
 
         const desc = (function () {
