@@ -107,6 +107,7 @@ function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config
 function _taskReport(report: TaskReport, label: string) {
 
     const skipped = report.item.task.skipped || report.stats.skipped;
+
     switch (report.type) {
         case TaskReportType.start:
             if (skipped) {
@@ -498,6 +499,10 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
              * Don't append 'series' or 'parallel' if this group
              * only consists of 1 item
              */
+            if (item.subTaskName) {
+                return compile(`{bold:${item.taskName}:${item.subTaskName}}`);
+            }
+
             return compile(`{bold:${item.taskName}}`);
         }
 

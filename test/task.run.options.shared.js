@@ -1,8 +1,8 @@
 const assert = require('chai').assert;
 const cli = require("../");
 
-describe('Adding options from _shared ket', function () {
-    it('passes _shared options when a sub-task is used in task', function (done) {
+describe('Adding options from _default ket', function () {
+    it('passes _default options when a sub-task is used in task', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:dev'], {
             tasks: {
@@ -12,7 +12,7 @@ describe('Adding options from _shared ket', function () {
             },
             options: {
                 js: {
-                    _shared: {
+                    _default: {
                         output: 'app/css'
                     },
                     dev: {
@@ -33,7 +33,7 @@ describe('Adding options from _shared ket', function () {
                 done();
             });
     });
-    it('passes _shared options when a subtask wildcard used', function (done) {
+    it('passes _default options when a subtask wildcard used', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:*'], {
             tasks: {
@@ -43,7 +43,7 @@ describe('Adding options from _shared ket', function () {
             },
             options: {
                 js: {
-                    _shared: {
+                    _default: {
                         output: 'app/css'
                     },
                     dev: {
@@ -63,13 +63,13 @@ describe('Adding options from _shared ket', function () {
                 done();
             });
     });
-    it('passes _shared options when a subtask is used in group', function (done) {
+    it('passes _default options when a subtask is used in group', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:dev'], {
             tasks: {
                 js: {
                     options: {
-                        _shared: {
+                        _default: {
                             output: 'app/css'
                         },
                         dev: {
@@ -103,13 +103,13 @@ describe('Adding options from _shared ket', function () {
                 done();
             });
     });
-    it('passes _shared options when wildcard used in group', function (done) {
+    it('passes _default options when wildcard used in group', function (done) {
         const opts = [];
         const runner = cli.getRunner(['js:*'], {
             tasks: {
                 js: {
                     options: {
-                        _shared: {
+                        _default: {
                             output: 'app/css'
                         },
                         dev: {
@@ -150,7 +150,7 @@ describe('Adding options from _shared ket', function () {
             tasks: {
                 js: {
                     options: {
-                        _shared: {
+                        _default: {
                             output: 'app/css'
                         },
                         dev: {
@@ -192,7 +192,7 @@ describe('Adding options from _shared ket', function () {
             tasks: {
                 js: {
                     options: {
-                        _shared: {
+                        _default: {
                             output: 'app/css'
                         },
                         dev: {
@@ -226,6 +226,48 @@ describe('Adding options from _shared ket', function () {
 
                 assert.equal(opts[2].input,  './tmp',  'default from option');
                 assert.equal(opts[2].output, 'app/css', 'derived from shared prop');
+
+                done();
+            });
+    });
+    it('creates single task when Group item has default options', function (done) {
+        const opts = [];
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: {
+                    options: {
+                        _default: {
+                            output: 'app/css',
+                            input: 'app/scss/core.scss'
+                        },
+                        dev: {
+                            input: 'kittie'
+                        },
+                        prod: {
+                            input: 'sally'
+                        }
+                    },
+                    tasks: [
+                        function (options) {
+                            opts.push(options);
+                        },
+                        'css'
+                    ]
+                },
+                css: function (options) {
+                    opts.push(options);
+                }
+            }
+        });
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function () {
+
+                assert.equal(opts.length, 2);
+
+                assert.equal(opts[0].input, 'app/scss/core.scss', 'default input');
+                assert.equal(opts[0].output, 'app/css', 'default output');
 
                 done();
             });

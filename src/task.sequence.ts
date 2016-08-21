@@ -95,7 +95,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     }
 
     /**
-     * Resolve a groupd of tasks
+     * Resolve a group of tasks
      * @param task
      * @param groupCreatorFn
      * @param continueFn
@@ -109,11 +109,28 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
         if (!task.subTasks.length) {
 
             /**
+             * If a group has _default options,
+             * but here no 'subTasks' were given, use the
+             * default options always
+             */
+            const parentOptions = (function () {
+                if (task.options._default !== undefined) {
+                    return _.merge(
+                        {},
+                        task.options._default,
+                        task.query,
+                        task.flags
+                    );
+                }
+                return task.options;
+            })();
+
+            /**
              * Here the group had no direct 'sub tasks', so just return the item
              */
             return [groupCreatorFn({
                 taskName: task.taskName,
-                items: flatten(task.tasks, [], task.options),
+                items: flatten(task.tasks, [], parentOptions),
                 skipped: task.skipped
             })];
         }
@@ -137,7 +154,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              */
             const parentOptions = _.merge(
                 {},
-                task.options._shared,
+                task.options._default,
                 _.get(task.options, subTaskName, {}),
                 task.query,
                 task.flags
@@ -146,7 +163,8 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             return groupCreatorFn({
                 taskName: task.taskName,
                 items: flatten(task.tasks, [], parentOptions),
-                skipped: task.skipped
+                skipped: task.skipped,
+                subTaskName: subTaskName
             });
         });
     }
@@ -157,7 +175,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
  * module to be run,
  */
 export interface ITaskOptions {
-    _shared?: any
+    _default?: any
     [index: string]: any
 }
 
@@ -195,7 +213,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * name, so we use that to try and find a child key
          * in the options that matched it.
          * */
-        const currentOptionObject = _.merge({}, localOptions._shared, _.get(localOptions, optionKey));
+        const currentOptionObject = _.merge({}, localOptions._default, _.get(localOptions, optionKey));
         const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject)
                 .map(seqItem => {
                     seqItem.subTaskName = optionKey;
@@ -262,9 +280,9 @@ function getFunctionName(fn: TaskFactory, count = 0): string {
 }
 
 /**
- *           *****************
+ *           ******************
  * Where the **--~~Magic~~--** happens!!!
- *           *****************
+ *           ******************
  *
  * Creating a task runner in crossbow is really about
  * wrapping the process of running the tasks in a way
@@ -526,10 +544,11 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
  *
  * lookupKeys = ['site', 'debug']
  */
+const blacklistedSubTaskNames = ['_default'];
 function getLookupKeys(subTasks: string[], topLevelObject: {}): string[] {
     if (subTasks[0] === '*') {
         return Object.keys(topLevelObject)
-            .filter(x => x !== '_shared');
+            .filter(x => blacklistedSubTaskNames.indexOf(x) === -1);
     }
     return subTasks;
 }

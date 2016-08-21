@@ -5,7 +5,7 @@ const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 describe.skip('can pre-process incoming task names', function () {
     it('can handle simple tasks tasks', function () {
         const proc = preprocess('file.js', {tasks:{}});
-
+        // console.log(proc);
         // assert.equal(proc.baseTaskName, 'file.js');
         // assert.deepEqual(proc.subTasks, []);
         // assert.deepEqual(proc.rawInput, 'file.js');
