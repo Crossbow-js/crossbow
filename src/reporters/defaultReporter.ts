@@ -109,7 +109,6 @@ function _taskReport(report: TaskReport) {
     const skipped = report.item.task.skipped || report.stats.skipped;
     const item = report.item;
     const label   = (function () {
-        console.log(item.task.flags);
         if (item.subTaskName) {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
         }
