@@ -109,16 +109,18 @@ function _taskReport(report: TaskReport) {
     const skipped = report.item.task.skipped || report.stats.skipped;
     const item = report.item;
     const label   = (function () {
-        // todo - find a cleaner way of determining if this was a sub-task run
-        // or a subtask of a group
+        console.log(item.task.flags);
+        if (item.subTaskName) {
+            return `${item.task.taskName}:{bold:${item.subTaskName}}`;
+        }
         if (item.viaName) {
             if (item.viaName.indexOf(':') > -1) {
-                return `${item.task.taskName} (via {bold:${item.viaName}})`;
-            } else {
-                return `${item.task.taskName}:${item.viaName}`;
+                const split = item.viaName.split(':');
+                return `${split[0]}:{bold:${split[1]}}`;
             }
+            return item.viaName;
         }
-        return item.task.taskName;
+        return item.task.rawInput;
     })();
 
     switch (report.type) {
