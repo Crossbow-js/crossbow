@@ -234,14 +234,14 @@ export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] 
 }
 
 /**
- * Attempt to use the LOCALLY installed crossbow-cli version
+ * Attempt to use the LOCALLY installed crossbow version
  * first, this will ensure anything registered with .task etc
  * can be picked up by global installs too.
  * @param config
  * @returns {InputFiles}
  */
 export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
-    const local = join('node_modules', 'crossbow-cli', 'dist', 'public', 'create.js');
+    const local = join('node_modules', 'crossbow', 'dist', 'public', 'create.js');
     const global = join(__dirname, 'public', 'create.js');
     return readInputFiles([local, global], config.cwd);
 }

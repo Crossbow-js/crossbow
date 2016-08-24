@@ -76,7 +76,7 @@ export function twoCol (tasks: Task[]): Array<string[]> {
             return limit(taskPreviews(item), desclength);
         })();
 
-        return [`{bold:${name}}`, desc];
+        return [name, desc];
     });
 }
 export function twoColWatchers (runners: WatchRunners): Array<string[]> {
@@ -90,6 +90,6 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
 
         const desc = limit(`${runner.patterns.length} pattern(s), ${runner.tasks.length} task(s)`, desclength);
 
-        return [`{bold:${name}}`, desc];
+        return [name, desc];
     });
 }
