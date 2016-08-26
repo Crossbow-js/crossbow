@@ -15,6 +15,7 @@
     "reporters",
     "dist",
     "opts",
+    "templates",
     "lodash.custom.js"
   ],
   "author": "",
