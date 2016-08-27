@@ -170,9 +170,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
             .runner
             .series()
             .do(report => {
-                if (trigger.config.progress) {
-                    reporter(ReportNames.TaskReport, report, trigger);
-                }
+                reporter(ReportNames.TaskReport, report, trigger);
             })
             .toArray()
             .flatMap((reports: TaskReport[]) => {

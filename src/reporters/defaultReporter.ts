@@ -125,19 +125,19 @@ function _taskReport(report: TaskReport) {
     switch (report.type) {
         case TaskReportType.start:
             if (skipped) {
-                l(`{yellow:-} ${label} {yellow:(skipped)}`);
+                l(`  {yellow:-} ${label} {yellow:(skipped)}`);
             } else {
-                l(`{yellow:+} ${label}`);
+                l(`  {yellow:+} ${label}`);
             }
             break;
         case TaskReportType.end:
             if (skipped) {
                 return;
             }
-            l(`{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
+            l(`  {green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
-            l(`{red:x} ${label}`);
+            l(`  {red:x} ${label}`);
             break;
     }
 }
@@ -746,7 +746,9 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.TaskList]: reportTaskList,
     [ReportNames.TaskErrors]: reportTaskErrors,
     [ReportNames.TaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
-        _taskReport(report);
+        if (trigger.config.progress) {
+            _taskReport(report);
+        }
     },
     [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
         logger.info('{red.bold:x Invalid tasks');

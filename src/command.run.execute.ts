@@ -105,9 +105,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             .call(null, ctx)
             .do(report => trigger.tracker.onNext(report))
             .do((report: TaskReport) => {
-                if (trigger.config.progress) {
-                    reporter(ReportNames.TaskReport, report, trigger);
-                }
+                reporter(ReportNames.TaskReport, report, trigger);
             })
             .toArray()
             .do(reports => {
