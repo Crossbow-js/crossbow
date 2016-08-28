@@ -81,9 +81,17 @@ describe('task.resolve (inline-functions)', function () {
                 }
             }
         });
-        assert.equal(runner.sequence.length, 5);
-        assert.equal(runner.sequence[0].options.name, 'kittie');
+
+        assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[1].type, SequenceItemTypes.Task);
+
+        assert.equal(runner.sequence[0].items.length, 2);
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
+        assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.Task);
+
+        assert.equal(runner.sequence[0].items[0].options.name, 'kittie');
+        assert.equal(runner.sequence[0].items[1].options.name, 'shane');
+
         assert.equal(runner.sequence[1].options.name, 'shane');
-        assert.equal(runner.sequence[2].options.name, 'shane');
     });
 });

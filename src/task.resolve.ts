@@ -134,11 +134,11 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         }
         return incoming;
     })();
-    
+
     /**
      * Determine which sub tasks need converting as children.
      * Based on what was explained above, we may want to pass the
-     * toplevel Value, or may want to use the tasks value directly
+     * top level Value, or may want to use the tasks value directly
      * @type {Array}
      */
     const toConvert = (function () {

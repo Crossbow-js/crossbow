@@ -134,10 +134,10 @@ function _taskReport(report: TaskReport) {
             if (skipped) {
                 return;
             }
-            l(`  {green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
+            l(`    {green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
             break;
         case TaskReportType.error:
-            l(`  {red:x} ${label}`);
+            l(`    {red:x} ${label}`);
             break;
     }
 }

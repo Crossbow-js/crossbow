@@ -25,15 +25,16 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        assert.equal(runner.sequence[0].type, types.SeriesGroup);
-        assert.equal(runner.sequence[0].items.length, 4);
-        assert.equal(runner.sequence[0].items[0].options.name, 'shane');
-        assert.equal(runner.sequence[0].items[1].options.name, 'shane');
-        assert.equal(runner.sequence[0].items[2].options.name, 'kittie');
-        assert.equal(runner.sequence[0].items[3].options.name, 'kittie');
+        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items.length, 4);
+        assert.equal(runner.sequence[0].items[0].items[0].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[0].items[1].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[0].items[2].options.name, 'kittie');
+        assert.equal(runner.sequence[0].items[0].items[3].options.name, 'kittie');
     });
     it('can gather groups in parallel', function () {
         this.timeout(10000);
+
         var runner = cli.getRunner(['build-all@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
@@ -52,9 +53,22 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
         assert.equal(runner.sequence[0].items.length, 2);
+        assert.equal(runner.sequence[0].type, types.ParallelGroup);
+
         assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
-        assert.equal(runner.sequence[0].items[0].items.length, 4);
-        assert.equal(runner.sequence[0].items[1].items.length, 2);
+        assert.equal(runner.sequence[0].items[1].type, types.SeriesGroup);
+
+
+        // console.log(runner.sequence[0].items[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].items[0].type, types.Task);
+        assert.equal(runner.sequence[0].items[0].items[0].items[1].type, types.Task);
+
+        assert.equal(runner.sequence[0].items[0].items[0].items[0].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[0].items[0].items[1].options.name, 'shane');
+
+        assert.equal(runner.sequence[0].items[0].items[0].items[2].options.name, 'kittie');
+        assert.equal(runner.sequence[0].items[0].items[0].items[3].options.name, 'kittie');
     });
     it('can gather groups in parallel when @p in task name', function () {
         this.timeout(10000);
@@ -75,9 +89,50 @@ describe('Gathering run tasks, grouped by runMode', function () {
                 }
             }
         });
-        assert.equal(runner.sequence[0].items.length, 2);
         assert.equal(runner.sequence[0].type, types.ParallelGroup);
-        assert.equal(runner.sequence[0].items[0].items.length, 4);
+        assert.equal(runner.sequence[0].items.length, 2);
+
+
+        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].items.length, 4);
+    });
+    it('can gather groups in parallel when @p call site', function () {
+        this.timeout(10000);
+        var runner = cli.getRunner(['build-all'], {
+            tasks: {
+                'build-all': ['js:*@p', 'css@p'],
+                'js': {
+                    tasks: ['test/fixtures/tasks/simple.js'],
+                    options: {
+                        first: {input: 'shane'},
+                        second: {input: 'kittie'}
+                    }
+                },
+                'css': ['test/fixtures/tasks/simple.js:first', 'test/fixtures/tasks/simple.js:second']
+            },
+            options: {
+                'test/fixtures/tasks/simple.multi.js': {
+                    first: {name: 'shane'},
+                    second: {name: 'kittie'}
+                },
+                'test/fixtures/tasks/simple.js': {
+                    first: {name: 'shane'},
+                    second: {name: 'kittie'}
+                }
+            }
+        });
+
+        // console.log(runner.tasks.valid[0].tasks[0]);
+        assert.equal(runner.sequence[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].type, types.ParallelGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].options.input, 'shane');
+        assert.equal(runner.sequence[0].items[0].items[1].options.input, 'kittie');
+
+        assert.equal(runner.sequence[0].items[1].type, types.ParallelGroup);
+        assert.equal(runner.sequence[0].items[1].items[0].options.name, 'shane');
+        assert.equal(runner.sequence[0].items[1].items[1].options.name, 'kittie');
+
     });
     it('can run in series', function (done) {
         this.timeout(10000);

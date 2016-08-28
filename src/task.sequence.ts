@@ -29,12 +29,49 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     function flatten(items: Task[], initial: SequenceItem[], options?, viaName?): SequenceItem[] {
 
         return items.reduce((all, task: Task) => {
+
             /**
              * If the current task has child tasks, we build a tree of
              * nested observables for it (a task with children cannot itself
              * be a task that should be run)
              */
             if (task.type === TaskTypes.TaskGroup) {
+
+                /**
+                 * If we're looking at a group of tasks that was run
+                 * with sub-tasks, we need to resolve differently to
+                 * allow things such as parallel running to work as expected
+                 */
+                if (task.subTasks.length && task.tasks.length) {
+
+                    /**
+                     * Build the list of tasks/groups
+                     * @type {Array}
+                     */
+                    const output = resolveGroupOfTasks(task);
+
+                    /**
+                     * Wrap as parallel group if this task has a runMode of 'parallel'
+                     */
+                    if (task.runMode === TaskRunModes.parallel) {
+                        return all.concat(createSequenceParallelGroup({
+                            taskName: task.taskName,
+                            items: output,
+                            skipped: task.skipped
+                        }));
+                    }
+
+                    /**
+                     * Wrap as a series group if this task has a runMode of 'series'
+                     */
+                    if (task.runMode === TaskRunModes.series) {
+                        return all.concat(createSequenceSeriesGroup({
+                            taskName: task.taskName,
+                            items: output,
+                            skipped: task.skipped
+                        }));
+                    }
+                }
 
                 /**
                  * If the current task was marked as `parallel`, all immediate children
@@ -100,14 +137,12 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
      * @param groupCreatorFn
      * @param continueFn
      * @returns {any}
-     * todo - this is basically the same functionality as `resolveFromFunction` - refactor
      */
     function resolveGroup (task: Task, groupCreatorFn: Function): SequenceItem[] {
         /**
          * If the group contains no subtasks
          */
         if (!task.subTasks.length) {
-
             /**
              * If a group has _default options,
              * but here no 'subTasks' were given, use the
@@ -152,7 +187,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * Order of presedence
              *   flags -> query -> options -> shared
              */
-            const parentOptions = _.merge(
+            const taskOptions = _.merge(
                 {},
                 task.options._default,
                 _.get(task.options, subTaskName, {}),
@@ -162,11 +197,25 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 
             return groupCreatorFn({
                 taskName: task.taskName,
-                items: flatten(task.tasks, [], parentOptions, task.taskName + ':' + subTaskName),
+                items: flatten(task.tasks, [], taskOptions, task.taskName + ':' + subTaskName),
                 skipped: task.skipped,
                 subTaskName: subTaskName
             });
         });
+    }
+
+    function resolveGroupOfTasks (task: Task) {
+        const lookupKeys = getLookupKeys(task.subTasks, task.options);
+        return lookupKeys.reduce(function (acc, subTaskName:string) {
+            const opts = _.merge(
+                {},
+                task.options._default,
+                _.get(task.options, subTaskName, {}),
+                task.query,
+                task.flags
+            );
+            return acc.concat(flatten(task.tasks, [], opts, task.taskName + ':' + subTaskName));
+        }, []);
     }
 }
 
@@ -207,7 +256,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     /**
      * Now generate 1 task per lookup key.
      */
-    return lookupKeys.reduce((acc, optionKey) => {
+    const group = lookupKeys.reduce((acc, optionKey) => {
         /**
          * `optionKey` here will be a string that represented the subTask
          * name, so we use that to try and find a child key
@@ -222,6 +271,33 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
 
         return acc.concat(sequenceItems);
     }, []);
+
+    /**
+     * Don't create a 'group' if we're only talking about 1 item
+     */
+    if (group.length === 1) {
+        return group;
+    }
+
+    if (task.runMode === TaskRunModes.parallel) {
+        return [createSequenceParallelGroup({
+            taskName: task.taskName,
+            items: group,
+            skipped: task.skipped
+        })];
+    }
+    /**
+     * If the current task was marked as `series`, all immediate child tasks
+     * will be queued and run in series - each waiting until the previous
+     * one has completed
+     */
+    if (task.runMode === TaskRunModes.series) {
+        return [createSequenceSeriesGroup({
+            taskName: task.taskName,
+            items: group,
+            skipped: task.skipped
+        })];
+    }
 }
 
 function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options, viaName?:string): SequenceItem[] {
