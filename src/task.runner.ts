@@ -133,8 +133,8 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
         if (item.task.type === TaskTypes.InlineFunction
-        || item.task.type === TaskTypes.ExternalTask
-        || item.task.type === TaskTypes.Adaptor) {
+        || item.task.type  === TaskTypes.ExternalTask
+        || item.task.type  === TaskTypes.Adaptor) {
 
             const argCount = item.factory.length;
             const cb = once(function (err) {

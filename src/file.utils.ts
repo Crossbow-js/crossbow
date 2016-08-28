@@ -23,7 +23,7 @@ const _ = require('../lodash.custom');
 const supportedTaskFileExtensions = ['.js', '.sh'];
 
 export interface ExternalFile {
-    path: string
+    rawInput: string
     resolved: string
     relative: string
     errors: InputError[],
@@ -144,10 +144,13 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
     return files
         .map((x: ExternalFileContent) => {
             if (x.errors.length) return x;
-
             x.content = readFileSync(x.resolved, 'utf8');
             return x;
         });
+}
+
+export function readFileContent(file: ExternalFile): string {
+    return readFileSync(file.resolved, 'utf8');
 }
 
 export function writeFileToDisk(file: ExternalFile, content: string) {
@@ -185,7 +188,7 @@ export function getStubFile(path:string, cwd:string): ExternalFile {
     const resolved = resolve(cwd, path);
     return {
         errors: [],
-        path: path,
+        rawInput: path,
         resolved,
         parsed: parse(path),
         relative: relative(cwd, resolved)
@@ -257,7 +260,7 @@ export function getExternalFiles (dirpaths: string[], cwd: string): ExternalFile
                 const resolved = join(dirPath, filepath);
                 const parsed = parse(resolved);
                 const output : ExternalFile = {
-                    path: filepath,
+                    rawInput: filepath,
                     resolved,
                     relative: relative(cwd, resolved),
                     parsed,

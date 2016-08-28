@@ -4,7 +4,7 @@ import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ParsedPath} from "path";
-import {ExternalFileInput} from "./file.utils";
+import {ExternalFileInput, ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -31,7 +31,7 @@ export interface InputFiles {
     invalid: ExternalFileInput[]
 }
 
-export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalTask[] {
+export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalFile[] {
 
     const tasksByName = locateExternalTask(config, taskName);
 
@@ -49,14 +49,7 @@ export function locateModule(config: CrossbowConfiguration, taskName: string): E
     return [];
 }
 
-export interface ExternalTask {
-    rawInput: string
-    parsed: ParsedPath
-    resolved: string
-    relative: string
-}
-
-function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalTask[] {
+function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalFile[] {
 
     const dirLookups = config.tasksDir.reduce((acc, dir) => {
         return acc.concat([[dir, name + '.js'], [dir, name]]);
@@ -72,17 +65,18 @@ function locateExternalTask (config: CrossbowConfiguration, name: string): Exter
         .map(x => resolve.apply(null, [config.cwd].concat(x)))
         .filter(existsSync)
         .filter(x => lstatSync(x).isFile())
-        .map((resolvedFilePath: string): ExternalTask => {
+        .map((resolvedFilePath: string): ExternalFile => {
             return {
                 rawInput: name,
                 parsed:   parse(resolvedFilePath),
                 resolved: resolvedFilePath,
-                relative: relative(config.cwd, resolvedFilePath)
+                relative: relative(config.cwd, resolvedFilePath),
+                errors: []
             }
         });
 }
 
-function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalTask[] {
+function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalFile[] {
     try {
         const maybe   = join(config.cwd, 'node_modules', name);
         const required = require.resolve(maybe);
@@ -90,7 +84,8 @@ function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalT
             rawInput: name,
             parsed:   parse(required),
             resolved: required,
-            relative: relative(config.cwd, required)
+            relative: relative(config.cwd, required),
+            errors: []
         }];
     } catch (e) {
         if (e.code !== 'MODULE_NOT_FOUND') {

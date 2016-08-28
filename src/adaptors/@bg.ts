@@ -9,7 +9,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
 
     return function (opts, ctx, done) {
 
-        const args   = getArgs(task, trigger);
+        const args   = getArgs(task.command);
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv  = getCBEnv(trigger);
         const env    = merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);

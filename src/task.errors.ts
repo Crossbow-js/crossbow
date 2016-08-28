@@ -1,7 +1,8 @@
 import {Task} from "./task.resolve";
 import {TaskTypes} from "./task.resolve";
-import {isSupportedFileType, ExternalTask} from "./task.utils";
+import {isSupportedFileType} from "./task.utils";
 import {CommandTrigger} from "./command.run";
+import {ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
 
 export enum TaskErrorTypes {
@@ -58,7 +59,7 @@ function getFileTypeErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 
     if (supported) return [];
 
-    return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalTask: task.externalTasks[0]}];
+    return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalFile: task.externalTasks[0]}];
 }
 
 function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
@@ -208,5 +209,5 @@ export interface CircularReferenceError extends TaskError {
 
 export interface FileTypeNotSupportedError extends TaskError {
     taskName: string,
-    externalTask: ExternalTask
+    externalFile: ExternalFile
 }

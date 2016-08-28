@@ -86,14 +86,16 @@ function getEnv(process: any, config: CrossbowConfiguration) {
 }
 
 export interface CommandArgs {
-    stringInput: string
-    cmd: string[]
+    stringInput?: string
+    cmd?: string[]
+    errors: Error[]
 }
 
-function getArgs(task: Task, trigger: CommandTrigger): CommandArgs {
+function getArgs(command: string): CommandArgs {
     return {
-        stringInput: task.command,
-        cmd: [shFlag].concat(task.command)
+        stringInput: command,
+        cmd: [shFlag].concat(command),
+        errors: []
     };
 }
 
@@ -158,7 +160,7 @@ export default function (task: Task, trigger: CommandTrigger) {
 
     return (opts, ctx, done) => {
 
-        const commandArgs = getArgs(task, trigger); // todo: allow user to set env vars from config
+        const commandArgs = getArgs(task.command);
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv = getCBEnv(trigger);
         const env = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);

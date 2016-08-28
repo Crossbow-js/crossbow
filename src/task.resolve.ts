@@ -4,7 +4,7 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines, isPlainObject, ExternalTask} from "./task.utils";
+import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask} from "./task.preprocess";
@@ -12,6 +12,7 @@ import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
 import {applyTreeTransforms} from "./task.tree.transforms";
+import {ExternalFile} from "./file.utils";
 
 /**
  * Function.name is es6 & >
@@ -520,7 +521,7 @@ export interface Task {
     taskName: string
     baseTaskName: string
     subTasks: string[]
-    externalTasks: ExternalTask[]
+    externalTasks: ExternalFile[]
     tasks: Task[]
     rawInput: string
     parents: string[]

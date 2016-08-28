@@ -1,5 +1,4 @@
 const debug = require('debug')('cb:task.transform');
-import {readFileSync} from "fs";
 import {Task} from "./task.resolve";
 import {TaskTypes, TaskOriginTypes} from "./task.resolve";
 
@@ -26,7 +25,7 @@ export const transforms = {
             incoming.type    = TaskTypes.Adaptor;
             incoming.origin  = TaskOriginTypes.FileSystem;
             incoming.adaptor = 'sh';
-            incoming.command = readFileSync(incoming.externalTasks[0].resolved, 'utf8');
+            incoming.command = ''; // Will read later
             return incoming;
         }
     }

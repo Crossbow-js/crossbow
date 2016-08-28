@@ -699,7 +699,7 @@ const reporterFunctions = {
     [ReportNames.InputFileNotFound]: function (inputs: ExternalFileInput[]) {
         heading(`Sorry, there were errors resolving your input files`);
         inputs.forEach(function (item) {
-            logger.info(`{red.bold:x ${item.path}}`);
+            logger.info(`{red.bold:x ${item.rawInput}}`);
             multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
         });
     },
@@ -719,7 +719,7 @@ const reporterFunctions = {
     },
     [ReportNames.DuplicateConfigFile]: function (error: InitConfigFileExistsError) {
         heading(`Sorry, this would cause an existing file to be overwritten`);
-        logger.info(`{red.bold:x ${error.file.path}}`);
+        logger.info(`{red.bold:x ${error.file.rawInput}}`);
         multiLine(getExternalError(error.type, error, error.file));
     },
     [ReportNames.ConfigFileCreated]: function (parsed: ParsedPath) {
