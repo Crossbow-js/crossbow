@@ -1,4 +1,4 @@
-import {longestString, padLine, escapeNewLines} from "../task.utils";
+import {longestString, padLine, escapeNewLines, isInternal} from "../task.utils";
 import {Task, TaskOriginTypes, TaskRunModes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
@@ -26,11 +26,12 @@ function limit (string, linelength) {
     return string;
 }
 
-export function getSimpleTaskList(tasks) {
-    return twoCol(tasks).map(x => `${x[0]}  ${x[1]}`)
+export function getSimpleTaskList(tasks: Task[]) {
+    return twoCol(tasks.filter(x => !isInternal(x.taskName))).map(x => `${x[0]}  ${x[1]}`)
 }
 
 export function twoCol (tasks: Task[]): Array<string[]> {
+
     const longest = longestString(tasks.map(x => {
         if (x.runMode === TaskRunModes.parallel) {
             return x.baseTaskName + ' <p>';

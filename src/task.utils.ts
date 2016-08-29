@@ -250,8 +250,8 @@ export function isPublicTask (taskName: string): boolean {
     return taskName[0] !== '_';
 }
 
-export function isInternal (incoming) {
-    return incoming.match(/_internal_fn_\d{0,10}$/);
+export function isInternal (incoming: string): boolean {
+    return /_internal_fn_\d{0,10}$/.test(incoming);
 }
 
 const supportedFileExtensions = ['.js'];
