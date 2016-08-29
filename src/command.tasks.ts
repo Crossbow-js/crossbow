@@ -16,27 +16,63 @@ function execute(trigger: CommandTrigger): any {
     const {input, config, reporter} = trigger;
 
     /**
-     * Top level task names on the input
+     * Either resolve ALL tasks, or a subset if given
+     * via the cli.
+     *
+     * eg:
+     *      crossbow ls -> all tasks
+     *      crossbow ls build-all -> only build all tasks
      */
-    const taskNamesToResolve    = Object.keys(input.tasks);
-    const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
+    const toResolve = (function () {
 
-    const resolved = resolveTasks([...taskNamesToResolve, ...taskNamesFromTasksDir], trigger);
+        /**
+         * First look if there's trailing task names in cli input
+         * @type {string[]}
+         */
+        const cliTasks = trigger.cli.input.slice(1);
+        if (cliTasks.length) {
+            return cliTasks;
+        }
 
+        /**
+         * Now build up available tasks using input + tasks directories
+         */
+        const taskNamesToResolve    = Object.keys(input.tasks);
+        const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
+        return [...taskNamesToResolve, ...taskNamesFromTasksDir];
+    })();
+
+    /**
+     * Resolve the subset
+     * @type {Tasks}
+     */
+    const resolved = resolveTasks(toResolve, trigger);
+
+    /**
+     * handoff if requested
+     */
     if (trigger.config.handoff) {
         return {tasks: resolved};
     }
 
+    /**
+     * If no tasks were matched, give the usual error
+     */
     if (resolved.all.length === 0) {
         reporter(ReportNames.NoTasksAvailable);
         return {tasks: resolved};
     }
 
-    if (resolved.invalid.length ||
-        config.verbose === LogLevel.Verbose
-    ) {
+    /**
+     * If any were invalid or if the user gave the verbose
+     * flag, show the full tree
+     */
+    if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
         reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
     } else {
+        /**
+         * Otherwise just print a simple two-col list
+         */
         reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid), resolved.valid);
     }
 

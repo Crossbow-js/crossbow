@@ -11,6 +11,12 @@ describe('Command: Tasks', function () {
             done();
         });
     });
+    it('Should show sub-set of tasks', function (done) {
+        exec('node dist/index tasks build-js --cbfile test/fixtures/cbfile.js', function (err, stdout) {
+            assert.include(stdout.split('\n')[2], 'build-js');
+            done();
+        });
+    });
     it('Should show tasks from configured task dir', function (done) {
         exec('node dist/index tasks --tasksDir test/fixtures/tasks-command/tasks-02', function (err, stdout) {
             assert.include(stdout, 'test/fixtures/tasks-command/tasks-02/task-2-01.js   Run via: task-2-01');
@@ -24,7 +30,7 @@ describe('Command: Tasks', function () {
         });
     });
     it('Should show tasks from configured task dir + configured cwd', function (done) {
-        exec('node dist/index ls task-2-01 --cwd test/fixtures/tasks-command --tasksDir tasks-02', function (err, stdout) {
+        exec('node dist/index ls --cwd test/fixtures/tasks-command --tasksDir tasks-02', function (err, stdout) {
             assert.include(stdout, 'tasks-02/task-2-01.js   Run via: task-2-01');
             done();
         });
