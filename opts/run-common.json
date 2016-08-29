@@ -26,5 +26,14 @@
   "skip": {
     "desc": "Skip certain tasks",
     "type": "array"
+  },
+  "dryRun": {
+    "desc": "Fake the execution of tasks for visualisation",
+    "type": "boolean",
+    "alias": ["D"]
+  },
+  "dryRunDuration": {
+    "desc": "How long should faked tasks take to complete",
+    "type": "number"
   }
 }

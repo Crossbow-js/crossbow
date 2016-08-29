@@ -16,7 +16,7 @@ import {resolveTasks} from "../task.resolve";
 import {CommandTrigger} from "../command.run";
 import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
 import {countSequenceErrors, collectSkippedTasks} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e, escapeNewLines} from "../task.utils";
 import {ExternalFileInput, ExternalFileContent} from "../file.utils";
 import {WatchRunners} from "../watch.runner";
 import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
@@ -108,7 +108,7 @@ function _taskReport(report: TaskReport) {
 
     const skipped = report.item.task.skipped || report.stats.skipped;
     const item = report.item;
-    const label   = (function () {
+    const label   = escapeNewLines((function () {
         if (item.subTaskName) {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
         }
@@ -120,7 +120,7 @@ function _taskReport(report: TaskReport) {
             return item.viaName;
         }
         return item.task.rawInput;
-    })();
+    })());
 
     switch (report.type) {
         case TaskReportType.start:

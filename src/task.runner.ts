@@ -132,6 +132,19 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          */
         observer.onNext(getTaskReport(TaskReportType.start, item, stats));
 
+        /**
+         * Exit after 1 second if we're in a 'dry run'
+         */
+        if (trigger.config.dryRun) {
+            const int = setTimeout(function () {
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+                observer.onCompleted();
+            }, trigger.config.dryRunDuration);
+            return () => {
+                clearTimeout(int);
+            };
+        }
+
         if (item.task.type === TaskTypes.InlineFunction
         || item.task.type  === TaskTypes.ExternalTask
         || item.task.type  === TaskTypes.Adaptor) {

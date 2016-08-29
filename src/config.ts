@@ -35,6 +35,8 @@ export interface CrossbowConfiguration {
     // docs command
     file?: string
     output?: string
+    dryRun?: boolean
+    dryRunDuration?: number
 }
 
 /**
@@ -59,6 +61,8 @@ const defaults = <CrossbowConfiguration>{
      */
     dump: false,
     debug: false,
+    dryRun: false,
+    dryRunDuration: 1000,
     force: false,
     /**
      * How much task information should be output
