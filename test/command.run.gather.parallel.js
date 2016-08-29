@@ -2,11 +2,7 @@ const assert = require('chai').assert;
 const cli = require("../");
 const types = require("../dist/task.sequence.factories").SequenceItemTypes;
 const TaskReportType = require('../dist/task.runner').TaskReportType;
-
-function log (obj, pathname) {
-    console.log(obj);
-    require('fs').writeFileSync(pathname || 'out.json', JSON.stringify(obj, null, 4));
-}
+const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
 
 describe('Gathering run tasks, grouped by runMode', function () {
     it('can gather groups in series', function () {
@@ -96,6 +92,73 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items[1].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items[0].items[0].items.length, 4);
+    });
+    it('can gather groups in parallel in a nested array', function () {
+        this.timeout(10000);
+        var runner = cli.getRunner(['build-all'], {
+            tasks: {
+                'build-all': ['clean', ['js', 'css', 'svg']],
+                'clean': 'test/fixtures/tasks/simple.js',
+                'js':    'test/fixtures/tasks/simple.js',
+                'css':   'test/fixtures/tasks/simple.js',
+                'svg': function () {
+
+                }
+            }
+        });
+
+        assert.equal(runner.sequence[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].type, types.ParallelGroup);
+        assert.equal(runner.sequence[0].items[1].items.length, 3);
+
+        assert.equal(runner.sequence[0].items[1].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].items[1].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].items[2].type, types.Task);
+    });
+    it('produces reports in the correct order', function (done) {
+        this.timeout(10000);
+        var runner = cli.getRunner(['build-all'], {
+            tasks: {
+                'build-all': ['clean', ['js', 'css', 'svg']],
+                'clean':     'test/fixtures/tasks/simple.js',
+                'js':        'test/fixtures/tasks/simple.js',
+                'css':       'test/fixtures/tasks/simple.js',
+                'svg':       () => {}
+            }
+        });
+
+        runner.runner
+            .series()
+            .toArray()
+            .subscribe(function (reports) {
+
+                assert.equal(reports[0].type, 'start');
+                assert.equal(reports[1].type, 'end');
+
+                assert.equal(reports[2].type, 'start');
+                assert.equal(reports[3].type, 'start');
+                assert.equal(reports[4].type, 'start');
+
+                assert.equal(reports[5].type, 'end');
+                assert.equal(reports[6].type, 'end');
+                assert.equal(reports[7].type, 'end');
+
+                done();
+            })
+    });
+    it('can gather groups in parallel in a nested array (cbfile)', function () {
+        this.timeout(10000);
+        var runner = cli.getRunner(['multi'], {}, {cbfile: 'test/fixtures/cbfile.js'});
+
+        assert.equal(runner.tasks.all[0].tasks[0].runMode, TaskRunModes.series);
+        assert.equal(runner.tasks.all[0].tasks[1].runMode, TaskRunModes.parallel);
+
+        assert.equal(runner.sequence[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].type, types.ParallelGroup);
+
+        assert.equal(runner.sequence[0].items[1].items.length, 2);
     });
     it('can gather groups in parallel when @p call site', function () {
         this.timeout(10000);

@@ -7,7 +7,7 @@ import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask} from "./task.preprocess";
+import {preprocessTask, handleObjectInput} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
@@ -21,6 +21,7 @@ export interface CBFunction extends Function {
     name: string
 }
 export type IncomingTaskItem = string|CBFunction;
+export type IncomingInlineArray = { tasks: Array<IncomingTaskItem>; runMode: TaskRunModes; }
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
     ExternalTask = <any>"ExternalTask",
@@ -31,10 +32,11 @@ export enum TaskTypes {
 
 export enum TaskOriginTypes {
     CrossbowConfig = <any>"CrossbowConfig",
-    NpmScripts = <any>"NpmScripts",
-    FileSystem = <any>"FileSystem",
-    Adaptor = <any>"Adaptor",
-    InlineFunction = <any>"InlineFunction"
+    NpmScripts     = <any>"NpmScripts",
+    FileSystem     = <any>"FileSystem",
+    Adaptor        = <any>"Adaptor",
+    InlineFunction = <any>"InlineFunction",
+    InlineArray    = <any>"InlineArray"
 }
 
 export enum TaskRunModes {
@@ -135,6 +137,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return incoming;
     })();
 
+
     /**
      * Determine which sub tasks need converting as children.
      * Based on what was explained above, we may want to pass the
@@ -142,6 +145,9 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {Array}
      */
     const toConvert = (function () {
+        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineArray) {
+            return incoming.tasks;
+        }
         if (toplevelValue == undefined) return [];
         if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
             return [].concat(toplevelValue.tasks);
@@ -151,39 +157,13 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         }
         return [].concat(toplevelValue);
     })();
-    
+
     /**
-     * Set child tasks
-     * @type {Task[]}
+     * Add child tasks
+     * @type {Array}
      */
-    incoming.tasks = (function () {
-
-        if (!toConvert.length) {
-            return [];
-        }
-
-        return toConvert.map(x => {
-            if (parents.indexOf(x) > -1) {
-                return createCircularReferenceTask(incoming, parents);
-            }
-
-            /**
-             * Create the flattened tasks
-             * @type {Task}
-             */
-            const flattenedTask = createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
-
-            /**
-             * Child tasks *always* inherit the 'skipped' property from the parents.
-             * This allows entire 'branches' of tasks to be skipped at any level
-             * @type {Task}
-             */
-            flattenedTask.skipped = incoming.skipped;
-
-            return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
-
-        });
-    })();
+    // console.log(toConvert, incoming.skipped, incoming.taskName);
+    incoming.tasks = getTasks(toConvert, incoming, trigger, parents);
 
     /**
      * @type {CBFunction[]}
@@ -261,6 +241,29 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     incoming.parents = parents;
 
     return incoming
+}
+
+/**
+ * Set child tasks
+ * @type {Task[]}
+ */
+function getTasks(items, incoming, trigger, parents) {
+
+    if (!items.length) {
+        return [];
+    }
+
+    return items.reduce((acc, taskItem) => {
+
+        if (parents.indexOf(taskItem) > -1) {
+            return acc.concat(createCircularReferenceTask(incoming, parents));
+        }
+
+        const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
+
+        return acc.concat(flattenedTask);
+
+    }, []);
 }
 
 /**
@@ -494,6 +497,7 @@ export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTri
         .map(task => {
             return createFlattenedTask(task, [], trigger)
         });
+
 
     /**
      * Now apply any last-minute tree transformations

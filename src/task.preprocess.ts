@@ -29,6 +29,9 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
         if (isPlainObject(taskName)) {
             return handleObjectInput(taskName, trigger.input, parents);
         }
+        if (Array.isArray(taskName)) {
+            return handleArrayInput(<any>taskName, trigger.input, parents);
+        }
     })();
 
     /**
@@ -44,23 +47,23 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
      */
     if (trigger.config.skip.length) {
         if (trigger.config.skip.indexOf(output.baseTaskName) > -1) {
-            // console.log('setting', output);
             output.skipped = true;
         }
     }
-    
+
     return output;
 }
 
 export interface TaskLiteral {
-    input?: string
-    adaptor?: string
-    command?: string
-    tasks?: IncomingTaskItem[]
+    tasks?:       IncomingTaskItem[]
+    runMode?:     TaskRunModes
+    input?:       string
+    adaptor?:     string
+    command?:     string
     description?: string
 }
 
-function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
+export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
     if (typeof taskLiteral.input === 'string') {
         return stubAdaptor(taskLiteral.input, taskLiteral, parents);
@@ -81,6 +84,21 @@ function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
             type: TaskErrorTypes.InvalidTaskInput,
             input: taskLiteral
         }]
+    });
+}
+
+function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
+    const name = 'AnonGroup_' + taskItems.join(',').slice(0, 10) + '...';
+    return createTask({
+        runMode: TaskRunModes.parallel,
+        baseTaskName: name,
+        taskName: name,
+        rawInput: taskItems.toString(),
+        valid: true,
+        parents: parents,
+        origin: TaskOriginTypes.InlineArray,
+        type: TaskTypes.TaskGroup,
+        tasks: taskItems
     });
 }
 
@@ -150,20 +168,6 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * Now pass it off to allow any flags to applied
      */
     return processFlags(incomingTask);
-}
-
-function handleObjectWithTasksInput(taskLiteral: TaskLiteral, parents: string[]) {
-    // console.log(parents.slice(-1)[0]);
-    // createTask({
-    //     baseTaskName: identifier,
-    //     taskName: identifier,
-    //     rawInput: identifier,
-    //     inlineFunctions: [<CBFunction>taskName],
-    //     valid: true,
-    //     parents: parents,
-    //     origin: TaskOriginTypes.InlineFunction,
-    //     type: TaskTypes.InlineFunction
-    // });
 }
 
 /**
@@ -295,23 +299,6 @@ function processFlags(task: Task): Task {
     return _.assign({}, task, {
         runMode
     });
-}
-
-/**
- * Strip any underscore commands from parsed args
- * @param obj
- * @returns {{}}
- */
-function withoutCommand(obj: {}) {
-    if (!Object.keys(obj).length) {
-        return {};
-    }
-    return Object.keys(obj).reduce(function (acc, key) {
-        if (key !== "_") {
-            acc[key] = obj[key];
-        }
-        return acc;
-    }, {});
 }
 
 /**

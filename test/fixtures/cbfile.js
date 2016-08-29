@@ -45,3 +45,5 @@ cb.task('obj', {
 cb.env({__wait__: '0.3'});
 cb.task('wait-env', ['@sh sleep $__wait__']);
 
+cb.task('multi', ['shane', ['build-js', '@sh sleep 1']]);
+
