@@ -334,16 +334,6 @@ export function hashItems(dirs: string[], cwd:string): any {
         });
 }
 
-export function concatProps(tasks, initial: string[], propname: string): string[] {
-    return tasks.reduce(function (acc, task) {
-        if (task.tasks.length) {
-            return acc.concat(concatProps(task.tasks, [], propname));
-        }
-        if (task[propname].length) return acc.concat(task[propname]);
-        return acc;
-    }, initial);
-}
-
 function hashFile(filepath:string, fn: Function) {
     const hash = createHash('sha256');
     createReadStream(filepath)

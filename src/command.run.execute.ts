@@ -7,11 +7,8 @@ import {TaskReport, TaskReportType} from "./task.runner";
 import {writeFileSync} from "fs";
 import {join} from "path";
 import Rx = require('rx');
-import Immutable = require('immutable');
-const {fromJS} = Immutable;
 import * as seq from "./task.sequence";
-import * as file from "./file.utils";
-import {HashDirErrorTypes} from "./file.utils";
+import getContext from "./command.run.context";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -77,32 +74,21 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      */
     const timestamp = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
-    const ifLookups = file.concatProps(tasks.all, [], "ifChanged");
 
-    if (ifLookups.length) {
-        file.hashItems(ifLookups, trigger.config.cwd)
-            .map(function (hashResults: file.IHashResults) {
-                // Send in the marked hashes to the run context
-                // so that matching tasks can be ignored
-                return fromJS({
-                    "ifChanged": hashResults.markedHashes
-                });
-            })
-            .take(1)
-            .catch(function (e) {
-                if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
-                if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
-                reporter(ReportNames.HashDirError, e, trigger.config.cwd);
-                return Rx.Observable.just(Immutable.Map({}));
-            })
-            .subscribe(run);
-    } else {
-        run();
-    }
+    /**
+     * Get a run context for this execution.
+     * note: This could take some time as it may need
+     * to hash directories etc. A run context is just a key=>value
+     * map of read-only values.
+     */
+    getContext(tasks.all, trigger).subscribe(run);
 
-    function run(ctx?: RunContext) {
+    /**
+     * Now actually execute the tasks.
+     */
+    function run(runContext?: RunContext) {
         runner[trigger.config.runMode] // .series or .parallel
-            .call(null, ctx)
+            .call(null, runContext)
             .do(report => trigger.tracker.onNext(report))
             .do((report: TaskReport) => {
                 reporter(ReportNames.TaskReport, report, trigger);
