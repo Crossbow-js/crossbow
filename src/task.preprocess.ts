@@ -63,7 +63,25 @@ export interface TaskLiteral {
     description?: string
 }
 
+let objectCount = 0;
 export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
+
+    if (taskLiteral.tasks && taskLiteral.tasks.length) {
+
+        const name = 'AnonObject_' + objectCount++;
+
+        const out = createTask(_.assign({
+            baseTaskName: name,
+            taskName: name,
+            rawInput: JSON.stringify(taskLiteral),
+            valid: true,
+            parents: parents,
+            origin: TaskOriginTypes.InlineObject,
+            type: TaskTypes.TaskGroup
+        }, taskLiteral));
+
+        return out;
+    }
 
     if (typeof taskLiteral.input === 'string') {
         return stubAdaptor(taskLiteral.input, taskLiteral, parents);

@@ -2,6 +2,8 @@ const assert = require('chai').assert;
 const cli = require("../");
 
 const TaskRunModes = require('../dist/task.resolve').TaskRunModes;
+const TaskTypes = require('../dist/task.resolve').TaskTypes;
+const TaskOriginTypes = require('../dist/task.resolve').TaskOriginTypes;
 
 describe('Gathering run tasks (1)', function () {
     it('Accepts single string for adaptor task', function () {
@@ -82,5 +84,29 @@ describe('Gathering run tasks (1)', function () {
 
         assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.parallel);
         assert.equal(runner.tasks.valid[0].tasks[0].runMode, TaskRunModes.series);
+    });
+    it('accepts object literal within array', function () {
+        const runner = cli.getRunner(['js'], {
+            tasks: {
+                js: [
+                    'test/fixtures/tasks/simple.js',
+                    {
+                        tasks: [
+                            'test/fixtures/tasks/simple.multi.js'
+                        ],
+                        runMode: TaskRunModes.parallel
+                    }
+                ]
+            }
+        });
+
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.ExternalTask);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].origin, TaskOriginTypes.InlineObject);
+        assert.equal(runner.tasks.valid[0].tasks[1].runMode, TaskRunModes.parallel);
+
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.ExternalTask);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.ExternalTask);
     });
 });

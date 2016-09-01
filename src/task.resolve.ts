@@ -36,7 +36,8 @@ export enum TaskOriginTypes {
     FileSystem     = <any>"FileSystem",
     Adaptor        = <any>"Adaptor",
     InlineFunction = <any>"InlineFunction",
-    InlineArray    = <any>"InlineArray"
+    InlineArray    = <any>"InlineArray",
+    InlineObject   = <any>"InlineObject"
 }
 
 export enum TaskRunModes {
@@ -148,6 +149,9 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineArray) {
             return incoming.tasks;
         }
+        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineObject) {
+            return incoming.tasks;
+        }
         if (toplevelValue == undefined) return [];
         if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
             return [].concat(toplevelValue.tasks);
@@ -162,7 +166,6 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * Add child tasks
      * @type {Array}
      */
-    // console.log(toConvert, incoming.skipped, incoming.taskName);
     incoming.tasks = getTasks(toConvert, incoming, trigger, parents);
 
     /**
