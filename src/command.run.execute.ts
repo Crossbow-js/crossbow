@@ -74,27 +74,35 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     reporter(ReportNames.TaskList, sequence, cli, '', config);
 
     /**
-     * A generic timestamp to mark the beginning of the tasks
-     * @type {number}
-     */
-    const startTime = new Date().getTime();
-    const complete$ = new Rx.Subject<RunCommandCompletionReport>();
-
-    /**
      * Get a run context for this execution.
      * note: This could take some time as it may need
      * to hash directories etc. A run context is just a key=>value
      * map of read-only values.
      */
-    return getContext(tasks.all, trigger)
-        .flatMap((x: RunContext) => run(x, startTime))
-        .subscribe();
+    const outgoing = getContext(tasks.all, trigger)
+        .timestamp()
+        .flatMap((x: {value: RunContext, timestamp: number}) => run(x.value, x.timestamp))
+        .share();
+
+    /**
+     * Start the process
+     */
+    outgoing.subscribe();
+
+    /**
+     * Return the stream so a consumer can receive the RunCompletionReport
+     */
+    return outgoing;
 
     /**
      * Now actually execute the tasks.
      */
-    function run(runContext: RunContext, startTime: number) {
+    function run(runContext: RunContext, startTime: number): Rx.Observable<RunCommandCompletionReport> {
 
+        /**
+         * series/parallel running have VERY different characteristics
+         * @type {Rx.Observable<TaskReport>|Rx.Observable<TaskReport>}
+         */
         const mode = (function () {
             if (trigger.config.runMode === TaskRunModes.parallel) {
                 return runner.parallel(runContext);
@@ -105,55 +113,66 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         /**
          * Now add side effects
          */
-        return mode.do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
+        return mode
+            .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
                 reporter(ReportNames.TaskReport, report, trigger);
             })
             .toArray()
             .timestamp()
-            .flatMap((completion: CompletionReport) => {
-                /**
-                 * Merge sequence tree with Task Reports
-                 */
-                const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+            .flatMap((completion: CompletionReport) => handleCompletion(completion.value, completion.timestamp - startTime));
+    }
 
-                /**
-                 * Did any errors occur in this run?
-                 * @type {TaskReport[]}
-                 */
-                const errors            = reports.filter(x => x.type === TaskReportType.error);
+    /**
+     * Because errors are handled by reports, task executions ALWAYS complete
+     * and we handle that here.
+     */
+    function handleCompletion (reports: TaskReport[], runtime: number): Rx.Observable<RunCommandCompletionReport> {
 
-                /**
-                 * Push a 'Completion report' onto the $complete Observable.
-                 * This means consumers will get everything when they call
-                 */
-                complete$.onNext({
-                    type: RunCommandReportTypes.Complete,
-                    reports,
-                    tasks,
-                    sequence,
-                    runner,
-                    decoratedSequence,
-                    runtime
-                });
+        /**
+         * Merge sequence tree with Task Reports
+         */
+        const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
 
-                reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
+        /**
+         * Did any errors occur in this run?
+         * @type {TaskReport[]}
+         */
+        const errors            = reports.filter(x => x.type === TaskReportType.error);
 
-                if (errors.length > 0 && config.fail) {
-                    const lastError = errors[errors.length-1];
+        /**
+         * Main summary report
+         */
+        reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
 
-                    const stats: TaskErrorStats = lastError.stats;
+        /**
+         * If an error occurred, we need to exit the process
+         * with any error codes if given
+         */
+        if (errors.length > 0 && config.fail) {
 
-                    if (stats.cbExitCode !== undefined) {
-                        process.exit(stats.cbExitCode);
-                    }
+            const lastError = errors[errors.length-1];
+            const stats: TaskErrorStats = lastError.stats;
 
-                    process.exit(1);
+            if (stats.cbExitCode !== undefined) {
+                process.exit(stats.cbExitCode);
+            }
 
-                } else {
-                    complete$.onCompleted();
-                }
-            })
-            .subscribe();
+            process.exit(1);
+        }
+
+        /**
+         * Push a 'Completion report' onto the $complete Observable.
+         * This means consumers will get everything when they call
+         */
+        return Rx.Observable.just({
+            type: RunCommandReportTypes.Complete,
+            reports,
+            tasks,
+            sequence,
+            runner,
+            decoratedSequence,
+            runtime: runtime
+        });
     }
 }
