@@ -1,8 +1,8 @@
 import {CommandTrigger, getRunCommandSetup} from "./command.run";
 import {ReportNames} from "./reporter.resolve";
-import {Tasks} from "./task.resolve";
+import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner, RunContext} from "./task.runner";
+import {Runner, RunContext, TaskErrorStats} from "./task.runner";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {writeFileSync} from "fs";
 import {join} from "path";
@@ -29,6 +29,11 @@ export interface RunCommandCompletionReport extends RunCommandErrorReport {
     reports: TaskReport[]
     decoratedSequence: SequenceItem[]
     runtime: number
+}
+
+export interface CompletionReport {
+    timestamp: number
+    value: TaskReport[]
 }
 
 export type RunCommandErrorStream = RunCommandErrorReport|Error;
@@ -72,7 +77,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * A generic timestamp to mark the beginning of the tasks
      * @type {number}
      */
-    const timestamp = new Date().getTime();
+    const startTime = new Date().getTime();
     const complete$ = new Rx.Subject<RunCommandCompletionReport>();
 
     /**
@@ -81,25 +86,47 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * to hash directories etc. A run context is just a key=>value
      * map of read-only values.
      */
-    getContext(tasks.all, trigger).subscribe(run);
+    return getContext(tasks.all, trigger)
+        .flatMap((x: RunContext) => run(x, startTime))
+        .subscribe();
 
     /**
      * Now actually execute the tasks.
      */
-    function run(runContext?: RunContext) {
-        runner[trigger.config.runMode] // .series or .parallel
-            .call(null, runContext)
-            .do(report => trigger.tracker.onNext(report))
+    function run(runContext: RunContext, startTime: number) {
+
+        const mode = (function () {
+            if (trigger.config.runMode === TaskRunModes.parallel) {
+                return runner.parallel(runContext);
+            }
+            return runner.series(runContext);
+        })();
+
+        /**
+         * Now add side effects
+         */
+        return mode.do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
                 reporter(ReportNames.TaskReport, report, trigger);
             })
             .toArray()
-            .do(reports => {
-
+            .timestamp()
+            .flatMap((completion: CompletionReport) => {
+                /**
+                 * Merge sequence tree with Task Reports
+                 */
                 const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-                const errors            = reports.filter(x => x.type === TaskReportType.error);
-                const runtime           = new Date().getTime() - timestamp;
 
+                /**
+                 * Did any errors occur in this run?
+                 * @type {TaskReport[]}
+                 */
+                const errors            = reports.filter(x => x.type === TaskReportType.error);
+
+                /**
+                 * Push a 'Completion report' onto the $complete Observable.
+                 * This means consumers will get everything when they call
+                 */
                 complete$.onNext({
                     type: RunCommandReportTypes.Complete,
                     reports,
@@ -114,17 +141,19 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
                 if (errors.length > 0 && config.fail) {
                     const lastError = errors[errors.length-1];
-                    if (lastError.stats.cbExitCode !== undefined) {
-                        process.exit(lastError.stats.cbExitCode);
+
+                    const stats: TaskErrorStats = lastError.stats;
+
+                    if (stats.cbExitCode !== undefined) {
+                        process.exit(stats.cbExitCode);
                     }
+
                     process.exit(1);
+
                 } else {
                     complete$.onCompleted();
                 }
             })
             .subscribe();
     }
-
-
-    return complete$;
 }

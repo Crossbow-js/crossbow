@@ -25,13 +25,6 @@ export interface TaskRunner {
     runner: Runner
 }
 
-export interface TaskErrorStats {
-    endTime: number
-    completed: boolean
-    errors: Error[]
-    cbError?: boolean
-    cbExitCode?: number
-}
 
 export interface TaskStats {
     startTime: number
@@ -42,6 +35,14 @@ export interface TaskStats {
     errors: Error[]
     skipped?: boolean
     skippedReadon?: TaskSkipReasons
+}
+
+export interface TaskErrorStats {
+    endTime: number
+    completed: boolean
+    errors: Error[]
+    cbError?: boolean
+    cbExitCode?: number
 }
 
 export interface Report {
