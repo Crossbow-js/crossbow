@@ -41,4 +41,12 @@ describe('Command: Tasks', function () {
             done();
         });
     });
+    it('Should exclude _ prefixed tasks from simple task list', function (done) {
+        exec('node dist/index tasks -c test/fixtures/tasks-command/hidden.js', function (err, stdout) {
+            assert.notInclude(stdout, '_merkle   [ @npm hash-dir ]');
+            assert.include(stdout, 'build    [ _merkle, deploy ]');
+            assert.include(stdout, 'deploy   [ @sh rsync some-server ]');
+            done();
+        });
+    });
 });

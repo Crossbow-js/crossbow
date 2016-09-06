@@ -121,8 +121,8 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
         return handleCBfileMode(cli, mergedConfig, reportFn);
     }
 
-    // if the user provided a -c flag, but external files were
-    // not return, this is an error state.
+    // if the user provided a -c flag, but no external files were
+    // returned, this is an error state.
     if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
         return processInput(cli, userInput.inputs[0], mergedConfig, reportFn);
     }
