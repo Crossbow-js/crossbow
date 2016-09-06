@@ -1,4 +1,5 @@
 const assert = require('chai').assert;
+const exec = require('child_process').exec;
 const cb  = require('../dist/index')['default'];
 const TaskTypes  = require('../dist/task.resolve').TaskTypes;
 
@@ -105,5 +106,12 @@ describe('Using a cbfile', function () {
                 assert.equal(reports.length, 2);
                 done();
             });
+    });
+    it('Propogates errors from CB file init', function (done) {
+        exec(`node dist/index tasks --cwd test/fixtures/inputs/cb-file-error`, function (err, stdout) {
+            assert.include(stdout, 'File:    cbfile.js');
+            assert.include(stdout, 'Error: Cannot find module \'-fs\'');
+            done();
+        });
     });
 });

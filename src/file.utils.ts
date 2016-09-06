@@ -190,7 +190,7 @@ export function getStubFile(path:string, cwd:string): ExternalFile {
         errors: [],
         rawInput: path,
         resolved,
-        parsed: parse(path),
+        parsed: parse(resolved),
         relative: relative(cwd, resolved)
     }
 }

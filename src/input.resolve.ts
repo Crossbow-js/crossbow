@@ -3,6 +3,7 @@ import {CrossbowConfiguration} from "./config";
 
 import * as utils from "./task.utils";
 import * as file from "./file.utils";
+import {InputErrorTypes} from "./task.utils";
 
 const debug = require('debug')('cb:input');
 const _ = require('../lodash.custom');
@@ -95,7 +96,26 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
     /**
      * Finally, try any cbfiles in the cwd
      */
-    const defaultCbFiles = file.retrieveCBFiles(config);
+    const defaultCbFiles  = file.retrieveCBFiles(config);
+
+    /**
+     * If a cbfile.js **was** found in the current
+     * directory, it will have been 'required' and therefor
+     * some code will have run, which may of errored.
+     * So here we check for that possible error by
+     * filtering out `InputFileNotFound` errors (which simply mean
+     * a cbfile.js was not found anyway.
+     */
+    const inputErrors = defaultCbFiles.invalid.filter(x => x.errors[0].type !== InputErrorTypes.InputFileNotFound);
+    if (inputErrors.length) {
+        return {
+            type: InputTypes.CBFile,
+            errors: inputErrors.map(x => x.errors[0]),
+            sources: inputErrors,
+            inputs: [],
+        };
+    }
+
     if (defaultCbFiles.valid.length) {
         debug(`Default cbfile found ${defaultCbFiles.valid[0].resolved}`);
         return {
