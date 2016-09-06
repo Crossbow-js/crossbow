@@ -1,6 +1,6 @@
 {
   "name": "crossbow",
-  "version": "3.6.14",
+  "version": "3.6.15",
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
