@@ -10,7 +10,7 @@
     "alias": ["P"]
   },
   "outputOnly": {
-    "desc": "Don't show child_process where possible",
+    "desc": "Only show child_process output (null logger)",
     "type": "boolean",
     "alias": ["q"]
   },
