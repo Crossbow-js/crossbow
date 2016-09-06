@@ -27,7 +27,11 @@ function limit (string, linelength) {
 }
 
 export function getSimpleTaskList(tasks: Task[]) {
-    return twoCol(tasks.filter(x => !isInternal(x.taskName))).map(x => `${x[0]}  ${x[1]}`)
+    const filtered = tasks
+        .filter(x => !isInternal(x.taskName))
+        .filter(x => x.baseTaskName[0] !== '_');
+
+    return twoCol(filtered).map(x => `${x[0]}  ${x[1]}`)
 }
 
 export function twoCol (tasks: Task[]): Array<string[]> {
