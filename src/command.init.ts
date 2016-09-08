@@ -9,6 +9,7 @@ import * as file from "./file.utils";
 import * as fs from "fs";
 import {join, parse} from "path";
 import {ReportNames} from "./reporter.resolve";
+import {DuplicateConfigFile} from "./reporters/defaultReporter";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -99,7 +100,7 @@ function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reporter({type: ReportNames.DuplicateConfigFile, data: {error: errors[0]}});
+        reporter({type: ReportNames.DuplicateConfigFile, data: {error: errors[0]}} as DuplicateConfigFile);
         return {existingFilesInCwd, matchingFiles, errors};
     }
 
