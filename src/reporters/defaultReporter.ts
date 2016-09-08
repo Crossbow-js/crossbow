@@ -744,6 +744,9 @@ export interface SimpleTaskListReport extends IncomingReport {
 export interface InvalidReporterReport extends IncomingReport {
     data: {reporters: Reporters}
 }
+export interface DuplicateConfigFile extends IncomingReport {
+    data: {error: InitConfigFileExistsError}
+}
 
 const reporterFunctions = {
     [ReportNames.UsingConfigFile]: function (report: UsingConfigFileReport) {
@@ -778,10 +781,13 @@ const reporterFunctions = {
 
         return lines;
     },
-    [ReportNames.DuplicateConfigFile]: function (error: InitConfigFileExistsError) {
-        heading(`Sorry, this would cause an existing file to be overwritten`);
-        logger.info(`{red.bold:x ${error.file.rawInput}}`);
-        multiLine(getExternalError(error.type, error, error.file));
+    [ReportNames.DuplicateConfigFile]: function (report: DuplicateConfigFile): string[] {
+        const error = report.data.error;
+        const lines = [
+            `Sorry, this would cause an existing file to be overwritten`,
+            `{red.bold:x ${error.file.rawInput}}`
+        ];
+        return lines.concat(getExternalError(error.type, error, error.file).split('\n'));
     },
     [ReportNames.ConfigFileCreated]: function (parsed: ParsedPath) {
         multiLine(`{green:✔} Created file: {cyan.bold:${parsed.base}}
