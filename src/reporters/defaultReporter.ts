@@ -30,10 +30,6 @@ const archy = require('archy');
 const parsed = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), 'node_modules');
 
-function nl() {
-    // logger.info('');
-}
-
 export const enum LogLevel {
     Short = 0,
     Verbose
@@ -45,11 +41,16 @@ export const enum LogLevel {
  * by providing the same padding on all but the first line.
  */
 export function multiLineTree(tree: string) {
+    const lines = [];
     const split = tree.split('\n');
-    logger.info(split[0]);
+
+    lines.push(compile(split[0]));
+
     split.slice(1, -1).forEach(function (line) {
-        logger.unprefixed('info', `   ${line}`);
+        lines.push(compile(`   ${line}`));
     });
+
+    return lines.join('\n');
 }
 
 /**
@@ -66,48 +67,66 @@ export function multiLine(input: string) {
 /**
  * Summary is a sequence tree with stats overlaid
  */
-function reportSummary(sequence: SequenceItem[], cli: CLI, title: string, config: CrossbowConfiguration, runtime: number) {
+export interface SummaryReport extends IncomingReport {
+    data: {
+        sequence: SequenceItem[],
+        cli: CLI,
+        title: string,
+        config: CrossbowConfiguration,
+        runtime: number
+    }
+}
+
+function reportSummary(report: SummaryReport) : string[] {
+
+    const {sequence, cli, title, config, runtime} = report.data;
 
     const errorCount = countSequenceErrors(sequence);
     const skipCount  = collectSkippedTasks(sequence, []);
+    const lines      = [];
 
     // todo - show a reduced tree showing only errors
     if (config.verbose === LogLevel.Verbose || errorCount > 0) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        nl();
-        reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true);
+        lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
     }
-    logger.info('{gray:--------}');
+
+    lines.push('{gray:--------}');
+
     if (errorCount > 0) {
-        nl();
+
         cli.input.slice(1).forEach(function (input) {
             const match = getSequenceItemThatMatchesCliInput(sequence, input);
             const errors = countSequenceErrors(match);
             if (errors > 0) {
-                l(`{red:x} input: {yellow:${input}} caused an error`);
+                lines.push(`{red:x} input: {yellow:${input}} caused an error`);
             }
         });
-        nl();
+
         if (config.fail) {
-            l(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
+            lines.push(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
         } else {
-            l(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
+            lines.push(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
         }
     } else {
-        nl();
+
         if (skipCount.length > 0) {
-            l(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped item${skipCount.length === 1 ? '' : 's'}, use -f to force)`);
+            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped item${skipCount.length === 1 ? '' : 's'}, use -f to force)`);
         } else {
-            l(`{ok: } ${title} {yellow:${duration(runtime)}`);
+            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}}`);
         }
     }
-    logger.info('{gray:--------}');
+
+    lines.push('{gray:--------}');
+
+    return lines;
 }
 
 function _taskReport(report: TaskReport) {
 
     const skipped = report.item.task.skipped || report.stats.skipped;
-    const item = report.item;
+    const item    = report.item;
+
     const label   = escapeNewLines((function () {
         if (item.subTaskName) {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
@@ -122,24 +141,23 @@ function _taskReport(report: TaskReport) {
         return item.task.rawInput;
     })());
 
-    switch (report.type) {
-        case TaskReportType.start:
+    return (function () {
+        if (report.type === TaskReportType.start) {
             if (skipped) {
-                l(`{yellow:-} ${label} {yellow:(skipped)}`);
-            } else {
-                l(`{yellow:>} ${label}`);
+                return compile(`{yellow:-} ${label} {yellow:(skipped)}`);
             }
-            break;
-        case TaskReportType.end:
+            return compile(`{yellow:>} ${label}`);
+        }
+        if (report.type === TaskReportType.end) {
             if (skipped) {
-                return;
+                return '';
             }
-            l(`{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
-            break;
-        case TaskReportType.error:
-            l(`{red:x} ${label}`);
-            break;
-    }
+            return compile(`{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`);
+        }
+        if (report.type === TaskReportType.error) {
+            return compile(`{red:x} ${label}`);
+        }
+    })();
 }
 
 function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: string): SequenceItem[] {
@@ -170,14 +188,24 @@ function incomingTaskItemAsString(x: IncomingTaskItem): string {
     }
 }
 
-function reportTaskList(sequence: SequenceItem[], cli: CLI, titlePrefix = '', config: CrossbowConfiguration) {
+export interface TaskListReport extends IncomingReport {
+    data: {
+        sequence: SequenceItem[],
+        cli: CLI,
+        titlePrefix: string,
+        config: CrossbowConfiguration
+    }
+}
+
+function reportTaskList(report: TaskListReport) : string {
+
+    const {config, sequence, titlePrefix, cli} = report.data;
 
     if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        nl();
-        reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
+        return reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
     } else {
-        l('{yellow:+}%s {bold:%s}', titlePrefix, cli.input.slice(1).join(', '));
+        return compile(`{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(', ')}`);
     }
 }
 
@@ -187,9 +215,9 @@ function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: Crossb
 
     if (config.verbose === LogLevel.Verbose) {
         const cliInput = cli.input.map(x => `'${x}'`).join(' ');
-        nl();
+
         reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
-        nl();
+
     }
 }
 
@@ -448,11 +476,12 @@ function appendStatsToSequenceLabel(label: string, stats: TaskStats, config: Cro
 /**
  * Show a tree of function calls
  */
-export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false) {
+export function reportSequenceTree(sequence: SequenceItem[], config: CrossbowConfiguration, title, showStats = false): string {
 
     const toLog = getItems(sequence, []);
     const o = archy({label: `{yellow:${title}}`, nodes: toLog});
-    multiLineTree(o);
+
+    return multiLineTree(o);
 
     function getItems(items, initial) {
         return items.reduce((acc, item: SequenceItem) => {
@@ -690,32 +719,64 @@ function duration(ms) {
     return String((Number(ms) / 1000).toFixed(2)) + 's';
 }
 
+export interface UsingConfigFileReport extends IncomingReport {
+    data: {
+        sources: ExternalFileInput[]
+    }
+}
+
+export interface InputFileNotFoundReport extends IncomingReport {
+    data: {
+        sources: ExternalFileInput[]
+    }
+}
+
+export interface TaskReportReport {
+    data: {
+        report: TaskReport,
+        trigger: CommandTrigger
+    }
+}
+
+export interface SimpleTaskListReport extends IncomingReport {
+    data: {lines: string[]}
+}
+export interface InvalidReporterReport extends IncomingReport {
+    data: {reporters: Reporters}
+}
+
 const reporterFunctions = {
-    [ReportNames.UsingConfigFile]: function (inputs: ExternalFileInput[]) {
-        inputs.forEach(function (input) {
-            logger.info(`Using: {cyan.bold:${input.relative}}`);
-        });
+    [ReportNames.UsingConfigFile]: function (report: UsingConfigFileReport) {
+        return report.data.sources.map(function (input) {
+            return `Using: {cyan.bold:${input.relative}}`;
+        }).join('\n');
     },
-    [ReportNames.InputFileNotFound]: function (inputs: ExternalFileInput[]) {
-        heading(`Sorry, there were errors resolving your input files`);
-        inputs.forEach(function (item) {
-            logger.info(`{red.bold:x ${item.rawInput}}`);
-            multiLine(getExternalError(item.errors[0].type, item.errors[0], item))
+    [ReportNames.InputFileNotFound]: function (report: InputFileNotFoundReport): string[] {
+        const lines = [`Sorry, there were errors resolving your input files`];
+
+        report.data.sources.forEach(function (item) {
+            lines.push(`{red.bold:x ${item.rawInput}}`);
+            lines.push.apply(lines, getExternalError(item.errors[0].type, item.errors[0], item).split('\n'));
         });
+
+        return lines;
     },
-    [ReportNames.InvalidReporter]: function (reporters: Reporters) {
-        heading(`{red.bold:x} Sorry, there were problems resolving your reporters`);
+    [ReportNames.InvalidReporter]: function (report: InvalidReporterReport): string[] {
+        const lines = [`{red.bold:x} Sorry, there were problems resolving your reporters`];
+        const {reporters} = report.data;
+
         reporters.invalid.forEach(function (reporter: Reporter) {
             reporter.errors.forEach(function (err: ReporterError) {
+
                 if (err.type === ReporterErrorTypes.ReporterFileNotFound) {
-                    heading(`{red.bold:x ${err.file.resolved}`);
-                    multiLine(getExternalError(err.type, err));
+                    lines.push(`{red.bold:x ${err.file.resolved}`);
                 }
-                if (err.type === ReporterErrorTypes.ReporterTypeNotSupported) {
-                    multiLine(getExternalError(err.type, err));
-                }
+
+                lines.push.apply(lines, getExternalError(err.type, err).split('\n'));
             })
         });
+
+        return lines;
     },
     [ReportNames.DuplicateConfigFile]: function (error: InitConfigFileExistsError) {
         heading(`Sorry, this would cause an existing file to be overwritten`);
@@ -738,17 +799,20 @@ Or to see multiple tasks running, with some in parallel, try:
         logger.info(`{red.bold:x '${error.providedType}'}`);
         multiLine(getExternalError(error.type, error));
     },
-    [ReportNames.SimpleTaskList]: function (lines: string[]) {
-        logger.info('{yellow:Available Tasks:');
-        lines.forEach(line => logger.info(line));
+    [ReportNames.SimpleTaskList]: function (report: SimpleTaskListReport): string[] {
+        return [
+            '{yellow:Available Tasks:',
+            ...report.data.lines
+        ];
     },
     [ReportNames.TaskTree]: reportTaskTree,
     [ReportNames.TaskList]: reportTaskList,
     [ReportNames.TaskErrors]: reportTaskErrors,
-    [ReportNames.TaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
-        if (trigger.config.progress) {
-            _taskReport(report);
+    [ReportNames.TaskReport]: function (report: TaskReportReport): string {
+        if (report.data.trigger.config.progress) {
+            return _taskReport(report.data.report);
         }
+        return '';
     },
     [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
         logger.info('{red.bold:x Invalid tasks');
@@ -782,7 +846,7 @@ Or to see multiple tasks running, with some in parallel, try:
         heading(`Entering interactive mode as you didn't provide a watcher to run`)
     },
     [ReportNames.Watchers]: function (watchTasks: WatchTask[]) {
-        nl();
+
         l(`{yellow:+} Watching...`);
         watchTasks.forEach(function (watchTask) {
             const o = archy({
@@ -828,10 +892,30 @@ Or to see multiple tasks running, with some in parallel, try:
     }
 };
 
-export default function (name, ...args) {
-    if (typeof reporterFunctions[name] === 'function') {
-        return reporterFunctions[name].apply(null, args);
+export interface IncomingReport {
+    type: ReportNames
+    data?: any
+}
+
+export interface OutgoingReport {
+    origin: ReportNames
+    data?: string
+}
+
+export default function (report: IncomingReport, observer: Rx.Observer<OutgoingReport>) {
+    if (typeof reporterFunctions[report.type] === 'function') {
+        const output = reporterFunctions[report.type](report);
+        if (typeof output === 'string') {
+            if (output === '') return;
+            observer.onNext({origin: report.type, data: output});
+        } else if (Array.isArray(output)) {
+            output.forEach(function (item) {
+                observer.onNext({origin: report.type, data: item});
+            })
+        } else {
+            console.log('STRING or ARRAY not returned for', report.type);
+        }
     }
 
-    console.log(`Reporter not defined for '${name}' Please implement this method`);
+    // console.log(`Reporter not defined for '${name}' Please implement this method`);
 }

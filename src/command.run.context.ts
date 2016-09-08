@@ -70,7 +70,9 @@ function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observable<any
         .catch(function (e) {
             if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
             if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
-            trigger.reporter(ReportNames.HashDirError, e, trigger.config.cwd);
+
+            trigger.reporter({type: ReportNames.HashDirError, data: {error: e, cwd: trigger.config.cwd}});
+
             return Rx.Observable.just(Immutable.Map({}));
         });
 }

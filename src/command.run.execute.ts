@@ -9,6 +9,7 @@ import {join} from "path";
 import Rx = require('rx');
 import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
+import {SummaryReport} from "./reporters/defaultReporter";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -54,7 +55,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * off
      */
     if (tasks.invalid.length) {
-        reporter(ReportNames.TaskErrors, tasks.all, cli.input.slice(1), input, config);
+        reporter({type: ReportNames.TaskErrors, data: {tasks: tasks.all, taskCollection: cli.input.slice(1), input, config}});
         return Rx.Observable.concat<RunCommandErrorStream>(
             Rx.Observable.just(<RunCommandErrorReport>{
                 type: RunCommandReportTypes.InvalidTasks,
@@ -71,7 +72,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     /**
      * Report task list that's about to run
      */
-    reporter(ReportNames.TaskList, sequence, cli, '', config);
+    reporter({type: ReportNames.TaskList, data: {sequence, cli, titlePrefix: '', config}});
 
     /**
      * Get a run context for this execution.
@@ -116,7 +117,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         return mode
             .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
-                reporter(ReportNames.TaskReport, report, trigger);
+                reporter({type: ReportNames.TaskReport, data: {report, trigger}});
             })
             .toArray()
             .timestamp()
@@ -143,7 +144,16 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         /**
          * Main summary report
          */
-        reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
+        reporter({
+            type: ReportNames.Summary,
+            data: {
+                sequence: decoratedSequence,
+                cli,
+                title: 'Total: ',
+                config,
+                runtime
+            }
+        } as SummaryReport);
 
         /**
          * If an error occurred, we need to exit the process

@@ -1,6 +1,6 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
-import {LogLevel} from "./reporters/defaultReporter";
+import {LogLevel, OutgoingReport} from "./reporters/defaultReporter";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
 import {join} from "path";
@@ -37,6 +37,7 @@ export interface CrossbowConfiguration {
     output?: string
     dryRun?: boolean
     dryRunDuration?: number
+    outputObserver?: Rx.Observable<OutgoingReport>
 }
 
 /**

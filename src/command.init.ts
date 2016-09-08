@@ -50,7 +50,7 @@ function execute(trigger: CommandTrigger): any {
             supportedTypes: maybeExistingFileInputs
         }];
         if (!config.handoff) {
-            reporter(ReportNames.InitConfigTypeNotSupported, errors[0]);
+            reporter({type: ReportNames.InitConfigTypeNotSupported, data: {error: errors[0]}});
         }
         return {errors};
     }
@@ -99,7 +99,7 @@ function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reporter(ReportNames.DuplicateConfigFile, errors[0]);
+        reporter({type: ReportNames.DuplicateConfigFile, data: {error: errors[0]}});
         return {existingFilesInCwd, matchingFiles, errors};
     }
 
@@ -118,7 +118,7 @@ function execute(trigger: CommandTrigger): any {
         outputFileName
     };
 
-    reporter(ReportNames.ConfigFileCreated, parse(outputFilePath), config.type);
+    reporter({type:ReportNames.ConfigFileCreated});
 
     return output;
 }

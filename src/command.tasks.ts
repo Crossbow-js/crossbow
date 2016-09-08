@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {LogLevel} from './reporters/defaultReporter';
+import {LogLevel, SimpleTaskListReport} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
@@ -59,7 +59,7 @@ function execute(trigger: CommandTrigger): any {
      * If no tasks were matched, give the usual error
      */
     if (resolved.all.length === 0) {
-        reporter(ReportNames.NoTasksAvailable);
+        reporter({type: ReportNames.NoTasksAvailable});
         return {tasks: resolved};
     }
 
@@ -68,12 +68,12 @@ function execute(trigger: CommandTrigger): any {
      * flag, show the full tree
      */
     if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
-        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
+        reporter({type: ReportNames.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
     } else {
         /**
          * Otherwise just print a simple two-col list
          */
-        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid), resolved.valid);
+        reporter({type: ReportNames.SimpleTaskList, data: {lines: getSimpleTaskList(resolved.valid)}} as SimpleTaskListReport);
     }
 
     return {tasks: resolved};

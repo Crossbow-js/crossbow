@@ -24,4 +24,26 @@ describe('Reporter checks', function () {
             }
         });
     });
+    it.only('doesnt show internal prefixes on functions', function (done) {
+        const output = new Rx.Subject();
+
+        output.subscribe(x => {
+            console.log('CAPTURED', x);
+        });
+
+        cli({
+            input: ['shane'],
+            flags: {
+                cbfile: 'test/fixtures/inputs/cb-files/anon-functions.js',
+                progress: true,
+                outputObserver: output
+            }
+        }).subscribe(function (out) {
+            console.log('values');
+        }, function () {
+
+        }, function () {
+            done()
+        })
+    });
 });

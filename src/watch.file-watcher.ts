@@ -52,10 +52,10 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                 paused.push(x.watcherUID);
             }
         })
-        .flatMap((watchEvent: WatchEvent, i) => {
+        .flatMap((watchEvent: WatchEvent, index) => {
 
             /** LOG **/
-            reporter(ReportNames.WatcherTriggeredTasks, i, watchEvent.runner.tasks);
+            reporter({type: ReportNames.WatcherTriggeredTasks, data: {index, taskCollection: watchEvent.runner.tasks}});
             /** LOG END **/
 
             const timer = new Date().getTime();
@@ -67,13 +67,13 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                     // for cross-watcher reports
                     trigger.tracker.onNext(val);
                 })
-                .do((x: TaskReport) => {
+                .do((report: TaskReport) => {
                     // todo - simpler/shorter format for task reports on watchers
                     if (trigger.config.progress) {
-                        reporter(ReportNames.WatchTaskReport, x, trigger); // always log start/end of tasks
+                        reporter({type: ReportNames.WatchTaskReport, data: {report, trigger}}); // always log start/end of tasks
                     }
-                    if (x.type === TaskReportType.error) {
-                        console.log(x.stats.errors[0].stack);
+                    if (report.type === TaskReportType.error) {
+                        console.log(report.stats.errors[0].stack);
                     }
                 })
                 .toArray()
@@ -83,9 +83,15 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
 
                     /** LOG **/
                     if (errorCount > 0) {
-                        reporter(ReportNames.Summary, incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
+                        reporter({type: ReportNames.Summary, data: {
+                            sequence: incoming,
+                            cli: trigger.cli,
+                            title: watchEvent.runner.tasks.join(', '),
+                            config: trigger.config,
+                            runtime: new Date().getTime() - timer
+                        }});
                     } else {
-                        reporter(ReportNames.WatcherTriggeredTasksCompleted, i, watchEvent.runner.tasks, new Date().getTime() - timer);
+                        reporter({type: ReportNames.WatcherTriggeredTasksCompleted, data: {index, taskCollection: watchEvent.runner.tasks, time: new Date().getTime() - timer}});
                     }
                     /** LOG END **/
 
@@ -160,7 +166,7 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
             /** DEBUG END **/
 
             if (Object.keys(chokidarWatcher.getWatched()).length === 0) {
-                reporter(ReportNames.NoFilesMatched, watcher);
+                reporter({type: ReportNames.NoFilesMatched, data: {watcher}});
             }
         });
 

@@ -50,7 +50,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * If there were 0 tasks, exit with error
      */
     if (tasks.all.length === 0) {
-        reporter(ReportNames.NoTasksAvailable);
+        reporter({type: ReportNames.NoTasksAvailable});
         return {
             tasks
         };
@@ -64,7 +64,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     if (tasks.invalid.length) {
         debug(`Tasks were invalid, so skipping doc generation completely`);
-        reporter(ReportNames.InvalidTasksSimple);
+        reporter({type: ReportNames.InvalidTasksSimple});
         return {tasks};
     }
 
@@ -186,7 +186,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         const error = <DocsOutputFileExistsError>{type: DocsErrorTypes.DocsOutputFileExists, file: maybe[0]};
 
         if (!config.handoff) {
-            reporter(ReportNames.DocsOutputFileExists, error);
+            reporter({type: ReportNames.DocsOutputFileExists, data: {error}});
         }
 
         return {
@@ -246,7 +246,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
          * If we're not handing off, report the error
          */
         if (!config.handoff) {
-            reporter(ReportNames.DocsInputFileNotFound, withErrors[0]);
+            reporter({type: ReportNames.DocsInputFileNotFound, data: {error:withErrors[0]}});
         }
 
         return {
@@ -326,7 +326,7 @@ function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
      */
     if (!config.handoff) {
         output.forEach(x => {
-            trigger.reporter(ReportNames.DocsAddedToFile, x.file, x.content);
+            trigger.reporter({type: ReportNames.DocsAddedToFile, data: {file: x.file, content: x.content}});
             file.writeFileToDisk(x.file, x.content);
         });
     }

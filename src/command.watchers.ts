@@ -14,7 +14,7 @@ function execute(trigger: CommandTrigger): void {
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
 
     if (!topLevelWatchers.length) {
-        reporter(ReportNames.NoWatchersAvailable);
+        reporter({type: ReportNames.NoWatchersAvailable});
         return;
     }
 
@@ -36,11 +36,11 @@ function execute(trigger: CommandTrigger): void {
          * Now log the invalid runners
          */
         runners.invalid.forEach(runner => {
-            reporter(ReportNames.WatchTaskTasksErrors, runner._tasks.all, runner, config)
+            reporter({type: ReportNames.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
         return;
     }
-    reporter(ReportNames.WatcherNames, runners, trigger);
+    reporter({type: ReportNames.WatcherNames, data: {runners, trigger}});
 }
 
 export default function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

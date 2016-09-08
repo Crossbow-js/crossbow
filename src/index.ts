@@ -7,6 +7,9 @@ import {getRequirePaths} from './file.utils';
 import cli from "./cli";
 import {getInputs, InputTypes} from "./input.resolve";
 import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
+import {IncomingReport, OutgoingReport, InvalidReporterReport} from "./reporters/defaultReporter";
+import Rx = require('rx');
+import logger from "./logger";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -27,7 +30,7 @@ export interface CrossbowInput {
 }
 
 export interface CrossbowReporter {
-    (name: ReportNames, ...args): void
+    (report: IncomingReport): void
 }
 
 const availableCommands = {
@@ -69,28 +72,39 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     let hasReporters      = resolvedReporters.valid.length;
     const defaultReporter = getDefaultReporter();
 
+    const outputObserver  = (function () {
+        if (mergedConfig.outputObserver) {
+            return mergedConfig.outputObserver;
+        }
+        const outputObserver = new Rx.Subject<OutgoingReport>();
+        outputObserver.subscribe(x => {
+            logger.info(x.data);
+        });
+        return outputObserver;
+    })();
+
     // Check if any given reporter are invalid
     // and defer to default
     if (resolvedReporters.invalid.length) {
-        defaultReporter(ReportNames.InvalidReporter, resolvedReporters);
+        defaultReporter({type:ReportNames.InvalidReporter, data: {reporters: resolvedReporters}} as InvalidReporterReport, outputObserver);
         return;
     }
 
     // proxy for calling reporter functions.
     // uses default if none given
-    const reportFn = function (...args) {
+    const reportFn = function (report: IncomingReport) {
         if (!hasReporters) {
-            return defaultReporter.apply(null, args);
+            return defaultReporter(report, outputObserver);
         }
         resolvedReporters.valid.forEach(function (reporter: Reporter) {
-            reporter.callable.apply(null, args);
+            reporter.callable(report, outputObserver);
         });
     };
 
     // Bail early if a user tried to load a specific file
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
-        reportFn(ReportNames.InputError, userInput.sources);
+        reportFn({type: ReportNames.InputError, data: {sources: userInput.sources}});
         return;
     }
 
@@ -105,7 +119,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     // Check if any given reporter are invalid
     // and defer to default (again)
     if (resolvedReporters.invalid.length) {
-        defaultReporter(ReportNames.InvalidReporter, resolvedReporters);
+        reportFn({type: ReportNames.InvalidReporter, data: {reporters: resolvedReporters}} as InvalidReporterReport);
         return;
     }
 
@@ -113,7 +127,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.type === InputTypes.ExternalFile ||
         userInput.type === InputTypes.CBFile ||
         userInput.type === InputTypes.DefaultExternalFile
-    ) reportFn(ReportNames.UsingConfigFile, userInput.sources);
+    ) reportFn({type: ReportNames.UsingConfigFile, data: {sources: userInput.sources}});
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state

@@ -31,7 +31,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
     if (resolved.invalid.length) {
 
-        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
+        reporter({type: ReportNames.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
         return Rx.Observable.empty<Answers>();
 
     } else {
