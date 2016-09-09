@@ -77,13 +77,13 @@ export interface SummaryReport extends IncomingReport {
     }
 }
 
-function reportSummary(report: SummaryReport) : string[] {
+function reportSummary(report: SummaryReport): string[] {
 
     const {sequence, cli, title, config, runtime} = report.data;
 
     const errorCount = countSequenceErrors(sequence);
-    const skipCount  = collectSkippedTasks(sequence, []);
-    const lines      = [];
+    const skipCount = collectSkippedTasks(sequence, []);
+    const lines = [];
 
     // todo - show a reduced tree showing only errors
     if (config.verbose === LogLevel.Verbose || errorCount > 0) {
@@ -95,6 +95,8 @@ function reportSummary(report: SummaryReport) : string[] {
 
     if (errorCount > 0) {
 
+        const plural = errorCount === 1 ? 'error' : 'errors';
+
         cli.input.slice(1).forEach(function (input) {
             const match = getSequenceItemThatMatchesCliInput(sequence, input);
             const errors = countSequenceErrors(match);
@@ -104,9 +106,9 @@ function reportSummary(report: SummaryReport) : string[] {
         });
 
         if (config.fail) {
-            lines.push(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
+            lines.push(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} ${plural})`);
         } else {
-            lines.push(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} %s)`, errorCount === 1 ? 'error' : 'errors');
+            lines.push(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} ${plural})`);
         }
     } else {
 
@@ -125,9 +127,9 @@ function reportSummary(report: SummaryReport) : string[] {
 function _taskReport(report: TaskReport) {
 
     const skipped = report.item.task.skipped || report.stats.skipped;
-    const item    = report.item;
+    const item = report.item;
 
-    const label   = escapeNewLines((function () {
+    const label = escapeNewLines((function () {
         if (item.subTaskName) {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
         }
@@ -197,11 +199,6 @@ export interface TaskListReport extends IncomingReport {
     }
 }
 
-function reportBeforeTasksDidNotComplete(error: Error) {
-    l('{red:x} %s', error.message);
-    l('  so none of the watchers started');
-}
-
 
 function getWatcherNode(watcher: Watcher) {
     const tasksString = (function () {
@@ -213,82 +210,18 @@ function getWatcherNode(watcher: Watcher) {
     ].join('\n');
 }
 
-function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, config: CrossbowConfiguration) {
-
-    if (runner._tasks.invalid.length) {
-        l('{gray.bold:---------------------------------------------------}');
-        l(`{err: } Sorry, there were errors when resolving the tasks`);
-        l(`  that will be used in the following watcher`);
-        logWatcher(runner);
-        reportTaskTree(tasks, config, `+ input: ${runner.parent}`);
-    } else {
-        l('{gray.bold:---------------------------------------------------}');
-        l(`{ok: } No errors from`);
-        logWatcher(runner);
-        if (config.verbose === LogLevel.Verbose) {
-            reportTaskTree(tasks, config, `+ input: ${runner.parent}`);
-        }
-    }
-}
-
 function logWatcher(runner) {
-    l(`  {bold:Watcher name:} {cyan:${runner.parent}}`);
-    l(`      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`);
-    l(`         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`);
-}
-
-function logWatcherNames(runners: WatchRunners, trigger: CommandTrigger) {
-    logger.info('{yellow:Available Watchers:}');
-
-    if (trigger.config.verbose === LogLevel.Short) {
-        twoColWatchers(runners).forEach(x => logger.info(`${x[0]} ${x[1]}`));
-        return;
-    }
-    runners.valid.forEach(function (runner) {
-        logger.info(`Name:  {bold:${runner.parent}}`);
-        logger.info('Files: ' + runner.patterns.map(_e).map(x => `{cyan:${x}}`).join(', '));
-        logger.info(`Tasks: ` + runner.tasks.map(x => `{magenta:${x}}`).join(', '));
-        logger.info('');
-    });
-
-    logger.info(`Run your watchers in the following way:`);
-    logger.info(``);
-
-    runners.valid.forEach(function (runner) {
-        logger.info(` {gray:$} crossbow watch {bold:${runner.parent}}`);
-    });
-
-    if (runners.valid.length > 1) {
-        logger.info('');
-        logger.info('Or run multiple watchers at once, such as:');
-        logger.info(``);
-        logger.info(' {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
-        logger.info('');
-    }
-}
-
-function logWatchErrors(tasks: WatchTask[]): void {
-
-    const errorCount = tasks.reduce(function (acc, item) {
-        return acc + item.errors.length;
-    }, 0);
-
-    tasks.forEach(function (task: WatchTask) {
-        if (task.errors.length) {
-            logger.info(`{red.bold:x '${task.name}'}`);
-            multiLine(getWatchError(task.errors[0], task));
-        } else {
-            logger.info(`{ok: } '${task.name}'}`);
-        }
-    });
-
-    errorSummary(errorCount);
+    return [
+        `  {bold:Watcher name:} {cyan:${runner.parent}}`,
+        `      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`,
+        `         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`,
+    ]
 }
 
 function errorSummary(errorCount: number): string {
     if (errorCount) {
         const plural = errorCount === 1 ? 'error' : 'errors';
-        return `{red:x} ${errorCount} ${plural} found (see above)` ;
+        return `{red:x} ${errorCount} ${plural} found (see above)`;
     } else {
         return `{ok: } 0 errors found`;
     }
@@ -517,8 +450,6 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
     const toLog = getTasks(tasks, [], 0);
     const archy = require('archy');
     const output = archy({label: `{yellow:${title}}`, nodes: toLog});
-    
-    console.log(multiLineTree(output).split('\n'));
 
     return [
         ...multiLineTree(output).split('\n'),
@@ -718,6 +649,27 @@ export interface BeforeWatchTaskErrorsReport extends IncomingReport {
 export interface BeforeTaskListReport extends IncomingReport {
     data: {sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration}
 }
+export interface BeforeTasksDidNotCompleteReport extends IncomingReport {
+    data: {error: Error}
+}
+export interface WatchTaskTasksErrorsReport extends IncomingReport {
+    data: {tasks: Task[], runner: Watcher, config: CrossbowConfiguration}
+}
+export interface WatchTaskErrorsReport extends IncomingReport {
+    data: {watchTasks: WatchTask[]}
+}
+export interface WatchTaskReportReport extends IncomingReport {
+    data: {report: TaskReport, trigger: CommandTrigger}
+}
+export interface WatcherTriggeredTasksReport extends IncomingReport {
+    data: {index: number, taskCollection: TaskCollection}
+}
+export interface WatcherTriggeredTasksCompletedReport extends IncomingReport {
+    data: {index: number, taskCollection: TaskCollection, time: number}
+}
+export interface WatcherNamesReport extends IncomingReport {
+    data: {runners: WatchRunners, trigger: CommandTrigger}
+}
 
 const reporterFunctions = {
     [ReportNames.UsingInputFile]: function (report: UsingConfigFileReport) {
@@ -848,10 +800,11 @@ Or to see multiple tasks running, with some in parallel, try:
         ];
 
         const {watchTasks, trigger} = report.data;
-        
+
         watchTasks.all.forEach(function (watchTask) {
+
             const cliInput = resolveBeforeTasks(trigger.config.before, trigger.input, [watchTask]);
-            const tasks    = resolveTasks(cliInput, trigger);
+            const tasks = resolveTasks(cliInput, trigger);
 
             if (!tasks.all.length) {
                 return;
@@ -862,13 +815,13 @@ Or to see multiple tasks running, with some in parallel, try:
             }
 
             if (tasks.invalid.length) {
-                return lines.push.apply(lines, reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`));
+                lines.push.apply(lines, reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`));
             }
         });
-        
+
         return lines;
     },
-    [ReportNames.BeforeTaskList]: function reportBeforeTaskList(report: BeforeTaskListReport): string[] {
+    [ReportNames.BeforeTaskList]: function (report: BeforeTaskListReport): string[] {
 
         const {config, cli, sequence} = report.data;
         const lines = [
@@ -882,14 +835,63 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.BeforeTasksDidNotComplete]: reportBeforeTasksDidNotComplete,
-    [ReportNames.WatchTaskTasksErrors]: reportWatchTaskTasksErrors,
-    [ReportNames.WatchTaskErrors]: function (tasks: WatchTask[]) {
-        heading(`Sorry, there were errors resolving your watch tasks`);
-        logWatchErrors(tasks);
+    [ReportNames.BeforeTasksDidNotComplete]: function (report: BeforeTasksDidNotCompleteReport): string[] {
+        return [
+            `{red:x} ${report.data.error.message}`,
+            '  so none of the watchers started',
+        ];
     },
-    [ReportNames.WatchTaskReport]: function (report: TaskReport, trigger: CommandTrigger) {
-        _taskReport(report);
+    [ReportNames.WatchTaskTasksErrors]: function (report: WatchTaskTasksErrorsReport): string[] {
+
+        const {runner, config, tasks} = report.data;
+
+        if (runner._tasks.invalid.length) {
+            return [
+                '{gray.bold:---------------------------------------------------}',
+                `{err: } Sorry, there were errors when resolving the tasks`,
+                `  that will be used in the following watcher`,
+                ...logWatcher(runner),
+                ...reportTaskTree(tasks, config, `+ input: ${runner.parent}`)
+            ];
+        }
+
+        const lines = [
+            '{gray.bold:---------------------------------------------------}',
+            `{ok: } No errors from`,
+            ...logWatcher(runner),
+        ];
+
+        if (config.verbose === LogLevel.Verbose) {
+            lines.push.apply(lines, reportTaskTree(tasks, config, `+ input: ${runner.parent}`));
+        }
+
+        return lines;
+    },
+    [ReportNames.WatchTaskErrors]: function (report: WatchTaskErrorsReport) {
+
+        const {watchTasks} = report.data;
+
+        const errorCount = watchTasks.reduce(function (acc, item) {
+            return acc + item.errors.length;
+        }, 0);
+
+        const lines = [`Sorry, there were errors resolving your watch tasks`];
+
+        watchTasks.forEach(function (task: WatchTask) {
+            if (task.errors.length) {
+                lines.push(`{red.bold:x '${task.name}'}`);
+                lines.push.apply(lines, getWatchError(task.errors[0], task).split('\n'));
+            } else {
+                lines.push(`{ok: } '${task.name}'}`);
+            }
+        });
+
+        lines.push(errorSummary(errorCount));
+
+        return lines;
+    },
+    [ReportNames.WatchTaskReport]: function (report: WatchTaskReportReport) {
+        return _taskReport(report.data.report);
     },
     [ReportNames.NoWatchersAvailable]: function () {
         heading('Sorry, there were no watchers available to run');
@@ -911,16 +913,51 @@ Or to see multiple tasks running, with some in parallel, try:
         });
         return lines;
     },
-    [ReportNames.WatcherNames]: logWatcherNames,
+    [ReportNames.WatcherNames]: function (report: WatcherNamesReport): string[] {
+
+        const {trigger, runners} = report.data;
+
+        const lines = ['{yellow:Available Watchers:}'];
+
+        // if (trigger.config.verbose === LogLevel.Short) {
+        //     lines.push.apply(lines, twoColWatchers(runners).map(x => logger.info(`${x[0]} ${x[1]}`)));
+        //     return lines;
+        // }
+
+        runners.valid.forEach(function (runner) {
+            lines.push(`Name:  {bold:${runner.parent}}`);
+            lines.push('Files: ' + runner.patterns.map(_e).map(x => `{cyan:${x}}`).join(', '));
+            lines.push(`Tasks: ` + runner.tasks.map(x => `{magenta:${x}}`).join(', '));
+            lines.push('');
+        });
+
+        lines.push(`Run your watchers in the following way:`);
+        lines.push(``);
+
+        runners.valid.forEach(function (runner) {
+            lines.push(` {gray:$} crossbow watch {bold:${runner.parent}}`);
+        });
+
+        if (runners.valid.length > 1) {
+            lines.push('');
+            lines.push('Or run multiple watchers at once, such as:');
+            lines.push(``);
+            lines.push(' {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+            lines.push('');
+        }
+        return lines;
+    },
     [ReportNames.NoFilesMatched]: function (watcher: Watcher) {
         l('{red:x warning} `{cyan:%s}` did not match any files', watcher.patterns.join(' '));
     },
 
-    [ReportNames.WatcherTriggeredTasks]: function(index: number, taskCollection: TaskCollection) {
-        l(`{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`);
+    [ReportNames.WatcherTriggeredTasks]: function (report: WatcherTriggeredTasksReport) {
+        const {index, taskCollection} = report.data;
+        return `{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`;
     },
-    [ReportNames.WatcherTriggeredTasksCompleted]: function (index: number, taskCollection: TaskCollection, time: number) {
-        l(`{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`);
+    [ReportNames.WatcherTriggeredTasksCompleted]: function (report: WatcherTriggeredTasksCompletedReport) {
+        const {index, taskCollection, time} = report.data;
+        return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`;
     },
     [ReportNames.DocsGenerated]: function docsGenerated(tasks, markdown) {
 
@@ -972,7 +1009,7 @@ export default function (report: IncomingReport, observer: Rx.Observer<OutgoingR
             console.log('STRING or ARRAY not returned for', report.type);
         }
     }
-    
+
 
     // console.log(`Reporter not defined for '${name}' Please implement this method`);
 }

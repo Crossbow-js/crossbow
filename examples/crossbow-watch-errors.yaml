@@ -1,0 +1,4 @@
+watch:
+    tasks:
+        default:
+            "test/fixtures": ["someother"]

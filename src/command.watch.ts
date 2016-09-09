@@ -15,7 +15,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 import {ReportNames} from "./reporter.resolve";
-import {BeforeWatchTaskErrorsReport} from "./reporters/defaultReporter";
+import {BeforeWatchTaskErrorsReport, BeforeTasksDidNotCompleteReport} from "./reporters/defaultReporter";
 
 const debug = require('debug')('cb:command.watch');
 const _ = require('../lodash.custom');
@@ -192,7 +192,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
                      * so we `throw` here to ensure the upstream fails
                      */
                     const cberror = <CrossbowError>new Error('Before tasks did not complete!');
-                    reporter({type: ReportNames.BeforeTasksDidNotComplete, data: {error: cberror}});
+                    reporter({type: ReportNames.BeforeTasksDidNotComplete, data: {error: cberror}} as BeforeTasksDidNotCompleteReport);
                     cberror._cb = true;
                     return Rx.Observable.throw(cberror);
                 }
