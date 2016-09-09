@@ -15,6 +15,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 import {ReportNames} from "./reporter.resolve";
+import {BeforeWatchTaskErrorsReport} from "./reporters/defaultReporter";
 
 const debug = require('debug')('cb:command.watch');
 const _ = require('../lodash.custom');
@@ -72,7 +73,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * Never continue if any BEFORE tasks were flagged as invalid
      */
     if (before.tasks.invalid.length) {
-        reporter({type: ReportNames.BeforeWatchTaskErrors, data: {watchTasks, trigger}});
+        reporter({type: ReportNames.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
         return;
     }
 

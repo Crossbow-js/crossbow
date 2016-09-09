@@ -197,18 +197,6 @@ export interface TaskListReport extends IncomingReport {
     }
 }
 
-function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
-
-    l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
-
-    if (config.verbose === LogLevel.Verbose) {
-        const cliInput = cli.input.map(x => `'${x}'`).join(' ');
-
-        reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
-
-    }
-}
-
 function reportBeforeTasksDidNotComplete(error: Error) {
     l('{red:x} %s', error.message);
     l('  so none of the watchers started');
@@ -279,29 +267,6 @@ function logWatcherNames(runners: WatchRunners, trigger: CommandTrigger) {
     }
 }
 
-function reportBeforeWatchTaskErrors(watchTasks: WatchTasks, trigger: CommandTrigger): void {
-
-    l('{err: } Sorry, there were errors resolving your {red:`before`} tasks');
-    l('  So none of them were run, and no watchers have begun either.');
-
-    watchTasks.all.forEach(function (watchTask) {
-        const cliInput = resolveBeforeTasks(trigger.config.before, trigger.input, [watchTask]);
-        const tasks = resolveTasks(cliInput, trigger);
-
-        if (!tasks.all.length) {
-            return;
-        }
-
-        if (trigger.config.verbose === LogLevel.Verbose) {
-            return reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`);
-        }
-
-        if (tasks.invalid.length) {
-            return reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`);
-        }
-    });
-}
-
 function logWatchErrors(tasks: WatchTask[]): void {
 
     const errorCount = tasks.reduce(function (acc, item) {
@@ -322,14 +287,11 @@ function logWatchErrors(tasks: WatchTask[]): void {
 
 function errorSummary(errorCount: number): string {
     if (errorCount) {
-        return `{red:x} ${errorCount} %s found (see above)`, errorCount === 1 ? 'error' : 'errors';
+        const plural = errorCount === 1 ? 'error' : 'errors';
+        return `{red:x} ${errorCount} ${plural} found (see above)` ;
     } else {
         return `{ok: } 0 errors found`;
     }
-}
-
-function reportNoTasksProvided() {
-    heading(`Entering interactive mode as you didn't provide a task to run`)
 }
 
 function heading(title) {
@@ -555,6 +517,8 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
     const toLog = getTasks(tasks, [], 0);
     const archy = require('archy');
     const output = archy({label: `{yellow:${title}}`, nodes: toLog});
+    
+    console.log(multiLineTree(output).split('\n'));
 
     return [
         ...multiLineTree(output).split('\n'),
@@ -630,10 +594,18 @@ function getWatchError(error, task) {
 
 function getExternalError<A, B>(type, error: A, val2?: B) {
     return [
-        compile(`{red:-} {bold:Error Type:}  ${type}`),
+        `{red:-} {bold:Error Type:}  ${type}`,
         ...require('./error.' + type).apply(null, [error, val2]),
-        compile(`{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`),
+        `{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`,
     ].join('\n');
+}
+
+function getExternalErrorLines(type, error, val2?): string[] {
+    return [
+        `{red:-} {bold:Error Type:}  ${type}`,
+        ...require('./error.' + type).apply(null, [error, val2]),
+        `{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`,
+    ];
 }
 
 function moduleLabel(task: Task) {
@@ -736,6 +708,15 @@ export interface TaskTreeReport extends IncomingReport {
 }
 export interface TaskErrorsReport extends IncomingReport {
     data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
+}
+export interface WatchersReport extends IncomingReport {
+    data: {watchTasks: WatchTask[]}
+}
+export interface BeforeWatchTaskErrorsReport extends IncomingReport {
+    data: {watchTasks: WatchTasks, trigger: CommandTrigger}
+}
+export interface BeforeTaskListReport extends IncomingReport {
+    data: {sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration}
 }
 
 const reporterFunctions = {
@@ -849,14 +830,58 @@ Or to see multiple tasks running, with some in parallel, try:
             'details about these errors',
         ];
     },
-    [ReportNames.NoTasksAvailable]: function () {
-        heading('Sorry, there were no tasks available.');
-        logger.info(`{red.bold:x Input: ''}`);
-        multiLine(getExternalError(InputErrorTypes.NoTasksAvailable, {}));
+    [ReportNames.NoTasksAvailable]: function (): string[] {
+        return [
+            'Sorry, there were no tasks available.',
+            `{red.bold:x Input: ''}`,
+            ...getExternalErrorLines(InputErrorTypes.NoTasksAvailable, {})
+        ];
     },
-    [ReportNames.NoTasksProvided]: reportNoTasksProvided,
-    [ReportNames.BeforeWatchTaskErrors]: reportBeforeWatchTaskErrors,
-    [ReportNames.BeforeTaskList]: reportBeforeTaskList,
+    [ReportNames.NoTasksProvided]: function (): string {
+        return `Entering interactive mode as you didn't provide a task to run`;
+    },
+    [ReportNames.BeforeWatchTaskErrors]: function (report: BeforeWatchTaskErrorsReport): string[] {
+
+        const lines = [
+            '{err: } Sorry, there were errors resolving your {red:`before`} tasks',
+            '  So none of them were run, and no watchers have begun either.',
+        ];
+
+        const {watchTasks, trigger} = report.data;
+        
+        watchTasks.all.forEach(function (watchTask) {
+            const cliInput = resolveBeforeTasks(trigger.config.before, trigger.input, [watchTask]);
+            const tasks    = resolveTasks(cliInput, trigger);
+
+            if (!tasks.all.length) {
+                return;
+            }
+
+            if (trigger.config.verbose === LogLevel.Verbose) {
+                lines.push.apply(lines, reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`));
+            }
+
+            if (tasks.invalid.length) {
+                return lines.push.apply(lines, reportTaskTree(tasks.all, trigger.config, `+ Tasks to run before: '${watchTask.name}'`));
+            }
+        });
+        
+        return lines;
+    },
+    [ReportNames.BeforeTaskList]: function reportBeforeTaskList(report: BeforeTaskListReport): string[] {
+
+        const {config, cli, sequence} = report.data;
+        const lines = [
+            `{yellow:+} Before tasks for watcher: {bold:${cli.input.join(', ')}}`,
+        ];
+
+        if (config.verbose === LogLevel.Verbose) {
+            const cliInput = cli.input.map(x => `'${x}'`).join(' ');
+            lines.push(reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`));
+        }
+
+        return lines;
+    },
     [ReportNames.BeforeTasksDidNotComplete]: reportBeforeTasksDidNotComplete,
     [ReportNames.WatchTaskTasksErrors]: reportWatchTaskTasksErrors,
     [ReportNames.WatchTaskErrors]: function (tasks: WatchTask[]) {
@@ -874,15 +899,17 @@ Or to see multiple tasks running, with some in parallel, try:
     [ReportNames.NoWatchTasksProvided]: function () {
         heading(`Entering interactive mode as you didn't provide a watcher to run`)
     },
-    [ReportNames.Watchers]: function (watchTasks: WatchTask[]) {
-
-        l(`{yellow:+} Watching...`);
-        watchTasks.forEach(function (watchTask) {
+    [ReportNames.Watchers]: function (report: WatchersReport): string[] {
+        const lines = [
+            `{yellow:+} Watching...`
+        ];
+        report.data.watchTasks.forEach(function (watchTask) {
             const o = archy({
                 label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
             });
-            multiLineTree(o);
+            lines.push(multiLineTree(o));
         });
+        return lines;
     },
     [ReportNames.WatcherNames]: logWatcherNames,
     [ReportNames.NoFilesMatched]: function (watcher: Watcher) {
@@ -945,6 +972,7 @@ export default function (report: IncomingReport, observer: Rx.Observer<OutgoingR
             console.log('STRING or ARRAY not returned for', report.type);
         }
     }
+    
 
     // console.log(`Reporter not defined for '${name}' Please implement this method`);
 }
