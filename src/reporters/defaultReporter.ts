@@ -40,14 +40,14 @@ export const enum LogLevel {
  * so this helper function helps to normalize the output
  * by providing the same padding on all but the first line.
  */
-export function multiLineTree(tree: string) {
+export function multiLineTree(tree: string): string {
     const lines = [];
     const split = tree.split('\n');
 
-    lines.push(compile(split[0]));
+    lines.push(split[0]);
 
     split.slice(1, -1).forEach(function (line) {
-        lines.push(compile(`   ${line}`));
+        lines.push(`   ${line}`);
     });
 
     return lines.join('\n');
@@ -197,18 +197,6 @@ export interface TaskListReport extends IncomingReport {
     }
 }
 
-function reportTaskList(report: TaskListReport) : string {
-
-    const {config, sequence, titlePrefix, cli} = report.data;
-
-    if (config.verbose === LogLevel.Verbose) {
-        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        return reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
-    } else {
-        return compile(`{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(', ')}`);
-    }
-}
-
 function reportBeforeTaskList(sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration) {
 
     l('{yellow:+} %s {bold:%s}', 'Before tasks for watcher:', cli.input.join(', '));
@@ -235,18 +223,6 @@ function getWatcherNode(watcher: Watcher) {
         `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(', ')}}`,
         `{bold:Tasks:} {cyan:${tasksString}}`,
     ].join('\n');
-}
-
-function reportTaskErrors(tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration) {
-
-    l('{gray.bold:------------------------------------------------}');
-    l('{err: } Sorry, there were errors resolving your tasks,');
-    l('  So none of them were run.');
-    l('{gray.bold:------------------------------------------------}');
-
-    taskCollection.forEach(function (n, i) {
-        reportTaskTree([tasks[i]], config, `+ input: '${n}'`);
-    });
 }
 
 function reportWatchTaskTasksErrors(tasks: Task[], runner: Watcher, config: CrossbowConfiguration) {
@@ -344,11 +320,11 @@ function logWatchErrors(tasks: WatchTask[]): void {
     errorSummary(errorCount);
 }
 
-function errorSummary(errorCount: number) {
+function errorSummary(errorCount: number): string {
     if (errorCount) {
-        l(`{red:x} ${errorCount} %s found (see above)`, errorCount === 1 ? 'error' : 'errors');
+        return `{red:x} ${errorCount} %s found (see above)`, errorCount === 1 ? 'error' : 'errors';
     } else {
-        l(`{ok: } 0 errors found`);
+        return `{ok: } 0 errors found`;
     }
 }
 
@@ -573,15 +549,17 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
     return baseName;
 }
 
-export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, title: string) {
+export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, title: string): string[] {
 
     let errorCount = 0;
     const toLog = getTasks(tasks, [], 0);
     const archy = require('archy');
     const output = archy({label: `{yellow:${title}}`, nodes: toLog});
 
-    multiLineTree(output);
-    errorSummary(errorCount);
+    return [
+        ...multiLineTree(output).split('\n'),
+        errorSummary(errorCount)
+    ];
 
     function getTasks(tasks, initial, depth) {
 
@@ -747,9 +725,21 @@ export interface InvalidReporterReport extends IncomingReport {
 export interface DuplicateConfigFile extends IncomingReport {
     data: {error: InitConfigFileExistsError}
 }
+export interface ConfigFileCreatedReport extends IncomingReport {
+    data: {parsed: ParsedPath}
+}
+export interface InitInputFileTypeNotSupportedReport extends IncomingReport {
+    data: {error: InitConfigFileTypeNotSupported}
+}
+export interface TaskTreeReport extends IncomingReport {
+    data: {tasks: Task[], config: CrossbowConfiguration, title: string}
+}
+export interface TaskErrorsReport extends IncomingReport {
+    data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
+}
 
 const reporterFunctions = {
-    [ReportNames.UsingConfigFile]: function (report: UsingConfigFileReport) {
+    [ReportNames.UsingInputFile]: function (report: UsingConfigFileReport) {
         return report.data.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;
         }).join('\n');
@@ -781,7 +771,7 @@ const reporterFunctions = {
 
         return lines;
     },
-    [ReportNames.DuplicateConfigFile]: function (report: DuplicateConfigFile): string[] {
+    [ReportNames.DuplicateInputFile]: function (report: DuplicateConfigFile): string[] {
         const error = report.data.error;
         const lines = [
             `Sorry, this would cause an existing file to be overwritten`,
@@ -789,8 +779,8 @@ const reporterFunctions = {
         ];
         return lines.concat(getExternalError(error.type, error, error.file).split('\n'));
     },
-    [ReportNames.ConfigFileCreated]: function (parsed: ParsedPath) {
-        multiLine(`{green:✔} Created file: {cyan.bold:${parsed.base}}
+    [ReportNames.InputFileCreated]: function (report: ConfigFileCreatedReport) {
+        return `{green:✔} Created file: {cyan.bold:${report.data.parsed.base}}
  
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
  
@@ -798,12 +788,15 @@ Now, try the \`{yellow:hello-world}\` example in that file by running:
  
 Or to see multiple tasks running, with some in parallel, try: 
 
-  {gray:$} crossbow run {bold:all}`);
+  {gray:$} crossbow run {bold:all}`.split('\n');
     },
-    [ReportNames.InitConfigTypeNotSupported]: function (error: InitConfigFileTypeNotSupported) {
-        heading(`Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`);
-        logger.info(`{red.bold:x '${error.providedType}'}`);
-        multiLine(getExternalError(error.type, error));
+    [ReportNames.InitInputFileTypeNotSupported]: function (report: InitInputFileTypeNotSupportedReport): string[] {
+        const error = report.data.error;
+        return [
+            `Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`,
+            `{red.bold:x '${error.providedType}'}`,
+            ...getExternalError(error.type, error).split('\n')
+        ];
     },
     [ReportNames.SimpleTaskList]: function (report: SimpleTaskListReport): string[] {
         return [
@@ -811,20 +804,50 @@ Or to see multiple tasks running, with some in parallel, try:
             ...report.data.lines
         ];
     },
-    [ReportNames.TaskTree]: reportTaskTree,
-    [ReportNames.TaskList]: reportTaskList,
-    [ReportNames.TaskErrors]: reportTaskErrors,
+    [ReportNames.TaskTree]: function (report: TaskTreeReport): string[] {
+        return reportTaskTree(report.data.tasks, report.data.config, report.data.title);
+    },
+    [ReportNames.TaskList]: function (report: TaskListReport): string {
+
+        const {config, sequence, titlePrefix, cli} = report.data;
+
+        if (config.verbose === LogLevel.Verbose) {
+            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+            return reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
+        } else {
+            return compile(`{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(', ')}`);
+        }
+    },
+    [ReportNames.TaskErrors]: function (report: TaskErrorsReport): string[] {
+
+        const {taskCollection, tasks, config} = report.data;
+
+        const lines = [
+            '{gray.bold:------------------------------------------------}',
+            '{err: } Sorry, there were errors resolving your tasks,',
+            '  So none of them were run.',
+            '{gray.bold:------------------------------------------------}',
+        ];
+
+        taskCollection.forEach(function (n, i) {
+            lines.push.apply(lines, reportTaskTree([tasks[i]], config, `+ input: '${n}'`));
+        });
+
+        return lines;
+    },
     [ReportNames.TaskReport]: function (report: TaskReportReport): string {
         if (report.data.trigger.config.progress) {
             return _taskReport(report.data.report);
         }
         return '';
     },
-    [ReportNames.InvalidTasksSimple]: function (tasks: Task[]) {
-        logger.info('{red.bold:x Invalid tasks');
-        logger.info('Sorry, we cannot generate documentation for you right now');
-        logger.info('as you have invalid tasks. Please run {bold:$ crossbow tasks} to see');
-        logger.info('details about these errors');
+    [ReportNames.DocsInvalidTasksSimple]: function (): string[] {
+        return [
+            '{red.bold:x Invalid tasks',
+            'Sorry, we cannot generate documentation for you right now',
+            'as you have invalid tasks. Please run {bold:$ crossbow tasks} to see',
+            'details about these errors',
+        ];
     },
     [ReportNames.NoTasksAvailable]: function () {
         heading('Sorry, there were no tasks available.');

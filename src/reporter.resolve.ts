@@ -30,20 +30,19 @@ export interface Reporters {
 }
 
 export enum ReportNames {
-    DuplicateConfigFile            = <any>"DuplicateConfigFile",
-    ConfigFileCreated              = <any>"ConfigFileCreated",
-    InitConfigTypeNotSupported     = <any>"InitConfigTypeNotSupported",
+    DuplicateInputFile             = <any>"DuplicateInputFile",
+    InputFileCreated               = <any>"InputFileCreated",
+    InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
     InputError                     = <any>"InputFileNotFound",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
-    UsingConfigFile                = <any>"UsingConfigFile",
+    UsingInputFile                 = <any>"UsingInputFile",
 
     TaskList                       = <any>"TaskList",
     TaskTree                       = <any>"TaskTree",
     TaskErrors                     = <any>"TaskErrors",
     TaskReport                     = <any>"TaskReport",
 
-    InvalidTasksSimple             = <any>"InvalidTasksSimple",
     NoTasksAvailable               = <any>"NoTasksAvailable",
     NoTasksProvided                = <any>"NoTasksProvided",
 
@@ -66,6 +65,7 @@ export enum ReportNames {
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
     DocsInputFileNotFound          = <any>"DocsInputFileNotFound",
     DocsOutputFileExists           = <any>"DocsOutputFileExists",
+    DocsInvalidTasksSimple         = <any>"DocsInvalidTasksSimple",
 
     Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",

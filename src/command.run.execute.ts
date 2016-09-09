@@ -9,7 +9,7 @@ import {join} from "path";
 import Rx = require('rx');
 import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
-import {SummaryReport} from "./reporters/defaultReporter";
+import {SummaryReport, TaskErrorsReport} from "./reporters/defaultReporter";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -55,7 +55,17 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * off
      */
     if (tasks.invalid.length) {
-        reporter({type: ReportNames.TaskErrors, data: {tasks: tasks.all, taskCollection: cli.input.slice(1), input, config}});
+
+        reporter({
+            type: ReportNames.TaskErrors,
+            data: {
+                tasks: tasks.all,
+                taskCollection: cli.input.slice(1),
+                input,
+                config
+            }
+        } as TaskErrorsReport);
+
         return Rx.Observable.concat<RunCommandErrorStream>(
             Rx.Observable.just(<RunCommandErrorReport>{
                 type: RunCommandReportTypes.InvalidTasks,

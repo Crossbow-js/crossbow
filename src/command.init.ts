@@ -9,12 +9,15 @@ import * as file from "./file.utils";
 import * as fs from "fs";
 import {join, parse} from "path";
 import {ReportNames} from "./reporter.resolve";
-import {DuplicateConfigFile} from "./reporters/defaultReporter";
+import {
+    DuplicateConfigFile, ConfigFileCreatedReport,
+    InitInputFileTypeNotSupportedReport
+} from "./reporters/defaultReporter";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
-    InitConfigFileExists = <any>"InitConfigFileExists",
-    InitConfigFileTypeNotSupported = <any>"InitConfigFileTypeNotSupported"
+    InitInputFileExists = <any>"InitInputFileExists",
+    InitInputFileTypeNotSupported = <any>"InitInputFileTypeNotSupported"
 }
 export interface InitConfigError {type: InitConfigFileErrorTypes}
 export interface InitConfigFileExistsError extends InitConfigError {file: file.ExternalFile}
@@ -46,12 +49,17 @@ function execute(trigger: CommandTrigger): any {
 
     if (outputFileName === undefined) {
         const errors = [{
-            type: InitConfigFileErrorTypes.InitConfigFileTypeNotSupported,
+            type: InitConfigFileErrorTypes.InitInputFileTypeNotSupported,
             providedType: config.type,
             supportedTypes: maybeExistingFileInputs
         }];
         if (!config.handoff) {
-            reporter({type: ReportNames.InitConfigTypeNotSupported, data: {error: errors[0]}});
+            reporter({
+                type: ReportNames.InitInputFileTypeNotSupported,
+                data: {
+                    error: errors[0]
+                }
+            } as InitInputFileTypeNotSupportedReport);
         }
         return {errors};
     }
@@ -83,7 +91,7 @@ function execute(trigger: CommandTrigger): any {
     const errors: Array<InitConfigFileExistsError> = (function () {
         if (matchingFiles.length) {
             return matchingFiles.map(file => {
-                return {type: InitConfigFileErrorTypes.InitConfigFileExists, file};
+                return {type: InitConfigFileErrorTypes.InitInputFileExists, file};
             });
         }
         return [];
@@ -100,7 +108,7 @@ function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reporter({type: ReportNames.DuplicateConfigFile, data: {error: errors[0]}} as DuplicateConfigFile);
+        reporter({type: ReportNames.DuplicateInputFile, data: {error: errors[0]}} as DuplicateConfigFile);
         return {existingFilesInCwd, matchingFiles, errors};
     }
 
@@ -119,7 +127,7 @@ function execute(trigger: CommandTrigger): any {
         outputFileName
     };
 
-    reporter({type:ReportNames.ConfigFileCreated});
+    reporter({type:ReportNames.InputFileCreated, data: {parsed: parse(outputFilePath)}} as ConfigFileCreatedReport);
 
     return output;
 }

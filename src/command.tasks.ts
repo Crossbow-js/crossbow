@@ -1,7 +1,7 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {LogLevel, SimpleTaskListReport} from './reporters/defaultReporter';
+import {LogLevel, SimpleTaskListReport, TaskTreeReport} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
@@ -68,7 +68,14 @@ function execute(trigger: CommandTrigger): any {
      * flag, show the full tree
      */
     if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
-        reporter({type: ReportNames.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
+        reporter({
+            type: ReportNames.TaskTree,
+            data: {
+                tasks: resolved.all,
+                config,
+                title: 'Available tasks:'
+            }
+        } as TaskTreeReport);
     } else {
         /**
          * Otherwise just print a simple two-col list

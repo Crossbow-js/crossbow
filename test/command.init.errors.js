@@ -10,7 +10,7 @@ describe('Init command', function () {
             flags: {handoff: true, cwd: 'test/fixtures', type: 'cbfile'}
         }, {});
         assert.equal(out.errors.length, 1);
-        assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitConfigFileExists);
+        assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitInputFileExists);
     });
     it('returns errors when type is not supported', function () {
         const out = handleIncoming({
@@ -18,7 +18,7 @@ describe('Init command', function () {
             flags: {handoff: true, cwd: 'test/fixtures', type: 'cjbile'} // typo
         }, {});
         assert.equal(out.errors.length, 1);
-        assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitConfigFileTypeNotSupported);
+        assert.equal(out.errors[0].type, InitConfigFileErrorTypes.InitInputFileTypeNotSupported);
     });
     it('returns no errors when the file will be unique', function () {
         const out = handleIncoming({

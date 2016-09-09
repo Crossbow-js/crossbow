@@ -64,7 +64,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     if (tasks.invalid.length) {
         debug(`Tasks were invalid, so skipping doc generation completely`);
-        reporter({type: ReportNames.InvalidTasksSimple});
+        reporter({type: ReportNames.DocsInvalidTasksSimple});
         return {tasks};
     }
 

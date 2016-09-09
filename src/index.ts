@@ -127,7 +127,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.type === InputTypes.ExternalFile ||
         userInput.type === InputTypes.CBFile ||
         userInput.type === InputTypes.DefaultExternalFile
-    ) reportFn({type: ReportNames.UsingConfigFile, data: {sources: userInput.sources}});
+    ) reportFn({type: ReportNames.UsingInputFile, data: {sources: userInput.sources}});
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
