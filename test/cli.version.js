@@ -2,6 +2,7 @@ const assert = require('chai').assert;
 const exec = require('child_process').exec;
 const current = require('../package.json').version;
 const cli = require('../dist/index');
+const Rx = require('rx');
 
 describe("Prints the version", function () {
     it("via --version flag", function (done) {
@@ -10,30 +11,28 @@ describe("Prints the version", function () {
             done();
         });
     });
-    it("reports tasks with @p ", function () {
-        const reports = [];
+    it("reports tasks with @p ", function (done) {
+        const obs = new Rx.Subject();
+        obs.filter(x => x.origin === 'SimpleTaskList')
+            .take(4)
+            .pluck('data')
+            .toArray()
+            .subscribe(function (logs) {
+                assert.include(logs[1], 'build <p>');
+                done();
+            });
         cli.default({
             input: ['tasks'],
             flags: {
-                reporters: [
-                    function (name, args) {
-                        if (name === 'SimpleTaskList') reports.push(args);
-                    }
-                ]
+                outputObserver: obs,
             }
         }, {
             tasks: {
                 'build@p': ['css', 'js'],
-                css: function cssTask() {
-
-                },
-                js: function jsTask() {
-
-                }
+                css: function cssTask() {},
+                js: function jsTask() {}
             }
         });
-
-        assert.include(reports[0].join('\n'), 'build <p>');
     });
     it("reports grouped tasks with @p", function () {
 

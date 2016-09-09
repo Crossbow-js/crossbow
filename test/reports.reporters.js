@@ -24,7 +24,7 @@ describe('Reporter checks', function () {
             }
         });
     });
-    it.only('doesnt show internal prefixes on functions', function (done) {
+    it.skip('doesnt show internal prefixes on functions', function (done) {
         const output = new Rx.Subject();
 
         output.subscribe(x => {

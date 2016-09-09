@@ -9,6 +9,7 @@ import {Task} from "./task.resolve";
 import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
+import {DocsAddedToFileReport} from "./reporters/defaultReporter";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -326,7 +327,12 @@ function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
      */
     if (!config.handoff) {
         output.forEach(x => {
-            trigger.reporter({type: ReportNames.DocsAddedToFile, data: {file: x.file, content: x.content}});
+            trigger.reporter({
+                type: ReportNames.DocsAddedToFile,
+                data: {
+                    file: x.file
+                }
+            } as DocsAddedToFileReport);
             file.writeFileToDisk(x.file, x.content);
         });
     }

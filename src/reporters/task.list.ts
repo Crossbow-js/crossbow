@@ -2,6 +2,7 @@ import {longestString, padLine, escapeNewLines, isInternal} from "../task.utils"
 import {Task, TaskOriginTypes, TaskRunModes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
+import {TaskReport, TaskReportType} from "../task.runner";
 
 function taskPreviews(item: Task) {
     if (!item.tasks.length) {
@@ -97,4 +98,46 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
 
         return [name, desc];
     });
+}
+
+export function _taskReport(report: TaskReport): string {
+
+    const skipped = report.item.task.skipped || report.stats.skipped;
+    const item = report.item;
+
+    const label = escapeNewLines((function () {
+        if (item.subTaskName) {
+            return `${item.task.taskName}:{bold:${item.subTaskName}}`;
+        }
+        if (item.viaName) {
+            if (item.viaName.indexOf(':') > -1) {
+                const split = item.viaName.split(':');
+                return `${split[0]}:{bold:${split[1]}}`;
+            }
+            return item.viaName;
+        }
+        return item.task.rawInput;
+    })());
+
+    return (function () {
+        if (report.type === TaskReportType.start) {
+            if (skipped) {
+                return `{yellow:-} ${label} {yellow:(skipped)}`;
+            }
+            return `{yellow:>} ${label}`;
+        }
+        if (report.type === TaskReportType.end) {
+            if (skipped) {
+                return '';
+            }
+            return `{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`;
+        }
+        if (report.type === TaskReportType.error) {
+            return `{red:x} ${label}`;
+        }
+    })();
+}
+
+export function duration(ms) {
+    return String((Number(ms) / 1000).toFixed(2)) + 's';
 }

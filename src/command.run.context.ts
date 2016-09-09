@@ -7,6 +7,7 @@ import {ReportNames} from "./reporter.resolve";
 import {CommandTrigger} from "./command.run";
 const {fromJS, Map} = Immutable;
 import Rx = require('rx');
+import {HashDirErrorReport} from "./reporters/defaultReporter";
 
 type PreExecutionTask = (tasks: Task[], trigger:CommandTrigger) => Rx.Observable<any>
 
@@ -71,7 +72,13 @@ function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observable<any
             if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
             if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
 
-            trigger.reporter({type: ReportNames.HashDirError, data: {error: e, cwd: trigger.config.cwd}});
+            trigger.reporter({
+                type: ReportNames.HashDirError,
+                data: {
+                    error: e,
+                    cwd: trigger.config.cwd
+                }
+            } as HashDirErrorReport);
 
             return Rx.Observable.just(Immutable.Map({}));
         });

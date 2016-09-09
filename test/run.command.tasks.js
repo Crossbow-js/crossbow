@@ -10,7 +10,7 @@ describe("list available tasks", function () {
     });
     it("lists tasks in verbose format", function (done) {
         exec(`node dist/index tasks -c examples/crossbow.js -v`, function (err, stdout, stderr) {
-            assert.include(stdout, 'Available tasks:\n   ├─┬ webpack\n');
+            assert.include(stdout, '├─┬ webpack\n');
             done();
         });
     });
