@@ -22,6 +22,7 @@ describe('Running with task stats', function () {
             .catch(x => Rx.Observable.empty())
             .toArray()
             .subscribe(reports => {
+                console.log(reports);
                 assert.equal(reports.length, 2);
                 assert.equal(reports[0].type, 'start');
                 assert.equal(reports[1].type, 'error');

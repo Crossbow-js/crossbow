@@ -43,6 +43,9 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
+    const time = (): number => {
+        return trigger.config.scheduler ? trigger.config.scheduler.now() : new Date().getTime();
+    };
 
     if (trigger.config.dump) {
         writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
@@ -91,14 +94,16 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * map of read-only values.
      */
     const outgoing = getContext(tasks.all, trigger)
-        .timestamp()
-        .flatMap((x: {value: RunContext, timestamp: number}) => run(x.value, x.timestamp))
+        .flatMap((x: RunContext) => run(x, time()))
         .share();
 
     /**
-     * Start the process
+     * Start the process in the next loop - this allows someone to attach
+     * an observer to something that may finish instantly
      */
-    outgoing.subscribe();
+    process.nextTick(function () {
+        outgoing.subscribe();
+    });
 
     /**
      * Return the stream so a consumer can receive the RunCompletionReport
@@ -130,8 +135,9 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
             })
             .toArray()
-            .timestamp()
-            .flatMap((completion: CompletionReport) => handleCompletion(completion.value, completion.timestamp - startTime));
+            .flatMap((reports: TaskReport[]) => {
+                return handleCompletion(reports, time() - startTime)
+            });
     }
 
     /**

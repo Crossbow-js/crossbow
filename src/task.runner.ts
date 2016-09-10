@@ -75,9 +75,15 @@ export type RunContext = Immutable.Map<string, any>;
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
+export function time (scheduler?) {
+    return scheduler ? scheduler.now() : new Date().getTime();
+}
+
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
 
     return Rx.Observable.create(observer => {
+
+        const startTime = time(trigger.config.scheduler);
 
         /**
          * Complete immediately if this item was marked
@@ -88,9 +94,9 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 skipped: true,
                 skippedReason: TaskSkipReasons.SkipFlag
             };
-            const stats = getStartStats(new Date().getTime(), additionalStats);
+            const stats = getStartStats(startTime, additionalStats);
             observer.onNext(getTaskReport(TaskReportType.start, item, stats));
-            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
+            observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, startTime, additionalStats)));
             observer.onCompleted();
             return;
         }
@@ -112,9 +118,9 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     skipped: true,
                     skippedReason: TaskSkipReasons.IfChanged
                 };
-                const stats = getStartStats(new Date().getTime(), additionalStats);
+                const stats = getStartStats(startTime, additionalStats);
                 observer.onNext(getTaskReport(TaskReportType.start, item, stats));
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, additionalStats)));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, startTime, additionalStats)));
                 observer.onCompleted();
                 return;
             }
@@ -125,7 +131,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Timestamp when this task starts
          * @type {TaskStats}
          */
-        const stats = getStartStats(new Date().getTime(), {skipped: false});
+        const stats = getStartStats(startTime, {skipped: false});
         debug(`> seqUID ${item.seqUID} started`);
 
         /**
@@ -137,13 +143,13 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Exit after 1 second if we're in a 'dry run'
          */
         if (trigger.config.dryRun) {
-            const int = setTimeout(function () {
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
-                observer.onCompleted();
-            }, trigger.config.dryRunDuration);
-            return () => {
-                clearTimeout(int);
-            };
+            Rx.Observable
+                .just('dryRun')
+                .delay(trigger.config.dryRunDuration, trigger.config.scheduler)
+                .do(_ => {
+                    observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
+                    observer.onCompleted();
+                })
         }
 
         if (item.task.type === TaskTypes.InlineFunction
@@ -156,7 +162,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     observer.onError(err);
                     return;
                 }
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats)));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
                 observer.onCompleted();
             });
 
@@ -215,7 +221,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * before the sequence ends.
          */
         return Rx.Observable.concat(
-            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error))),
+            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error, time(trigger.config.scheduler)))),
             Rx.Observable.throw(error)
         );
     });
@@ -249,15 +255,14 @@ export function getStartStats(startTime: number, additional?:{[index: string]: a
 /**
  * Create a new stats object with completed/duration flags etc
  */
-function getEndStats(stats: TaskStats, additional?:{[index: string]: any}) {
-    const now = new Date().getTime();
+function getEndStats(stats: TaskStats, endTime: number, additional?:{[index: string]: any}) {
     return _.assign(
         {},
         stats,
         additional,
         {
-            endTime:   now,
-            duration:  now - stats.startTime,
+            endTime:   endTime,
+            duration:  endTime - stats.startTime,
             completed: true
         }
     );
@@ -273,13 +278,11 @@ function getTaskErrorReport(item: SequenceItem, stats: TaskErrorStats): TaskErro
 /**
  * Get basic stats for a task error
  */
-function getErrorStats(error: CrossbowError): TaskErrorStats {
-
-    const now = new Date().getTime();
+function getErrorStats(error: CrossbowError, endTime: number): TaskErrorStats {
 
     if (error._cbError) {
         return {
-            endTime: now,
+            endTime,
             completed: false,
             errors: [error],
             cbError: true,
@@ -288,7 +291,7 @@ function getErrorStats(error: CrossbowError): TaskErrorStats {
     }
 
     return {
-        endTime: now,
+        endTime,
         completed: false,
         errors: [error]
     }

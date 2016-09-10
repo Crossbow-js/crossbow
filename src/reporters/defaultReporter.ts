@@ -24,6 +24,10 @@ export const enum LogLevel {
     Verbose
 }
 
+// @TODO - this file predates most of the changes made
+// to crossbow and therefor would be well suited to a complete
+// rewrite.
+
 const reporterFunctions = {
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.data.sources.map(function (input) {

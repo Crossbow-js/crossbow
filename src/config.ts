@@ -38,6 +38,7 @@ export interface CrossbowConfiguration {
     dryRun?: boolean
     dryRunDuration?: number
     outputObserver?: Rx.Observable<OutgoingReport>
+    scheduler?: Rx.IScheduler
 }
 
 /**

@@ -2,6 +2,7 @@ const assert = require('chai').assert;
 const exec = require('child_process').exec;
 const current = require('../package.json').version;
 const cli = require('../dist/index');
+const reports = require('../dist/reporter.resolve');
 const Rx = require('rx');
 
 describe("Prints the version", function () {
@@ -11,9 +12,9 @@ describe("Prints the version", function () {
             done();
         });
     });
-    it("reports tasks with @p ", function (done) {
+    it("reports tasks with @p", function (done) {
         const obs = new Rx.Subject();
-        obs.filter(x => x.origin === 'SimpleTaskList')
+        obs.filter(x => x.origin === reports.ReportTypes.SimpleTaskList)
             .take(4)
             .pluck('data')
             .toArray()
