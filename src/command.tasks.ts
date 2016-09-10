@@ -1,14 +1,14 @@
 /// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {LogLevel, SimpleTaskListReport, TaskTreeReport} from './reporters/defaultReporter';
+import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
 
 import Immutable = require('immutable');
 import Rx = require('rx');
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
 
 function execute(trigger: CommandTrigger): any {
@@ -59,7 +59,7 @@ function execute(trigger: CommandTrigger): any {
      * If no tasks were matched, give the usual error
      */
     if (resolved.all.length === 0) {
-        reporter({type: ReportNames.NoTasksAvailable});
+        reporter({type: ReportTypes.NoTasksAvailable});
         return {tasks: resolved};
     }
 
@@ -69,7 +69,7 @@ function execute(trigger: CommandTrigger): any {
      */
     if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
         reporter({
-            type: ReportNames.TaskTree,
+            type: ReportTypes.TaskTree,
             data: {
                 tasks: resolved.all,
                 config,
@@ -80,7 +80,7 @@ function execute(trigger: CommandTrigger): any {
         /**
          * Otherwise just print a simple two-col list
          */
-        reporter({type: ReportNames.SimpleTaskList, data: {lines: getSimpleTaskList(resolved.valid)}} as SimpleTaskListReport);
+        reporter({type: ReportTypes.SimpleTaskList, data: {lines: getSimpleTaskList(resolved.valid)}} as SimpleTaskListReport);
     }
 
     return {tasks: resolved};

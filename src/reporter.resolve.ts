@@ -1,6 +1,15 @@
 import {CrossbowConfiguration} from "./config";
-import {CrossbowInput} from "./index";
-import {readFilesFromDisk, ExternalFile} from "./file.utils";
+import {CrossbowInput, CLI} from "./index";
+import {readFilesFromDisk, ExternalFile, ExternalFileInput, ExternalFileContent, HashDirErrorTypes} from "./file.utils";
+import {TaskReport} from "./task.runner";
+import {CommandTrigger} from "./command.run";
+import {SequenceItem} from "./task.sequence.factories";
+import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "./command.init";
+import {ParsedPath} from "path";
+import {Task, TaskCollection} from "./task.resolve";
+import {WatchTask, Watcher, WatchTasks} from "./watch.resolve";
+import {WatchRunners} from "./watch.runner";
+import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.docs";
 
 export interface Reporter {
     errors: {}[]
@@ -29,7 +38,7 @@ export interface Reporters {
     invalid: Reporter[]
 }
 
-export enum ReportNames {
+export enum ReportTypes {
     DuplicateInputFile             = <any>"DuplicateInputFile",
     InputFileCreated               = <any>"InputFileCreated",
     InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
@@ -69,6 +78,101 @@ export enum ReportNames {
 
     Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",
+}
+
+export interface IncomingReport {
+    type: ReportTypes
+    data?: any
+}
+
+export interface OutgoingReport {
+    origin: ReportTypes
+    data?: string
+}
+
+export interface UsingConfigFileReport extends IncomingReport {
+    data: {sources: ExternalFileInput[]}
+}
+export interface InputFileNotFoundReport extends IncomingReport {
+    data: {sources: ExternalFileInput[]}
+}
+export interface TaskReportReport {
+    data: {report: TaskReport,trigger: CommandTrigger}
+}
+export interface SummaryReport extends IncomingReport {
+    data: {sequence: SequenceItem[],cli: CLI,title: string,config: CrossbowConfiguration,runtime: number}
+}
+export interface TaskListReport extends IncomingReport {
+    data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}
+}
+export interface SimpleTaskListReport extends IncomingReport {
+    data: {lines: string[]}
+}
+export interface InvalidReporterReport extends IncomingReport {
+    data: {reporters: Reporters}
+}
+export interface DuplicateConfigFile extends IncomingReport {
+    data: {error: InitConfigFileExistsError}
+}
+export interface ConfigFileCreatedReport extends IncomingReport {
+    data: {parsed: ParsedPath}
+}
+export interface InitInputFileTypeNotSupportedReport extends IncomingReport {
+    data: {error: InitConfigFileTypeNotSupported}
+}
+export interface TaskTreeReport extends IncomingReport {
+    data: {tasks: Task[], config: CrossbowConfiguration, title: string}
+}
+export interface TaskErrorsReport extends IncomingReport {
+    data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
+}
+export interface WatchersReport extends IncomingReport {
+    data: {watchTasks: WatchTask[]}
+}
+export interface BeforeWatchTaskErrorsReport extends IncomingReport {
+    data: {watchTasks: WatchTasks, trigger: CommandTrigger}
+}
+export interface BeforeTaskListReport extends IncomingReport {
+    data: {sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration}
+}
+export interface BeforeTasksDidNotCompleteReport extends IncomingReport {
+    data: {error: Error}
+}
+export interface WatchTaskTasksErrorsReport extends IncomingReport {
+    data: {tasks: Task[], runner: Watcher, config: CrossbowConfiguration}
+}
+export interface WatchTaskErrorsReport extends IncomingReport {
+    data: {watchTasks: WatchTask[]}
+}
+export interface WatchTaskReportReport extends IncomingReport {
+    data: {report: TaskReport, trigger: CommandTrigger}
+}
+export interface WatcherTriggeredTasksReport extends IncomingReport {
+    data: {index: number, taskCollection: TaskCollection}
+}
+export interface WatcherTriggeredTasksCompletedReport extends IncomingReport {
+    data: {index: number, taskCollection: TaskCollection, time: number}
+}
+export interface WatcherNamesReport extends IncomingReport {
+    data: {runners: WatchRunners, trigger: CommandTrigger}
+}
+export interface NoFilesMatchedReport extends IncomingReport {
+    data: {watcher: Watcher}
+}
+export interface DocsInputFileNotFoundReport extends IncomingReport {
+    data: {error: DocsInputFileNotFoundError}
+}
+export interface DocsAddedToFileReport extends IncomingReport {
+    data: {file: ExternalFileContent}
+}
+export interface DocsOutputFileExistsReport extends IncomingReport {
+    data: {error: DocsOutputFileExistsError}
+}
+export interface HashError extends Error {
+    type: HashDirErrorTypes
+}
+export interface HashDirErrorReport extends IncomingReport {
+    data: {error: HashError, cwd: string}
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {

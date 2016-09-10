@@ -14,8 +14,8 @@ import {createObservablesForWatchers} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
-import {ReportNames} from "./reporter.resolve";
-import {BeforeWatchTaskErrorsReport, BeforeTasksDidNotCompleteReport} from "./reporters/defaultReporter";
+import {ReportTypes} from "./reporter.resolve";
+import {BeforeWatchTaskErrorsReport, BeforeTasksDidNotCompleteReport} from "./reporter.resolve";
 
 const debug = require('debug')('cb:command.watch');
 const _ = require('../lodash.custom');
@@ -73,7 +73,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * Never continue if any BEFORE tasks were flagged as invalid
      */
     if (before.tasks.invalid.length) {
-        reporter({type: ReportNames.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
+        reporter({type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
         return;
     }
 
@@ -82,7 +82,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * // todo, how do we get here
      */
     if (watchTasks.invalid.length) {
-        reporter({type: ReportNames.WatchTaskErrors, data: {watchTasks: watchTasks.all, cli, input}});
+        reporter({type: ReportTypes.WatchTaskErrors, data: {watchTasks: watchTasks.all, cli, input}});
         return;
     }
 
@@ -94,10 +94,10 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
         // it doesn't make any sense to log 'valid' tasks with
         // WatchTaskTasksErrors - either don't log them, or use a more appropriate name
         // runners.valid.forEach(runner => {
-        //     reporter(ReportNames.WatchTaskTasksErrors, runner._tasks.all, runner, config)
+        //     reporter(ReportTypes.WatchTaskTasksErrors, runner._tasks.all, runner, config)
         // });
         runners.invalid.forEach(runner => {
-            reporter({type: ReportNames.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
+            reporter({type: ReportTypes.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
         return;
     }
@@ -106,7 +106,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * List the tasks that must complete before any watchers begin
      */
     if (before.tasks.valid.length) {
-        reporter({type: ReportNames.BeforeTaskList, data: {sequence: before.sequence, cli, config: trigger.config}});
+        reporter({type: ReportTypes.BeforeTaskList, data: {sequence: before.sequence, cli, config: trigger.config}});
     }
 
     /**
@@ -133,7 +133,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
                 return Rx.Observable.throw(err);
             })
             .do(() => {
-                reporter({type: ReportNames.Watchers, data: {watchTasks: watchTasks.valid, config}});
+                reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
             }),
         createObservablesForWatchers(runners.valid, trigger)).share();
 
@@ -166,7 +166,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
          */
         const beforeTimestamp = new Date().getTime();
         const report = (seq: SequenceItem[]) => {
-            reporter({type: ReportNames.Summary, data: {
+            reporter({type: ReportTypes.Summary, data: {
                 sequence: seq,
                 cli,
                 title: 'Before tasks Total:',
@@ -179,7 +179,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
             .runner
             .series()
             .do(report => {
-                reporter({type: ReportNames.TaskReport, data: {report, trigger}});
+                reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
             })
             .toArray()
             .flatMap((reports: TaskReport[]) => {
@@ -192,7 +192,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
                      * so we `throw` here to ensure the upstream fails
                      */
                     const cberror = <CrossbowError>new Error('Before tasks did not complete!');
-                    reporter({type: ReportNames.BeforeTasksDidNotComplete, data: {error: cberror}} as BeforeTasksDidNotCompleteReport);
+                    reporter({type: ReportTypes.BeforeTasksDidNotComplete, data: {error: cberror}} as BeforeTasksDidNotCompleteReport);
                     cberror._cb = true;
                     return Rx.Observable.throw(cberror);
                 }
@@ -243,10 +243,10 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
      */
     function enterInteractive() {
         if (!topLevelWatchers.length) {
-            reporter({type: ReportNames.NoWatchersAvailable});
+            reporter({type: ReportTypes.NoWatchersAvailable});
             return;
         }
-        reporter({type: ReportNames.NoWatchTasksProvided});
+        reporter({type: ReportTypes.NoWatchTasksProvided});
         return promptForWatchCommand(cli, input, config).then(function (answers) {
             const cliMerged = _.merge({}, cli, {input: answers.watch});
             return execute({

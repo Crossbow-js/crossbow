@@ -11,7 +11,7 @@ import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
 import {reportTaskTree} from "./reporters/defaultReporter";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 
 export interface Answers {
     tasks: string[]
@@ -31,7 +31,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
     if (resolved.invalid.length) {
 
-        reporter({type: ReportNames.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
+        reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
         return Rx.Observable.empty<Answers>();
 
     } else {

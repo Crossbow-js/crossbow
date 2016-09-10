@@ -4,15 +4,14 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import Immutable = require('immutable');
 import Rx = require('rx');
-import * as utils from "./task.utils";
 import * as file from "./file.utils";
 import * as fs from "fs";
 import {join, parse} from "path";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 import {
     DuplicateConfigFile, ConfigFileCreatedReport,
     InitInputFileTypeNotSupportedReport
-} from "./reporters/defaultReporter";
+} from "./reporter.resolve";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -55,7 +54,7 @@ function execute(trigger: CommandTrigger): any {
         }];
         if (!config.handoff) {
             reporter({
-                type: ReportNames.InitInputFileTypeNotSupported,
+                type: ReportTypes.InitInputFileTypeNotSupported,
                 data: {
                     error: errors[0]
                 }
@@ -108,7 +107,7 @@ function execute(trigger: CommandTrigger): any {
      * He we perform any IO as we're not 'handing off'
      */
     if (errors.length) {
-        reporter({type: ReportNames.DuplicateInputFile, data: {error: errors[0]}} as DuplicateConfigFile);
+        reporter({type: ReportTypes.DuplicateInputFile, data: {error: errors[0]}} as DuplicateConfigFile);
         return {existingFilesInCwd, matchingFiles, errors};
     }
 
@@ -127,7 +126,7 @@ function execute(trigger: CommandTrigger): any {
         outputFileName
     };
 
-    reporter({type:ReportNames.InputFileCreated, data: {parsed: parse(outputFilePath)}} as ConfigFileCreatedReport);
+    reporter({type:ReportTypes.InputFileCreated, data: {parsed: parse(outputFilePath)}} as ConfigFileCreatedReport);
 
     return output;
 }

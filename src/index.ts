@@ -6,8 +6,7 @@ import {TaskRunner} from './task.runner';
 import {getRequirePaths} from './file.utils';
 import cli from "./cli";
 import {getInputs, InputTypes} from "./input.resolve";
-import {getReporters, getDefaultReporter, ReportNames, Reporter} from "./reporter.resolve";
-import {IncomingReport, OutgoingReport, InvalidReporterReport} from "./reporters/defaultReporter";
+import * as reports from "./reporter.resolve";
 import Rx = require('rx');
 import logger from "./logger";
 
@@ -30,7 +29,7 @@ export interface CrossbowInput {
 }
 
 export interface CrossbowReporter {
-    (report: IncomingReport): void
+    (report: reports.IncomingReport): void
 }
 
 const availableCommands = {
@@ -68,15 +67,15 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
 
     let mergedConfig      = merge(cli.flags);
     const userInput       = getInputs(mergedConfig, input);
-    let resolvedReporters = getReporters(mergedConfig, input);
+    let resolvedReporters = reports.getReporters(mergedConfig, input);
     let hasReporters      = resolvedReporters.valid.length;
-    const defaultReporter = getDefaultReporter();
+    const defaultReporter = reports.getDefaultReporter();
 
     const outputObserver  = (function () {
         if (mergedConfig.outputObserver) {
             return mergedConfig.outputObserver;
         }
-        const outputObserver = new Rx.Subject<OutgoingReport>();
+        const outputObserver = new Rx.Subject<reports.OutgoingReport>();
         outputObserver.subscribe(x => {
             logger.info(x.data);
         });
@@ -86,17 +85,22 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     // Check if any given reporter are invalid
     // and defer to default
     if (resolvedReporters.invalid.length) {
-        defaultReporter({type:ReportNames.InvalidReporter, data: {reporters: resolvedReporters}} as InvalidReporterReport, outputObserver);
+        defaultReporter({
+            type: reports.ReportTypes.InvalidReporter,
+            data: {
+                reporters: resolvedReporters
+            }
+        } as reports.InvalidReporterReport, outputObserver);
         return;
     }
 
     // proxy for calling reporter functions.
     // uses default if none given
-    const reportFn = function (report: IncomingReport) {
+    const reportFn = function (report: reports.IncomingReport) {
         if (!hasReporters) {
             return defaultReporter(report, outputObserver);
         }
-        resolvedReporters.valid.forEach(function (reporter: Reporter) {
+        resolvedReporters.valid.forEach(function (reporter: reports.Reporter) {
             reporter.callable(report, outputObserver);
         });
     };
@@ -104,7 +108,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     // Bail early if a user tried to load a specific file
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
-        reportFn({type: ReportNames.InputError, data: {sources: userInput.sources}});
+        reportFn({type: reports.ReportTypes.InputError, data: {sources: userInput.sources}});
         return;
     }
 
@@ -113,13 +117,13 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.inputs.length) {
         mergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
     }
-    resolvedReporters = getReporters(mergedConfig, input);
+    resolvedReporters = reports.getReporters(mergedConfig, input);
     hasReporters      = resolvedReporters.valid.length;
 
     // Check if any given reporter are invalid
     // and defer to default (again)
     if (resolvedReporters.invalid.length) {
-        reportFn({type: ReportNames.InvalidReporter, data: {reporters: resolvedReporters}} as InvalidReporterReport);
+        reportFn({type: reports.ReportTypes.InvalidReporter, data: {reporters: resolvedReporters}} as reports.InvalidReporterReport);
         return;
     }
 
@@ -127,7 +131,7 @@ function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
     if (userInput.type === InputTypes.ExternalFile ||
         userInput.type === InputTypes.CBFile ||
         userInput.type === InputTypes.DefaultExternalFile
-    ) reportFn({type: ReportNames.UsingInputFile, data: {sources: userInput.sources}});
+    ) reportFn({type: reports.ReportTypes.UsingInputFile, data: {sources: userInput.sources}});
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state

@@ -1,9 +1,9 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
-import {LogLevel, OutgoingReport} from "./reporters/defaultReporter";
+import {LogLevel} from "./reporters/defaultReporter";
+import {OutgoingReport} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
-import {join} from "path";
 
 const _ = require('../lodash.custom');
 

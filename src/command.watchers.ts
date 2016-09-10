@@ -7,14 +7,14 @@ import Rx = require('rx');
 import {stripBlacklisted} from "./watch.utils";
 import {resolveWatchTasks} from "./watch.resolve";
 import {createWatchRunners} from "./watch.runner";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 
 function execute(trigger: CommandTrigger): void {
     const {input, config, reporter}   = trigger;
     const topLevelWatchers  = stripBlacklisted(Object.keys(input.watch));
 
     if (!topLevelWatchers.length) {
-        reporter({type: ReportNames.NoWatchersAvailable});
+        reporter({type: ReportTypes.NoWatchersAvailable});
         return;
     }
 
@@ -36,11 +36,11 @@ function execute(trigger: CommandTrigger): void {
          * Now log the invalid runners
          */
         runners.invalid.forEach(runner => {
-            reporter({type: ReportNames.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
+            reporter({type: ReportTypes.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
         return;
     }
-    reporter({type: ReportNames.WatcherNames, data: {runners, trigger}});
+    reporter({type: ReportTypes.WatcherNames, data: {runners, trigger}});
 }
 
 export default function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

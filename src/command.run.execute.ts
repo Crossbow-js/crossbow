@@ -1,5 +1,5 @@
 import {CommandTrigger, getRunCommandSetup} from "./command.run";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner, RunContext, TaskErrorStats} from "./task.runner";
@@ -9,7 +9,7 @@ import {join} from "path";
 import Rx = require('rx');
 import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
-import {SummaryReport, TaskErrorsReport} from "./reporters/defaultReporter";
+import {SummaryReport, TaskErrorsReport} from "./reporter.resolve";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -57,7 +57,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     if (tasks.invalid.length) {
 
         reporter({
-            type: ReportNames.TaskErrors,
+            type: ReportTypes.TaskErrors,
             data: {
                 tasks: tasks.all,
                 taskCollection: cli.input.slice(1),
@@ -82,7 +82,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     /**
      * Report task list that's about to run
      */
-    reporter({type: ReportNames.TaskList, data: {sequence, cli, titlePrefix: '', config}});
+    reporter({type: ReportTypes.TaskList, data: {sequence, cli, titlePrefix: '', config}});
 
     /**
      * Get a run context for this execution.
@@ -127,7 +127,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         return mode
             .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
-                reporter({type: ReportNames.TaskReport, data: {report, trigger}});
+                reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
             })
             .toArray()
             .timestamp()
@@ -155,7 +155,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
          * Main summary report
          */
         reporter({
-            type: ReportNames.Summary,
+            type: ReportTypes.Summary,
             data: {
                 sequence: decoratedSequence,
                 cli,

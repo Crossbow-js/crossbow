@@ -4,12 +4,12 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks, Tasks} from './task.resolve';
 import Immutable = require('immutable');
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
 import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
-import {DocsAddedToFileReport} from "./reporters/defaultReporter";
+import {DocsAddedToFileReport} from "./reporter.resolve";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -51,7 +51,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * If there were 0 tasks, exit with error
      */
     if (tasks.all.length === 0) {
-        reporter({type: ReportNames.NoTasksAvailable});
+        reporter({type: ReportTypes.NoTasksAvailable});
         return {
             tasks
         };
@@ -65,7 +65,7 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     if (tasks.invalid.length) {
         debug(`Tasks were invalid, so skipping doc generation completely`);
-        reporter({type: ReportNames.DocsInvalidTasksSimple});
+        reporter({type: ReportTypes.DocsInvalidTasksSimple});
         return {tasks};
     }
 
@@ -187,7 +187,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         const error = <DocsOutputFileExistsError>{type: DocsErrorTypes.DocsOutputFileExists, file: maybe[0]};
 
         if (!config.handoff) {
-            reporter({type: ReportNames.DocsOutputFileExists, data: {error}});
+            reporter({type: ReportTypes.DocsOutputFileExists, data: {error}});
         }
 
         return {
@@ -247,7 +247,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
          * If we're not handing off, report the error
          */
         if (!config.handoff) {
-            reporter({type: ReportNames.DocsInputFileNotFound, data: {error:withErrors[0]}});
+            reporter({type: ReportTypes.DocsInputFileNotFound, data: {error:withErrors[0]}});
         }
 
         return {
@@ -328,7 +328,7 @@ function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
     if (!config.handoff) {
         output.forEach(x => {
             trigger.reporter({
-                type: ReportNames.DocsAddedToFile,
+                type: ReportTypes.DocsAddedToFile,
                 data: {
                     file: x.file
                 }

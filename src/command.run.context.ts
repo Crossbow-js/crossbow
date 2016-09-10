@@ -3,11 +3,10 @@ import * as file from "./file.utils";
 import * as utils from "./task.utils";
 import {HashDirErrorTypes} from "./file.utils";
 import Immutable = require('immutable');
-import {ReportNames} from "./reporter.resolve";
 import {CommandTrigger} from "./command.run";
 const {fromJS, Map} = Immutable;
 import Rx = require('rx');
-import {HashDirErrorReport} from "./reporters/defaultReporter";
+import {ReportTypes, HashDirErrorReport} from "./reporter.resolve";
 
 type PreExecutionTask = (tasks: Task[], trigger:CommandTrigger) => Rx.Observable<any>
 
@@ -73,7 +72,7 @@ function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observable<any
             if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
 
             trigger.reporter({
-                type: ReportNames.HashDirError,
+                type: ReportTypes.HashDirError,
                 data: {
                     error: e,
                     cwd: trigger.config.cwd

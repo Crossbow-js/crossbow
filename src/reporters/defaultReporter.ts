@@ -1,25 +1,18 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import {CLI, CrossbowInput} from "../index";
 import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem, Task} from "../task.resolve";
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
 import * as taskErrors from "../task.errors";
 import * as watchErrors from "../watch.errors";
-import {ParsedPath, parse, dirname, join, relative} from "path";
-import {WatchTasks} from "../watch.resolve";
+import {parse, dirname, join, relative} from "path";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
-import {CommandTrigger} from "../command.run";
-import {TaskReport, TaskReportType, TaskStats} from "../task.runner";
+import {TaskStats} from "../task.runner";
 import {countSequenceErrors, collectSkippedTasks} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, __e, escapeNewLines} from "../task.utils";
-import {ExternalFileInput, ExternalFileContent, HashDirErrorTypes} from "../file.utils";
-import {WatchRunners} from "../watch.runner";
-import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "../command.init";
-import {twoColWatchers, duration, _taskReport} from "./task.list";
-import {ReportNames, Reporters, Reporter, ReporterErrorTypes, ReporterError} from "../reporter.resolve";
-import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "../command.docs";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
+import {duration, _taskReport} from "./task.list";
+import * as reports from "../reporter.resolve";
 
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
@@ -32,12 +25,12 @@ export const enum LogLevel {
 }
 
 const reporterFunctions = {
-    [ReportNames.UsingInputFile]: function (report: UsingConfigFileReport): string {
+    [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.data.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;
         }).join('\n');
     },
-    [ReportNames.InputFileNotFound]: function (report: InputFileNotFoundReport): string[] {
+    [reports.ReportTypes.InputFileNotFound]: function (report: reports.InputFileNotFoundReport): string[] {
         const lines = [`Sorry, there were errors resolving your input files`];
 
         report.data.sources.forEach(function (item) {
@@ -47,14 +40,14 @@ const reporterFunctions = {
 
         return lines;
     },
-    [ReportNames.InvalidReporter]: function (report: InvalidReporterReport): string[] {
+    [reports.ReportTypes.InvalidReporter]: function (report: reports.InvalidReporterReport): string[] {
         const lines = [`{red.bold:x} Sorry, there were problems resolving your reporters`];
         const {reporters} = report.data;
 
-        reporters.invalid.forEach(function (reporter: Reporter) {
-            reporter.errors.forEach(function (err: ReporterError) {
+        reporters.invalid.forEach(function (reporter: reports.Reporter) {
+            reporter.errors.forEach(function (err: reports.ReporterError) {
 
-                if (err.type === ReporterErrorTypes.ReporterFileNotFound) {
+                if (err.type === reports.ReporterErrorTypes.ReporterFileNotFound) {
                     lines.push(`{red.bold:x ${err.file.resolved}`);
                 }
 
@@ -64,7 +57,7 @@ const reporterFunctions = {
 
         return lines;
     },
-    [ReportNames.DuplicateInputFile]: function (report: DuplicateConfigFile): string[] {
+    [reports.ReportTypes.DuplicateInputFile]: function (report: reports.DuplicateConfigFile): string[] {
         const error = report.data.error;
         const lines = [
             `Sorry, this would cause an existing file to be overwritten`,
@@ -72,7 +65,7 @@ const reporterFunctions = {
         ];
         return lines.concat(getExternalError(error.type, error, error.file).split('\n'));
     },
-    [ReportNames.InputFileCreated]: function (report: ConfigFileCreatedReport): string[] {
+    [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string[] {
         return `{green:✔} Created file: {cyan.bold:${report.data.parsed.base}}
  
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
@@ -83,7 +76,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
   {gray:$} crossbow run {bold:all}`.split('\n');
     },
-    [ReportNames.InitInputFileTypeNotSupported]: function (report: InitInputFileTypeNotSupportedReport): string[] {
+    [reports.ReportTypes.InitInputFileTypeNotSupported]: function (report: reports.InitInputFileTypeNotSupportedReport): string[] {
         const error = report.data.error;
         return [
             `Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`,
@@ -91,16 +84,16 @@ Or to see multiple tasks running, with some in parallel, try:
             ...getExternalError(error.type, error).split('\n')
         ];
     },
-    [ReportNames.SimpleTaskList]: function (report: SimpleTaskListReport): string[] {
+    [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
         return [
             '{yellow:Available Tasks:',
             ...report.data.lines
         ];
     },
-    [ReportNames.TaskTree]: function (report: TaskTreeReport): string[] {
+    [reports.ReportTypes.TaskTree]: function (report: reports.TaskTreeReport): string[] {
         return reportTaskTree(report.data.tasks, report.data.config, report.data.title);
     },
-    [ReportNames.TaskList]: function (report: TaskListReport): string {
+    [reports.ReportTypes.TaskList]: function (report: reports.TaskListReport): string {
 
         const {config, sequence, titlePrefix, cli} = report.data;
 
@@ -111,7 +104,7 @@ Or to see multiple tasks running, with some in parallel, try:
             return `{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(', ')}`;
         }
     },
-    [ReportNames.TaskErrors]: function (report: TaskErrorsReport): string[] {
+    [reports.ReportTypes.TaskErrors]: function (report: reports.TaskErrorsReport): string[] {
 
         const {taskCollection, tasks, config} = report.data;
 
@@ -128,13 +121,13 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.TaskReport]: function (report: TaskReportReport): string {
+    [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
         if (report.data.trigger.config.progress) {
             return _taskReport(report.data.report);
         }
         return '';
     },
-    [ReportNames.DocsInvalidTasksSimple]: function (): string[] {
+    [reports.ReportTypes.DocsInvalidTasksSimple]: function (): string[] {
         return [
             '{red.bold:x Invalid tasks',
             'Sorry, we cannot generate documentation for you right now',
@@ -142,17 +135,17 @@ Or to see multiple tasks running, with some in parallel, try:
             'details about these errors',
         ];
     },
-    [ReportNames.NoTasksAvailable]: function (): string[] {
+    [reports.ReportTypes.NoTasksAvailable]: function (): string[] {
         return [
             'Sorry, there were no tasks available.',
             `{red.bold:x Input: ''}`,
             ...getExternalErrorLines(InputErrorTypes.NoTasksAvailable, {})
         ];
     },
-    [ReportNames.NoTasksProvided]: function (): string {
+    [reports.ReportTypes.NoTasksProvided]: function (): string {
         return `Entering interactive mode as you didn't provide a task to run`;
     },
-    [ReportNames.BeforeWatchTaskErrors]: function (report: BeforeWatchTaskErrorsReport): string[] {
+    [reports.ReportTypes.BeforeWatchTaskErrors]: function (report: reports.BeforeWatchTaskErrorsReport): string[] {
 
         const lines = [
             '{err: } Sorry, there were errors resolving your {red:`before`} tasks',
@@ -181,7 +174,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.BeforeTaskList]: function (report: BeforeTaskListReport): string[] {
+    [reports.ReportTypes.BeforeTaskList]: function (report: reports.BeforeTaskListReport): string[] {
 
         const {config, cli, sequence} = report.data;
         const lines = [
@@ -195,13 +188,13 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.BeforeTasksDidNotComplete]: function (report: BeforeTasksDidNotCompleteReport): string[] {
+    [reports.ReportTypes.BeforeTasksDidNotComplete]: function (report: reports.BeforeTasksDidNotCompleteReport): string[] {
         return [
             `{red:x} ${report.data.error.message}`,
             '  so none of the watchers started',
         ];
     },
-    [ReportNames.WatchTaskTasksErrors]: function (report: WatchTaskTasksErrorsReport): string[] {
+    [reports.ReportTypes.WatchTaskTasksErrors]: function (report: reports.WatchTaskTasksErrorsReport): string[] {
 
         const {runner, config, tasks} = report.data;
 
@@ -227,7 +220,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.WatchTaskErrors]: function (report: WatchTaskErrorsReport): string[] {
+    [reports.ReportTypes.WatchTaskErrors]: function (report: reports.WatchTaskErrorsReport): string[] {
 
         const {watchTasks} = report.data;
 
@@ -250,20 +243,20 @@ Or to see multiple tasks running, with some in parallel, try:
 
         return lines;
     },
-    [ReportNames.WatchTaskReport]: function (report: WatchTaskReportReport): string {
+    [reports.ReportTypes.WatchTaskReport]: function (report: reports.WatchTaskReportReport): string {
         return _taskReport(report.data.report);
     },
-    [ReportNames.NoWatchersAvailable]: function (): string[] {
+    [reports.ReportTypes.NoWatchersAvailable]: function (): string[] {
         return [
             'Sorry, there were no watchers available to run',
             `{red.bold:x No watchers available}`,
             ...getExternalError(InputErrorTypes.NoWatchersAvailable, {}).split('\n')
         ];
     },
-    [ReportNames.NoWatchTasksProvided]: function (): string {
+    [reports.ReportTypes.NoWatchTasksProvided]: function (): string {
         return `Entering interactive mode as you didn't provide a watcher to run`;
     },
-    [ReportNames.Watchers]: function (report: WatchersReport): string[] {
+    [reports.ReportTypes.Watchers]: function (report: reports.WatchersReport): string[] {
         const lines = [
             `{yellow:+} Watching...`
         ];
@@ -275,7 +268,7 @@ Or to see multiple tasks running, with some in parallel, try:
         });
         return lines;
     },
-    [ReportNames.WatcherNames]: function (report: WatcherNamesReport): string[] {
+    [reports.ReportTypes.WatcherNames]: function (report: reports.WatcherNamesReport): string[] {
 
         const {runners} = report.data;
 
@@ -304,26 +297,26 @@ Or to see multiple tasks running, with some in parallel, try:
         }
         return lines;
     },
-    [ReportNames.NoFilesMatched]: function (report: NoFilesMatchedReport): string {
+    [reports.ReportTypes.NoFilesMatched]: function (report: reports.NoFilesMatchedReport): string {
         const {watcher} = report.data;
         return `{red:x warning} {cyan:${watcher.patterns.join(' ')}} did not match any files`
     },
 
-    [ReportNames.WatcherTriggeredTasks]: function (report: WatcherTriggeredTasksReport): string {
+    [reports.ReportTypes.WatcherTriggeredTasks]: function (report: reports.WatcherTriggeredTasksReport): string {
         const {index, taskCollection} = report.data;
         return `{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`;
     },
-    [ReportNames.WatcherTriggeredTasksCompleted]: function (report: WatcherTriggeredTasksCompletedReport): string {
+    [reports.ReportTypes.WatcherTriggeredTasksCompleted]: function (report: reports.WatcherTriggeredTasksCompletedReport): string {
         const {index, taskCollection, time} = report.data;
         return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`;
     },
-    [ReportNames.DocsGenerated]: function () {
+    [reports.ReportTypes.DocsGenerated]: function () {
 
         // Todo - should we always output to the console?
         // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
         // console.log(markdown);
     },
-    [ReportNames.DocsInputFileNotFound]: function (report: DocsInputFileNotFoundReport): string[] {
+    [reports.ReportTypes.DocsInputFileNotFound]: function (report: reports.DocsInputFileNotFoundReport): string[] {
         const {error} = report.data;
         return [
             `Sorry, there were errors resolving your input files`,
@@ -331,19 +324,19 @@ Or to see multiple tasks running, with some in parallel, try:
             ...getExternalError(error.type, error).split('\n')
         ];
     },
-    [ReportNames.DocsAddedToFile]: function (report: DocsAddedToFileReport): string {
+    [reports.ReportTypes.DocsAddedToFile]: function (report: reports.DocsAddedToFileReport): string {
         const {file} = report.data;
         return `{green:✔} Docs added to: {cyan.bold:${file.relative}}`;
     },
-    [ReportNames.DocsOutputFileExists]: function (report: DocsOutputFileExistsReport): string[] {
+    [reports.ReportTypes.DocsOutputFileExists]: function (report: reports.DocsOutputFileExistsReport): string[] {
         const {error} = report.data;
         return [
             `{red.bold:x '${error.file.resolved}'}`,
             ...getExternalError(error.type, error).split('\n')
         ]
     },
-    [ReportNames.Summary]: reportSummary,
-    [ReportNames.HashDirError]: function (report: HashDirErrorReport): string[] {
+    [reports.ReportTypes.Summary]: reportSummary,
+    [reports.ReportTypes.HashDirError]: function (report: reports.HashDirErrorReport): string[] {
         const {error, cwd} = report.data;
         return [
             `{red.bold:x CB-History hash failed} (tasks will still run)`,
@@ -352,17 +345,7 @@ Or to see multiple tasks running, with some in parallel, try:
     }
 };
 
-export interface IncomingReport {
-    type: ReportNames
-    data?: any
-}
-
-export interface OutgoingReport {
-    origin: ReportNames
-    data?: string
-}
-
-export default function (report: IncomingReport, observer: Rx.Observer<OutgoingReport>) {
+export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
     if (typeof reporterFunctions[report.type] === 'function') {
         const output = reporterFunctions[report.type](report);
         if (typeof output === 'string') {
@@ -396,7 +379,7 @@ export function multiLineTree(tree: string): string {
     return lines.join('\n');
 }
 
-function reportSummary(report: SummaryReport): string[] {
+function reportSummary(report: reports.SummaryReport): string[] {
 
     const {sequence, cli, title, config, runtime} = report.data;
 
@@ -862,90 +845,4 @@ function maybeErrorLabel(task: Task, label: string): string {
         return `{red.bold:x ${label}}`;
     }
     return label;
-}
-
-export interface UsingConfigFileReport extends IncomingReport {
-    data: {sources: ExternalFileInput[]}
-}
-export interface InputFileNotFoundReport extends IncomingReport {
-    data: {sources: ExternalFileInput[]}
-}
-
-export interface TaskReportReport {
-    data: {report: TaskReport,trigger: CommandTrigger}
-}
-export interface SummaryReport extends IncomingReport {
-    data: {sequence: SequenceItem[],cli: CLI,title: string,config: CrossbowConfiguration,runtime: number}
-}
-export interface TaskListReport extends IncomingReport {
-    data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}
-}
-export interface SimpleTaskListReport extends IncomingReport {
-    data: {lines: string[]}
-}
-export interface InvalidReporterReport extends IncomingReport {
-    data: {reporters: Reporters}
-}
-export interface DuplicateConfigFile extends IncomingReport {
-    data: {error: InitConfigFileExistsError}
-}
-export interface ConfigFileCreatedReport extends IncomingReport {
-    data: {parsed: ParsedPath}
-}
-export interface InitInputFileTypeNotSupportedReport extends IncomingReport {
-    data: {error: InitConfigFileTypeNotSupported}
-}
-export interface TaskTreeReport extends IncomingReport {
-    data: {tasks: Task[], config: CrossbowConfiguration, title: string}
-}
-export interface TaskErrorsReport extends IncomingReport {
-    data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
-}
-export interface WatchersReport extends IncomingReport {
-    data: {watchTasks: WatchTask[]}
-}
-export interface BeforeWatchTaskErrorsReport extends IncomingReport {
-    data: {watchTasks: WatchTasks, trigger: CommandTrigger}
-}
-export interface BeforeTaskListReport extends IncomingReport {
-    data: {sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration}
-}
-export interface BeforeTasksDidNotCompleteReport extends IncomingReport {
-    data: {error: Error}
-}
-export interface WatchTaskTasksErrorsReport extends IncomingReport {
-    data: {tasks: Task[], runner: Watcher, config: CrossbowConfiguration}
-}
-export interface WatchTaskErrorsReport extends IncomingReport {
-    data: {watchTasks: WatchTask[]}
-}
-export interface WatchTaskReportReport extends IncomingReport {
-    data: {report: TaskReport, trigger: CommandTrigger}
-}
-export interface WatcherTriggeredTasksReport extends IncomingReport {
-    data: {index: number, taskCollection: TaskCollection}
-}
-export interface WatcherTriggeredTasksCompletedReport extends IncomingReport {
-    data: {index: number, taskCollection: TaskCollection, time: number}
-}
-export interface WatcherNamesReport extends IncomingReport {
-    data: {runners: WatchRunners, trigger: CommandTrigger}
-}
-export interface NoFilesMatchedReport extends IncomingReport {
-    data: {watcher: Watcher}
-}
-export interface DocsInputFileNotFoundReport extends IncomingReport {
-    data: {error: DocsInputFileNotFoundError}
-}
-export interface DocsAddedToFileReport extends IncomingReport {
-    data: {file: ExternalFileContent}
-}
-export interface DocsOutputFileExistsReport extends IncomingReport {
-    data: {error: DocsOutputFileExistsError}
-}
-export interface HashError extends Error {
-    type: HashDirErrorTypes
-}
-export interface HashDirErrorReport extends IncomingReport {
-    data: {error: HashError, cwd: string}
 }
