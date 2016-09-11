@@ -75,15 +75,12 @@ export type RunContext = Immutable.Map<string, any>;
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
-export function time (scheduler?) {
-    return scheduler ? scheduler.now() : new Date().getTime();
-}
 
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
 
     return Rx.Observable.create(observer => {
 
-        const startTime = time(trigger.config.scheduler);
+        const startTime = trigger.config.scheduler.now();
 
         /**
          * Complete immediately if this item was marked
@@ -147,7 +144,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 .just('dryRun')
                 .delay(trigger.config.dryRunDuration, trigger.config.scheduler)
                 .do(_ => {
-                    observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
+                    observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, trigger.config.scheduler.now())));
                     observer.onCompleted();
                 })
         }
@@ -162,7 +159,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     observer.onError(err);
                     return;
                 }
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, trigger.config.scheduler.now())));
                 observer.onCompleted();
             });
 
@@ -221,7 +218,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * before the sequence ends.
          */
         return Rx.Observable.concat(
-            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error, time(trigger.config.scheduler)))),
+            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error, trigger.config.scheduler.now()))),
             Rx.Observable.throw(error)
         );
     });

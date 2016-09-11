@@ -36,6 +36,10 @@ export interface CompletionReport {
     timestamp: number
     value: TaskReport[]
 }
+export interface RunContextCompletion {
+    timestamp: number
+    value: RunContext
+}
 
 export type RunCommandErrorStream = RunCommandErrorReport|Error;
 
@@ -43,10 +47,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
-    const time = (): number => {
-        return trigger.config.scheduler ? trigger.config.scheduler.now() : new Date().getTime();
-    };
-
+    
     if (trigger.config.dump) {
         writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
         writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
@@ -94,7 +95,10 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * map of read-only values.
      */
     const outgoing = getContext(tasks.all, trigger)
-        .flatMap((x: RunContext) => run(x, time()))
+        .timestamp(trigger.config.scheduler)
+        .flatMap((complete: RunContextCompletion) => {
+            return run(complete.value, complete.timestamp)
+        })
         .share();
 
     /**
@@ -135,8 +139,9 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
             })
             .toArray()
-            .flatMap((reports: TaskReport[]) => {
-                return handleCompletion(reports, time() - startTime)
+            .timestamp(trigger.config.scheduler)
+            .flatMap((complete: CompletionReport) => {
+                return handleCompletion(complete.value, complete.timestamp - startTime)
             });
     }
 
