@@ -14,7 +14,7 @@ const once = require('once');
 const domain = require('domain');
 
 export interface Runner {
-    series:   (ctx?: RunContext)   => Rx.Observable<TaskReport>
+    series:   (ctx?: RunContext) => Rx.Observable<TaskReport>
     parallel: (ctx?: RunContext) => Rx.Observable<TaskReport>,
     sequence: SequenceItem[]
 }

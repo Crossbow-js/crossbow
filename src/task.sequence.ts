@@ -405,14 +405,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
 
             Observable.from(flattened)
                 .mergeAll()
-                .do(subject)
-                .subscribe(() => {
-                    // values are proxied to subject
-                }, () => {
-                    // errors handled via error reports
-                }, () => {
-                    subject.onCompleted();
-                });
+                .subscribe(subject);
 
             return subject;
         }

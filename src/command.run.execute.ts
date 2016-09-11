@@ -47,7 +47,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
-    
+
     if (trigger.config.dump) {
         writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
         writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
@@ -180,7 +180,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
          * If an error occurred, we need to exit the process
          * with any error codes if given
          */
-        if (errors.length > 0 && config.fail) {
+        if (errors.length > 0 && config.fail && config.exitOnError) {
 
             const lastError = errors[errors.length-1];
             const stats: TaskErrorStats = lastError.stats;
