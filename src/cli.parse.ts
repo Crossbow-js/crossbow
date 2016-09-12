@@ -1,3 +1,4 @@
+import {CLI} from "./index";
 const _ = require('../lodash.custom');
 
 export interface FlagOption {
@@ -45,7 +46,7 @@ export interface CliInputAndFlags {
     flags: Array<string[]>
 }
 
-export interface FlagsOutput {
+export interface FlagsOutput extends CLI {
     command:    string
     input:      string[]
     rawFlags:   Array<string[]>,

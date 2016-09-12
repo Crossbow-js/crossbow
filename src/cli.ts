@@ -1,9 +1,14 @@
 import {commands, CLICommands, twoColFromJson} from "./cli.commands";
 const _ = require('../lodash.custom');
-
 import parse from './cli.parse';
+import {FlagsOutput} from "./cli.parse";
 
-export default function (cb) {
+export interface PostCLIParse {
+    cli: FlagsOutput
+    execute: boolean
+}
+
+export default function (): PostCLIParse  {
 
     const args    = process.argv.slice(2);
     const command = args[0];
@@ -15,7 +20,8 @@ export default function (cb) {
         const cli = parse(['no-command', ...args], require('../opts/global-common.json'));
 
         if (cli.flags.version) {
-            return console.log(require('../package.json').version);
+            console.log(require('../package.json').version);
+            return {cli, execute: false};
         }
 
         const commandOptions = commands['run'].opts.map(require);
@@ -26,13 +32,15 @@ export default function (cb) {
          * If there was additional input, try to run a task
          */
         if (cli2.input.length > 1) {
-            return cb(cli2);
+            return {cli: cli2, execute: true}
         }
 
         /**
          * Show global help
          */
-        return printHelp(commands);
+        printHelp(commands);
+
+        return {cli: cli2, execute: false};
     }
 
     const commandName    = match[0];
@@ -46,9 +54,9 @@ export default function (cb) {
      */
     if (cli.flags.help) {
         console.log(commands[match[0]].help);
-    } else {
-        cb(cli);
     }
+
+    return {cli, execute: true};
 }
 
 function printHelp (commands) {

@@ -10,6 +10,7 @@ import Rx = require('rx');
 import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
 import {SummaryReport, TaskErrorsReport} from "./reporter.resolve";
+import {CrossbowConfiguration} from "./config";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -25,11 +26,14 @@ export interface RunCommandErrorReport {
     runner: Runner
 }
 
+export type RunComplete = Rx.Observable<RunCommandCompletionReport>
 export interface RunCommandCompletionReport extends RunCommandErrorReport {
     type: RunCommandReportTypes
     reports: TaskReport[]
     decoratedSequence: SequenceItem[]
     runtime: number
+    errors: TaskReport[]
+    config: CrossbowConfiguration
 }
 
 export interface CompletionReport {
@@ -94,7 +98,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * to hash directories etc. A run context is just a key=>value
      * map of read-only values.
      */
-    const outgoing = getContext(tasks.all, trigger)
+    return getContext(tasks.all, trigger)
         .timestamp(trigger.config.scheduler)
         .flatMap((complete: RunContextCompletion) => {
             return run(complete.value, complete.timestamp)
@@ -102,17 +106,8 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         .share();
 
     /**
-     * Start the process in the next loop - this allows someone to attach
-     * an observer to something that may finish instantly
-     */
-    process.nextTick(function () {
-        outgoing.subscribe();
-    });
-
-    /**
      * Return the stream so a consumer can receive the RunCompletionReport
      */
-    return outgoing;
 
     /**
      * Now actually execute the tasks.
@@ -160,7 +155,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
          * Did any errors occur in this run?
          * @type {TaskReport[]}
          */
-        const errors            = reports.filter(x => x.type === TaskReportType.error);
+        const errors = reports.filter(x => x.type === TaskReportType.error);
 
         /**
          * Main summary report
@@ -168,6 +163,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
         reporter({
             type: ReportTypes.Summary,
             data: {
+                errors: errors,
                 sequence: decoratedSequence,
                 cli,
                 title: 'Total: ',
@@ -175,22 +171,6 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 runtime
             }
         } as SummaryReport);
-
-        /**
-         * If an error occurred, we need to exit the process
-         * with any error codes if given
-         */
-        if (errors.length > 0 && config.fail && config.exitOnError) {
-
-            const lastError = errors[errors.length-1];
-            const stats: TaskErrorStats = lastError.stats;
-
-            if (stats.cbExitCode !== undefined) {
-                process.exit(stats.cbExitCode);
-            }
-
-            process.exit(1);
-        }
 
         /**
          * Push a 'Completion report' onto the $complete Observable.
@@ -203,7 +183,9 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             sequence,
             runner,
             decoratedSequence,
-            runtime: runtime
+            runtime: runtime,
+            errors,
+            config
         });
     }
 }

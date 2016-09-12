@@ -100,7 +100,14 @@ export interface TaskReportReport {
     data: {report: TaskReport,trigger: CommandTrigger}
 }
 export interface SummaryReport extends IncomingReport {
-    data: {sequence: SequenceItem[],cli: CLI,title: string,config: CrossbowConfiguration,runtime: number}
+    data: {
+        sequence: SequenceItem[],
+        cli: CLI,
+        title: string,
+        config: CrossbowConfiguration,
+        runtime: number,
+        errors: TaskReport[]
+    }
 }
 export interface TaskListReport extends IncomingReport {
     data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}

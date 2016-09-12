@@ -2,13 +2,13 @@
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
-import {TaskRunner} from './task.runner';
 import {getRequirePaths} from './file.utils';
 import cli from "./cli";
 import {getInputs, InputTypes} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require('rx');
 import logger from "./logger";
+import {RunComplete} from "./command.run.execute";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -51,7 +51,12 @@ const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
  * If running from the CLI
  */
 if (!module.parent) {
-    cli(handleIncoming);
+    const parsed = cli();
+    if (parsed.execute) {
+        handleIncoming<RunComplete>(parsed.cli)
+            // lazy load post CLI execution handler
+            .subscribe(require('./post-execution').postCliExecution);
+    }
 }
 
 /**
@@ -63,7 +68,7 @@ if (!module.parent) {
  *          flags: {c: 'conf/cb.js'}
  *       });
  */
-function handleIncoming(cli: CLI, input?: CrossbowInput|any): TaskRunner {
+function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): ReturnType {
 
     let mergedConfig      = merge(cli.flags);
     const userInput       = getInputs(mergedConfig, input);
