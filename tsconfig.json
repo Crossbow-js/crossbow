@@ -16,6 +16,7 @@
     "dist",
     "opts",
     "templates",
-    "examples"
+    "examples",
+    "src2"
   ]
 }
