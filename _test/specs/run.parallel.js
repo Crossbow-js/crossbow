@@ -70,6 +70,7 @@ describe("Running tasks in parallel", function () {
         assert.equal(reports[1].type, TaskReportType.start);
         assert.equal(reports[2].type, TaskReportType.end);
         assert.equal(reports[3].type, TaskReportType.end);
+
         assert.equal(reports[4].type, TaskReportType.start);
         assert.equal(reports[5].type, TaskReportType.end);
     });

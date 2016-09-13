@@ -21,7 +21,7 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
 
     let output = (function () {
         if (typeof taskName === 'function') {
-            return handleFunctionInput(taskName, trigger.input, parents);
+            return handleFunctionInput(<any>taskName, trigger.input, parents);
         }
         if (typeof taskName === 'string') {
             return handleStringInput(taskName, trigger.input, parents);
@@ -191,8 +191,8 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
 /**
  * Function can be given inline so this methods handles that
  */
-function handleFunctionInput (taskName: CBFunction, input: CrossbowInput, parents: string[]): Task {
-    const fnName = taskName.name;
+function handleFunctionInput (taskName: Function, input: CrossbowInput, parents: string[]): Task {
+    const fnName = taskName['name'];
     const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
     return createTask({
         runMode: TaskRunModes.series,
