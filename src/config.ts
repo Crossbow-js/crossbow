@@ -13,7 +13,6 @@ export interface CrossbowConfiguration {
     verbose: LogLevel
     parallel: boolean
     fail: boolean
-    exitOnError: boolean
     force: boolean
     reporter: string
     handoff: boolean
@@ -137,8 +136,7 @@ const defaults = <CrossbowConfiguration>{
      */
     type: InitConfigFileTypes.yaml,
     reporters: [],
-    tasksDir: ['tasks'],
-    exitOnError: true
+    tasksDir: ['tasks']
 };
 
 /**

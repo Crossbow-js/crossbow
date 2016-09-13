@@ -21,7 +21,6 @@ module.exports.run = (input, config) => {
     input.flags                = input.flags || {};
     input.flags.outputObserver = output;
     input.flags.scheduler      = scheduler;
-    input.flags.exitOnError    = false;
 
     const runner = cli.default(input, config);
     const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 4000});

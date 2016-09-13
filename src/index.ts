@@ -55,7 +55,7 @@ if (!module.parent) {
     if (parsed.execute) {
         handleIncoming<RunComplete>(parsed.cli)
             // lazy load post CLI execution handler
-            .subscribe(require('./post-execution').postCliExecution);
+            .subscribe(require('./command.run.post-execution').postCliExecution);
     }
 }
 
@@ -155,10 +155,11 @@ function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): Return
 
 function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: CrossbowReporter) {
 
-    var createFilePaths = getRequirePaths(config);
-    var input = require(createFilePaths.valid[0].resolved);
-    input.default.config = processConfigs(_.merge({}, config, input.default.config), cli.flags);
-    input.default.cli = cli;
+    const createFilePaths = getRequirePaths(config);
+    const input           = require(createFilePaths.valid[0].resolved);
+
+    input.default.config   = processConfigs(_.merge({}, config, input.default.config), cli.flags);
+    input.default.cli      = cli;
     input.default.reporter = reportFn;
 
     if (isCommand(cli.input[0])) {
