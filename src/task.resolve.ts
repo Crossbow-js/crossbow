@@ -7,7 +7,7 @@ import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
 import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, handleObjectInput} from "./task.preprocess";
+import {preprocessTask, handleObjectInput, handleArrayInput} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
@@ -20,7 +20,7 @@ import {ExternalFile} from "./file.utils";
 export interface CBFunction extends Function {
     name: string
 }
-export type IncomingTaskItem = string|CBFunction;
+export type IncomingTaskItem = string|CBFunction|Task;
 export type IncomingInlineArray = { tasks: Array<IncomingTaskItem>; runMode: TaskRunModes; }
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
@@ -137,7 +137,6 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         }
         return incoming;
     })();
-
 
     /**
      * Determine which sub tasks need converting as children.
@@ -257,6 +256,12 @@ function getTasks(items, incoming, trigger, parents) {
     }
 
     return items.reduce((acc, taskItem) => {
+
+        if (Array.isArray(taskItem)) {
+            const out = handleArrayInput(taskItem, trigger.input, parents);
+            out.tasks = out.tasks.map(item => createFlattenedTask(item, parents.concat(incoming.baseTaskName), trigger))
+            return acc.concat(out);
+        }
 
         if (parents.indexOf(taskItem) > -1) {
             return acc.concat(createCircularReferenceTask(incoming, parents));

@@ -105,7 +105,7 @@ export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
     });
 }
 
-function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
+export function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
     const name = 'AnonGroup_' + taskItems.join(',').slice(0, 10) + '...';
     return createTask({
         runMode: TaskRunModes.parallel,
