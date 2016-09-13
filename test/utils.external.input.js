@@ -8,7 +8,6 @@ describe('Retrieving external input', function () {
         const files = retrieveDefaultInputFiles({
             cwd: process.cwd()
         });
-
         assert.ok(files.valid[0].input.tasks);
     });
     it('can use a examples/crossbow.yaml file when options flag given', function () {

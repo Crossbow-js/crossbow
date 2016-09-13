@@ -1,5 +1,4 @@
 const assert = require('chai').assert;
-const cli = require("../dist/index");
 const configMerge = require("../dist/config").merge;
 const getInputs = require("../dist/input.resolve").getInputs;
 
