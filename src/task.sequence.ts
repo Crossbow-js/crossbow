@@ -388,11 +388,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
                     subject.onCompleted();
                     return Rx.Observable.empty();
                 })
-                /**
-                 * Push any messages into the subject
-                 */
-                .do(subject)
-                .subscribe();
+                .subscribe(subject);
 
             return subject;
         },
