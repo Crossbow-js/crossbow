@@ -1,7 +1,7 @@
 const assert  = require('chai').assert;
 const exec    = require('child_process').exec;
 const reports = require('../dist/reporter.resolve');
-const Rx      = require('rx/dist/rx.all');
+const Rx      = require('rx');
 const cli     = require('../dist/index');
 
 describe("Performing a dry-run", function () {
@@ -23,15 +23,15 @@ describe("Performing a dry-run", function () {
             }
         }, {
             tasks: {
-                css: function () {
-                    return Rx.Observable.just('shane').delay(1000, scheduler);
+                css: function (opts, ctx) {
+                    return Rx.Observable.just('shane').delay(1000, ctx.config.scheduler);
                 },
                 'js@p': [
-                    function () {
-                        return Rx.Observable.just('shane').delay(100, scheduler);
+                    function (opts, ctx) {
+                        return Rx.Observable.just('shane').delay(100, ctx.config.scheduler);
                     },
-                    function () {
-                        return Rx.Observable.just('shane').delay(100, scheduler);
+                    function (opts, ctx) {
+                        return Rx.Observable.just('shane').delay(100, ctx.config.scheduler);
                     }
                 ]
 
