@@ -142,13 +142,13 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Exit after 1 second if we're in a 'dry run'
          */
         if (trigger.config.dryRun) {
-            Rx.Observable
+            return Rx.Observable
                 .just('dryRun')
                 .delay(trigger.config.dryRunDuration, trigger.config.scheduler)
                 .do(_ => {
                     observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
                     observer.onCompleted();
-                })
+                }).subscribe();
         }
 
         if (item.task.type === TaskTypes.InlineFunction

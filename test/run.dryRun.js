@@ -5,12 +5,6 @@ const Rx      = require('rx');
 const cli     = require('../dist/index');
 
 describe("Performing a dry-run", function () {
-    it("it fakes the execution of tasks", function (done) {
-        exec(`node dist/index run '@npm printenv' --dryRun --dryRunDuration=10`, function (err, stdout) {
-            assert.ok(stdout.split('\n').length > 10, 'printenv would normally produce many line');
-            done();
-        });
-    });
     it("it fakes the execution of tasks with time", function () {
         const scheduler  = new Rx.TestScheduler();
         const obs        = new Rx.ReplaySubject(100, null, scheduler);
@@ -19,7 +13,9 @@ describe("Performing a dry-run", function () {
             input: ['run', 'css', 'js'],
             flags: {
                 scheduler: scheduler,
-                outputObserver: obs
+                outputObserver: obs,
+                dryRun: true,
+                dryRunDuration: 100
             }
         }, {
             tasks: {
@@ -43,7 +39,7 @@ describe("Performing a dry-run", function () {
             .take(3)
             .toArray()
             .subscribe(function (data) {
-                assert.include(data[1].data, '1.10s'); // 1s + 2 parallel at 100ms each === 1.10s
+                assert.include(data[1].data, '0.20s'); // 1s + 2 parallel at 100ms each === 1.10s
             });
 
         const out = scheduler.startScheduler(function () {
@@ -54,9 +50,15 @@ describe("Performing a dry-run", function () {
 
         assert.equal(reports[0].type, 'start');
         assert.equal(reports[1].type, 'end');
+        assert.equal(reports[1].stats.duration, 100);
+
         assert.equal(reports[2].type, 'start');
         assert.equal(reports[3].type, 'start');
+
         assert.equal(reports[4].type, 'end');
         assert.equal(reports[5].type, 'end');
+
+        assert.equal(reports[4].stats.duration, 100);
+        assert.equal(reports[5].stats.duration, 100);
     });
 });
