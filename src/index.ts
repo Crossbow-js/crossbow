@@ -81,8 +81,10 @@ function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): Return
             return mergedConfig.outputObserver;
         }
         const outputObserver = new Rx.Subject<reports.OutgoingReport>();
-        outputObserver.subscribe(x => {
-            logger.info(x.data);
+        outputObserver.subscribe(xs => {
+            xs.data.forEach(function (x) {
+                logger.info(x);
+            });
         });
         return outputObserver;
     })();

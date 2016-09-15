@@ -28,9 +28,7 @@ describe("Prints the version", function () {
         runner
             .output
             .filter(x => x.origin === 'SimpleTaskList')
-            .take(4)
             .pluck('data')
-            .toArray()
             .subscribe(function (data) {
                 assert.include(data[1], 'build <p>'); // 1s + 2 parallel at 100ms each === 1.10s
             });

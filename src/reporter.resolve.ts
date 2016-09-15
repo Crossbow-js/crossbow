@@ -87,7 +87,7 @@ export interface IncomingReport {
 
 export interface OutgoingReport {
     origin: ReportTypes
-    data?: string
+    data?: string[]
 }
 
 export interface UsingConfigFileReport extends IncomingReport {

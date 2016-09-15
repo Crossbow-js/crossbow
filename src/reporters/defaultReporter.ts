@@ -28,6 +28,20 @@ export const enum LogLevel {
 // to crossbow and therefor would be well suited to a complete
 // rewrite.
 
+export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
+    if (typeof reporterFunctions[report.type] === 'function') {
+        const output = reporterFunctions[report.type](report);
+        if (typeof output === 'string') {
+            if (output === '') return;
+            observer.onNext({origin: report.type, data: [output]});
+        } else if (Array.isArray(output) && output.length) {
+            observer.onNext({origin: report.type, data: output});
+        } else {
+            console.log('STRING or ARRAY not returned for', report.type);
+        }
+    }
+}
+
 const reporterFunctions = {
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.data.sources.map(function (input) {
@@ -348,22 +362,6 @@ Or to see multiple tasks running, with some in parallel, try:
         ]
     }
 };
-
-export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
-    if (typeof reporterFunctions[report.type] === 'function') {
-        const output = reporterFunctions[report.type](report);
-        if (typeof output === 'string') {
-            if (output === '') return;
-            observer.onNext({origin: report.type, data: output});
-        } else if (Array.isArray(output)) {
-            output.forEach(function (item) {
-                observer.onNext({origin: report.type, data: item});
-            })
-        } else {
-            console.log('STRING or ARRAY not returned for', report.type);
-        }
-    }
-}
 
 /**
  * There are multiple ways to output trees to the screen,

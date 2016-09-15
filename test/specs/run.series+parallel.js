@@ -18,11 +18,10 @@ describe("Running mix of tasks in seq + parallel", function () {
         });
 
         // test output
-        runner.output.filter(x => x.origin === 'Summary')
-            .take(3)
-            .toArray()
-            .subscribe(function (data) {
-                assert.include(data[2].data, '2.00s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
+        runner.output
+            .filter(x => x.origin === 'Summary')
+            .subscribe(function (x) {
+                assert.include(x.data[2], '2.00s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
             });
 
         const reports = runner.subscription.messages[0].value.value.reports;
@@ -49,12 +48,9 @@ describe("Running mix of tasks in seq + parallel", function () {
         runner
             .output
             .filter(x => x.origin === 'Summary')
-            .take(3)
             .pluck('data')
-            .toArray()
-            .map(x => x.join('\n'))
             .subscribe(function (data) {
-                assert.include(data, '2.10s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
+                assert.include(data[2], '2.10s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
             });
 
         const reports = runner.subscription.messages[0].value.value.reports;
@@ -82,16 +78,6 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        // test output
-        runner
-            .output
-            .filter(x => x.origin === 'Summary')
-            .take(3)
-            .toArray()
-            .subscribe(function (data) {
-                assert.include(data[1].data, '0.10s'); // 1s + 2 parallel at 100ms each === 1.10s
-            });
-
         const reports = runner.subscription.messages[0].value.value.reports;
 
         assert.equal(reports[0].type, 'start');
@@ -109,16 +95,6 @@ describe("Running mix of tasks in seq + parallel", function () {
                 'js@p': [t100, t100]
             }
         });
-
-        // test output
-        runner
-            .output
-            .filter(x => x.origin === 'Summary')
-            .take(3)
-            .toArray()
-            .subscribe(function (data) {
-                assert.include(data[1].data, '1.10s'); // 1s + 2 parallel at 100ms each === 1.10s
-            });
 
         const reports = runner.subscription.messages[0].value.value.reports;
 
