@@ -1,5 +1,7 @@
 const assert = require('chai').assert;
 const cli = require("../../");
+const utils = require("../utils");
+const t100 = require("../utils").task(100);
 const types = require("../../dist/task.sequence.factories").SequenceItemTypes;
 const TaskReportType = require('../../dist/task.runner').TaskReportType;
 const TaskRunModes = require('../../dist/task.resolve').TaskRunModes;
@@ -197,9 +199,10 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[1].items[1].options.name, 'kittie');
 
     });
-    it('can run in series', function (done) {
-        this.timeout(10000);
-        var runner = cli.getRunner(['js', 'css'], {
+    it('can run in series', function () {
+        var runner = utils.run({
+            input: ['run', 'js', 'css']
+        }, {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -217,27 +220,35 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const stream$  = runner.runner.series().share();
-        const messages = [];
-        const now      = new Date().getTime();
-
-        stream$.subscribe(x => {
-            messages.push(x);
-        }, e => {
-            done(e);
-        }, _ => {
-            assert.equal(messages.length, 12);
-            assert.ok(new Date().getTime() - now > 60, '6 tasks at 10ms each should take longer than 60ms');
-            done();
-        });
+        const reports = runner.subscription.messages[0].value.value.reports;
+        assert.equal(reports.length, 12);
+        assert.deepEqual(reports.map(x => x.type), [
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.start,
+            TaskReportType.end,
+        ]);
     });
-    it('can run in parallel', function (done) {
-        this.timeout(10000);
-        var runner = cli.getRunner(['js@p', 'css@p'], {
+    it('can run in parallel groups in sequence (4 types)', function () {
+        var runner = utils.run({input:['run', 'js', 'css', 'img', 'img2@p']}, {
             tasks: {
-                'build-all': ['js', 'css'],
-                'js':        ['test/fixtures/tasks/simple.multi.js:*'],
-                'css':       'test/fixtures/tasks/simple.js:first:second'
+                'js':  {
+                    tasks: 'test/fixtures/tasks/simple.multi.js:*@p'
+                },
+                'css@p': 'test/fixtures/tasks/simple.js:first:second',
+                'img': {
+                    tasks: [t100, t100],
+                    runMode: 'parallel'
+                },
+                'img2': [t100, t100, t100, t100]
             },
             options: {
                 'test/fixtures/tasks/simple.multi.js': {
@@ -251,27 +262,40 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const stream$  = runner.runner.parallel().share();
-        const messages = [];
-        stream$.subscribeOnNext(function (val) {
-            messages.push(val);
-        });
-        stream$.subscribeOnCompleted(function () {
-            assert.equal(messages.length, 12);
-            done();
-        });
-    });
-    it('runs a single external task (with multi functions) in seq', function (done) {
-        this.timeout(10000);
-        var runner = cli.run(['test/fixtures/tasks/simple.multi.js']);
-        runner.subscribe(function (x) {
-            assert.equal(x.reports[0].type, TaskReportType.start);
-            assert.equal(x.reports[2].type, TaskReportType.start);
-        }, function (err) {
-            done(err);
-        }, function () {
-            done();
-        });
+        const reports = runner.subscription.messages[0].value.value.reports;
+        assert.deepEqual(reports.map(x => x.type), [
+            // js
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.end,
+            TaskReportType.end,
+            TaskReportType.end,
+
+            // css
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.end,
+
+            // img
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.end,
+
+            // img2
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.start,
+            TaskReportType.end,
+            TaskReportType.end,
+            TaskReportType.end,
+            TaskReportType.end
+        ]);
     });
 });
 

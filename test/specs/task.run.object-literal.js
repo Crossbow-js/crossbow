@@ -1,39 +1,43 @@
 const assert = require('chai').assert;
 const cli = require("../../");
+const utils = require("../utils");
+const Rx = require("rx");
 const TaskErrorTypes = require('../../dist/task.errors').TaskErrorTypes;
+const TaskReportType = require('../../dist/task.runner').TaskReportType;
 
 describe('Running tasks from object literals', function () {
-    it('with single task', function (done) {
-        var called = 0;
-        const runner = cli.getRunner(['js'], {
+    it('with single task', function () {
+        const runner = utils.run({
+            input: ['run', 'js'],
+            flags: {}
+        }, {
             tasks: {
                 js: {
-                    input: '@npm sleep .25'
+                    tasks: utils.task(100)
                 }
             }
         });
-        runner.runner
-            .series()
-            .toArray()
-            .subscribe(function () {
-                done();
-            });
+        const reports = runner.subscription.messages[0].value.value.reports;
+        assert.equal(reports.length, 2);
+        assert.equal(reports[0].type, TaskReportType.start);
+        assert.equal(reports[1].type, TaskReportType.end);
+        assert.equal(reports[1].stats.duration, 100);
     });
-    it('with single task as array', function (done) {
-        var called = 0;
-        const runner = cli.getRunner(['js'], {
+    it('with single task as array', function () {
+        const runner = utils.run({
+            input: ['run', 'js']
+        }, {
             tasks: {
                 js: [{
-                    input: '@npm sleep .25'
+                    tasks: utils.task(1000)
                 }]
             }
         });
-        runner.runner
-            .series()
-            .toArray()
-            .subscribe(function () {
-                done();
-            });
+        const reports = runner.subscription.messages[0].value.value.reports;
+        assert.equal(reports.length, 2);
+        assert.equal(reports[0].type, TaskReportType.start);
+        assert.equal(reports[1].type, TaskReportType.end);
+        assert.equal(reports[1].stats.duration, 1000);
     });
     it('@sh with single task + env vars', function (done) {
         const runner = cli.getRunner(['js'], {
@@ -41,17 +45,16 @@ describe('Running tasks from object literals', function () {
                 js: [{
                     input: '@sh sleep $SLEEP',
                     env: {
-                        SLEEP: '0.5'
+                        SLEEP: '0.1'
                     }
                 }]
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 500);
+            .subscribe(function (reports) {
+                assert.ok(reports.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
@@ -59,19 +62,18 @@ describe('Running tasks from object literals', function () {
         const runner = cli.getRunner(['js'], {
             tasks: {
                 js: [{
-                    input: '@sh sleep $SLEEP',
+                    input: '@npm sleep $SLEEP',
                     env: {
-                        SLEEP: '0.5'
+                        SLEEP: '0.1'
                     }
                 }]
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 500);
+            .subscribe(function (reports) {
+                assert.ok(reports.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });

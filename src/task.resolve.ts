@@ -259,7 +259,7 @@ function getTasks(items, incoming, trigger, parents) {
 
         if (Array.isArray(taskItem)) {
             const out = handleArrayInput(taskItem, trigger.input, parents);
-            out.tasks = out.tasks.map(item => createFlattenedTask(item, parents.concat(incoming.baseTaskName), trigger))
+            out.tasks = out.tasks.map(item => createFlattenedTask(item, parents.concat(incoming.baseTaskName), trigger));
             return acc.concat(out);
         }
 
@@ -268,6 +268,22 @@ function getTasks(items, incoming, trigger, parents) {
         }
 
         const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
+
+        /**
+         * if a user has
+         *   tasks:
+         *      js: 'sometask:op1:op2'
+         *
+         *  And calls
+         *    $ cb js@p
+         *
+         *  The @p flag (parallel) need to be applied the resulting tasks
+         *  that are created from the above call.
+         *
+         */
+        if (flattenedTask.subTasks.length && !flattenedTask.cbflags.length) {
+            flattenedTask.runMode = incoming.runMode;
+        }
 
         return acc.concat(flattenedTask);
 

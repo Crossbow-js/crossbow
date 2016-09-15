@@ -22,9 +22,11 @@ module.exports.run = (input, config) => {
     input.flags.outputObserver = output;
     input.flags.scheduler      = scheduler;
 
-    const runner = cli.default(input, config);
-    const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 4000});
+    const runner      = cli.default(input, config);
+    const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 200000});
     return {subscription, output};
 };
 
 module.exports.nullOutput = () => new Rx.ReplaySubject(100);
+
+module.exports.delay = (time, scheduler) => Oempty().delay(time, scheduler);
