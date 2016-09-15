@@ -16,7 +16,7 @@ module.exports.error = (time) =>
 
 module.exports.run = (input, config) => {
     const scheduler  = new Rx.TestScheduler();
-    const output     = new Rx.ReplaySubject(100, null, scheduler);
+    const output     = new Rx.ReplaySubject(100);
 
     input.flags                = input.flags || {};
     input.flags.outputObserver = output;

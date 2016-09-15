@@ -94,6 +94,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
         } as SimpleTaskListReport);
     }
 
+    return Rx.Observable.just({tasks: resolved});
 }
 
 export default function handleIncomingTasksCommand(

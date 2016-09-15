@@ -452,8 +452,9 @@ function incomingTaskItemAsString(x: IncomingTaskItem): string {
         return _e(x);
     }
     if (typeof x === 'function') {
-        if (x.name) {
-            return `[Function: ${x.name}]`;
+        const fn : any = x;
+        if (fn.name) {
+            return `[Function: ${fn.name}]`;
         }
         return '[Function]';
     }

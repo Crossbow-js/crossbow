@@ -13,7 +13,7 @@ describe("Prints the version", function () {
             done();
         });
     });
-    it.only("reports tasks with @p", function () {
+    it("reports tasks with @p", function () {
 
         const runner = utils.run({
             input: ['tasks']
@@ -28,9 +28,11 @@ describe("Prints the version", function () {
         runner
             .output
             .filter(x => x.origin === 'SimpleTaskList')
-            .take(1)
+            .take(4)
+            .pluck('data')
+            .toArray()
             .subscribe(function (data) {
-                assert.include(data[2].data, '2.00s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
+                assert.include(data[1], 'build <p>'); // 1s + 2 parallel at 100ms each === 1.10s
             });
     });
     it("reports grouped tasks with @p", function () {
