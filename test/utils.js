@@ -26,3 +26,5 @@ module.exports.run = (input, config) => {
     const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 4000});
     return {subscription, output};
 };
+
+module.exports.nullOutput = () => new Rx.ReplaySubject(100);

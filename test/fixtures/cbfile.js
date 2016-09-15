@@ -1,4 +1,5 @@
 var cb = require('../../');
+var Rx = require('rx');
 
 cb.config({
 	envPrefix: 'JS'
@@ -23,27 +24,32 @@ cb.task('shane', ['kittie'], function () {
 });
 
 cb.task('kittie', function () {
-	console.log('kittie task');
+	// console.log('kittie task');
 });
 
 cb.task('build-js', {
-	adaptor: 'npm',
-	command: 'webpack example.js'
+	tasks: [
+		function (opts, ctx) {
+			return Rx.Observable.just('wayhe!').delay(3000, ctx.config.scheduler);
+		}
+	],
 }, function () {
-    console.log('all done');
+
 });
 
-cb.task('wait', [{
-	input: '@sh sleep $JS_OPTIONS_WAIT_TIME'
-}]);
+cb.task('wait', function (opts, ctx) {
+    return Rx.Observable.just('wayhe!').delay(3000, ctx.config.scheduler);
+});
 
 cb.task('obj', {
 	tasks: ['wait-env'],
 	description: "Run from an obj"
 });
 
-cb.env({__wait__: '0.3'});
-cb.task('wait-env', ['@sh sleep $__wait__']);
+cb.env({__wait__: '3'});
+cb.task('wait-env', function (opts, ctx) {
+	return Rx.Observable.just('wayhe!').delay(Number(ctx.input.env.__wait__) * 1000, ctx.config.scheduler);
+});
 
 cb.task('multi', ['shane', ['build-js', '@sh sleep 1']]);
 
