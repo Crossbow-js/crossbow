@@ -4,6 +4,7 @@ const current = require('../../package.json').version;
 const cli = require('../../dist/index');
 const reports = require('../../dist/reporter.resolve');
 const Rx = require('rx');
+const utils = require('../utils');
 
 describe("Prints the version", function () {
     it("via --version flag", function (done) {
@@ -12,21 +13,10 @@ describe("Prints the version", function () {
             done();
         });
     });
-    it("reports tasks with @p", function (done) {
-        const obs = new Rx.Subject();
-        obs.filter(x => x.origin === reports.ReportTypes.SimpleTaskList)
-            .take(4)
-            .pluck('data')
-            .toArray()
-            .subscribe(function (logs) {
-                assert.include(logs[1], 'build <p>');
-                done();
-            });
-        cli.default({
-            input: ['tasks'],
-            flags: {
-                outputObserver: obs,
-            }
+    it.only("reports tasks with @p", function () {
+
+        const runner = utils.run({
+            input: ['tasks']
         }, {
             tasks: {
                 'build@p': ['css', 'js'],
@@ -34,6 +24,14 @@ describe("Prints the version", function () {
                 js: function jsTask() {}
             }
         });
+
+        runner
+            .output
+            .filter(x => x.origin === 'SimpleTaskList')
+            .take(1)
+            .subscribe(function (data) {
+                assert.include(data[2].data, '2.00s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
+            });
     });
     it("reports grouped tasks with @p", function () {
 
