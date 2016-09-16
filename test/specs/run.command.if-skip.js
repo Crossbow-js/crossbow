@@ -60,7 +60,7 @@ describe("skipping tasks", function () {
                 },
                 svg: '@sh sleep 0.02'
             }
-        }).subscribe(function (output) {
+        }).subscribe(function () {
             const history = require(path.join(process.cwd(), '.crossbow/history.json'));
             assert.equal(history.hashes.length, 3);
             assert.equal(history.hashes[0].changed, true);

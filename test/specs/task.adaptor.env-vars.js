@@ -1,14 +1,11 @@
 const assert = require('chai').assert;
 const cli = require("../../");
-const TaskTypes = require("../../dist/task.resolve").TaskTypes;
-const TaskRunModes = require("../../dist/task.resolve").TaskRunModes;
-const SequenceItemTypes = require("../../dist/task.sequence.factories").SequenceItemTypes;
 
 describe('Adaptor tasks + env vars', function () {
     it('@sh accepts top-level env option and merges that will task + process env' , function (done) {
         const runner = cli.getRunner(['js'], {
             env: {
-                __SLEEP__: '0.3'
+                __SLEEP__: '0.1'
             },
             tasks: {
                 js: {
@@ -17,19 +14,18 @@ describe('Adaptor tasks + env vars', function () {
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
     it('@npm accepts top-level env option and merges that will task + process env' , function (done) {
         const runner = cli.getRunner(['js'], {
             env: {
-                __SLEEP__: '0.3'
+                __SLEEP__: '0.1'
             },
             tasks: {
                 js: {
@@ -37,12 +33,11 @@ describe('Adaptor tasks + env vars', function () {
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
@@ -55,18 +50,16 @@ describe('Adaptor tasks + env vars', function () {
                 js: {
                     input: '@npm sleep $__SLEEP__',
                     env: {
-                        __SLEEP__: '0.3'
+                        __SLEEP__: '0.1'
                     }
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
-                assert.ok(new Date().getTime() - start < 2000);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
@@ -86,16 +79,15 @@ describe('Adaptor tasks + env vars', function () {
         }, {
             // cli input
             env: {
-                __SLEEP__: '0.3'
+                __SLEEP__: '0.1'
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
-                assert.ok(new Date().getTime() - start < 2000);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
+                assert.ok(xs.slice(-1)[0].stats.duration < 2000);
                 done();
             });
     });
@@ -116,16 +108,15 @@ describe('Adaptor tasks + env vars', function () {
         }, {
             // cli input
             env: {
-                __SLEEP__: '0.3'
+                __SLEEP__: '0.1'
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
-                assert.ok(new Date().getTime() - start < 2000);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
+                assert.ok(xs.slice(-1)[0].stats.duration < 200);
                 done();
             });
     });

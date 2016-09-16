@@ -1,8 +1,5 @@
 const assert = require('chai').assert;
 const cli = require("../../");
-const TaskTypes = require("../../dist/task.resolve").TaskTypes;
-const TaskRunModes = require("../../dist/task.resolve").TaskRunModes;
-const SequenceItemTypes = require("../../dist/task.sequence.factories").SequenceItemTypes;
 
 describe('Adaptor tasks + global option vars', function () {
     it('@sh with options env vars' , function (done) {
@@ -16,18 +13,17 @@ describe('Adaptor tasks + global option vars', function () {
                 my: {
                     nested: {
                         object: {
-                            sleep: 0.3
+                            sleep: 0.1
                         }
                     }
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
@@ -42,18 +38,17 @@ describe('Adaptor tasks + global option vars', function () {
                 my: {
                     nested: {
                         object: {
-                            sleep: 0.3
+                            sleep: 0.1
                         }
                     }
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });

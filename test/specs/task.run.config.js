@@ -18,7 +18,7 @@ describe('running tasks with config', function () {
             options: {
                 some: {
                     nested: {
-                        prop: '0.3'
+                        prop: '0.1'
                     }
                 }
             },
@@ -26,12 +26,11 @@ describe('running tasks with config', function () {
                 css: '@sh sleep $JJSSJJ_OPTIONS_SOME_NESTED_PROP'
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 300);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
     });
@@ -59,13 +58,12 @@ describe('running tasks with config', function () {
                 }
             }
         });
-        var start = new Date().getTime();
         runner.runner
             .series()
             .toArray()
-            .subscribe(function () {
-                assert.ok(new Date().getTime() - start > 100);
-                assert.ok(new Date().getTime() - start < 200);
+            .subscribe(function (xs) {
+                assert.ok(xs.slice(-1)[0].stats.duration > 100);
+                assert.ok(xs.slice(-1)[0].stats.duration < 200);
                 done();
             });
     });
