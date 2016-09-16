@@ -9,6 +9,7 @@ import * as reports from "./reporter.resolve";
 import Rx = require('rx');
 import logger from "./logger";
 import {RunComplete} from "./command.run.execute";
+import {TasksCommandComplete} from "./command.tasks";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -47,15 +48,27 @@ const availableCommands = {
 
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
+enum commands {
+    tasks = 0,
+    ls    = 1 << 0,
+    t     = 1 << 1
+}
+
+
 /**
  * If running from the CLI
  */
 if (!module.parent) {
     const parsed = cli();
     if (parsed.execute) {
-        handleIncoming<RunComplete>(parsed.cli)
-            // lazy load post CLI execution handler
-            .subscribe(require('./command.run.post-execution').postCliExecution);
+        if (parsed.cli.command === 'run' || parsed.cli.command === 'run') {
+            handleIncoming<RunComplete>(parsed.cli)
+                .subscribe(require('./command.run.post-execution').postCliExecution);
+        }
+        if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
+            handleIncoming<TasksCommandComplete>(parsed.cli)
+                .subscribe();
+        }
     }
 }
 

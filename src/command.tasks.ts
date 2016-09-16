@@ -12,7 +12,8 @@ import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.reso
 import {getPossibleTasksFromDirectories} from "./file.utils";
 
 export interface TasksCommandCompletionReport {
-    tasks: Tasks
+    tasks: Tasks,
+    errors: Error[]
 }
 
 export type TasksCommandComplete = Rx.Observable<TasksCommandCompletionReport>;
@@ -58,7 +59,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
      * handoff if requested
      */
     if (trigger.config.handoff) {
-        return Rx.Observable.just({tasks: resolved});
+        return Rx.Observable.just({tasks: resolved, errors: []});
     }
 
     /**
@@ -66,7 +67,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
      */
     if (resolved.all.length === 0) {
         reporter({type: ReportTypes.NoTasksAvailable});
-        return Rx.Observable.just({tasks: resolved});
+        return Rx.Observable.just({tasks: resolved, errors: []});
     }
 
     /**
@@ -94,7 +95,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
         } as SimpleTaskListReport);
     }
 
-    return Rx.Observable.just({tasks: resolved});
+    return Rx.Observable.just({tasks: resolved, errors: []});
 }
 
 export default function handleIncomingTasksCommand(
