@@ -8,7 +8,7 @@ const utils = require('../utils');
 
 describe("Prints the version", function () {
     it("via --version flag", function (done) {
-        exec(`node dist/index --version`, function (err, stdout) {
+        exec(`node dist/cb --version`, function (err, stdout) {
             assert.equal(stdout, `${current}\n`);
             done();
         });

@@ -110,7 +110,7 @@ describe('Using a cbfile', function () {
         assert.equal(reports[1].stats.duration, 3000);
     });
     it('Propogates errors from CB file init', function (done) {
-        exec(`node dist/index tasks --cwd test/fixtures/inputs/cb-file-error`, function (err, stdout) {
+        exec(`node dist/cb tasks --cwd test/fixtures/inputs/cb-file-error`, function (err, stdout) {
             assert.include(stdout, 'File:    cbfile.js');
             assert.include(stdout, 'Error: Cannot find module \'-fs\'');
             done();

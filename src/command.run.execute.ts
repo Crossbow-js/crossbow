@@ -18,22 +18,21 @@ export enum RunCommandReportTypes {
     InvalidTasks = <any>"InvalidTasks",
     Complete = <any>"Complete"
 }
-
-export interface RunCommandErrorReport {
+export interface RunCommandSetupErrors {
     type: RunCommandReportTypes
+}
+export type RunComplete = Rx.Observable<RunCommandCompletionReport>
+export interface RunCommandCompletionReport {
     tasks: Tasks,
     sequence: SequenceItem[]
     runner: Runner
-}
-
-export type RunComplete = Rx.Observable<RunCommandCompletionReport>
-export interface RunCommandCompletionReport extends RunCommandErrorReport {
-    type: RunCommandReportTypes
-    reports: TaskReport[]
-    decoratedSequence: SequenceItem[]
-    runtime: number
-    errors: TaskReport[]
     config: CrossbowConfiguration
+    type: RunCommandReportTypes
+    reports?: TaskReport[]
+    decoratedSequence?: SequenceItem[]
+    runtime?: number
+    errors: RunCommandSetupErrors[]
+    taskErrors: TaskReport[]
 }
 
 export interface CompletionReport {
@@ -45,9 +44,7 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export type RunCommandErrorStream = RunCommandErrorReport|Error;
-
-export default function executeRunCommand(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
+export default function executeRunCommand(trigger: CommandTrigger): Rx.Observable<RunCommandCompletionReport> {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
@@ -74,15 +71,17 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             }
         } as TaskErrorsReport);
 
-        return Rx.Observable.concat<RunCommandErrorStream>(
-            Rx.Observable.just(<RunCommandErrorReport>{
-                type: RunCommandReportTypes.InvalidTasks,
-                tasks,
-                sequence,
-                runner
-            }),
-            Rx.Observable.throw(new Error(`RunCommandErrorTypes.InvalidTasks`))
-        );
+        return Rx.Observable.just({
+            errors: [
+                {type: RunCommandReportTypes.InvalidTasks}
+            ],
+            taskErrors: [],
+            tasks,
+            sequence,
+            runner,
+            config,
+            type: RunCommandReportTypes.InvalidTasks
+        });
     }
 
     debug(`~ run mode from config in mode: '${config.runMode}'`);
@@ -184,8 +183,9 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
             runner,
             decoratedSequence,
             runtime: runtime,
-            errors,
-            config
+            config,
+            errors: [],
+            taskErrors: reports.filter(x => x.type === TaskReportType.error)
         });
     }
 }

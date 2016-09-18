@@ -48,8 +48,8 @@
     "traverse": "0.6.6"
   },
   "bin": {
-    "crossbow": "dist/index.js",
-    "cb": "dist/index.js"
+    "crossbow": "dist/cb.js",
+    "cb": "dist/cb.js"
   },
   "engines": {
     "node": ">=4.0.0"
@@ -80,7 +80,7 @@
     "through2": "2.0.0",
     "typescript": "^1.8.10",
     "typings": "0.6.6",
-    "vinyl-fs": "^2.4.3",
+    "vinyl-fs": "2.4.3",
     "watchify": "3.7.0",
     "webpack": "1.13.1"
   }

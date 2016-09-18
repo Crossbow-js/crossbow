@@ -3,8 +3,7 @@
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge} from './config';
 import {getRequirePaths} from './file.utils';
-import cli from "./cli";
-import {getInputs, InputTypes} from "./input.resolve";
+import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require('rx');
 import logger from "./logger";
@@ -48,28 +47,11 @@ const availableCommands = {
 
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
-enum commands {
-    tasks = 0,
-    ls    = 1 << 0,
-    t     = 1 << 1
-}
-
-
-/**
- * If running from the CLI
- */
-if (!module.parent) {
-    const parsed = cli();
-    if (parsed.execute) {
-        if (parsed.cli.command === 'run' || parsed.cli.command === 'run') {
-            handleIncoming<RunComplete>(parsed.cli)
-                .subscribe(require('./command.run.post-execution').postCliExecution);
-        }
-        if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
-            handleIncoming<TasksCommandComplete>(parsed.cli)
-                .subscribe();
-        }
-    }
+interface PreparedInput {
+    cli: CLI,
+    config: CrossbowConfiguration
+    reportFn: CrossbowReporter,
+    userInput: UserInput
 }
 
 /**
@@ -81,7 +63,7 @@ if (!module.parent) {
  *          flags: {c: 'conf/cb.js'}
  *       });
  */
-function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): ReturnType {
+function prepareInput(cli: CLI, input?: CrossbowInput|any): PreparedInput  {
 
     let mergedConfig      = merge(cli.flags);
     const userInput       = getInputs(mergedConfig, input);
@@ -153,19 +135,35 @@ function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): Return
         userInput.type === InputTypes.DefaultExternalFile
     ) reportFn({type: reports.ReportTypes.UsingInputFile, data: {sources: userInput.sources}});
 
+    return {
+        userInput,
+        cli,
+        reportFn,
+        config: mergedConfig
+    }
+}
+
+function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): ReturnType {
+
+    const prepared = prepareInput(cli, input);
+
+    if (!prepared) return;
+
+    const {userInput, config, reportFn} = prepared;
+
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {
-        return handleCBfileMode(cli, mergedConfig, reportFn);
+        return handleCBfileMode(cli, config, reportFn);
     }
 
     // if the user provided a -c flag, but no external files were
     // returned, this is an error state.
-    if (mergedConfig.config.length && userInput.type === InputTypes.ExternalFile) {
-        return processInput(cli, userInput.inputs[0], mergedConfig, reportFn);
+    if (config.config.length && userInput.type === InputTypes.ExternalFile) {
+        return processInput(cli, userInput.inputs[0], config, reportFn);
     }
 
-    return processInput(cli, userInput.inputs[0], mergedConfig, reportFn);
+    return processInput(cli, userInput.inputs[0], config, reportFn);
 }
 
 function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: CrossbowReporter) {

@@ -1,16 +1,14 @@
 import {commands, CLICommands, twoColFromJson} from "./cli.commands";
 const _ = require('../lodash.custom');
-import parse from './cli.parse';
-import {FlagsOutput} from "./cli.parse";
+import parse, {FlagsOutput} from "./cli.parse";
 
 export interface PostCLIParse {
     cli: FlagsOutput
     execute: boolean
 }
 
-export default function (): PostCLIParse  {
+export default function (args: string[]): PostCLIParse  {
 
-    const args    = process.argv.slice(2);
     const command = args[0];
     const match   = getCommand(command, commands);
     
