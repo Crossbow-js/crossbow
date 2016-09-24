@@ -22,7 +22,6 @@ describe('Running with task stats', function () {
             .catch(x => Rx.Observable.empty())
             .toArray()
             .subscribe(reports => {
-                console.log(reports);
                 assert.equal(reports.length, 2);
                 assert.equal(reports[0].type, 'start');
                 assert.equal(reports[1].type, 'error');
@@ -31,20 +30,14 @@ describe('Running with task stats', function () {
             });
     });
     it('returns an error', function (done) {
-        var calls = [];
         cli.run(['build'], {}, {
-            config: 'examples/circular.yaml'
+            config: 'examples/circular.yaml',
+            reporters: [function(){}]
         })
-            .catch(x => {
-                calls.push(x);
-                assert.equal(calls.length, 2);
-                assert.equal(calls[0].type, RunCommandReportTypes.InvalidTasks);
-                done();
-                return Rx.Observable.empty();
-            })
             .subscribe(x => {
-                assert.equal(x.type, RunCommandReportTypes.InvalidTasks);
-                calls.push(x);
+                assert.equal(x.errors.length, 1);
+                assert.equal(x.errors[0].type, RunCommandReportTypes.InvalidTasks);
+                done();
             });
     });
     it('runs without error', function (done) {

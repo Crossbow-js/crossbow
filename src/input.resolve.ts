@@ -4,6 +4,7 @@ import {CrossbowConfiguration} from "./config";
 import * as utils from "./task.utils";
 import * as file from "./file.utils";
 import {InputErrorTypes} from "./task.utils";
+import Rx = require('rx');
 
 const debug = require('debug')('cb:input');
 const _ = require('../lodash.custom');
@@ -22,7 +23,7 @@ export interface UserInput {
     inputs: CrossbowInput[]
 }
 
-export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInput {
+export function getInputs (config: CrossbowConfiguration, inlineInput?: any): UserInput {
 
     /**
      * If the User provided a -c flag we MUST validate this

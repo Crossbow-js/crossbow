@@ -1,9 +1,26 @@
-const assert = require('chai').assert;
-const cli = require("../../");
+const assert    = require('chai').assert;
+const cli       = require("../../");
 const TaskTypes = require("../../dist/task.resolve").TaskTypes;
-const exec = require("child_process").exec;
+const exec      = require("child_process").exec;
+const utils     = require('../utils');
+const t100      = utils.task(100);
+const compile = require('eazy-logger').compile;
 
 describe('Command: Tasks', function () {
+    it('is testable via output', function () {
+
+        const runner = utils.run({
+            input: ['tasks']
+        });
+
+        // test output
+        runner.output
+            .subscribe(function (x) {
+                x.data.forEach(function (block) {
+                    console.log(compile(block))
+                })
+            });
+    });
     it('Should show tasks from current CWD + /tasks', function (done) {
         exec('node dist/cb tasks --cwd test/fixtures/tasks-command', function (err, stdout) {
             assert.include(stdout, 'tasks/test-01.js   Run via: test-01');

@@ -6,9 +6,7 @@ import {getRequirePaths} from './file.utils';
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require('rx');
-import logger from "./logger";
-import {RunComplete} from "./command.run.execute";
-import {TasksCommandComplete} from "./command.tasks";
+import {OutgoingReporter} from "./reporter.resolve";
 
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:init');
@@ -63,26 +61,14 @@ interface PreparedInput {
  *          flags: {c: 'conf/cb.js'}
  *       });
  */
-function prepareInput(cli: CLI, input?: CrossbowInput|any): PreparedInput  {
+function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): PreparedInput  {
 
-    let mergedConfig      = merge(cli.flags);
-    const userInput       = getInputs(mergedConfig, input);
-    let resolvedReporters = reports.getReporters(mergedConfig, input);
-    let hasReporters      = resolvedReporters.valid.length;
-    const defaultReporter = reports.getDefaultReporter();
-
-    const outputObserver  = (function () {
-        if (mergedConfig.outputObserver) {
-            return mergedConfig.outputObserver;
-        }
-        const outputObserver = new Rx.Subject<reports.OutgoingReport>();
-        outputObserver.subscribe(xs => {
-            xs.data.forEach(function (x) {
-                logger.info(x);
-            });
-        });
-        return outputObserver;
-    })();
+    let mergedConfig         = merge(cli.flags);
+    const userInput          = getInputs(mergedConfig, input);
+    let resolvedReporters    = reports.getReporters(mergedConfig, input);
+    let chosenOutputObserver = reports.getOutputObserver(mergedConfig, outputObserver);
+    let hasReporters         = resolvedReporters.valid.length;
+    const defaultReporter    = reports.getDefaultReporter();
 
     // Check if any given reporter are invalid
     // and defer to default
@@ -92,7 +78,7 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any): PreparedInput  {
             data: {
                 reporters: resolvedReporters
             }
-        } as reports.InvalidReporterReport, outputObserver);
+        } as reports.InvalidReporterReport, chosenOutputObserver);
         return;
     }
 
@@ -100,10 +86,10 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any): PreparedInput  {
     // uses default if none given
     const reportFn = function (report: reports.IncomingReport) {
         if (!hasReporters) {
-            return defaultReporter(report, outputObserver);
+            return defaultReporter(report, chosenOutputObserver);
         }
         resolvedReporters.valid.forEach(function (reporter: reports.Reporter) {
-            reporter.callable(report, outputObserver);
+            reporter.callable(report, chosenOutputObserver);
         });
     };
 
@@ -143,9 +129,9 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any): PreparedInput  {
     }
 }
 
-function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): ReturnType {
+function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): ReturnType {
 
-    const prepared = prepareInput(cli, input);
+    const prepared = prepareInput(cli, input, outputObserver);
 
     if (!prepared) return;
 
@@ -155,12 +141,6 @@ function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any): Return
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {
         return handleCBfileMode(cli, config, reportFn);
-    }
-
-    // if the user provided a -c flag, but no external files were
-    // returned, this is an error state.
-    if (config.config.length && userInput.type === InputTypes.ExternalFile) {
-        return processInput(cli, userInput.inputs[0], config, reportFn);
     }
 
     return processInput(cli, userInput.inputs[0], config, reportFn);

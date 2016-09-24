@@ -10,6 +10,8 @@ import {Task, TaskCollection} from "./task.resolve";
 import {WatchTask, Watcher, WatchTasks} from "./watch.resolve";
 import {WatchRunners} from "./watch.runner";
 import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.docs";
+import Rx = require('rx');
+import logger from './logger';
 
 export interface Reporter {
     errors: {}[]
@@ -87,7 +89,7 @@ export interface IncomingReport {
 
 export interface OutgoingReport {
     origin: ReportTypes
-    data?: string[]
+    data: string[]
 }
 
 export interface UsingConfigFileReport extends IncomingReport {
@@ -289,6 +291,36 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
             sources: files
         }
     }
+}
+export type OutgoingReporter = Rx.Subject<OutgoingReport>;
+export function getOutputObserver(mergedConfig: CrossbowConfiguration, outputObserver: OutgoingReporter) {
+
+    /**
+     * If an outputObserver was passed in with configuration (flags)
+     */
+    if (mergedConfig.outputObserver) {
+        return mergedConfig.outputObserver;
+    }
+
+    /**
+     * If an output observer was passed in via initial setup (cli fallback)
+     */
+    if (outputObserver) {
+        return outputObserver;
+    }
+
+    /**
+     * Default is to log each report to the console
+     */
+    const defaultOutputObserver = new Rx.Subject<OutgoingReport>();
+
+    defaultOutputObserver.subscribe(xs => {
+        xs.data.forEach(function (x) {
+            logger.info(x);
+        });
+    });
+
+    return defaultOutputObserver;
 }
 
 export function getDefaultReporter () {
