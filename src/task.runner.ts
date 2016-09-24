@@ -165,19 +165,19 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 observer.onCompleted();
             });
 
-            function onError(err) {
-                cb(err);
-            }
-
             var d = domain.create();
-            d.once('error', onError);
+            d.once('error', function (err) {
+                cb(err);
+            });
             var domainBoundFn = d.bind(item.factory.bind(null, item.options, trigger));
 
-            function done(err?: Error) {
-                d.removeListener('error', onError);
+            var done = function (err?: Error) {
+                d.removeListener('error', function (err) {
+                    cb(err);
+                });
                 d.exit();
                 return cb.apply(null, arguments);
-            }
+            };
 
             var result  = domainBoundFn(done);
 

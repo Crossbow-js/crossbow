@@ -30,7 +30,8 @@ export const enum LogLevel {
 
 export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
     if (typeof reporterFunctions[report.type] === 'function') {
-        const output = reporterFunctions[report.type](report);
+        const outputFn = reporterFunctions[report.type];
+        const output   = outputFn.call(null, report);
         if (typeof output === 'string') {
             if (output === '') return;
             observer.onNext({origin: report.type, data: [output]});
