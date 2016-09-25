@@ -87,7 +87,7 @@ tasks:
     - cover
 
 
-  # Build test specs
+  # Build test api
   build_spec:                  "@npm tsc --project ./spec --pretty"
   build_spec_browser:          "@npm webpack --config spec/support/webpack.mocha.config.js"
 

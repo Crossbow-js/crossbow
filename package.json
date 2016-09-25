@@ -5,7 +5,7 @@
   "main": "dist/public/index.js",
   "scripts": {
     "test": "npm run ts && npm run unit",
-    "unit": "mocha test",
+    "unit": "mocha test/specs --recursive",
     "lint": "eslint lib",
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray exports=node",

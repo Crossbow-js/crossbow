@@ -45,11 +45,16 @@ const availableCommands = {
 
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
-interface PreparedInput {
-    cli: CLI,
+export interface PreparedInputErrors {
+    type: reports.ReportTypes
+}
+
+export interface PreparedInput {
+    cli: CLI
     config: CrossbowConfiguration
-    reportFn: CrossbowReporter,
+    reportFn?: CrossbowReporter
     userInput: UserInput
+    errors: PreparedInputErrors[]
 }
 
 /**
@@ -61,7 +66,7 @@ interface PreparedInput {
  *          flags: {c: 'conf/cb.js'}
  *       });
  */
-function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): PreparedInput  {
+export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): PreparedInput {
 
     let mergedConfig         = merge(cli.flags);
     const userInput          = getInputs(mergedConfig, input);
@@ -79,7 +84,13 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: Outg
                 reporters: resolvedReporters
             }
         } as reports.InvalidReporterReport, chosenOutputObserver);
-        return;
+
+        return {
+            userInput,
+            cli,
+            config: mergedConfig,
+            errors: [{type: reports.ReportTypes.InvalidReporter}]
+        } as PreparedInput
     }
 
     // proxy for calling reporter functions.
@@ -97,7 +108,13 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: Outg
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
         reportFn({type: reports.ReportTypes.InputError, data: {sources: userInput.sources}});
-        return;
+        return {
+            userInput,
+            cli,
+            config: mergedConfig,
+            reportFn,
+            errors: [{type: reports.ReportTypes.InputError}]
+        } as PreparedInput
     }
 
     // at this point, there are no invalid reporters or input files
@@ -112,7 +129,13 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: Outg
     // and defer to default (again)
     if (resolvedReporters.invalid.length) {
         reportFn({type: reports.ReportTypes.InvalidReporter, data: {reporters: resolvedReporters}} as reports.InvalidReporterReport);
-        return;
+        return {
+            userInput,
+            cli,
+            reportFn,
+            config: mergedConfig,
+            errors: [{type: reports.ReportTypes.InvalidReporter}]
+        }
     }
 
     // Show the user which external inputs are being used
@@ -125,17 +148,18 @@ function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: Outg
         userInput,
         cli,
         reportFn,
-        config: mergedConfig
+        config: mergedConfig,
+        errors: []
     }
 }
 
-function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): ReturnType {
+/**
+ * This the the proxy that allows command/run mode to be handled
+ * @param preparedInput
+ */
+export function handleIncoming<ReturnType>(preparedInput: PreparedInput): ReturnType {
 
-    const prepared = prepareInput(cli, input, outputObserver);
-
-    if (!prepared) return;
-
-    const {userInput, config, reportFn} = prepared;
+    const {cli, userInput, config, reportFn} = preparedInput;
 
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
@@ -148,8 +172,8 @@ function handleIncoming<ReturnType>(cli: CLI, input?: CrossbowInput|any, outputO
 
 function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: CrossbowReporter) {
 
-    const createFilePaths = getRequirePaths(config);
-    const input           = require(createFilePaths.valid[0].resolved);
+    const createFilePaths  = getRequirePaths(config);
+    const input            = require(createFilePaths.valid[0].resolved);
 
     input.default.config   = processConfigs(_.merge({}, config, input.default.config), cli.flags);
     input.default.cli      = cli;
@@ -177,6 +201,22 @@ function processConfigs (config, flags) {
     return merge(cbConfig);
 }
 
-export default handleIncoming;
+/**
+ * This is the default export that can be
+ * used as a convenience method.
+ * Note: types are lost when using this method.
+ */
+export default function (cli: CLI, input?: CrossbowInput) {
+
+    const prepared = prepareInput(cli, input);
+
+    if (prepared.errors.length) {
+        return Rx.Observable.just({
+            errors: prepared.errors
+        });
+    }
+
+    return handleIncoming<any>(prepared);
+}
 
 

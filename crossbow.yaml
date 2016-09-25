@@ -35,7 +35,7 @@ tasks:
     --outDir dist
 
   lint:   '@npm eslint lib'
-  unit:   '@npm mocha test/specs'
+  unit:   '@npm mocha test/api'
 
   sleep@p:
     - sleep1

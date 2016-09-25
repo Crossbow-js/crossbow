@@ -1,5 +1,5 @@
 const Rx          = require('rx');
-const cli            = require('../dist/index');
+const cb            = require('../dist/index');
 const Oempty      = Rx.Observable.empty;
 const Othrow      = Rx.Observable.throw;
 const Ojust       = Rx.Observable.just;
@@ -14,17 +14,52 @@ module.exports.error = (time) =>
         .delay(time || defaultTime, ctx.config.scheduler)
         .flatMap(Othrow('oops'));
 
-module.exports.run = (input, config) => {
+module.exports.run = (cli, input) => {
     const scheduler  = new Rx.TestScheduler();
     const output     = new Rx.ReplaySubject(100);
 
-    input.flags                = input.flags || {};
-    input.flags.outputObserver = output;
-    input.flags.scheduler      = scheduler;
+    cli.flags                = cli.flags || {};
+    cli.flags.outputObserver = output;
+    cli.flags.scheduler      = scheduler;
 
-    const runner      = cli.default(input, config);
+    const runner       = cb.default(cli, input);
     const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 200000});
     return {subscription, output};
+};
+
+module.exports.getRunner = (args, input, config) => {
+    const output = new Rx.ReplaySubject(100);
+    const cli    = {};
+
+    cli.input                = ['run'].concat(args);
+    cli.flags                = cli.flags || config || {};
+    cli.flags.handoff        = true;
+    cli.flags.outputObserver = output;
+
+    return cb.default(cli, input);
+};
+
+module.exports.getWatcher = (args, input, config) => {
+    const output = new Rx.ReplaySubject(100);
+    const cli    = {};
+
+    cli.input                = ['watch'].concat(args);
+    cli.flags                = cli.flags || config || {};
+    cli.flags.handoff        = true;
+    cli.flags.outputObserver = output;
+
+    return cb.default(cli, input);
+};
+
+module.exports.executeRun = (args, input, config) => {
+    const output = new Rx.ReplaySubject(100);
+    const cli    = {};
+
+    cli.input                = ['run'].concat(args);
+    cli.flags                = cli.flags || config || {};
+    cli.flags.outputObserver = output;
+
+    return cb.default(cli, input);
 };
 
 module.exports.nullOutput = () => new Rx.ReplaySubject(100);
