@@ -4,6 +4,7 @@ import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
 import {resolveTasks, Tasks} from './task.resolve';
 import Immutable = require('immutable');
+import Rx = require('rx');
 import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
 import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
@@ -31,12 +32,12 @@ export interface DocsFileOutput {
 }
 export interface DocsCommandOutput {
     tasks: Tasks,
-    errors?: DocsError[],
+    errors: DocsError[],
     markdown?: string,
     output?: DocsFileOutput[]
 }
 
-function execute(trigger: CommandTrigger): DocsCommandOutput {
+function execute(trigger: CommandTrigger): Rx.Observable<DocsCommandOutput> {
 
     const {input, config, reporter} = trigger;
 
@@ -52,9 +53,10 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     if (tasks.all.length === 0) {
         reporter({type: ReportTypes.NoTasksAvailable});
-        return {
-            tasks
-        };
+        return Rx.Observable.just({
+            tasks,
+            errors: []
+        });
     }
 
     debug(`Amount of tasks to consider ${tasks.all.length}`);
@@ -66,7 +68,10 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
     if (tasks.invalid.length) {
         debug(`Tasks were invalid, so skipping doc generation completely`);
         reporter({type: ReportTypes.DocsInvalidTasksSimple});
-        return {tasks};
+        return Rx.Observable.just({
+            tasks,
+            errors: []
+        });
     }
 
     const markdown = getMarkdown(tasks.valid);
@@ -77,14 +82,14 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * append them
      */
     if (config.file) {
-        return handleFileFlag(tasks, markdown, trigger);
+        return Rx.Observable.just(handleFileFlag(tasks, markdown, trigger));
     }
 
     /**
      * If a user provides the 'output' flag, it means they want a new file creating
      */
     if (config.output) {
-        return handleOutputFlag(tasks, markdown, trigger);
+        return Rx.Observable.just(handleOutputFlag(tasks, markdown, trigger));
     }
 
     /**
@@ -101,12 +106,12 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
 
         addDocsToFile(output, trigger);
 
-        return {
+        return Rx.Observable.just({
             errors: [],
             tasks,
             markdown,
             output
-        }
+        })
     }
 
     /**
@@ -124,12 +129,12 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
 
     addDocsToFile(output, trigger);
 
-    return {
+    return Rx.Observable.just({
         errors: [],
         tasks,
         markdown,
         output
-    };
+    });
 }
 
 /**
@@ -333,7 +338,6 @@ function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
                     file: x.file
                 }
             } as DocsAddedToFileReport);
-            file.writeFileToDisk(x.file, x.content);
         });
     }
 }

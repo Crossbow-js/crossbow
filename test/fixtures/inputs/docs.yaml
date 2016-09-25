@@ -1,0 +1,6 @@
+tasks:
+  one:
+    - two
+    - three
+  two:   '@npm ls'
+  three: '@npm printenv'
