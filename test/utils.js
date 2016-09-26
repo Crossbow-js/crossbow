@@ -1,5 +1,5 @@
 const Rx          = require('rx');
-const cb            = require('../dist/index');
+const cb          = require('../dist/index');
 const Oempty      = Rx.Observable.empty;
 const Othrow      = Rx.Observable.throw;
 const Ojust       = Rx.Observable.just;

@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
-const parse = require("../../dist/cli.parse").default;
-const CliFlagTypes = require("../../dist/cli.parse").CliFlagTypes;
+const parse = require("../../../dist/cli.parse").default;
+const CliFlagTypes = require("../../../dist/cli.parse").CliFlagTypes;
 
 describe('cli parser', function () {
     it('handles simple command + 2 inputs', function () {

@@ -5,6 +5,7 @@ import * as utils from "./task.utils";
 import * as file from "./file.utils";
 import {InputErrorTypes} from "./task.utils";
 import Rx = require('rx');
+import {isPlainObject} from "./task.utils";
 
 const debug = require('debug')('cb:input');
 const _ = require('../lodash.custom');
@@ -31,28 +32,34 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
      */
     if (config.config.length) {
         debug(`config flag provided ${config.config}`);
-        const inputs = file.readInputFiles(config.config, config.cwd);
-        if (inputs.invalid.length) {
+
+        const stringInputs     = config.config.filter(x => typeof x === 'string');
+        const inlineInputs     = config.config.filter(x => isPlainObject(x));
+
+        const fileInputs       = file.readInputFiles(stringInputs, config.cwd);
+        const mergedFileInputs = fileInputs.valid.map(file => file.input);
+        const mergedInputs     = _.merge(generateBaseInput({}), ...mergedFileInputs, ...inlineInputs, inlineInput);
+
+        if (fileInputs.invalid.length) {
             return {
                 type: InputTypes.ExternalFile,
-                errors: inputs.invalid.map(x => x.errors[0]),
-                sources: inputs.invalid,
+                errors: fileInputs.invalid.map(x => x.errors[0]),
+                sources: fileInputs.invalid,
                 inputs: [],
             }
         }
+
         return {
             type: InputTypes.ExternalFile,
             errors: [],
-            sources: inputs.valid,
+            sources: fileInputs.valid,
             inputs: [
                 /**
                  * Merged all given configs into a single obj
                  * This is to allow, for example, production
                  * configuration to override dev etc..
                  */
-                inputs.valid.reduce((acc, file: file.ExternalFileInput) => {
-                    return _.merge(acc, generateBaseInput(file.input));
-                }, {})
+                mergedInputs
             ],
         }
     }
