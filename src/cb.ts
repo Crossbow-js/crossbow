@@ -2,6 +2,7 @@
 import {RunComplete} from "./command.run.execute";
 import {TasksCommandComplete} from "./command.tasks";
 import cli from "./cli";
+import {readFileSync, writeFileSync} from "fs";
 import {handleIncoming} from "./index";
 import logger from "./logger";
 import Rx = require('rx');
@@ -54,18 +55,26 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     if (parsed.cli.command === 'docs') {
         handleIncoming<DocsCommandComplete>(prepared)
             .subscribe(x => {
-                if (x.errors.length === 0) {
-                    x.output.forEach(function (outputItem: DocsFileOutput) {
-                        file.writeFileToDisk(outputItem.file, outputItem.content);
-                    });
+
+                if (x.errors.length) {
+                    return process.exit(1);
                 }
+
+                x.output.forEach(function (outputItem: DocsFileOutput) {
+                    file.writeFileToDisk(outputItem.file, outputItem.content);
+                });
             })
     }
 
     if (parsed.cli.command === 'init') {
         handleIncoming<InitCommandComplete>(prepared)
             .subscribe(x => {
-                console.log(x);
-            })
+
+                if (x.errors.length) {
+                    return process.exit(1);
+                }
+
+                writeFileSync(x.outputFilePath, readFileSync(x.templateFilePath));
+            });
     }
 }

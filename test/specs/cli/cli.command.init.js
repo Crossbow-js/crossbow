@@ -4,27 +4,74 @@ const rimraf  = require('rimraf');
 const fs      = require('fs');
 
 describe("CLI command.init", function () {
-    it.only("init works", function () {
+    it("init works with default crossbow.yaml file", function () {
 
-        require('rimraf').sync('test/fixtures/init/crossbow.yaml');
+        const outputFile = 'test/fixtures/init/crossbow.yaml';
+        const template   = 'templates/crossbow.yaml';
 
-        const out = exec(`node dist/cb init --cwd test/fixtures/init`);
+        require('rimraf').sync(outputFile);
 
-        assert.ok(fs.existsSync('test/fixtures/init/crossbow.yaml'));
-        require('rimraf').sync('test/fixtures/init/crossbow.yaml');
+        exec(`node dist/cb init --cwd test/fixtures/init`);
 
-        // const output   = 'test/fixtures/outputs/new.md';
-        // const input    = 'test/fixtures/inputs/docs.yaml';
-        // const expected = 'test/fixtures/outputs/new-expected.md';
-        //
-        // rimraf.sync(output);
-        //
-        // const out = exec(`node dist/cb docs -c ${input} --output ${output}`);
-        //
-        // assert.include(out.toString(), 'Docs added to: test/fixtures/outputs/new.md');
-        //
-        // assert.equal(read(output, 'utf8'), read(expected, 'utf8'), 'New file matches expected');
-        //
-        // rimraf.sync(output);
+        assert.equal(
+            fs.readFileSync(template, 'utf8'),
+            fs.readFileSync(outputFile, 'utf8')
+        );
+
+        require('rimraf').sync(outputFile);
+    });
+    it("init works with crossbow.js file", function () {
+
+        const outputFile = 'test/fixtures/init/crossbow.js';
+        const template   = 'templates/crossbow.js';
+
+        require('rimraf').sync(outputFile);
+
+        exec(`node dist/cb init --type js --cwd test/fixtures/init`);
+
+        assert.equal(
+            fs.readFileSync(template, 'utf8'),
+            fs.readFileSync(outputFile, 'utf8')
+        );
+
+        require('rimraf').sync(outputFile);
+    });
+    it("init works with crossbow.json file", function () {
+
+        const outputFile = 'test/fixtures/init/crossbow.json';
+        const template   = 'templates/crossbow.json';
+
+        require('rimraf').sync(outputFile);
+
+        exec(`node dist/cb init --type json --cwd test/fixtures/init`);
+
+        assert.equal(
+            fs.readFileSync(template, 'utf8'),
+            fs.readFileSync(outputFile, 'utf8')
+        );
+
+        require('rimraf').sync(outputFile);
+    });
+    it("init works with cbfile", function () {
+
+        const outputFile = 'test/fixtures/init/cbfile.js';
+        const template   = 'templates/cbfile.js';
+
+        require('rimraf').sync(outputFile);
+
+        exec(`node dist/cb init --type cbfile --cwd test/fixtures/init`);
+
+        assert.equal(
+            fs.readFileSync(template, 'utf8'),
+            fs.readFileSync(outputFile, 'utf8')
+        );
+
+        require('rimraf').sync(outputFile);
+    });
+    it("handles unsupported types", function () {
+
+        assert.throws(function () {
+            exec(`node dist/cb init --type cb-file --cwd test/fixtures/init`);
+        });
     });
 });

@@ -134,10 +134,6 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
     const templateFilePath = join(templateDir, outputFileName);
     const outputFilePath   = join(config.cwd, outputFileName);
 
-    // fs.writeFileSync(outputFilePath,
-    //     fs.readFileSync(templateFilePath)
-    // );
-
     const output = {
         existingFilesInCwd,
         matchingFiles,

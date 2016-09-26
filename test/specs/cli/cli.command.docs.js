@@ -20,4 +20,9 @@ describe("CLI command.docs", function () {
 
         rimraf.sync(output);
     });
+    it("handles missing file", function () {
+        assert.throws(function () {
+            exec(`node dist/cb docs --file nothing.md`);
+        });
+    });
 });
