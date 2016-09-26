@@ -8,8 +8,9 @@ import Rx = require('rx');
 import * as reports from "./reporter.resolve";
 import {PostCLIParse} from "./cli";
 import {prepareInput} from "./index";
-import {DocsCommandOutput, DocsFileOutput} from "./command.docs";
+import {DocsFileOutput, DocsCommandComplete} from "./command.docs";
 import * as file from "./file.utils";
+import {InitCommandComplete} from "./command.init";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -51,13 +52,20 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     }
 
     if (parsed.cli.command === 'docs') {
-        handleIncoming<DocsCommandOutput>(prepared)
+        handleIncoming<DocsCommandComplete>(prepared)
             .subscribe(x => {
                 if (x.errors.length === 0) {
                     x.output.forEach(function (outputItem: DocsFileOutput) {
                         file.writeFileToDisk(outputItem.file, outputItem.content);
                     });
                 }
+            })
+    }
+
+    if (parsed.cli.command === 'init') {
+        handleIncoming<InitCommandComplete>(prepared)
+            .subscribe(x => {
+                console.log(x);
             })
     }
 }

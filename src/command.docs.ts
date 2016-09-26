@@ -37,7 +37,9 @@ export interface DocsCommandOutput {
     output?: DocsFileOutput[]
 }
 
-function execute(trigger: CommandTrigger): Rx.Observable<DocsCommandOutput> {
+export type DocsCommandComplete = Rx.Observable<DocsCommandOutput>;
+
+function execute(trigger: CommandTrigger): DocsCommandComplete {
 
     const {input, config, reporter} = trigger;
 

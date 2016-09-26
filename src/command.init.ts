@@ -12,6 +12,7 @@ import {
     DuplicateConfigFile, ConfigFileCreatedReport,
     InitInputFileTypeNotSupportedReport
 } from "./reporter.resolve";
+import {ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
 
 export enum InitConfigFileErrorTypes {
@@ -25,6 +26,16 @@ export interface InitConfigFileTypeNotSupported extends InitConfigError {
     supportedTypes: {}
 }
 
+export interface InitCommandOutput {
+    existingFilesInCwd: ExternalFile[]
+    matchingFiles: ExternalFile[]
+    errors: InitConfigError[]
+    outputFilePath?: string
+    outputFileName?: string
+    templateFilePath?: string
+}
+export type InitCommandComplete = Rx.Observable<InitCommandOutput>;
+
 export enum InitConfigFileTypes {
     yaml   = <any>"yaml",
     js     = <any>"js",
@@ -32,7 +43,7 @@ export enum InitConfigFileTypes {
     cbfile = <any>"cbfile"
 }
 
-function execute(trigger: CommandTrigger): any {
+function execute(trigger: CommandTrigger): InitCommandComplete {
     const {config, reporter} = trigger;
 
     const templateDir = join(__dirname, '..', 'templates');
@@ -60,7 +71,11 @@ function execute(trigger: CommandTrigger): any {
                 }
             } as InitInputFileTypeNotSupportedReport);
         }
-        return {errors};
+        return Rx.Observable.just({
+            existingFilesInCwd: [],
+            matchingFiles: [],
+            errors
+        });
     }
 
     /**
@@ -96,39 +111,50 @@ function execute(trigger: CommandTrigger): any {
         return [];
     })();
 
-    /**
-     * Allow consumer to handle executions
-     */
-    if (config.handoff) {
-        return {existingFilesInCwd, matchingFiles, errors};
-    }
+    // /**
+    //  * Allow consumer to handle executions
+    //  */
+    // if (config.handoff) {
+    //     return Rx.Ob{existingFilesInCwd, matchingFiles, errors};
+    // }
 
-    /**
-     * He we perform any IO as we're not 'handing off'
-     */
+
+
     if (errors.length) {
-        reporter({type: ReportTypes.DuplicateInputFile, data: {error: errors[0]}} as DuplicateConfigFile);
-        return {existingFilesInCwd, matchingFiles, errors};
+        reporter({
+            type: ReportTypes.DuplicateInputFile,
+            data: {
+                error: errors[0]
+            }
+        } as DuplicateConfigFile);
+
+        return Rx.Observable.just({existingFilesInCwd, matchingFiles, errors});
     }
 
     const templateFilePath = join(templateDir, outputFileName);
     const outputFilePath   = join(config.cwd, outputFileName);
 
-    fs.writeFileSync(outputFilePath,
-        fs.readFileSync(templateFilePath)
-    );
+    // fs.writeFileSync(outputFilePath,
+    //     fs.readFileSync(templateFilePath)
+    // );
 
     const output = {
         existingFilesInCwd,
         matchingFiles,
         errors,
         outputFilePath,
-        outputFileName
+        outputFileName,
+        templateFilePath
     };
 
-    reporter({type:ReportTypes.InputFileCreated, data: {parsed: parse(outputFilePath)}} as ConfigFileCreatedReport);
+    reporter({
+        type: ReportTypes.InputFileCreated,
+        data: {
+            parsed: parse(outputFilePath)
+        }
+    } as ConfigFileCreatedReport);
 
-    return output;
+    return Rx.Observable.just(output);
 }
 
 export default function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
