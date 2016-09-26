@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
-const configMerge = require("../../dist/config").merge;
-const getInputs = require("../../dist/input.resolve").getInputs;
+const configMerge = require("../../../dist/config").merge;
+const getInputs = require("../../../dist/input.resolve").getInputs;
 
 describe('Choosing which input strategy to use', function () {
     it('uses the file in CWD by default', function () {

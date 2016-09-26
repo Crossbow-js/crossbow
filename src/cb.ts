@@ -53,11 +53,9 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     if (parsed.cli.command === 'docs') {
         handleIncoming<DocsCommandComplete>(prepared)
             .subscribe(x => {
-
                 if (x.errors.length) {
                     return process.exit(1);
                 }
-
                 x.output.forEach(function (outputItem: DocsFileOutput) {
                     file.writeFileToDisk(outputItem.file, outputItem.content);
                 });
@@ -67,11 +65,9 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     if (parsed.cli.command === 'init') {
         handleIncoming<InitCommandComplete>(prepared)
             .subscribe(x => {
-
                 if (x.errors.length) {
                     return process.exit(1);
                 }
-
                 writeFileSync(x.outputFilePath, readFileSync(x.templateFilePath));
             });
     }

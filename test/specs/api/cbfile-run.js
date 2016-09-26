@@ -1,14 +1,13 @@
 const assert = require('chai').assert;
 const exec = require('child_process').exec;
-const utils = require('../utils');
-const Rx = require('rx');
-const cb  = require('../../dist/index')['default'];
-const TaskTypes  = require('../../dist/task.resolve').TaskTypes;
-const TaskReportType = require('../../dist/task.runner').TaskReportType;
+const utils = require('../../utils');
+const cb  = require('../../../dist/index')['default'];
+const TaskTypes  = require('../../../dist/task.resolve').TaskTypes;
+const TaskReportType = require('../../../dist/task.runner').TaskReportType;
 
-const absPath  = require('path').resolve(__dirname, '..', '..', 'dist', 'public', 'index.js');
-const absPath3 = require('path').resolve(__dirname, '..', '..', 'dist', 'public', 'create.js');
-const absPath2 = require('path').resolve(__dirname, '..', 'fixtures', 'cbfile.js');
+const absPath  = require('path').resolve(__dirname, '..', '..', '..', 'dist', 'public', 'index.js');
+const absPath3 = require('path').resolve(__dirname, '..', '..', '..', 'dist', 'public', 'create.js');
+const absPath2 = require('path').resolve(__dirname, '..', '..', 'fixtures', 'cbfile.js');
 
 describe('Using a cbfile', function () {
     beforeEach(function () {
