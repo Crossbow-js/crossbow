@@ -46,10 +46,8 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
-        const out = handleIncoming<TasksCommandComplete>(prepared);
-        if (out && out.subscribe && typeof out.subscribe === 'function') {
-            out.subscribe();
-        }
+        handleIncoming<TasksCommandComplete>(prepared)
+            .subscribe();
     }
 
     if (parsed.cli.command === 'docs') {
