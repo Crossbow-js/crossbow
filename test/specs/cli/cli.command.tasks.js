@@ -3,13 +3,13 @@ const exec = require('child_process').exec;
 
 describe("list available tasks", function () {
     it("lists tasks in simple format", function (done) {
-        exec(`node dist/cb tasks -c examples/crossbow.js`, function (err, stdout, stderr) {
+        exec(`node dist/cb tasks -i examples/crossbow.js`, function (err, stdout, stderr) {
             assert.include(stdout, 'Available Tasks:\n»  webpack');
             done();
         });
     });
     it("lists tasks in verbose format", function (done) {
-        exec(`node dist/cb tasks -c examples/crossbow.js -v`, function (err, stdout, stderr) {
+        exec(`node dist/cb tasks -i examples/crossbow.js -v`, function (err, stdout, stderr) {
             assert.include(stdout, '├─┬ webpack\n');
             done();
         });
@@ -40,7 +40,7 @@ describe("list available tasks", function () {
         });
     });
     it('Should exclude _ prefixed tasks from simple task list', function (done) {
-        exec('node dist/cb tasks -c test/fixtures/tasks-command/hidden.js', function (err, stdout) {
+        exec('node dist/cb tasks -i test/fixtures/tasks-command/hidden.js', function (err, stdout) {
             assert.notInclude(stdout, '_merkle   [ @npm hash-dir ]');
             assert.include(stdout, 'build    [ _merkle, deploy ]');
             assert.include(stdout, 'deploy   [ @sh rsync some-server ]');

@@ -9,7 +9,7 @@ describe("exiting with non-zero", function () {
     });
     it("on missing input files", function () {
         assert.throws(function () {
-            exec(`node dist/cb run -c nahnah`);
+            exec(`node dist/cb run -i nahnah`);
         });
     });
 });

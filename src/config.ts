@@ -16,7 +16,7 @@ export interface CrossbowConfiguration {
     force: boolean
     reporter: string
     handoff: boolean
-    config: string[]
+    input: string[]
     interactive: boolean
     outputOnly: boolean
     suppressOutput: boolean
@@ -57,7 +57,7 @@ const defaults = <CrossbowConfiguration>{
     runMode: TaskRunModes.series,
     resumeOnError: false,
     parallel: false,
-    config: [],
+    input: [],
     /**
      * Dump json to disk for debugging
      */
@@ -177,9 +177,9 @@ const flagTransforms = {
     	opts.cwd = resolve(opts.cwd);
         return opts;
     },
-    config: (opts) => {
-        if (opts.config && !Array.isArray(opts.config)) {
-            opts.config = [opts.config];
+    input: (opts) => {
+        if (opts.input && !Array.isArray(opts.input)) {
+            opts.input = [opts.input];
         }
         return opts;
     }

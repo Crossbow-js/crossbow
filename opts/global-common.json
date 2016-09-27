@@ -1,8 +1,8 @@
 {
-  "config": {
+  "input": {
     "desc": "Path(s) to your input file.",
     "type": "array",
-    "alias": ["c"]
+    "alias": ["i"]
   },
   "tasksDir": {
     "desc": "Path(s) that will be auto-loaded for task resolution",

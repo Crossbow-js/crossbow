@@ -160,20 +160,20 @@ describe('cli parser', function () {
         assert.deepEqual(output.flags.doc, 'true');
     });
     it('ensures an array', function () {
-        const input = 'run task-1 -c example.js';
+        const input = 'run task-1 -i example.js';
         const output = parse(input, {
-            config: {
-                alias: 'c',
+            input: {
+                alias: 'i',
                 type: CliFlagTypes.Array
             }
         });
-        assert.deepEqual(output.flags.config[0], 'example.js');
+        assert.deepEqual(output.flags.input[0], 'example.js');
     });
     it('Allows array of alias', function () {
-        const input = 'run task-1 --conf example.js -c another.js -r out.js';
+        const input = 'run task-1 -i example.js -i another.js -r out.js';
         const output = parse(input, {
-            config: {
-                alias: ['c', 'conf'],
+            input: {
+                alias: ['i', 'conf'],
                 type: CliFlagTypes.Array
             },
             reporters: {
@@ -181,14 +181,14 @@ describe('cli parser', function () {
                 alias: ['r']
             }
         });
-        assert.deepEqual(output.flags.config[0], 'example.js');
-        assert.deepEqual(output.flags.config[1], 'another.js');
+        assert.deepEqual(output.flags.input[0], 'example.js');
+        assert.deepEqual(output.flags.input[1], 'another.js');
     });
     it('strips opts that were not present in the command', function () {
-        const input = 'run task-1 --conf example.js';
+        const input = 'run task-1 -i example.js';
         const output = parse(input, {
-            config: {
-                alias: ['c', 'conf'],
+            input: {
+                alias: ['i', 'conf'],
                 type: CliFlagTypes.Array
             },
             reporters: {
@@ -196,7 +196,7 @@ describe('cli parser', function () {
                 alias: ['r']
             }
         });
-        assert.deepEqual(output.flags.config[0], 'example.js');
+        assert.deepEqual(output.flags.input[0], 'example.js');
         assert.isUndefined(output.flags.reporters);
     });
     it('Allows flag-first', function () {

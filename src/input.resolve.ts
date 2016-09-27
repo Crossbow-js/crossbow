@@ -30,11 +30,11 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
      * If the User provided a -c flag we MUST validate this
      * request first as it may fail and then we don't want to continue
      */
-    if (config.config.length) {
-        debug(`config flag provided ${config.config}`);
+    if (config.input.length) {
+        debug(`config flag provided ${config.input}`);
 
-        const stringInputs     = config.config.filter(x => typeof x === 'string');
-        const inlineInputs     = config.config.filter(x => isPlainObject(x));
+        const stringInputs     = config.input.filter(x => typeof x === 'string');
+        const inlineInputs     = config.input.filter(x => isPlainObject(x));
 
         const fileInputs       = file.readInputFiles(stringInputs, config.cwd);
         const mergedFileInputs = fileInputs.valid.map(file => file.input);

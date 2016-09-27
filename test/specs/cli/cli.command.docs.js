@@ -12,7 +12,7 @@ describe("CLI command.docs", function () {
 
         rimraf.sync(output);
 
-        const out = exec(`node dist/cb docs -c ${input} --output ${output}`);
+        const out = exec(`node dist/cb docs -i ${input} --output ${output}`);
 
         assert.include(out.toString(), 'Docs added to: test/fixtures/outputs/new.md');
 
