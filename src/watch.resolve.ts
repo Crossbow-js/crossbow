@@ -37,6 +37,8 @@ export interface WatchTask {
     watchers: Watcher[]
     name: string
     errors: WatchTaskError[]
+    patterns?: string[]
+    tasks?: string[]
 }
 
 export interface Watcher {
@@ -87,6 +89,21 @@ function createOne(item, itemOptions, globalOptions): Watcher {
  * @returns {*}
  */
 function getFormattedTask(watchTaskParent: WatchTask, globalOptions: CBWatchOptions): Watcher[] {
+
+    /**
+     * Simple mode is when patterns + tasks given as top-level
+     * keys. This means we automatically just into simple mode
+     *  eg:
+     *      default: {
+     *          patterns: ['*.json']
+     *          tasks: ['*.json']
+     * }
+     *
+     */
+    if (watchTaskParent.patterns && watchTaskParent.tasks) {
+        return [createOne(watchTaskParent, watchTaskParent.options, globalOptions)];
+    }
+
     /**
      * Look at each key provided to decide if it can
      * be transformed into a watcher obj
@@ -171,9 +188,9 @@ function getFormattedTask(watchTaskParent: WatchTask, globalOptions: CBWatchOpti
 
 function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): WatchTask {
 
-    const incoming = preprocessWatchTask(taskName);
+    const incoming  = preprocessWatchTask(taskName);
     const selection = trigger.input.watch[incoming.taskName] || {};
-    const watchers = getFormattedTask(selection, trigger.input.watch.options || {});
+    const watchers  = getFormattedTask(selection, trigger.input.watch.options || {});
 
     const errors = gatherWatchTaskErrors(
         incoming,

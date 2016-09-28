@@ -12,6 +12,7 @@ import {prepareInput} from "./index";
 import {DocsFileOutput, DocsCommandComplete} from "./command.docs";
 import * as file from "./file.utils";
 import {InitCommandComplete} from "./command.init";
+import {WatchersCommandComplete} from "./command.watchers";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -69,6 +70,15 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
                     return process.exit(1);
                 }
                 writeFileSync(x.outputFilePath, readFileSync(x.templateFilePath));
+            });
+    }
+
+    if (parsed.cli.command === 'watchers') {
+        handleIncoming<WatchersCommandComplete>(prepared)
+            .subscribe(x => {
+                if (x.errors.length) {
+                    return process.exit(1);
+                }
             });
     }
 }

@@ -4,6 +4,22 @@ const defaultWatchOptions = require('../../../dist/watch.resolve').defaultWatchO
 const yml  = require('js-yaml');
 
 describe('Gathering watch tasks in longer format', function () {
+    it('can gather tasks in normal format patterns: [] tasks: [] format', function () {
+        const runner = utils.getWatcher(['default'], {
+            watch: {
+                "bs-config": {
+                    server: true
+                },
+                default: {
+                    patterns: ["*.css"],
+                    tasks:    ["sass", "js"]
+                }
+            }
+        });
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].patterns, ['*.css']);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].tasks, ['sass', 'js']);
+        assert.deepEqual(runner.tasks.valid[0].watchers[0].options, defaultWatchOptions);
+    });
     it('can gather tasks in long format', function () {
         const runner = utils.getWatcher(['default'], {
            watch: {
