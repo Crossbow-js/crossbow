@@ -7,7 +7,7 @@ describe('Choosing merging multiple input types', function () {
         const runner = utils.run({
             input: ['run', 'css'],
             flags: {
-                config: [
+                input: [
                     'test/fixtures/inputs/1.yaml',
                     'test/fixtures/inputs/2.yaml',
                     {
@@ -20,6 +20,7 @@ describe('Choosing merging multiple input types', function () {
                 ]
             }
         });
+
         const output = runner.subscription.messages[0].value.value;
         assert.equal(output.reports[1].stats.duration, 2000);
     });

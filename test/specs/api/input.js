@@ -14,9 +14,9 @@ describe('Choosing which input strategy to use', function () {
         assert.equal(inputs.sources[0].parsed.base, 'crossbow.yaml');
         assert.equal(inputs.sources[1].parsed.base, 'crossbow.js');
     });
-    it('never looks for defaults when -c flag given', function () {
+    it('never looks for defaults when -i flag given', function () {
         const inputs = getInputs(configMerge({
-            config: ['test/fixtures/bs-config.js']
+            input: ['test/fixtures/bs-config.js']
         }));
         assert.equal(inputs.sources.length, 1);
         assert.equal(inputs.sources[0].parsed.base, 'bs-config.js');

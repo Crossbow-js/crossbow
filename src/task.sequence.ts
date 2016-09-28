@@ -593,7 +593,8 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
     }
 
     if (start && error) {
-        return _.assign({}, start.stats, error.stats);
+        const duration = error.stats.endTime - start.stats.startTime;
+        return _.assign({}, start.stats, error.stats, {duration});
     }
 
     if (start) {

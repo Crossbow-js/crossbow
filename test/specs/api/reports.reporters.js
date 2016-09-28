@@ -1,8 +1,8 @@
 const assert = require("chai").assert;
-const _      = require('../../lodash.custom.js');
+const _      = require('../../../lodash.custom.js');
 const Rx     = require("rx");
-const cli    = require("../../dist/index").default;
-const ReportNames = require('../../dist/reporter.resolve').ReportNames;
+const cli    = require("../../../dist/index").default;
+const ReportNames = require('../../../dist/reporter.resolve').ReportNames;
 
 describe('Reporter checks', function () {
     it('calls with using Config file... etc', function () {
