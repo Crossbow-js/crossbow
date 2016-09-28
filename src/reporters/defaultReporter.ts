@@ -9,7 +9,7 @@ import {parse, dirname, join, relative} from "path";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {TaskStats} from "../task.runner";
-import {countSequenceErrors, collectSkippedTasks} from "../task.sequence";
+import {countSequenceErrors, collectSkippedTasks, collectRunnableTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
 import {duration, _taskReport} from "./task.list";
 import * as reports from "../reporter.resolve";
@@ -386,8 +386,11 @@ function reportSummary(report: reports.SummaryReport): string[] {
 
     const {sequence, cli, title, config, runtime} = report.data;
 
-    const errorCount = countSequenceErrors(sequence);
-    const skipCount = collectSkippedTasks(sequence, []);
+    const errorCount     = countSequenceErrors(sequence);
+    const skippedTasks   = collectSkippedTasks(sequence,  []);
+    const runnableTasks  = collectRunnableTasks(sequence, []);
+    const completedTasks = runnableTasks.filter(x => x.stats.completed);
+
     const lines = [];
 
     // todo - show a reduced tree showing only errors
@@ -396,7 +399,6 @@ function reportSummary(report: reports.SummaryReport): string[] {
         lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
     }
 
-    lines.push('{gray:--------}');
 
     if (errorCount > 0) {
 
@@ -415,16 +417,40 @@ function reportSummary(report: reports.SummaryReport): string[] {
         } else {
             lines.push(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} ${plural})`);
         }
+
+        lines.push(``);
+        lines.push(`  {bold:Summary:}`);
+        lines.push(``);
+        lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
+        lines.push(`    Completed: {green:${completedTasks.length}}`);
+        lines.push(`    Failed:    {red:${errorCount}}`);
+
     } else {
 
-        if (skipCount.length > 0) {
-            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}} (${skipCount.length} skipped item${skipCount.length === 1 ? '' : 's'}, use -f to force)`);
+        if (skippedTasks.length > 0) {
+
+            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}} (${skippedTasks.length} of ${runnableTasks.length} skipped, use -f to force)`);
+            lines.push(``);
+            lines.push(`  {bold:Summary:}`);
+            lines.push(``);
+            lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
+            lines.push(`    Skipped:   {cyan:${skippedTasks.length}}`);
+
+            if (runnableTasks.length !== skippedTasks.length) {
+                lines.push(`  Completed: {cyan:${completedTasks.length}}`);
+            }
         } else {
+
             lines.push(`{ok: } ${title} {yellow:${duration(runtime)}}`);
+            lines.push(``);
+            lines.push(`  {bold:Summary:}`);
+            lines.push(``);
+            lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
+            lines.push(`    Completed: {green:${completedTasks.length}}`);
         }
     }
 
-    lines.push('{gray:--------}');
+    lines.push('');
 
     return lines;
 }

@@ -574,6 +574,16 @@ export function collectSkippedTasks (items:SequenceItem[], initial): SequenceIte
         return acc.concat(collectSkippedTasks(item.items, []));
     }, initial);
 }
+
+export function collectRunnableTasks (items:SequenceItem[], initial: SequenceItem[]): SequenceItem[] {
+    return items.reduce(function (acc, item) {
+        if (item.type === SequenceItemTypes.Task) {
+            return acc.concat(item);
+        }
+        return acc.concat(collectRunnableTasks(item.items, []));
+    }, initial);
+}
+
 /**
  * Look at the reports array to find stats linked to a
  * given task
