@@ -31,6 +31,7 @@ export interface CrossbowConfiguration {
     reporters: Array<string|Function>
     skip: string[]
     tasksDir: string[]
+    nodeModulesPaths: string[]
 
     // docs command
     file?: string
@@ -97,6 +98,10 @@ const defaults = <CrossbowConfiguration>{
      * Show the prompt for selecting tasks?
      */
     interactive: false,
+    /**
+     *
+     */
+    nodeModulesPaths: ['node_modules'],
     /**
      *
      * CI mode - will exit if any shell/npm scripts

@@ -32,7 +32,7 @@ module.exports.getRunner = (args, input, config) => {
     const cli    = {};
 
     cli.input                = ['run'].concat(args);
-    cli.flags                = cli.flags || config || {};
+    cli.flags                = config || {};
     cli.flags.handoff        = true;
     cli.flags.outputObserver = output;
 
@@ -64,4 +64,5 @@ module.exports.executeRun = (args, input, config) => {
 
 module.exports.nullOutput = () => new Rx.ReplaySubject(100);
 
-module.exports.delay = (time, scheduler) => Oempty().delay(time, scheduler);
+module.exports.delay     = (time, scheduler) => Oempty().delay(time, scheduler);
+module.exports.getOutput = (runner) => runner.subscription.messages[0].value.value;

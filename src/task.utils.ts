@@ -34,7 +34,7 @@ export interface InputFiles {
 export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalFile[] {
 
     const tasksByName = locateExternalTask(config, taskName);
-
+    
     /**
      * Exit early if this file exists
      * TODO - allow this lookup to be cached to prevent future calls
@@ -76,9 +76,9 @@ function locateExternalTask (config: CrossbowConfiguration, name: string): Exter
         });
 }
 
-function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalFile[] {
+function locateNodeModule (config: CrossbowConfiguration, name: string): ExternalFile[] {
     try {
-        const maybe   = join(config.cwd, 'node_modules', name);
+        const maybe   = join(config.cwd, ...config.nodeModulesPaths, name);
         const required = require.resolve(maybe);
         return [{
             rawInput: name,

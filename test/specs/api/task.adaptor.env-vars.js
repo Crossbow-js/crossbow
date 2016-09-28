@@ -1,29 +1,23 @@
 const assert = require('chai').assert;
-const cli = require("../../");
+const utils  = require("../../utils");
 
 describe('Adaptor tasks + env vars', function () {
-    it('@sh accepts top-level env option and merges that will task + process env' , function (done) {
-        const runner = cli.getRunner(['js'], {
+    it('@sh accepts top-level env option and merges that with task + process env' , function () {
+        const env = [];
+        const runner = utils.run({input: ['run', 'js']}, {
             env: {
                 __SLEEP__: '0.1'
             },
             tasks: {
-                js: {
-                    adaptor: 'sh',
-                    command: 'sleep $__SLEEP__'
+                js: function (opts, ctx) {
+                    env.push(ctx.input.env);
                 }
             }
         });
-        runner.runner
-            .series()
-            .toArray()
-            .subscribe(function (xs) {
-                assert.ok(xs.slice(-1)[0].stats.duration > 100);
-                done();
-            });
+        assert.equal(env[0].__SLEEP__, '0.1');
     });
     it('@npm accepts top-level env option and merges that will task + process env' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             env: {
                 __SLEEP__: '0.1'
             },
@@ -42,7 +36,7 @@ describe('Adaptor tasks + env vars', function () {
             });
     });
     it('@sh task-specific vars override global' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             env: {
                 __SLEEP__: '2'
             },
@@ -64,7 +58,7 @@ describe('Adaptor tasks + env vars', function () {
             });
     });
     it('@npm CLI provided env vars override EVERYTHING else' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             env: {
                 __SLEEP__: '2'
             },
@@ -92,7 +86,7 @@ describe('Adaptor tasks + env vars', function () {
             });
     });
     it('@sh CLI provided env vars override EVERYTHING else' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             env: {
                 __SLEEP__: '2'
             },

@@ -7,27 +7,30 @@ describe('task.resolve from installed node_modules', function () {
     it('can retrieve task-name using require()', function () {
         const runner = utils.getRunner(['js'], {
             tasks: {
-                js: 'crossbow-sass'
+                js: 'sass'
             }
+        }, {
+            nodeModulesPaths: ['test', 'fixtures', 'fake_modules']
         });
         assert.equal(runner.tasks.valid[0].rawInput, 'js');
-        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'crossbow-sass');
-        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'node_modules/crossbow-sass/index.js');
+        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'sass');
+        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'test/fixtures/fake_modules/sass.js');
     });
     it('can retrieve task-name using require() + sub tasks + flags', function () {
         const runner = utils.getRunner(['js@p'], {
             tasks: {
-                js: 'crossbow-sass:cat'
+                js: 'sass:cat'
             },
             options: {
-                'crossbow-sass': {
+                'sass': {
                     'cat': {name:'kittie'}
                 }
             }
+        }, {
+            nodeModulesPaths: ['test', 'fixtures', 'fake_modules']
         });
         assert.equal(runner.tasks.valid[0].rawInput, 'js@p');
-        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'crossbow-sass');
-        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'node_modules/crossbow-sass/index.js');
+        assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'sass');
     });
     it('can give good errors when module not found', function () {
         const runner = utils.getRunner(['js'], {

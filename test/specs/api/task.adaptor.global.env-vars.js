@@ -1,9 +1,9 @@
 const assert = require('chai').assert;
-const cli = require("../../");
+const utils = require("../../utils");
 
 describe('Adaptor tasks + global option vars', function () {
     it('@sh with options env vars' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             tasks: {
                 js: {
                     input: '@sh sleep $CB_OPTIONS_MY_NESTED_OBJECT_SLEEP'
@@ -28,7 +28,7 @@ describe('Adaptor tasks + global option vars', function () {
             });
     });
     it('@npm with options env vars' , function (done) {
-        const runner = cli.getRunner(['js'], {
+        const runner = utils.getRunner(['js'], {
             tasks: {
                 js: {
                     input: '@sh sleep $CB_OPTIONS_MY_NESTED_OBJECT_SLEEP'

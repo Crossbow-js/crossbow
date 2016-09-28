@@ -1,5 +1,5 @@
-const utils = require('../../dist/task.utils');
-const fileUtils = require('../../dist/file.utils');
+const utils = require('../../../dist/task.utils');
+const fileUtils = require('../../../dist/file.utils');
 const retrieveDefaultInputFiles = fileUtils.retrieveDefaultInputFiles;
 const assert                    = require('chai').assert;
 
