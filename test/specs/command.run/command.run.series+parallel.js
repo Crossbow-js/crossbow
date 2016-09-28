@@ -17,13 +17,6 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        // test output
-        runner.output
-            .filter(x => x.origin === 'Summary')
-            .subscribe(function (x) {
-                assert.include(x.data[2], '2.00s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
-            });
-
         const reports = runner.subscription.messages[0].value.value.reports;
 
         assert.equal(reports[0].type, TaskReportType.start);
@@ -43,15 +36,6 @@ describe("Running mix of tasks in seq + parallel", function () {
                 'js':  [t100, terror, t100]
             }
         });
-
-        // test output
-        runner
-            .output
-            .filter(x => x.origin === 'Summary')
-            .pluck('data')
-            .subscribe(function (data) {
-                assert.include(data[2], '2.10s (1 error)'); // 1s + 2 parallel at 100ms each === 1.10s
-            });
 
         const reports = runner.subscription.messages[0].value.value.reports;
 

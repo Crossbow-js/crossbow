@@ -386,86 +386,44 @@ function reportSummary(report: reports.SummaryReport): string[] {
 
     const {sequence, cli, title, config, runtime} = report.data;
 
-    const errorCount     = countSequenceErrors(sequence);
-    const skippedTasks   = collectSkippedTasks(sequence,  []);
     const runnableTasks  = collectRunnableTasks(sequence, []);
-    const completedTasks = runnableTasks.filter(x => x.stats.completed);
+    const errorTasks     = runnableTasks.filter(x => x.stats.errors.length);
+    const skippedTasks   = runnableTasks.filter(x => x.stats.skipped);
+    const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
 
     const lines = [];
 
     // todo - show a reduced tree showing only errors
-    if (config.verbose === LogLevel.Verbose || errorCount > 0) {
+    if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
         const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
         lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
     }
 
+    lines.push(``);
 
-    if (errorCount > 0) {
-
-        const plural = errorCount === 1 ? 'error' : 'errors';
-
-        cli.input.slice(1).forEach(function (input) {
-            const match = getSequenceItemThatMatchesCliInput(sequence, input);
-            const errors = countSequenceErrors(match);
-            if (errors > 0) {
-                lines.push(`{red:x} input: {yellow:${input}} caused an error`);
-            }
-        });
-
-        if (config.fail) {
-            lines.push(`{red:x} ${title} {yellow:${duration(runtime)} (${errorCount} ${plural})`);
-        } else {
-            lines.push(`{yellow:x} ${title} {yellow:${duration(runtime)} (${errorCount} ${plural})`);
-        }
-
-        lines.push(``);
-        lines.push(`  {bold:Summary:}`);
-        lines.push(``);
-        lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
-        lines.push(`    Completed: {green:${completedTasks.length}}`);
-        lines.push(`    Failed:    {red:${errorCount}}`);
-
+    if (errorTasks.length > 0) {
+        lines.push(`{red:x} {bold:Summary:}`);
     } else {
+        lines.push(`{ok: } {bold:Summary:}`);
 
-        if (skippedTasks.length > 0) {
-
-            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}} (${skippedTasks.length} of ${runnableTasks.length} skipped, use -f to force)`);
-            lines.push(``);
-            lines.push(`  {bold:Summary:}`);
-            lines.push(``);
-            lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
-            lines.push(`    Skipped:   {cyan:${skippedTasks.length}}`);
-
-            if (runnableTasks.length !== skippedTasks.length) {
-                lines.push(`  Completed: {cyan:${completedTasks.length}}`);
-            }
-        } else {
-
-            lines.push(`{ok: } ${title} {yellow:${duration(runtime)}}`);
-            lines.push(``);
-            lines.push(`  {bold:Summary:}`);
-            lines.push(``);
-            lines.push(`    Tasks:     {cyan:${runnableTasks.length}}`);
-            lines.push(`    Completed: {green:${completedTasks.length}}`);
-        }
     }
 
+    lines.push(``);
+    lines.push(`    Total Time: {yellow:${duration(runtime)}}`);
+    lines.push(`    Tasks:      {cyan:${runnableTasks.length}}`);
+
+    if (skippedTasks.length) {
+        lines.push(`    Skipped:    {cyan:${skippedTasks.length}}`);
+    }
+
+    if (errorTasks.length > 0) {
+        lines.push(`    Failed:     {red:${errorTasks.length}}`);
+    }
+
+    lines.push(`    Completed:  {green:${completedTasks.length}}`);
     lines.push('');
 
     return lines;
-}
-
-
-function getSequenceItemThatMatchesCliInput(sequence: SequenceItem[], input: string): SequenceItem[] {
-    return sequence.filter(function (item) {
-        if (item.taskName) {
-            if (item.taskName === input) {
-                return true;
-            }
-        } else {
-            return item.task.rawInput === input;
-        }
-    });
 }
 
 function getTaskCollectionList(taskCollection: TaskCollection): string[] {
