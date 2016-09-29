@@ -354,7 +354,49 @@ Or to see multiple tasks running, with some in parallel, try:
             ...getExternalError(error.type, error).split('\n')
         ]
     },
-    [reports.ReportTypes.Summary]: reportSummary,
+    [reports.ReportTypes.Summary]: function reportSummary(report: reports.SummaryReport): string[] {
+
+        const {sequence, cli, title, config, runtime} = report.data;
+
+        const runnableTasks  = collectRunnableTasks(sequence, []);
+        const errorTasks     = runnableTasks.filter(x => x.stats.errors.length > 0);
+        const skippedTasks   = runnableTasks.filter(x => x.stats.skipped);
+        const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
+
+        const lines = [];
+
+        // todo - show a reduced tree showing only errors
+        if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
+            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+            lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
+        }
+
+        lines.push(``);
+
+        if (errorTasks.length > 0) {
+            lines.push(`{red:x} {bold:Summary:}`);
+        } else {
+            lines.push(`{ok: } {bold:Summary:}`);
+
+        }
+
+        lines.push(``);
+        lines.push(`    Total Time: {yellow:${duration(runtime)}}`);
+        lines.push(`    Tasks:      {cyan:${runnableTasks.length}}`);
+
+        if (skippedTasks.length) {
+            lines.push(`    Skipped:    {cyan:${skippedTasks.length}}`);
+        }
+
+        if (errorTasks.length > 0) {
+            lines.push(`    Failed:     {red:${errorTasks.length}}`);
+        }
+
+        lines.push(`    Completed:  {green:${completedTasks.length}}`);
+        lines.push('');
+
+        return lines;
+    },
     [reports.ReportTypes.HashDirError]: function (report: reports.HashDirErrorReport): string[] {
         const {error, cwd} = report.data;
         return [
@@ -380,50 +422,6 @@ export function multiLineTree(tree: string): string {
     });
 
     return lines.join('\n');
-}
-
-function reportSummary(report: reports.SummaryReport): string[] {
-
-    const {sequence, cli, title, config, runtime} = report.data;
-
-    const runnableTasks  = collectRunnableTasks(sequence, []);
-    const errorTasks     = runnableTasks.filter(x => x.stats.errors.length);
-    const skippedTasks   = runnableTasks.filter(x => x.stats.skipped);
-    const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
-
-    const lines = [];
-
-    // todo - show a reduced tree showing only errors
-    if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
-        const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
-        lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
-    }
-
-    lines.push(``);
-
-    if (errorTasks.length > 0) {
-        lines.push(`{red:x} {bold:Summary:}`);
-    } else {
-        lines.push(`{ok: } {bold:Summary:}`);
-
-    }
-
-    lines.push(``);
-    lines.push(`    Total Time: {yellow:${duration(runtime)}}`);
-    lines.push(`    Tasks:      {cyan:${runnableTasks.length}}`);
-
-    if (skippedTasks.length) {
-        lines.push(`    Skipped:    {cyan:${skippedTasks.length}}`);
-    }
-
-    if (errorTasks.length > 0) {
-        lines.push(`    Failed:     {red:${errorTasks.length}}`);
-    }
-
-    lines.push(`    Completed:  {green:${completedTasks.length}}`);
-    lines.push('');
-
-    return lines;
 }
 
 function getTaskCollectionList(taskCollection: TaskCollection): string[] {

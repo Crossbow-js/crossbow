@@ -165,7 +165,6 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
                 errors: errors,
                 sequence: decoratedSequence,
                 cli,
-                title: 'Total:',
                 config,
                 runtime
             }
