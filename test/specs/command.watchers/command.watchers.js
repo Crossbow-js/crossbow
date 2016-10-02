@@ -9,20 +9,42 @@ describe('command.watchers', function () {
         }, {
             watch: {
                 default: {
-                    patterns: ['*.json'],
-                    tasks:    ['build']
+                    patterns: ['*.json', 'core/css/*.{js,css}'],
+                    tasks:    ['build', 'other']
                 }
             },
             tasks: {
-                build: utils.task(100)
+                build: utils.task(100),
+                other: utils.task(100)
             }
         });
 
         runner
             .output
+            .filter(x => x.origin === 'WatcherNames')
+            .map(x => x.data.join('\n'))
             .subscribe(function (data) {
-                // console.log(data);
-                // assert.include(data[1], 'build <p>'); // 1s + 2 parallel at 100ms each === 1.10s
+                assert.include(data, '    {bold:Name}:     default');
+                assert.include(data, '    {bold:Patterns}: *.json, core/css/*.\\{js,css\\}');
+                assert.include(data, '    {bold:Tasks}:    build, other');
+            });
+    });
+    it("reports when no watchers available", function () {
+        const runner = utils.run({
+            input: ['watchers']
+        }, {
+            tasks: {
+                build: utils.task(100),
+                other: utils.task(100)
+            }
+        });
+
+        runner
+            .output
+            .filter(x => x.origin === 'NoWatchersAvailable')
+            .map(x => x.data.join('\n'))
+            .subscribe(function (data) {
+                assert.include(data, '{red:-} {bold:Error Type:}  NoWatchersAvailable');
             });
     });
 });

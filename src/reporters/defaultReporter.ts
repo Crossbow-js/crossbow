@@ -294,24 +294,26 @@ Or to see multiple tasks running, with some in parallel, try:
         const lines = ['{yellow:Available Watchers:}'];
 
         runners.valid.forEach(function (runner) {
-            lines.push(`Name:  {bold:${runner.parent}}`);
-            lines.push('Files: ' + runner.patterns.map(_e).map(x => `{cyan:${x}}`).join(', '));
-            lines.push(`Tasks: ` + runner.tasks.map(x => `{magenta:${x}}`).join(', '));
             lines.push('');
+            lines.push(`    {bold:Name}:     ${runner.parent}`);
+            lines.push(`    {bold:Patterns}: ${runner.patterns.map(_e).join(', ')}`);
+            lines.push(`    {bold:Tasks}:    ${runner.tasks.join(', ')}`);
         });
 
+
+        lines.push(``);
         lines.push(`Run your watchers in the following way:`);
         lines.push(``);
 
         runners.valid.forEach(function (runner) {
-            lines.push(` {gray:$} crossbow watch {bold:${runner.parent}}`);
+            lines.push(`    {gray:$} crossbow watch {bold:${runner.parent}}`);
         });
 
         if (runners.valid.length > 1) {
             lines.push('');
             lines.push('Or run multiple watchers at once, such as:');
             lines.push(``);
-            lines.push(' {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+            lines.push('    {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
             lines.push('');
         }
         return lines;
