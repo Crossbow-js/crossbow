@@ -300,7 +300,6 @@ Or to see multiple tasks running, with some in parallel, try:
             lines.push(`    {bold:Tasks}:    ${runner.tasks.join(', ')}`);
         });
 
-
         lines.push(``);
         lines.push(`Run your watchers in the following way:`);
         lines.push(``);

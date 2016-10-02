@@ -1,0 +1,4 @@
+watch:
+  default:
+    patterns: '*.json'
+    tasks: '@sh du package.json'
