@@ -40,15 +40,18 @@ module.exports.getRunner = (args, input, config) => {
 };
 
 module.exports.getWatcher = (args, input, config) => {
-    const output = new Rx.ReplaySubject(100);
-    const cli    = {};
+    const scheduler  = new Rx.TestScheduler();
+    const output     = new Rx.ReplaySubject(100);
+    const cli        = {};
 
     cli.input                = ['watch'].concat(args);
     cli.flags                = cli.flags || config || {};
-    cli.flags.handoff        = true;
     cli.flags.outputObserver = output;
 
-    return cb.default(cli, input);
+    const runner       = cb.default(cli, input);
+    const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 200000});
+
+    return subscription.messages[0].value.value;
 };
 
 module.exports.executeRun = (args, input, config) => {

@@ -20,8 +20,8 @@ describe('using tasks given as flags as before', function () {
             before: ['js']
         });
 
-        assert.equal(runner.before.tasks.valid.length, 1);
-        assert.equal(runner.before.tasks.valid[0].taskName, 'js');
-        assert.equal(runner.before.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
+        assert.equal(runner.beforeTasks.tasks.valid.length, 1);
+        assert.equal(runner.beforeTasks.tasks.valid[0].taskName, 'js');
+        assert.equal(runner.beforeTasks.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
     });
 });

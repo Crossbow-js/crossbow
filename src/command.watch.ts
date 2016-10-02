@@ -2,9 +2,9 @@
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {WatchTaskRunner, createWatchRunners} from "./watch.runner";
+import {WatchTaskRunner, createWatchRunners, WatchRunners} from "./watch.runner";
 import {TaskReport} from "./task.runner";
-import {resolveWatchTasks} from './watch.resolve';
+import {resolveWatchTasks, WatchTasks} from './watch.resolve';
 import {getModifiedWatchContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
 import * as seq from "./task.sequence";
@@ -24,7 +24,18 @@ export interface CrossbowError extends Error {
     _cb: boolean
 }
 
-function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker$:any} {
+export interface WatchCommandSetupErrors {
+    type: ReportTypes
+}
+
+export interface WatchCommandReport {
+    beforeTasks:  BeforeTasks
+    watchTasks:   WatchTasks
+    watchRunners: WatchRunners
+    errors: WatchCommandSetupErrors[]
+}
+
+function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport> {
 
     const {cli, input, config, reporter} = trigger;
 
@@ -32,7 +43,7 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * task Tracker for external observers
      * @type {Subject<T>}
      */
-    trigger.tracker = new Rx.Subject();
+    trigger.tracker  = new Rx.Subject();
     trigger.tracker$ = trigger.tracker.share();
 
     debug(`Working with input [${trigger.cli.input}]`);
@@ -51,21 +62,11 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
     const runners = createWatchRunners(watchTasks, trigger);
 
     /**
-     * Get a special runner that will execute before
+     * Get a special runner that will executeWatchCommand before
      * watchers begin
      * @type {BeforeTasks}
      */
     const before = getBeforeTaskRunner(trigger, watchTasks);
-
-    /**
-     * Check if the user intends to handle running the tasks themselves,
-     * if that's the case we give them the resolved tasks along with
-     * the sequence and the primed runner
-     */
-    if (config.handoff) {
-        debug(`Handing off Watchers`);
-        return {tasks: watchTasks, runners, before};
-    }
 
     debug(`Not handing off, will handle watching internally`);
 
@@ -74,7 +75,12 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      */
     if (before.tasks.invalid.length) {
         reporter({type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
-        return;
+        return Rx.Observable.just({
+            watchTasks,
+            watchRunners: runners,
+            beforeTasks: before,
+            errors: [{type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}}]
+        });
     }
 
     /**
@@ -83,7 +89,12 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      */
     if (watchTasks.invalid.length) {
         reporter({type: ReportTypes.WatchTaskErrors, data: {watchTasks: watchTasks.all, cli, input}});
-        return;
+        return Rx.Observable.just({
+            watchTasks,
+            watchRunners: runners,
+            beforeTasks: before,
+            errors: [{type: ReportTypes.WatchTaskErrors, data: {watchTasks, trigger}}]
+        });
     }
 
 
@@ -91,15 +102,17 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
      * Never continue if any runners are invalid
      */
     if (runners.invalid.length) {
-        // it doesn't make any sense to log 'valid' tasks with
-        // WatchTaskTasksErrors - either don't log them, or use a more appropriate name
-        // runners.valid.forEach(runner => {
-        //     reporter(ReportTypes.WatchTaskTasksErrors, runner._tasks.all, runner, config)
-        // });
+
         runners.invalid.forEach(runner => {
             reporter({type: ReportTypes.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
-        return;
+
+        return Rx.Observable.just({
+            watchTasks,
+            watchRunners: runners,
+            beforeTasks: before,
+            errors: [{type: ReportTypes.WatchTaskTasksErrors}]
+        });
     }
 
     /**
@@ -110,95 +123,49 @@ function execute(trigger: CommandTrigger): WatchTaskRunner|{watcher$:any,tracker
     }
 
     /**
-     * To begin the watchers, we first create a runner for the 'before' tasks.
-     * If this completes (tasks complete or return true) then we continue
-     * to create the file-watchers and hook up the tasks
+     * todo: actually begin the watchers
      */
-    const watcher$ = Rx.Observable.concat(
-        /**
-         * The 'before' runner can be `true`, complete, or throw.
-         * If it throws, the login in the `do` block below will not run
-         * and the watchers will not begin
-         */
-        createBeforeRunner(before)
-            .catch(err => {
-                // Only intercept Crossbow errors
-                // otherwise just allow it to be thrown
-                // For example, 'before' runner may want
-                // to terminate the stream, but not with a throwable
-                if (err._cb) {
-                    sub.dispose();
-                    return Rx.Observable.empty();
-                }
-                return Rx.Observable.throw(err);
-            })
-            .do(() => {
-                reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
-            }),
-        createObservablesForWatchers(runners.valid, trigger)).share();
+    return Rx.Observable.just({
+        watchTasks,
+        watchRunners: runners,
+        beforeTasks: before,
+        errors: []
+    });
 
-    const sub = watcher$.subscribe();
-
-    return {
-        watcher$,
-        tracker$: trigger.tracker$
-    };
-
-    /**
-     * Return an Observable that's either
-     * 1. a simple boolean (no before tasks),
-     * 2. a throw (which means there was some error, so watchers should not begin)
-     * 3. a sequence representing a runner (which will then wait until complete)
-     */
-    function createBeforeRunner(before: BeforeTasks): Rx.Observable<any> {
-
-        if (!before.beforeTasksAsCliInput.length) {
-            return Rx.Observable.just(true);
-        }
-
-        if (before.tasks.invalid.length) {
-            return Rx.Observable.throw(new Error('Before task resolution failed'));
-        }
-
-        /**
-         * A generic timestamp to mark the beginning of the tasks
-         * @type {number}
-         */
-        const beforeTimestamp = new Date().getTime();
-        const report = (seq: SequenceItem[]) => {
-            reporter({type: ReportTypes.Summary, data: {
-                sequence: seq,
-                cli,
-                title: 'Before tasks Total:',
-                config: trigger.config,
-                runtime: new Date().getTime() - beforeTimestamp
-            }});
-        }
-
-        return before
-            .runner
-            .series()
-            .do(report => {
-                reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
-            })
-            .toArray()
-            .flatMap((reports: TaskReport[]) => {
-                const incoming = seq.decorateSequenceWithReports(before.sequence, reports);
-                const errorCount = seq.countSequenceErrors(incoming);
-                report(incoming);
-                if (errorCount > 0) {
-                    /**
-                     * If we reach here, the 'before' task sequence did not complete
-                     * so we `throw` here to ensure the upstream fails
-                     */
-                    const cberror = <CrossbowError>new Error('Before tasks did not complete!');
-                    reporter({type: ReportTypes.BeforeTasksDidNotComplete, data: {error: cberror}} as BeforeTasksDidNotCompleteReport);
-                    cberror._cb = true;
-                    return Rx.Observable.throw(cberror);
-                }
-                return Rx.Observable.just(incoming);
-            });
-    }
+    // /**
+    //  * To begin the watchers, we first create a runner for the 'before' tasks.
+    //  * If this completes (tasks complete or return true) then we continue
+    //  * to create the file-watchers and hook up the tasks
+    //  */
+    // const watcher$ = Rx.Observable.concat(
+    //     /**
+    //      * The 'before' runner can be `true`, complete, or throw.
+    //      * If it throws, the login in the `do` block below will not run
+    //      * and the watchers will not begin
+    //      */
+    //     createBeforeRunner(before)
+    //         .catch(err => {
+    //             // Only intercept Crossbow errors
+    //             // otherwise just allow it to be thrown
+    //             // For example, 'before' runner may want
+    //             // to terminate the stream, but not with a throwable
+    //             if (err._cb) {
+    //                 sub.dispose();
+    //                 return Rx.Observable.empty();
+    //             }
+    //             return Rx.Observable.throw(err);
+    //         })
+    //         .do(() => {
+    //             reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
+    //         }),
+    //     createObservablesForWatchers(runners.valid, trigger)).share();
+    //
+    // const sub = watcher$.subscribe();
+    //
+    // return {
+    //     watcher$,
+    //     tracker$: trigger.tracker$
+    // };
 }
 
 export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
@@ -224,7 +191,7 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
             cli.input = moddedCliInput.concat('default');
-            return execute(getModifiedWatchContext({
+            return executeWatchCommand(getModifiedWatchContext({
                 shared: sharedMap,
                 cli,
                 input,
@@ -249,7 +216,7 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
         reporter({type: ReportTypes.NoWatchTasksProvided});
         return promptForWatchCommand(cli, input, config).then(function (answers) {
             const cliMerged = _.merge({}, cli, {input: answers.watch});
-            return execute({
+            return executeWatchCommand({
                 shared: sharedMap,
                 cli: cliMerged,
                 input,
@@ -260,7 +227,7 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
         });
     }
 
-    return execute(getModifiedWatchContext({
+    return executeWatchCommand(getModifiedWatchContext({
         shared: sharedMap,
         cli,
         input,

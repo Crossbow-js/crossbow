@@ -15,12 +15,12 @@ describe('Resolving watch tasks', function () {
             }
         });
 
-        assert.equal(runner.tasks.valid[0].name, 'shane');
-        assert.deepEqual(runner.tasks.valid[0].options, {});
-        assert.equal(runner.tasks.valid[0].watchers.length, 3);
-        assert.equal(runner.tasks.valid[0].watchers[0].patterns[0], '*.css');
-        assert.deepEqual(runner.tasks.valid[0].watchers[0].tasks, ['sass', 'js']);
-        assert.deepEqual(runner.tasks.valid[0].watchers[0].options, defaultWatchOptions);
+        assert.equal(runner.watchTasks.valid[0].name, 'shane');
+        assert.deepEqual(runner.watchTasks.valid[0].options, {});
+        assert.equal(runner.watchTasks.valid[0].watchers.length, 3);
+        assert.equal(runner.watchTasks.valid[0].watchers[0].patterns[0], '*.css');
+        assert.deepEqual(runner.watchTasks.valid[0].watchers[0].tasks, ['sass', 'js']);
+        assert.deepEqual(runner.watchTasks.valid[0].watchers[0].options, defaultWatchOptions);
     });
     it('can maintain personal before tasks even when before given globally too', function () {
         const runner = utils.getWatcher(['default', 'dev'], {
@@ -37,7 +37,7 @@ describe('Resolving watch tasks', function () {
             }
         });
 
-        assert.equal(runner.tasks.valid[0].before[0], '@logger');
-        assert.equal(runner.tasks.valid[1].before.length, 0);
+        assert.equal(runner.watchTasks.valid[0].before[0], '@logger');
+        assert.equal(runner.watchTasks.valid[1].before.length, 0);
     });
 });

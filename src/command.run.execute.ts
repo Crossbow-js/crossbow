@@ -44,7 +44,7 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function executeRunCommand(trigger: CommandTrigger): Rx.Observable<RunCommandCompletionReport> {
+export default function executeRunCommand(trigger: CommandTrigger): RunComplete {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
@@ -111,7 +111,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     /**
      * Now actually execute the tasks.
      */
-    function run(runContext: RunContext, startTime: number): Rx.Observable<RunCommandCompletionReport> {
+    function run(runContext: RunContext, startTime: number): RunComplete {
 
         /**
          * series/parallel running have VERY different characteristics
@@ -143,7 +143,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * Because errors are handled by reports, task executions ALWAYS complete
      * and we handle that here.
      */
-    function handleCompletion (reports: TaskReport[], runtime: number): Rx.Observable<RunCommandCompletionReport> {
+    function handleCompletion (reports: TaskReport[], runtime: number): RunComplete {
 
         /**
          * Merge sequence tree with Task Reports
