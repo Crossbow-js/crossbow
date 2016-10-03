@@ -10,7 +10,7 @@ import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
 import * as seq from "./task.sequence";
 import Rx = require('rx');
 import Immutable = require('immutable');
-import {createObservablesForWatchers} from "./watch.file-watcher";
+import {createObservablesForWatchers, WatchEvent} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
@@ -28,58 +28,47 @@ export interface WatchCommandSetupErrors {
     type: ReportTypes
 }
 
-export interface WatchCommandReport {
+export interface WatchCommandReport <T> {
+    type: WatchCommandEventTypes
+    data: T
+}
+
+export interface WatchCommandSetup {
     beforeTasks:  BeforeTasks
     watchTasks:   WatchTasks
     watchRunners: WatchRunners
-    errors: WatchCommandSetupErrors[]
+    errors:       WatchCommandSetupErrors[]
 }
 
-function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport> {
+export enum WatchCommandEventTypes {
+    SetupError = <any>'SetupError',
+    FileEvent  = <any>'FileEvent'
+}
+
+function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchEvent>> {
+
+    // debug(`Working with input [${trigger.cli.input}]`);
+    // debug(`${watchTasks.valid.length} valid task(s)`);
+    // debug(`${watchTasks.invalid.length} invalid task(s)`);
+    // debug(`Not handing off, will handle watching internally`);
 
     const {cli, input, config, reporter} = trigger;
 
-    /**
-     * task Tracker for external observers
-     * @type {Subject<T>}
-     */
-    trigger.tracker  = new Rx.Subject();
-    trigger.tracker$ = trigger.tracker.share();
-
-    debug(`Working with input [${trigger.cli.input}]`);
-
-    /**
-     * First Resolve the task names given in input.
-     */
-    const watchTasks = resolveWatchTasks(trigger.cli.input, trigger);
-
-    debug(`${watchTasks.valid.length} valid task(s)`);
-    debug(`${watchTasks.invalid.length} invalid task(s)`);
-
-    /**
-     * Create runners for watch tasks;
-     */
-    const runners = createWatchRunners(watchTasks, trigger);
-
-    /**
-     * Get a special runner that will executeWatchCommand before
-     * watchers begin
-     * @type {BeforeTasks}
-     */
-    const before = getBeforeTaskRunner(trigger, watchTasks);
-
-    debug(`Not handing off, will handle watching internally`);
+    const {beforeTasks, watchTasks, watchRunners} = getWatchCommandSetup(trigger);
 
     /**
      * Never continue if any BEFORE tasks were flagged as invalid
      */
-    if (before.tasks.invalid.length) {
+    if (beforeTasks.tasks.invalid.length) {
         reporter({type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
         return Rx.Observable.just({
-            watchTasks,
-            watchRunners: runners,
-            beforeTasks: before,
-            errors: [{type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}}]
+            type: WatchCommandEventTypes.SetupError,
+            data:  {
+                watchTasks,
+                watchRunners: watchRunners,
+                beforeTasks: beforeTasks,
+                errors: [{type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}}]
+            }
         });
     }
 
@@ -90,47 +79,47 @@ function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchComman
     if (watchTasks.invalid.length) {
         reporter({type: ReportTypes.WatchTaskErrors, data: {watchTasks: watchTasks.all, cli, input}});
         return Rx.Observable.just({
-            watchTasks,
-            watchRunners: runners,
-            beforeTasks: before,
-            errors: [{type: ReportTypes.WatchTaskErrors, data: {watchTasks, trigger}}]
+            type: WatchCommandEventTypes.SetupError,
+            data: {
+                watchTasks,
+                watchRunners: watchRunners,
+                beforeTasks: beforeTasks,
+                errors: [{type: ReportTypes.WatchTaskErrors, data: {watchTasks, trigger}}]
+            }
         });
     }
-
 
     /**
      * Never continue if any runners are invalid
      */
-    if (runners.invalid.length) {
+    if (watchRunners.invalid.length) {
 
-        runners.invalid.forEach(runner => {
+        watchRunners.invalid.forEach(runner => {
             reporter({type: ReportTypes.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
 
         return Rx.Observable.just({
-            watchTasks,
-            watchRunners: runners,
-            beforeTasks: before,
-            errors: [{type: ReportTypes.WatchTaskTasksErrors}]
+            type: WatchCommandEventTypes.SetupError,
+            data: {
+                watchTasks,
+                watchRunners: watchRunners,
+                beforeTasks: beforeTasks,
+                errors: [{type: ReportTypes.WatchTaskTasksErrors}]
+            }
         });
     }
 
     /**
      * List the tasks that must complete before any watchers begin
      */
-    if (before.tasks.valid.length) {
-        reporter({type: ReportTypes.BeforeTaskList, data: {sequence: before.sequence, cli, config: trigger.config}});
+    if (beforeTasks.tasks.valid.length) {
+        reporter({type: ReportTypes.BeforeTaskList, data: {sequence: beforeTasks.sequence, cli, config: trigger.config}});
     }
 
     /**
      * todo: actually begin the watchers
      */
-    return Rx.Observable.just({
-        watchTasks,
-        watchRunners: runners,
-        beforeTasks: before,
-        errors: []
-    });
+    return createObservablesForWatchers(watchRunners.valid, trigger);
 
     // /**
     //  * To begin the watchers, we first create a runner for the 'before' tasks.
@@ -235,4 +224,39 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
         reporter,
         type: TriggerTypes.watcher
     }));
+}
+
+
+export function getWatchCommandSetup (trigger: CommandTrigger): WatchCommandSetup {
+
+    const {cli, input, config, reporter} = trigger;
+
+    /**
+     * task Tracker for external observers
+     * @type {Subject<T>}
+     */
+    trigger.tracker  = new Rx.Subject();
+    trigger.tracker$ = trigger.tracker.share();
+
+    /**
+     * First Resolve the task names given in input.
+     */
+    const watchTasks = resolveWatchTasks(trigger.cli.input, trigger);
+
+    /**
+     * Create runners for watch tasks;
+     */
+    const watchRunners = createWatchRunners(watchTasks, trigger);
+
+    /**
+     * Get a special runner that will executeWatchCommand before
+     * watchers begin
+     * @type {BeforeTasks}
+     */
+    const beforeTasks = getBeforeTaskRunner(trigger, watchTasks);
+
+    /**
+     *
+     */
+    return {watchRunners, watchTasks, beforeTasks, errors: []};
 }

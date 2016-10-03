@@ -1,13 +1,13 @@
 import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
 import {CrossbowConfiguration} from "../config";
-import {getRawOutputStream} from "../watch.file-watcher";
+import {getFileChangeStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
 import watchCommand from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
 const merge = require('../../lodash.custom').merge;
-import {WatchEvent} from '../watch.file-watcher';
+import {IncomingWatchEvent} from '../watch.file-watcher';
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
@@ -128,7 +128,7 @@ export const api = {
             options: merge({}, defaultWatchOptions, options),
             watcherUID: num
         };
-        return getRawOutputStream(watcher, input.reporter);
+        return getFileChangeStream(watcher, input.reporter);
     }
 };
 

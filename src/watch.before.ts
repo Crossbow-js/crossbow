@@ -26,15 +26,14 @@ export function getBeforeTaskRunner(trigger: CommandTrigger, watchTasks: WatchTa
     /**
      * Now Resolve the before task names given in input.
      */
-    const beforeTasks = resolveTasks(beforeTasksAsCliInput, trigger);
-
+    const beforeTasks    = resolveTasks(beforeTasksAsCliInput, trigger);
     const beforeSequence = seq.createFlattenedSequence(beforeTasks.valid, trigger);
-    const beforeRunner = seq.createRunner(beforeSequence, trigger);
+    const beforeRunner   = seq.createRunner(beforeSequence, trigger);
 
     return {
-        tasks: beforeTasks,
+        tasks:    beforeTasks,
         sequence: beforeSequence,
-        runner: beforeRunner,
+        runner:   beforeRunner,
         beforeTasksAsCliInput
     };
 }

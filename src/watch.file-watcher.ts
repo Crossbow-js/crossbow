@@ -6,10 +6,11 @@ import Rx = require("rx");
 import {SequenceItem} from "./task.sequence.factories";
 import {ReportTypes} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
+import {WatchCommandEventTypes, WatchCommandReport} from "./command.watch";
 
 const debug = require('debug')('cb:watch.runner');
 
-export interface WatchEvent {
+export interface IncomingWatchEvent {
     event: string
     path: string
     runner: Watcher
@@ -17,15 +18,15 @@ export interface WatchEvent {
     duration?: number
 }
 
-export interface WatchEventCompletion {
+export interface WatchEvent {
     sequence: SequenceItem[]
-    watchEvent: WatchEvent
+    watchEvent: IncomingWatchEvent
 }
 
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchEventCompletion> {
+export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchEvent>> {
 
     let paused = [];
     let {reporter} = trigger;
@@ -35,12 +36,12 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
          * Take each <Watcher> and create an observable stream for it,
          * merging them all together
          */
-        .merge(watchers.map(x => createObservableForWatcher(x, trigger.reporter)))
+        .merge(watchers.map(x => createObservableForWatcher(x, trigger)))
         /**
          * Map each file-change event into a stream of Rx.Observable<TaskReport>
          * todo - allow parallel + series running here
          */
-        .filter((x: WatchEvent) => {
+        .filter((x: IncomingWatchEvent) => {
             if (x.runner.options.block && paused.indexOf(x.watcherUID) > -1) {
                 debug('File change blocked');
                 return false;
@@ -52,7 +53,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                 paused.push(x.watcherUID);
             }
         })
-        .flatMap((watchEvent: WatchEvent, index) => {
+        .flatMap((watchEvent: IncomingWatchEvent, index) => {
 
             /** LOG **/
             reporter({type: ReportTypes.WatcherTriggeredTasks, data: {index, taskCollection: watchEvent.runner.tasks}});
@@ -95,24 +96,27 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                     }
                     /** LOG END **/
 
-                    return Rx.Observable.just({sequence: incoming, watchEvent: watchEvent});
+                    return Rx.Observable.just({type: WatchCommandEventTypes.FileEvent, data: {sequence: incoming, watchEvent: watchEvent}});
                 });
             return upcoming;
         })
-        .do((completion: WatchEventCompletion) => {
-            paused = paused.filter(x => x !== completion.watchEvent.watcherUID);
+        .do((completion: WatchCommandReport<WatchEvent>) => {
+            paused = paused.filter(x => x !== completion.data.watchEvent.watcherUID);
         });
 }
 
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher(watcher: Watcher, reporter): Rx.Observable<WatchEvent> {
+export function createObservableForWatcher(watcher: Watcher, trigger: CommandTrigger): Rx.Observable<IncomingWatchEvent> {
+
+    const {reporter}  = trigger;
+    const {scheduler} = trigger.config;
 
     /**
      * First create a stream of file-watcher events for this Watcher
      */
-    const output$ = getRawOutputStream(watcher, reporter);
+    const output$ = trigger.config.fileChangeObserver || getFileChangeStream(watcher, reporter);
 
     /**
      * Specify a mapping from option name -> Rx.Observable operator name
@@ -132,16 +136,16 @@ export function createObservableForWatcher(watcher: Watcher, reporter): Rx.Obser
         }
     ];
 
-    return applyOperators(output$, additionalOperators, watcher.options);
+    return applyOperators(output$, additionalOperators, watcher.options, scheduler);
 }
 
-export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<WatchEvent> {
+export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<IncomingWatchEvent> {
 
     /** DEBUG **/
     debug(`[id:${watcher.watcherUID}] options: ${JSON.stringify(watcher.options, null, 2)}`);
     /** DEBUG END **/
 
-    return Rx.Observable.create((observer: Rx.Observer<WatchEvent>) => {
+    return Rx.Observable.create((observer: Rx.Observer<IncomingWatchEvent>) => {
 
         /** DEBUG **/
         debug(`+ [id:${watcher.watcherUID}] ${watcher.patterns.length} patterns (${watcher.patterns})`);
@@ -180,11 +184,11 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
 /**
  *
  */
-function applyOperators(source: Rx.Observable<any>, items: {option: string, fnName: string}[], options: CBWatchOptions): Rx.Observable<any> {
+function applyOperators(source: Rx.Observable<any>, items: {option: string, fnName: string}[], options: CBWatchOptions, scheduler?): Rx.Observable<any> {
     return items.reduce((stream$, item) => {
         const value = options[item.option];
         if (value !== undefined && value > 0) {
-            return stream$[item.fnName].call(stream$, value);
+            return stream$[item.fnName].call(stream$, value, scheduler);
         }
         return stream$;
     }, source);
