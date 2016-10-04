@@ -2,20 +2,17 @@
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {WatchTaskRunner, createWatchRunners, WatchRunners} from "./watch.runner";
-import {TaskReport} from "./task.runner";
+import {createWatchRunners, WatchRunners} from "./watch.runner";
 import {resolveWatchTasks, WatchTasks} from './watch.resolve';
 import {getModifiedWatchContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
-import * as seq from "./task.sequence";
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {createObservablesForWatchers, WatchTaskReport, WatchRunnerComplete} from "./watch.file-watcher";
-import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
 import {ReportTypes} from "./reporter.resolve";
-import {BeforeWatchTaskErrorsReport, BeforeTasksDidNotCompleteReport} from "./reporter.resolve";
+import {BeforeWatchTaskErrorsReport} from "./reporter.resolve";
 
 const debug = require('debug')('cb:command.watch');
 const _ = require('../lodash.custom');
@@ -40,6 +37,8 @@ export interface WatchCommandSetup {
     errors:       WatchCommandSetupErrors[]
 }
 
+export type WatchCommmandComplete = Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete>>;
+
 export enum WatchCommandEventTypes {
     SetupError = <any>'SetupError',
     FileEvent  = <any>'FileEvent',
@@ -47,12 +46,7 @@ export enum WatchCommandEventTypes {
     WatchRunnerComplete  = <any>'WatchRunnerComplete',
 }
 
-function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete>> {
-
-    // debug(`Working with input [${trigger.cli.input}]`);
-    // debug(`${watchTasks.valid.length} valid task(s)`);
-    // debug(`${watchTasks.invalid.length} invalid task(s)`);
-    // debug(`Not handing off, will handle watching internally`);
+function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
 
     const {cli, input, config, reporter} = trigger;
 

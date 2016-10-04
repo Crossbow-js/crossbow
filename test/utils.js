@@ -83,3 +83,27 @@ module.exports.nullOutput = () => new Rx.ReplaySubject(100);
 
 module.exports.delay     = (time, scheduler) => Oempty().delay(time, scheduler);
 module.exports.getOutput = (runner) => runner.subscription.messages[0].value.value;
+
+module.exports.getFileWatcher = (args, input, fileEvents) => {
+
+    const scheduler = new Rx.TestScheduler();
+    const output    = new Rx.ReplaySubject(100);
+    const cli       = {};
+
+    const fileEventsObservable = scheduler.createHotObservable.apply(scheduler, fileEvents);
+
+    cli.input = ['watch'].concat(args);
+    cli.flags = {
+        scheduler: scheduler,
+        outputObserver: output,
+        fileChangeObserver: fileEventsObservable
+    };
+
+    const runner = cb.default(cli, input);
+
+    const subscription = scheduler.startScheduler(() => {
+        return runner;
+    }, {created: 0, subscribed: 0, disposed: 2000});
+
+    return {subscription, output};
+};

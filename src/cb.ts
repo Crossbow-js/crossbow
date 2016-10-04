@@ -13,6 +13,7 @@ import {DocsFileOutput, DocsCommandComplete} from "./command.docs";
 import * as file from "./file.utils";
 import {InitCommandComplete} from "./command.init";
 import {WatchersCommandComplete} from "./command.watchers";
+import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -78,6 +79,18 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
             .subscribe(x => {
                 if (x.errors.length) {
                     return process.exit(1);
+                }
+            });
+    }
+
+    if (parsed.cli.command === 'watch') {
+        handleIncoming<WatchCommmandComplete>(prepared)
+            .subscribe(x => {
+                if (x.type === WatchCommandEventTypes.SetupError) {
+                    const data = <WatchCommandSetup>x.data;
+                    if (data.errors.length) {
+                        process.exit(1);
+                    }
                 }
             });
     }

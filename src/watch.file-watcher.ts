@@ -4,7 +4,7 @@ import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
 import {SequenceItem} from "./task.sequence.factories";
-import {ReportTypes} from "./reporter.resolve";
+import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
 import {WatchCommandEventTypes, WatchCommandReport, WatchCommandSetupErrors} from "./command.watch";
 
@@ -27,6 +27,7 @@ export interface WatchRunnerComplete {
     reports: TaskReport[]
     errors: TaskReport[]
     watchEvent: WatchEvent
+    runtime: number
 }
 
 /**
@@ -34,17 +35,47 @@ export interface WatchRunnerComplete {
  */
 export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>> {
 
+    /**
+     * Wrap every chokidar watcher in an observable
+     * @type {Rx.Observable<WatchEvent>[]}
+     */
     const watchersAsObservables = watchers.map((watcher) => {
         return createObservableForWatcher(watcher, trigger);
     });
 
+    /**
+     * Now map file-change events to task running
+     */
     return Rx.Observable
         .merge(...watchersAsObservables)
-        .flatMap((watchEvent: WatchEvent, i: number) => {
+        .timestamp(trigger.config.scheduler)
+        .flatMap((incoming: {value: WatchEvent, timestamp: number}, i: number) => {
+
+            const watchEvent = incoming.value;
+
+            /**
+             * Get the watcher linked to the current file event
+             * @type {Watcher}
+             */
             const watcher = watchers.filter(x => x.watcherUID === watchEvent.watcherUID)[0];
+
+            /**
+             * Report start of task run
+             */
+            trigger.reporter({
+                type: ReportTypes.WatcherTriggeredTasks,
+                data: {
+                    index: i,
+                    taskCollection: watcher.tasks
+                }
+            } as WatcherTriggeredTasksReport);
 
             return Rx.Observable.create<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>>(function (obs) {
 
+                /**
+                 * todo: Is there a way to handle this without
+                 * subscribing manually?
+                 */
                 watcher._runner.series()
                     .do(taskReport => obs.onNext({
                         type: WatchCommandEventTypes.WatchTaskReport,
@@ -55,8 +86,10 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                         }
                     }))
                     .toArray()
-                    .subscribe(function (reports: TaskReport[]) {
+                    .timestamp(trigger.config.scheduler)
+                    .subscribe(function (x: {value: TaskReport[], timestamp; number}) {
 
+                        const reports = x.value;
                         const sequence = seq.decorateSequenceWithReports(watcher._sequence, reports);
                         const errors   = reports.filter(x => x.type === TaskReportType.error);
 
@@ -66,9 +99,34 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                                 sequence,
                                 reports,
                                 errors,
-                                watchEvent
-                            }
+                                watchEvent,
+                                runtime: x.timestamp - incoming.timestamp
+                            } as WatchRunnerComplete
                         });
+
+                        if (errors.length > 0) {
+                            trigger.reporter({
+                                type: ReportTypes.Summary,
+                                data: {
+                                    sequence: sequence,
+                                    cli: trigger.cli,
+                                    title: watcher.tasks.join(', '),
+                                    config: trigger.config,
+                                    runtime: x.timestamp - incoming.timestamp
+                                }
+                            });
+                        } else {
+                            trigger.reporter({
+                                type: ReportTypes.WatcherTriggeredTasksCompleted,
+                                data: {
+                                    index: i,
+                                    taskCollection: watcher.tasks,
+                                    time: x.timestamp - incoming.timestamp
+                                }
+                            });
+                        }
+
+                        obs.onCompleted();
                     });
             });
         });
