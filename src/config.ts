@@ -4,7 +4,7 @@ import {LogLevel} from "./reporters/defaultReporter";
 import {OutgoingReport} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
-import {IncomingWatchEvent} from "./watch.file-watcher";
+import {WatchEvent} from "./watch.file-watcher";
 
 const _ = require('../lodash.custom');
 
@@ -40,7 +40,7 @@ export interface CrossbowConfiguration {
     dryRun?: boolean
     dryRunDuration?: number
     outputObserver?: Rx.Observable<OutgoingReport>
-    fileChangeObserver?: Rx.Observable<IncomingWatchEvent>
+    fileChangeObserver?: Rx.Observable<WatchEvent>
     scheduler?: Rx.IScheduler
 }
 

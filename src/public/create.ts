@@ -7,7 +7,6 @@ import watchCommand from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
 const merge = require('../../lodash.custom').merge;
-import {IncomingWatchEvent} from '../watch.file-watcher';
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 

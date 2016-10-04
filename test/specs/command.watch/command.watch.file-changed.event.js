@@ -1,6 +1,7 @@
 const assert = require('chai').assert;
 const utils = require('../../utils');
 const Rx = require('rx');
+const watchEventTypes = require('../../../dist/command.watch').WatchCommandEventTypes;
 const cb = require('../../../dist/index');
 var Observable = Rx.Observable,
     TestScheduler = Rx.TestScheduler,
@@ -12,13 +13,10 @@ var Observable = Rx.Observable,
     disposed = Rx.ReactiveTest.disposed;
 
 describe('responding to file change events', function () {
-    it('runs a single task following a file-change', function () {
+    it('runs a tasks following a file-changes', function () {
 
         const input = {
             watch: {
-                options: {
-                    debounce: 500
-                },
                 default: {
                     "*.css": ["css"],
                 },
@@ -28,10 +26,10 @@ describe('responding to file change events', function () {
             },
             tasks: {
                 css: function (opts) {
-                    console.log('CSS task', opts);
+                    // console.log('CSS task', opts);
                 },
                 js: function (opts) {
-                    console.log('JS task', opts);
+                    // console.log('JS task', opts);
                 }
             }
         };
@@ -41,8 +39,8 @@ describe('responding to file change events', function () {
         const cli       = {};
 
         const fileEvents = scheduler.createColdObservable(
-            onNext(100, {event: 'change', path: 'style.css'}),
-            onNext(101, {event: 'change', path: 'style.css'})
+            onNext(100, {event: 'change', path: 'style.css',     watcherUID: 'default-0'}),
+            onNext(150, {event: 'change', path: 'style.css.map', watcherUID: 'default-0'})
         );
 
         cli.input = ['watch', 'default'];
@@ -52,18 +50,22 @@ describe('responding to file change events', function () {
             fileChangeObserver: fileEvents
         };
 
-        const runner       = cb.default(cli, input);
+        const runner = cb.default(cli, input);
 
         const subscription = scheduler.startScheduler(() => {
             return runner;
         }, {created: 0, subscribed: 0, disposed: 2000});
 
-        console.log(subscription.messages[0].value.value);
-
-        // console.log(subscription.messages[0].value.error.stack);
-        // console.log(subscription);
-        // assert.equal(runner.beforeTasks.tasks.valid.length, 1);
-        // assert.equal(runner.beforeTasks.tasks.valid[0].taskName, 'js');
-        // assert.equal(runner.beforeTasks.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
+        assert.deepEqual(
+            subscription.messages.map(x => x.value.value.type),
+            [
+                watchEventTypes.WatchTaskReport,
+                watchEventTypes.WatchTaskReport,
+                watchEventTypes.WatchRunnerComplete,
+                watchEventTypes.WatchTaskReport,
+                watchEventTypes.WatchTaskReport,
+                watchEventTypes.WatchRunnerComplete
+            ]
+        );
     });
 });

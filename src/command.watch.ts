@@ -10,7 +10,7 @@ import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
 import * as seq from "./task.sequence";
 import Rx = require('rx');
 import Immutable = require('immutable');
-import {createObservablesForWatchers, WatchEvent} from "./watch.file-watcher";
+import {createObservablesForWatchers, WatchTaskReport, WatchRunnerComplete} from "./watch.file-watcher";
 import {SequenceItem} from "./task.sequence.factories";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
@@ -42,10 +42,12 @@ export interface WatchCommandSetup {
 
 export enum WatchCommandEventTypes {
     SetupError = <any>'SetupError',
-    FileEvent  = <any>'FileEvent'
+    FileEvent  = <any>'FileEvent',
+    WatchTaskReport  = <any>'WatchTaskReport',
+    WatchRunnerComplete  = <any>'WatchRunnerComplete',
 }
 
-function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchEvent>> {
+function executeWatchCommand(trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete>> {
 
     // debug(`Working with input [${trigger.cli.input}]`);
     // debug(`${watchTasks.valid.length} valid task(s)`);
