@@ -6,6 +6,7 @@ import {defaultWatchOptions} from "../watch.resolve";
 import watchCommand from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
+import {WatchEvent} from '../watch.file-watcher';
 const merge = require('../../lodash.custom').merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
@@ -125,7 +126,7 @@ export const api = {
             tasks: [],
             name: identifer,
             options: merge({}, defaultWatchOptions, options),
-            watcherUID: num
+            watcherUID: `${identifer}-${num}`
         };
         return getFileChangeStream(watcher, input.reporter);
     }

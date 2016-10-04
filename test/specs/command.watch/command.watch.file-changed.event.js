@@ -30,8 +30,9 @@ describe('responding to file change events', function () {
             }
         }, [
             onNext(100, {event: 'change', path: 'style.css',     watcherUID: 'default-0'}),
-            onNext(150, {event: 'change', path: 'style.css.map', watcherUID: 'default-0'})
+            onNext(300, {event: 'change', path: 'style.css',     watcherUID: 'default-0'})
         ]);
+
 
         assert.deepEqual(
             out.subscription.messages.map(x => x.value.value.type),
@@ -67,9 +68,9 @@ describe('responding to file change events', function () {
         ]);
 
         assert.deepEqual(out.subscription.messages.map(x => x.time), [
-            601,
-            901,
-            901
+            600,
+            900,
+            900
         ]);
     });
     it('runs a task with throttle', function () {
@@ -100,10 +101,10 @@ describe('responding to file change events', function () {
 
         const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
         assert.deepEqual(outTimes, [
-            101, // start 1
-            206, // start 2
-            401, // end 1
-            506, // end 2
+            100, // start 1
+            205, // start 2
+            400, // end 1
+            505, // end 2
         ]);
     });
 });
