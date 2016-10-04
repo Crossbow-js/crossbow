@@ -16,8 +16,11 @@ describe('responding to file change events', function () {
 
         const input = {
             watch: {
+                options: {
+                    debounce: 500
+                },
                 default: {
-                    "*.css": ["css"]
+                    "*.css": ["css"],
                 },
                 dev: {
                     "*.html": "html-min"
@@ -26,33 +29,39 @@ describe('responding to file change events', function () {
             tasks: {
                 css: function (opts) {
                     console.log('CSS task', opts);
+                },
+                js: function (opts) {
+                    console.log('JS task', opts);
                 }
             }
         };
 
         const scheduler = new Rx.TestScheduler();
         const output    = new Rx.ReplaySubject(100);
-        const output2    = new Rx.ReplaySubject(100, scheduler);
-
         const cli       = {};
+
+        const fileEvents = scheduler.createColdObservable(
+            onNext(100, {event: 'change', path: 'style.css'}),
+            onNext(101, {event: 'change', path: 'style.css'})
+        );
 
         cli.input = ['watch', 'default'];
         cli.flags = {
             scheduler: scheduler,
             outputObserver: output,
-            fileChangeObserver: output2
+            fileChangeObserver: fileEvents
         };
 
-        output2.onNext({name: 'shane'});
-        scheduler.advanceBy(2000);
-        output2.onNext({name: 'kittie'});
         const runner       = cb.default(cli, input);
+
         const subscription = scheduler.startScheduler(() => {
             return runner;
-        }, {created: 0, subscribed: 0, disposed: 200000});
+        }, {created: 0, subscribed: 0, disposed: 2000});
 
-        console.log(subscription.messages[0].value.error.stack);
+        console.log(subscription.messages[0].value.value);
 
+        // console.log(subscription.messages[0].value.error.stack);
+        // console.log(subscription);
         // assert.equal(runner.beforeTasks.tasks.valid.length, 1);
         // assert.equal(runner.beforeTasks.tasks.valid[0].taskName, 'js');
         // assert.equal(runner.beforeTasks.tasks.valid[0].tasks[0].taskName, 'test/fixtures/tasks/observable.js');
