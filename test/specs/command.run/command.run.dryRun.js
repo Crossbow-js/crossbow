@@ -1,38 +1,27 @@
 const assert  = require('chai').assert;
-const Rx      = require('rx');
-const cli     = require('../../../dist/index');
+const utils   = require('../../utils');
 
 describe("Performing a dry-run", function () {
     it("it fakes the execution of tasks with time", function () {
-        const scheduler  = new Rx.TestScheduler();
-        const obs        = new Rx.ReplaySubject(100, null, scheduler);
 
-        const runner = cli.default({
+        const runner = utils.run({
             input: ['run', 'css', 'js'],
             flags: {
-                scheduler: scheduler,
-                outputObserver: obs,
                 dryRun: true,
                 dryRunDuration: 100
             }
         }, {
             tasks: {
-                css: function (opts, ctx) {
-                    return Rx.Observable.just('shane').delay(1000, ctx.config.scheduler);
-                },
+                css: utils.task(1000),
                 'js@p': [
-                    function (opts, ctx) {
-                        return Rx.Observable.just('shane').delay(100, ctx.config.scheduler);
-                    },
-                    function (opts, ctx) {
-                        return Rx.Observable.just('shane').delay(100, ctx.config.scheduler);
-                    }
+                    utils.task(20000),
+                    utils.task(3000000),
                 ]
 
             }
         });
 
-        obs
+        runner.output
             .filter(x => x.origin === 'Summary')
             .take(3)
             .toArray()
@@ -40,11 +29,7 @@ describe("Performing a dry-run", function () {
                 assert.include(data[1].data, '0.20s'); // 1s + 2 parallel at 100ms each === 1.10s
             });
 
-        const out = scheduler.startScheduler(function () {
-            return runner;
-        }, {created: 0, subscribed: 0, disposed: 4000});
-
-        const reports = out.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports[0].type, 'start');
         assert.equal(reports[1].type, 'end');

@@ -102,11 +102,13 @@ export interface InputFileNotFoundReport extends IncomingReport {
 export interface TaskReportReport {
     data: {report: TaskReport,trigger: CommandTrigger}
 }
+export interface SignalReceivedReport extends IncomingReport {
+    data: {code: number}
+}
 export interface SummaryReport extends IncomingReport {
     data: {
         sequence: SequenceItem[],
         cli: CLI,
-        title: string,
         config: CrossbowConfiguration,
         runtime: number,
         errors: TaskReport[]

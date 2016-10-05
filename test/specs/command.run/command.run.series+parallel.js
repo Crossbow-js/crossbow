@@ -17,7 +17,7 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.start);
@@ -37,7 +37,8 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
 
         // css
         assert.equal(reports[0].type, TaskReportType.start);
@@ -62,7 +63,8 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
 
         assert.equal(reports[0].type, 'start');
         assert.equal(reports[1].type, 'start');
@@ -80,7 +82,8 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
 
         assert.equal(reports[0].type, 'start', 'css start');
         assert.equal(reports[1].type, 'end',   'css end');
@@ -101,7 +104,8 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
 
         assert.equal(reports[0].type, 'start');
         assert.equal(reports[1].type, 'end');

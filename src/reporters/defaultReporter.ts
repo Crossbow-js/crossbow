@@ -13,6 +13,7 @@ import {countSequenceErrors, collectSkippedTasks, collectRunnableTasks} from "..
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
 import {duration, _taskReport} from "./task.list";
 import * as reports from "../reporter.resolve";
+import not = Rx.helpers.not;
 
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
@@ -355,9 +356,12 @@ Or to see multiple tasks running, with some in parallel, try:
             ...getExternalError(error.type, error).split('\n')
         ]
     },
+    [reports.ReportTypes.SignalReceived]: function reportSummary(report: reports.SignalReceivedReport): string[] {
+        return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.data.code})} {yellow:~~~}`];
+    },
     [reports.ReportTypes.Summary]: function reportSummary(report: reports.SummaryReport): string[] {
 
-        const {sequence, cli, title, config, runtime} = report.data;
+        const {sequence, cli, config, runtime} = report.data;
 
         const runnableTasks  = collectRunnableTasks(sequence, []);
         const errorTasks     = runnableTasks.filter(x => x.stats.errors.length > 0);
@@ -378,7 +382,6 @@ Or to see multiple tasks running, with some in parallel, try:
             lines.push(`{red:x} {bold:Summary:}`);
         } else {
             lines.push(`{ok: } {bold:Summary:}`);
-
         }
 
         lines.push(``);

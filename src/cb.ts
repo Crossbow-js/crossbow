@@ -16,7 +16,10 @@ import {ExitSignal, CBSignal, SignalTypes} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
 import {RunComplete, RunCommandReportTypes} from "./command.run.execute";
-import {TaskReport} from "./task.runner";
+import {TaskReport, TaskReportType} from "./task.runner";
+import {RunCommandSetup} from "./command.run";
+import * as seq from "./task.sequence";
+import {SummaryReport} from "./reporter.resolve";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -52,26 +55,63 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
         const subscription = handleIncoming<RunComplete>(prepared);
         const reports      = [];
 
+        let sequence;
+        let tasks;
+
         const subscription1 = subscription
             .do(x => {
+                if (x.type === RunCommandReportTypes.Setup) {
+                    const data = <RunCommandSetup>x.data;
+                    sequence = data.sequence;
+                    tasks    = data.tasks;
+                }
                 if (x.type === RunCommandReportTypes.TaskReport) {
                     reports.push(x.data);
                 }
-                if (x.type === RunCommandReportTypes.TaskReport) {
+                if (x.type === RunCommandReportTypes.Complete) {
                     require('./command.run.post-execution').postCliExecution(x);
                 }
             })
             .subscribe();
 
-        const exitSignals = cliSignalObserver
+        cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
             .do((cbSignal: CBSignal<ExitSignal>) => {
-                subscription1.dispose();
-                console.log(reports);
-                cliOutputObserver.onNext({
-                    origin: ReportTypes.SignalReceived,
-                    data: [`{yellow:~~~} Exit Signal Received {cyan:(code: ${cbSignal.data.code})} {yellow:~~~}`]
+
+                process.nextTick(function () {
+                    subscription1.dispose();
                 });
+
+                /**
+                 * Merge sequence tree with Task Reports
+                 */
+                const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+
+                /**
+                 * Did any errors occur in this run?
+                 * @type {TaskReport[]}
+                 */
+                const errors = reports.filter(x => x.type === TaskReportType.error);
+
+                prepared.reportFn({
+                    type: ReportTypes.SignalReceived,
+                    data: cbSignal.data
+                });
+
+                /**
+                 * Main summary report
+                 */
+                prepared.reportFn({
+                    type: ReportTypes.Summary,
+                    data: {
+                        errors: errors,
+                        sequence: decoratedSequence,
+                        cli: prepared.cli,
+                        config: prepared.config,
+                        runtime: 0
+                    }
+                } as SummaryReport);
+
             }).subscribe();
     }
 

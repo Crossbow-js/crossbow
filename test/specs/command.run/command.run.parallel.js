@@ -17,7 +17,7 @@ describe("Running tasks in parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports.length, 4);
         assert.equal(reports[0].type, TaskReportType.start);
@@ -39,7 +39,7 @@ describe("Running tasks in parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports.length, 6);
         assert.equal(reports[0].type, TaskReportType.start);
@@ -63,7 +63,7 @@ describe("Running tasks in parallel", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports.length, 6);
         assert.equal(reports[0].type, TaskReportType.start);

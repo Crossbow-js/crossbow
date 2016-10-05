@@ -124,7 +124,8 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+        // const complete = utils.getComplete(runner);
 
         assert.equal(reports[0].type, 'start');
         assert.equal(reports[1].type, 'end');
@@ -206,7 +207,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
         assert.equal(reports.length, 12);
         assert.deepEqual(reports.map(x => x.type), [
             TaskReportType.start,
@@ -248,7 +249,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
         assert.deepEqual(reports.map(x => x.type), [
             // js
             TaskReportType.start,

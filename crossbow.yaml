@@ -18,7 +18,13 @@ watch:
 tasks:
 
   shane:
-    - '@bg sleep 5'
+    runMode: parallel
+    tasks:
+      - '@npm sleep 5'
+      - '@npm sleep 1'
+      - _shane
+
+  _shane:
     - '@npm sleep 1'
     - '@cb exit'
 

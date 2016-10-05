@@ -58,7 +58,7 @@ describe("skipping tasks", function () {
                 },
                 svg: '@sh sleep 0.02'
             }
-        }).subscribe(function () {
+        }).toArray().subscribe(function () {
             const history = require(path.join(process.cwd(), '.crossbow/history.json'));
             assert.equal(history.hashes.length, 3);
             assert.equal(history.hashes[0].changed, true);
@@ -90,8 +90,11 @@ describe("skipping tasks", function () {
 
         // First run
         utils.executeRun(['js', 'svg'], input)
+            .toArray()
+            .map(xs => xs[xs.length-1].data)
             .subscribe(function (output) {
 
+                // console.log(output.reports);
                 const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
                 assert.equal(ends[0].skipped, false, 'none skipped on first run');
                 assert.equal(ends[1].skipped, false, 'none skipped on first run');
@@ -99,6 +102,8 @@ describe("skipping tasks", function () {
 
                 // Second run
                 utils.executeRun(['js', 'svg'], input)
+                    .toArray()
+                    .map(xs => xs[xs.length-1].data)
                     .subscribe(function (output) {
 
                         const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
@@ -134,6 +139,8 @@ describe("skipping tasks", function () {
 
         // First run
         utils.executeRun(['js', 'svg'], input, {force: true})
+            .toArray()
+            .map(xs => xs[xs.length-1].data)
             .subscribe(function (output) {
 
                 const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);
@@ -143,6 +150,8 @@ describe("skipping tasks", function () {
 
                 // Second run
                 utils.executeRun(['js', 'svg'], input, {force: true})
+                    .toArray()
+                    .map(xs => xs[xs.length-1].data)
                     .subscribe(function (output) {
 
                         const ends = output.reports.filter(x => x.type === 'end').map(x => x.stats);

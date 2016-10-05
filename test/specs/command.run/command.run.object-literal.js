@@ -14,7 +14,8 @@ describe('Running tasks from object literals', function () {
                 }
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+        // const complete = utils.getComplete(runner);
         assert.equal(reports.length, 2);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
@@ -30,7 +31,8 @@ describe('Running tasks from object literals', function () {
                 }]
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+        // const complete = utils.getComplete(runner);
         assert.equal(reports.length, 2);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);

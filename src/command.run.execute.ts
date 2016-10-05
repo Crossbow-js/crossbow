@@ -16,6 +16,7 @@ const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
     InvalidTasks = <any>"InvalidTasks",
+    Setup        = <any>"Setup",
     Complete     = <any>"Complete",
     TaskReport   = <any>"TaskReport"
 }
@@ -28,7 +29,12 @@ export interface RunCommandReport<T> {
     data: T
 }
 
-export type RunComplete = Rx.Observable<RunCommandReport<RunCommandCompletionReport|TaskReport>>
+export type RunComplete = Rx.Observable<RunCommandReport<RunCommandSetup|RunCommandCompletionReport|TaskReport>>
+
+export interface RunCommandSetup {
+    tasks: Tasks,
+    sequence: SequenceItem[]
+}
 
 export interface RunCommandCompletionReport {
     tasks: Tasks,
@@ -158,7 +164,15 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
                 return handleCompletion(complete.value, complete.timestamp - startTime)
             });
 
-        return Rx.Observable.concat(each, complete);
+        const setup = {
+            type: RunCommandReportTypes.Setup,
+            data: {
+                sequence,
+                tasks
+            } as RunCommandSetup
+        };
+
+        return Rx.Observable.concat(Rx.Observable.just(setup), each, complete);
 
     }
 
