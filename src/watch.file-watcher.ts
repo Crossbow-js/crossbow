@@ -10,6 +10,11 @@ import {WatchCommandEventTypes, WatchCommandReport, WatchCommandSetupErrors} fro
 
 const debug = require('debug')('cb:watch.runner');
 
+export interface WatchEventWithContext {
+    watchEvent: WatchEvent
+    watcher: Watcher
+}
+
 export interface WatchEvent {
     event: string
     path: string
@@ -43,34 +48,51 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
         return createObservableForWatcher(watcher, trigger);
     });
 
+    const blockable$ = new Rx.BehaviorSubject<string[]>([]);
+
     /**
      * Now map file-change events to task running
      */
     return Rx.Observable
+        /**
+         * Merge all watchers
+         */
         .merge(...watchersAsObservables)
-        .timestamp(trigger.config.scheduler)
-        .flatMap((incoming: {value: WatchEvent, timestamp: number}, i: number) => {
-
-            const watchEvent = incoming.value;
-
-            /**
-             * Get the watcher linked to the current file event
-             * @type {Watcher}
-             */
+        /**
+         * Pair up the watchEvent with it's watcher.
+         * This separation is done to allow us to pass an observable
+         * in to stub the file io stream
+         */
+        .map<WatchEventWithContext>((watchEvent: WatchEvent) => {
             const watcher = watchers.filter(x => x.watcherUID === watchEvent.watcherUID)[0];
+            return {watchEvent, watcher};
+        })
+        // .filter((x: WatchEvent) => {
+        //     const blocked = !~blockable$.getValue().indexOf(x.watcherUID);
+        //     debug(`${x.watcherUID} blocked`);
+        //     return blocked
+        // })
+        // .do((x: WatchEvent) => blockable$.onNext(blockable$.getValue().concat(x.watcherUID)))
+        .timestamp(trigger.config.scheduler)
+        .flatMap((incoming: {value: WatchEventWithContext, timestamp: number}, i: number) => {
 
             /**
-             * Report start of task run
+             * @type {WatchEvent}
              */
-            trigger.reporter({
-                type: ReportTypes.WatcherTriggeredTasks,
-                data: {
-                    index: i,
-                    taskCollection: watcher.tasks
-                }
-            } as WatcherTriggeredTasksReport);
+            const {watchEvent, watcher} = incoming.value;
 
             return Rx.Observable.create<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>>(function (obs) {
+
+                /**
+                 * Report start of task run
+                 */
+                trigger.reporter({
+                    type: ReportTypes.WatcherTriggeredTasks,
+                    data: {
+                        index: i,
+                        taskCollection: watcher.tasks
+                    }
+                } as WatcherTriggeredTasksReport);
 
                 /**
                  * todo: Is there a way to handle this without
@@ -83,7 +105,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                             taskReport,
                             watchEvent,
                             count: i
-                        }
+                        } as WatchTaskReport
                     }))
                     .toArray()
                     .timestamp(trigger.config.scheduler)
@@ -109,10 +131,10 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                                 type: ReportTypes.Summary,
                                 data: {
                                     sequence: sequence,
-                                    cli: trigger.cli,
-                                    title: watcher.tasks.join(', '),
-                                    config: trigger.config,
-                                    runtime: x.timestamp - incoming.timestamp
+                                    cli:      trigger.cli,
+                                    title:    watcher.tasks.join(', '),
+                                    config:   trigger.config,
+                                    runtime:  x.timestamp - incoming.timestamp
                                 }
                             });
                         } else {
@@ -125,6 +147,10 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                                 }
                             });
                         }
+
+                        const withoutThis = blockable$.getValue().filter(x => x !== watchEvent.watcherUID);
+
+                        blockable$.onNext(withoutThis);
 
                         obs.onCompleted();
                     });

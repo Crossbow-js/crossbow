@@ -88,23 +88,47 @@ describe('responding to file change events', function () {
                 }
             },
             tasks: {
-                css: utils.task(300)
+                css: utils.task(100)
             }
         }, [
             onNext(100, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
             onNext(101, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(102, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(205, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(206, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(207, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+            onNext(102, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
         ]);
 
         const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
         assert.deepEqual(outTimes, [
             100, // start 1
-            205, // start 2
-            400, // end 1
-            505, // end 2
+            200 // end 2
+        ]);
+    });
+    it('can block the running of tasks', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                options: {
+                    throttle: 100
+                },
+                default: {
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(100)
+            }
+        }, [
+            onNext(100, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(101, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(102, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+        ]);
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
+        assert.deepEqual(outTimes, [
+            100, // start 1
+            200 // end 2
         ]);
     });
 });

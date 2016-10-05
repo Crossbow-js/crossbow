@@ -40,9 +40,9 @@ export interface WatchCommandSetup {
 export type WatchCommmandComplete = Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete>>;
 
 export enum WatchCommandEventTypes {
-    SetupError = <any>'SetupError',
-    FileEvent  = <any>'FileEvent',
-    WatchTaskReport  = <any>'WatchTaskReport',
+    SetupError           = <any>'SetupError',
+    FileEvent            = <any>'FileEvent',
+    WatchTaskReport      = <any>'WatchTaskReport',
     WatchRunnerComplete  = <any>'WatchRunnerComplete',
 }
 
