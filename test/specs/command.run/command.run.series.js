@@ -7,7 +7,7 @@ const t200           = utils.task(200);
 const terror         = utils.error(2000);
 
 describe("Running tasks in series", function () {
-    it("single [ 1 ]", function () {
+    it("single  1", function () {
 
         const runner = utils.run({
             input: ['run', 'js']
@@ -17,13 +17,12 @@ describe("Running tasks in series", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
-
+        const reports  = utils.getReports(runner);
         assert.equal(reports.length, 2);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
     });
-    it("multi [ 1, 2 ]", function () {
+    it.only("multi 1, 2", function () {
 
         const runner = utils.run({
             input: ['run', 'js']
@@ -33,11 +32,11 @@ describe("Running tasks in series", function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
-        const runtime = runner.subscription.messages[0].value.value.runtime;
+        const reports  = utils.getReports(runner);
+        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 4);
-        assert.equal(runtime, 300);
+        assert.equal(complete.runtime, 300);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[2].type, TaskReportType.start);

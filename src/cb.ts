@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import {RunComplete} from "./command.run.execute";
-import {TasksCommandComplete} from "./command.tasks";
 import cli from "./cli";
 import {readFileSync, writeFileSync} from "fs";
 import {handleIncoming} from "./index";
@@ -16,6 +14,9 @@ import {WatchersCommandComplete} from "./command.watchers";
 import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
 import {ExitSignal, CBSignal, SignalTypes} from "./config";
 import {ReportTypes} from "./reporter.resolve";
+import {TasksCommandComplete} from "./command.tasks";
+import {RunComplete, RunCommandReportTypes} from "./command.run.execute";
+import {TaskReport} from "./task.runner";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -49,14 +50,14 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
     if (parsed.cli.command === 'run') {
 
         const subscription = handleIncoming<RunComplete>(prepared);
-        const record       = [];
+        const reports      = [];
 
         const subscription1 = subscription
             .do(x => {
-                if (x.type === 'TaskReport') {
-                    record.push(x.data);
+                if (x.type === RunCommandReportTypes.TaskReport) {
+                    reports.push(x.data);
                 }
-                if (x.type === 'Complete') {
+                if (x.type === RunCommandReportTypes.TaskReport) {
                     require('./command.run.post-execution').postCliExecution(x);
                 }
             })
@@ -66,7 +67,7 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
             .filter(x => x.type === SignalTypes.Exit)
             .do((cbSignal: CBSignal<ExitSignal>) => {
                 subscription1.dispose();
-                console.log(record);
+                console.log(reports);
                 cliOutputObserver.onNext({
                     origin: ReportTypes.SignalReceived,
                     data: [`{yellow:~~~} Exit Signal Received {cyan:(code: ${cbSignal.data.code})} {yellow:~~~}`]

@@ -23,7 +23,9 @@ module.exports.run = (cli, input) => {
     cli.flags.scheduler      = scheduler;
 
     const runner       = cb.default(cli, input);
-    const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 200000});
+    const subscription = scheduler.startScheduler(() => {
+        return runner;
+    }, {created: 0, subscribed: 0, disposed: 200000});
     return {subscription, output};
 };
 
@@ -81,8 +83,19 @@ module.exports.executeRun = (args, input, config) => {
 
 module.exports.nullOutput = () => new Rx.ReplaySubject(100);
 
-module.exports.delay     = (time, scheduler) => Oempty().delay(time, scheduler);
-module.exports.getOutput = (runner) => runner.subscription.messages[0].value.value;
+module.exports.delay       = (time, scheduler) => Oempty().delay(time, scheduler);
+module.exports.getOutput   = (runner) => runner.subscription.messages[0].value.value;
+
+module.exports.getReports  = (runner) => runner.subscription.messages
+    .filter(x => x.value.kind === 'N')
+    .filter(x => x.value.value.type === 'TaskReport')
+    .map(x => x.value.value.data);
+
+module.exports.getComplete = (runner) =>
+    runner.subscription.messages
+        .filter(x => x.value.kind === 'N')
+        .filter(x => x.value.value.type === 'Complete')
+        .map(x => x.value.value.data)[0];
 
 module.exports.getFileWatcher = (args, input, fileEvents) => {
 

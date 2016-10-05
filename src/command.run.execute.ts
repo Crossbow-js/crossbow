@@ -22,13 +22,19 @@ export enum RunCommandReportTypes {
 export interface RunCommandSetupErrors {
     type: RunCommandReportTypes
 }
-export type RunComplete = Rx.Observable<RunCommandCompletionReport>
+
+export interface RunCommandReport<T> {
+    type: RunCommandReportTypes
+    data: T
+}
+
+export type RunComplete = Rx.Observable<RunCommandReport<RunCommandCompletionReport|TaskReport>>
+
 export interface RunCommandCompletionReport {
     tasks: Tasks,
     sequence: SequenceItem[]
     runner: Runner
     config: CrossbowConfiguration
-    type: RunCommandReportTypes
     reports?: TaskReport[]
     decoratedSequence?: SequenceItem[]
     runtime?: number
@@ -73,15 +79,18 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
         } as TaskErrorsReport);
 
         return Rx.Observable.just({
-            errors: [
-                {type: RunCommandReportTypes.InvalidTasks}
-            ],
-            taskErrors: [],
-            tasks,
-            sequence,
-            runner,
-            config,
-            type: RunCommandReportTypes.InvalidTasks
+            type: RunCommandReportTypes.InvalidTasks,
+            data: {
+                errors: [
+                    {type: RunCommandReportTypes.InvalidTasks}
+                ],
+                taskErrors: [],
+                tasks,
+                sequence,
+                runner,
+                config,
+                type: RunCommandReportTypes.InvalidTasks
+            }
         });
     }
 
@@ -190,15 +199,17 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
          */
         return Rx.Observable.just({
             type: RunCommandReportTypes.Complete,
-            reports,
-            tasks,
-            sequence,
-            runner,
-            decoratedSequence,
-            runtime: runtime,
-            config,
-            errors: [],
-            taskErrors: reports.filter(x => x.type === TaskReportType.error)
+            data: {
+                reports,
+                tasks,
+                sequence,
+                runner,
+                decoratedSequence,
+                runtime: runtime,
+                config,
+                errors: [],
+                taskErrors: reports.filter(x => x.type === TaskReportType.error)
+            }
         });
     }
 }
