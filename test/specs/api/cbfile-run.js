@@ -51,7 +51,8 @@ describe('Using a cbfile', function () {
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[1].stats.duration, 0);
@@ -64,7 +65,8 @@ describe('Using a cbfile', function () {
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[1].stats.duration, 3000);
@@ -76,7 +78,8 @@ describe('Using a cbfile', function () {
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[1].stats.duration, 3000);
@@ -89,7 +92,8 @@ describe('Using a cbfile', function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
 
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
@@ -103,7 +107,8 @@ describe('Using a cbfile', function () {
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
-        const reports = runner.subscription.messages[0].value.value.reports;
+        const reports  = utils.getReports(runner);
+
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[1].stats.duration, 3000);

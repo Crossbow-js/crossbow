@@ -33,7 +33,7 @@ describe('task.resolve with --skip', function () {
             }
         });
 
-        const reports = runner.subscription.messages[0].value.value;
-        assert.equal(reports.runtime, 2100); // from simple.multi tasks
+        const complete = utils.getComplete(runner);
+        assert.equal(complete.runtime, 2100); // from simple.multi tasks
     });
 });

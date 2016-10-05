@@ -15,7 +15,7 @@ import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "
 import {ExitSignal, CBSignal, SignalTypes} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
-import {RunComplete, RunCommandReportTypes} from "./command.run.execute";
+import {RunComplete, RunCommandReportTypes, RunCommandCompletionReport} from "./command.run.execute";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup} from "./command.run";
 import * as seq from "./task.sequence";
@@ -66,10 +66,12 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                     tasks    = data.tasks;
                 }
                 if (x.type === RunCommandReportTypes.TaskReport) {
-                    reports.push(x.data);
+                    const data = <TaskReport>x.data;
+                    reports.push(data);
                 }
                 if (x.type === RunCommandReportTypes.Complete) {
-                    require('./command.run.post-execution').postCliExecution(x);
+                    const data = <RunCommandCompletionReport>x.data;
+                    require('./command.run.post-execution').postCliExecution(data);
                 }
             })
             .subscribe();
@@ -78,6 +80,9 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
             .filter(x => x.type === SignalTypes.Exit)
             .do((cbSignal: CBSignal<ExitSignal>) => {
 
+                /**
+                 * Allow the signal-sender's task to complete
+                 */
                 process.nextTick(function () {
                     subscription1.dispose();
                 });

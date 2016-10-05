@@ -52,8 +52,7 @@ describe('Gathering completed stats', function () {
                 ok: utils.task(100)
             }
         });
-        const output  = runner.subscription.messages[0].value.value;
-        const reports = output.reports;
+        const reports  = utils.getReports(runner);
 
         assert.equal(reports[0].type, types.start);
         assert.equal(reports[1].type, types.start);

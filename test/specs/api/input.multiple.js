@@ -21,7 +21,7 @@ describe('Choosing merging multiple input types', function () {
             }
         });
 
-        const output = runner.subscription.messages[0].value.value;
-        assert.equal(output.reports[1].stats.duration, 2000);
+        const reports  = utils.getReports(runner);
+        assert.equal(reports[1].stats.duration, 2000);
     });
 });
