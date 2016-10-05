@@ -48,18 +48,30 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const subscription = handleIncoming<RunComplete>(prepared)
-            .subscribe(require('./command.run.post-execution').postCliExecution);
+        const subscription = handleIncoming<RunComplete>(prepared);
+        const record       = [];
 
-        cliSignalObserver
+        const subscription1 = subscription
+            .do(x => {
+                if (x.type === 'TaskReport') {
+                    record.push(x.data);
+                }
+                if (x.type === 'Complete') {
+                    require('./command.run.post-execution').postCliExecution(x);
+                }
+            })
+            .subscribe();
+
+        const exitSignals = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
-            .subscribe(function (cbSignal: CBSignal<ExitSignal>) {
-                subscription.dispose();
+            .do((cbSignal: CBSignal<ExitSignal>) => {
+                subscription1.dispose();
+                console.log(record);
                 cliOutputObserver.onNext({
                     origin: ReportTypes.SignalReceived,
                     data: [`{yellow:~~~} Exit Signal Received {cyan:(code: ${cbSignal.data.code})} {yellow:~~~}`]
                 });
-            });
+            }).subscribe();
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {

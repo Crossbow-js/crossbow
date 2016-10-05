@@ -128,16 +128,29 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
         /**
          * Now add side effects
          */
-        return mode
+        const records = new Rx.ReplaySubject();
+        const each = mode
             .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
                 reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
             })
+            .do(records)
+            .map(x => {
+                return {
+                    type: RunCommandReportTypes.TaskReport,
+                    data: x
+                }
+            });
+
+        const complete = records
             .toArray()
             .timestamp(trigger.config.scheduler)
             .flatMap((complete: CompletionReport) => {
                 return handleCompletion(complete.value, complete.timestamp - startTime)
             });
+
+        return Rx.Observable.concat(each, complete);
+
     }
 
     /**
