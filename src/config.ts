@@ -8,6 +8,21 @@ import {WatchEvent} from "./watch.file-watcher";
 
 const _ = require('../lodash.custom');
 
+export enum SignalTypes {
+    Exit = <any>'Exit'
+}
+
+export interface CBSignal<T> {
+    type: SignalTypes
+    data?: T
+}
+
+export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal>>
+
+export interface ExitSignal {
+    code: number
+}
+
 export interface CrossbowConfiguration {
     cwd: string
     runMode: TaskRunModes
@@ -39,9 +54,10 @@ export interface CrossbowConfiguration {
     output?: string
     dryRun?: boolean
     dryRunDuration?: number
-    outputObserver?: Rx.Observable<OutgoingReport>
+    outputObserver?:     Rx.Observable<OutgoingReport>
     fileChangeObserver?: Rx.Observable<WatchEvent>
-    scheduler?: Rx.IScheduler
+    signalObserver?:     Rx.Subject<CBSignal<ExitSignal>>
+    scheduler?:          Rx.IScheduler
 }
 
 /**

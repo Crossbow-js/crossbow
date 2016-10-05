@@ -366,7 +366,7 @@ function getFunctionName(fn: TaskFactory, count = 0): string {
  * wrapping the process of running the tasks in a way
  * that allows comprehensive logging/reporting
  *
- * Series & Parallel have different symantics and are
+ * Series & Parallel have different semantics and are
  * therefor handled separately.
  *
  * Note that everything here is completely lazy and
@@ -380,30 +380,21 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], false, ctx);
-            const subject   = new Rx.ReplaySubject(2000);
-
-            Observable.from(flattened)
+            const run       = Observable
+                .from(flattened)
                 .concatAll()
-                .catch(() => {
-                    subject.onCompleted();
-                    return Rx.Observable.empty();
-                })
-                .subscribe(subject);
+                .catch(x => Rx.Observable.empty());
 
-            return subject;
+            return run;
         },
         parallel: (ctx: RunContext) => {
 
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], true, ctx);
-            const subject   = new Rx.ReplaySubject(2000);
+            const run = Observable.from(flattened).mergeAll();
 
-            Observable.from(flattened)
-                .mergeAll()
-                .subscribe(subject);
-
-            return subject;
+            return run;
         }
     };
 

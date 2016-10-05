@@ -17,6 +17,11 @@ watch:
 
 tasks:
 
+  shane:
+    - '@bg sleep 5'
+    - '@npm sleep 1'
+    - '@cb exit'
+
   watchify: >
     @bg watchify test/fixtures/js/app.js -o test/fixtures/js/app.watchify.js -v -d
 
@@ -28,14 +33,11 @@ tasks:
     - lint
     - unit
 
-  compile: >
-    @npm tsc
-    src/**/*.ts
-    --module commonjs
-    --outDir dist
+  compile:
+    - '@npm tsc'
 
   lint:   '@npm eslint lib'
-  unit:   '@npm mocha test/api'
+  unit:   '@npm mocha test/specs --recursive'
 
   sleep@p:
     - sleep1

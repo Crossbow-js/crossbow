@@ -45,7 +45,7 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
         handleExit(emitter, done);
 
         return function tearDownShellAdaptor () {
-            teardown(emitter);
+            teardown(emitter, task);
         };
     };
 };

@@ -16,7 +16,8 @@ const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
     InvalidTasks = <any>"InvalidTasks",
-    Complete = <any>"Complete"
+    Complete     = <any>"Complete",
+    TaskReport   = <any>"TaskReport"
 }
 export interface RunCommandSetupErrors {
     type: RunCommandReportTypes
@@ -169,7 +170,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
                 runtime
             }
         } as SummaryReport);
-
+        
         /**
          * Push a 'Completion report' onto the $complete Observable.
          * This means consumers will get everything when they call

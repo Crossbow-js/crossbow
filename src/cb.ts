@@ -14,6 +14,8 @@ import * as file from "./file.utils";
 import {InitCommandComplete} from "./command.init";
 import {WatchersCommandComplete} from "./command.watchers";
 import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
+import {ExitSignal, CBSignal, SignalTypes} from "./config";
+import {ReportTypes} from "./reporter.resolve";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -24,13 +26,15 @@ cliOutputObserver.subscribe(function (report) {
     });
 });
 
+const cliSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
+
 if (parsed.execute) {
-    runFromCli(parsed, cliOutputObserver);
+    runFromCli(parsed, cliOutputObserver, cliSignalObserver);
 }
 
-function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
+function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
 
-    const prepared = prepareInput(parsed.cli, null, cliOutputObserver);
+    const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
 
     /**
      * Any errors found on input preparation
@@ -43,8 +47,19 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver): void {
     }
 
     if (parsed.cli.command === 'run') {
-        handleIncoming<RunComplete>(prepared)
+
+        const subscription = handleIncoming<RunComplete>(prepared)
             .subscribe(require('./command.run.post-execution').postCliExecution);
+
+        cliSignalObserver
+            .filter(x => x.type === SignalTypes.Exit)
+            .subscribe(function (cbSignal: CBSignal<ExitSignal>) {
+                subscription.dispose();
+                cliOutputObserver.onNext({
+                    origin: ReportTypes.SignalReceived,
+                    data: [`{yellow:~~~} Exit Signal Received {cyan:(code: ${cbSignal.data.code})} {yellow:~~~}`]
+                });
+            });
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {

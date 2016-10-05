@@ -7,6 +7,14 @@ const merge = require('../../lodash.custom').merge;
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
+    let emitter;
+
+    trigger.config.signalObserver.subscribe(function (signal) {
+        if (emitter) {
+            teardown(emitter, task);
+        }
+    });
+
     return function (opts, ctx, done) {
 
         const args   = getArgs(task.command);
@@ -17,20 +25,20 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
 
         debug(`running %s`, args.cmd);
 
-        const emitter = runCommand(args.cmd, {
+        emitter = runCommand(args.cmd, {
             cwd: trigger.config.cwd,
             env: env,
             stdio: stdio
         });
 
         emitter.on('close', function (code) {
-            teardown(emitter);
+            teardown(emitter, task);
         }).on('error', function (err) {
             done(err);
         });
 
         done(null, function tearDownBgAdaptor() {
-            teardown(emitter);
+            teardown(emitter, task);
         });
     };
 };

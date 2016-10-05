@@ -1,4 +1,4 @@
-import {CrossbowConfiguration} from "./config";
+import {CrossbowConfiguration, ExitSignal, CBSignal, OutgoingSignals} from "./config";
 import {CrossbowInput, CLI} from "./index";
 import {readFilesFromDisk, ExternalFile, ExternalFileInput, ExternalFileContent, HashDirErrorTypes} from "./file.utils";
 import {TaskReport} from "./task.runner";
@@ -80,6 +80,7 @@ export enum ReportTypes {
 
     Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",
+    SignalReceived                 = <any>"SignalReceived",
 }
 
 export interface IncomingReport {
@@ -321,6 +322,37 @@ export function getOutputObserver(mergedConfig: CrossbowConfiguration, outputObs
     });
 
     return defaultOutputObserver;
+}
+
+export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObserver?: OutgoingSignals): OutgoingSignals {
+
+    /**
+     * If an outputObserver was passed in with configuration (flags)
+     */
+    if (mergedConfig.signalObserver) {
+        return mergedConfig.signalObserver;
+    }
+
+    /**
+     * If an output observer was passed in via initial setup (cli fallback)
+     */
+    if (signalObserver) {
+        return signalObserver;
+    }
+
+    /**
+     * Default is to log each report to the console
+     */
+    const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
+
+    defaultSignalObserver.subscribe(xs => {
+        console.log(xs);
+        // xs.data.forEach(function (x) {
+        //     logger.info(x);
+        // });
+    });
+
+    return defaultSignalObserver;
 }
 
 export function getDefaultReporter () {

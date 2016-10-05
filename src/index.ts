@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
-import {CrossbowConfiguration, merge} from './config';
+import {CrossbowConfiguration, merge, OutgoingSignals} from './config';
 import {getRequirePaths} from './file.utils';
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
@@ -66,12 +66,13 @@ export interface PreparedInput {
  *          flags: {c: 'conf/cb.js'}
  *       });
  */
-export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter): PreparedInput {
+export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter, signalObserver?: OutgoingSignals): PreparedInput {
 
     let mergedConfig         = merge(cli.flags);
     const userInput          = getInputs(mergedConfig, input);
     let resolvedReporters    = reports.getReporters(mergedConfig, input);
     let chosenOutputObserver = reports.getOutputObserver(mergedConfig, outputObserver);
+    let chosenSignalObserver = reports.getSignalReporter(mergedConfig, signalObserver);
     let hasReporters         = resolvedReporters.valid.length;
     const defaultReporter    = reports.getDefaultReporter();
 
@@ -125,6 +126,13 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
     resolvedReporters = reports.getReporters(mergedConfig, input);
     hasReporters      = resolvedReporters.valid.length;
 
+    /**
+     * Set the signal observer
+     * todo: Clean up how this is assigned
+     * @type {OutgoingSignals}
+     */
+    mergedConfig.signalObserver = chosenSignalObserver;
+
     // Check if any given reporter are invalid
     // and defer to default (again)
     if (resolvedReporters.invalid.length) {
@@ -135,7 +143,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             reportFn,
             config: mergedConfig,
             errors: [{type: reports.ReportTypes.InvalidReporter}]
-        }
+        } as PreparedInput
     }
 
     // Show the user which external inputs are being used

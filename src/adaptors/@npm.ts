@@ -99,7 +99,7 @@ function getArgs(command: string): CommandArgs {
     };
 }
 
-export function teardown (emitter) {
+export function teardown (emitter, task: Task) {
     if ((typeof emitter.raw.exitCode) !== 'number') {
         debug('tearing down a child_process because exitCode is missing');
         emitter.removeAllListeners('close');
@@ -178,7 +178,7 @@ export default function (task: Task, trigger: CommandTrigger) {
         handleExit(emitter, done);
 
         return function tearDownNpmAdaptor () {
-            teardown(emitter);
+            teardown(emitter, task);
         };
     };
 };
