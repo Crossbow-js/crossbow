@@ -67,171 +67,109 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             const watcher = watchers.filter(x => x.watcherUID === watchEvent.watcherUID)[0];
             return {watchEvent, watcher};
         })
-        // .filter((x: WatchEvent) => {
-        //     const blocked = !~blockable$.getValue().indexOf(x.watcherUID);
-        //     debug(`${x.watcherUID} blocked`);
-        //     return blocked
-        // })
-        // .do((x: WatchEvent) => blockable$.onNext(blockable$.getValue().concat(x.watcherUID)))
+        /**
+         * If the incoming watch had block: true as an option
+         * check if it's watcherUID exists in the blockable$
+         */
+        .filter((x: WatchEventWithContext) => {
+            if (x.watcher.options.block) {
+                const blocked = !~blockable$.getValue().indexOf(x.watchEvent.watcherUID);
+                debug(`${x.watchEvent.watcherUID} blocked`);
+                return blocked
+            }
+            return true;
+        })
+        .do((x: WatchEventWithContext) => {
+            if (x.watcher.options.block) {
+                blockable$.onNext(blockable$.getValue().concat(x.watchEvent.watcherUID));
+            }
+        })
         .timestamp(trigger.config.scheduler)
         .flatMap((incoming: {value: WatchEventWithContext, timestamp: number}, i: number) => {
-
-            /**
-             * @type {WatchEvent}
-             */
-            const {watchEvent, watcher} = incoming.value;
-
-            return Rx.Observable.create<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>>(function (obs) {
-
-                /**
-                 * Report start of task run
-                 */
-                trigger.reporter({
-                    type: ReportTypes.WatcherTriggeredTasks,
-                    data: {
-                        index: i,
-                        taskCollection: watcher.tasks
-                    }
-                } as WatcherTriggeredTasksReport);
-
-                /**
-                 * todo: Is there a way to handle this without
-                 * subscribing manually?
-                 */
-                watcher._runner.series()
-                    .do(taskReport => obs.onNext({
-                        type: WatchCommandEventTypes.WatchTaskReport,
-                        data: {
-                            taskReport,
-                            watchEvent,
-                            count: i
-                        } as WatchTaskReport
-                    }))
-                    .toArray()
-                    .timestamp(trigger.config.scheduler)
-                    .subscribe(function (x: {value: TaskReport[], timestamp; number}) {
-
-                        const reports = x.value;
-                        const sequence = seq.decorateSequenceWithReports(watcher._sequence, reports);
-                        const errors   = reports.filter(x => x.type === TaskReportType.error);
-
-                        obs.onNext({
-                            type: WatchCommandEventTypes.WatchRunnerComplete,
-                            data: {
-                                sequence,
-                                reports,
-                                errors,
-                                watchEvent,
-                                runtime: x.timestamp - incoming.timestamp
-                            } as WatchRunnerComplete
-                        });
-
-                        if (errors.length > 0) {
-                            trigger.reporter({
-                                type: ReportTypes.Summary,
-                                data: {
-                                    sequence: sequence,
-                                    cli:      trigger.cli,
-                                    title:    watcher.tasks.join(', '),
-                                    config:   trigger.config,
-                                    runtime:  x.timestamp - incoming.timestamp
-                                }
-                            });
-                        } else {
-                            trigger.reporter({
-                                type: ReportTypes.WatcherTriggeredTasksCompleted,
-                                data: {
-                                    index: i,
-                                    taskCollection: watcher.tasks,
-                                    time: x.timestamp - incoming.timestamp
-                                }
-                            });
-                        }
-
-                        const withoutThis = blockable$.getValue().filter(x => x !== watchEvent.watcherUID);
-
-                        blockable$.onNext(withoutThis);
-
-                        obs.onCompleted();
-                    });
-            });
+            return runTasks(incoming, i);
         });
 
-    // let paused = [];
-    // let {reporter} = trigger;
-    //
-    // return Rx.Observable
-    //     /**
-    //      * Take each <Watcher> and create an observable stream for it,
-    //      * merging them all together
-    //      */
-    //     .merge(watchers.map(x => createObservableForWatcher(x, trigger)))
-    //     /**
-    //      * Map each file-change event into a stream of Rx.Observable<TaskReport>
-    //      * todo - allow parallel + series running here
-    //      */
-    //     .filter((x: WatchEvent) => {
-    //         if (x.runner.options.block && paused.indexOf(x.watcherUID) > -1) {
-    //             debug('File change blocked');
-    //             return false;
-    //         }
-    //         return true;
-    //     })
-    //     .do(x => {
-    //         if (x.runner.options.block) {
-    //             paused.push(x.watcherUID);
-    //         }
-    //     })
-    //     .flatMap((watchEvent: WatchEvent, index) => {
-    //
-    //         /** LOG **/
-    //         reporter({type: ReportTypes.WatcherTriggeredTasks, data: {index, taskCollection: watchEvent.runner.tasks}});
-    //         /** LOG END **/
-    //
-    //         const timer = new Date().getTime();
-    //         const upcoming = watchEvent.runner._runner
-    //             // todo support parallel running here
-    //             .series()
-    //             .do(function (val) {
-    //                 // Push reports onto tracker
-    //                 // for cross-watcher reports
-    //                 trigger.tracker.onNext(val);
-    //             })
-    //             .do((report: TaskReport) => {
-    //                 // todo - simpler/shorter format for task reports on watchers
-    //                 if (trigger.config.progress) {
-    //                     reporter({type: ReportTypes.WatchTaskReport, data: {report, trigger}}); // always log start/end of tasks
-    //                 }
-    //                 if (report.type === TaskReportType.error) {
-    //                     console.log(report.stats.errors[0].stack);
-    //                 }
-    //             })
-    //             .toArray()
-    //             .flatMap((reports: TaskReport[]) => {
-    //                 const incoming = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
-    //                 const errorCount = seq.countSequenceErrors(incoming);
-    //
-    //                 /** LOG **/
-    //                 if (errorCount > 0) {
-    //                     reporter({type: ReportTypes.Summary, data: {
-    //                         sequence: incoming,
-    //                         cli: trigger.cli,
-    //                         title: watchEvent.runner.tasks.join(', '),
-    //                         config: trigger.config,
-    //                         runtime: new Date().getTime() - timer
-    //                     }});
-    //                 } else {
-    //                     reporter({type: ReportTypes.WatcherTriggeredTasksCompleted, data: {index, taskCollection: watchEvent.runner.tasks, time: new Date().getTime() - timer}});
-    //                 }
-    //                 /** LOG END **/
-    //
-    //                 return Rx.Observable.just({type: WatchCommandEventTypes.FileEvent, data: {sequence: incoming, watchEvent: watchEvent}});
-    //             });
-    //         return upcoming;
-    //     })
-    //     .do((completion: WatchCommandReport<WatchEvent>) => {
-    //         paused = paused.filter(x => x !== completion.data.watchEvent.watcherUID);
-    //     });
+    function runTasks (incoming, i: number) {
+        /**
+         * @type {WatchEvent}
+         */
+        const {watchEvent, watcher} = incoming.value;
+
+        return Rx.Observable.create<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>>(function (obs) {
+
+            /**
+             * Report start of task run
+             */
+            trigger.reporter({
+                type: ReportTypes.WatcherTriggeredTasks,
+                data: {
+                    index: i,
+                    taskCollection: watcher.tasks
+                }
+            } as WatcherTriggeredTasksReport);
+
+            /**
+             * todo: Is there a way to handle this without
+             * subscribing manually?
+             */
+            watcher._runner.series()
+                .do(taskReport => obs.onNext({
+                    type: WatchCommandEventTypes.WatchTaskReport,
+                    data: {
+                        taskReport,
+                        watchEvent,
+                        count: i
+                    } as WatchTaskReport
+                }))
+                .toArray()
+                .timestamp(trigger.config.scheduler)
+                .subscribe(function (x: {value: TaskReport[], timestamp; number}) {
+
+                    const reports = x.value;
+                    const sequence = seq.decorateSequenceWithReports(watcher._sequence, reports);
+                    const errors   = reports.filter(x => x.type === TaskReportType.error);
+
+                    obs.onNext({
+                        type: WatchCommandEventTypes.WatchRunnerComplete,
+                        data: {
+                            sequence,
+                            reports,
+                            errors,
+                            watchEvent,
+                            runtime: x.timestamp - incoming.timestamp
+                        } as WatchRunnerComplete
+                    });
+
+                    if (errors.length > 0) {
+                        trigger.reporter({
+                            type: ReportTypes.Summary,
+                            data: {
+                                sequence: sequence,
+                                cli:      trigger.cli,
+                                title:    watcher.tasks.join(', '),
+                                config:   trigger.config,
+                                runtime:  x.timestamp - incoming.timestamp
+                            }
+                        });
+                    } else {
+                        trigger.reporter({
+                            type: ReportTypes.WatcherTriggeredTasksCompleted,
+                            data: {
+                                index: i,
+                                taskCollection: watcher.tasks,
+                                time: x.timestamp - incoming.timestamp
+                            }
+                        });
+                    }
+
+                    const withoutThis = blockable$.getValue().filter(x => x !== watchEvent.watcherUID);
+
+                    blockable$.onNext(withoutThis);
+
+                    obs.onCompleted();
+                });
+        });
+    }
 }
 
 /**

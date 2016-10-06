@@ -106,10 +106,10 @@ describe('responding to file change events', function () {
 
         const out = utils.getFileWatcher(['default'], {
             watch: {
-                options: {
-                    throttle: 100
-                },
                 default: {
+                    options: {
+                        block: true
+                    },
                     "*.css": ["css"],
                 },
                 dev: {
@@ -117,18 +117,55 @@ describe('responding to file change events', function () {
                 }
             },
             tasks: {
-                css: utils.task(100)
+                css: utils.task(1000)
             }
         }, [
             onNext(100, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(101, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
-            onNext(102, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+            onNext(200, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
         ]);
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(outTimes.length, 2);
+    });
+    it('can block the running of tasks & continue after completion', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    options: {
+                        block: true
+                    },
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000)
+            }
+        }, [
+            // 1 should make it
+            onNext(100,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+
+            // these should be ignored
+            onNext(101,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(102,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(103,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+
+            // this should make it
+            onNext(1101, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+        ]);
+
+        const watchReports = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(watchReports.length, 4);
 
         const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
         assert.deepEqual(outTimes, [
-            100, // start 1
-            200 // end 2
-        ]);
+            100,  // 1 start
+            1100, // 1 end (1000ms task)
+            1101,  // 2 start
+            2101  // 2 start
+        ])
     });
 });

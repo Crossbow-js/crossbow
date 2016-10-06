@@ -116,7 +116,7 @@ module.exports.getFileWatcher = (args, input, fileEvents) => {
 
     const subscription = scheduler.startScheduler(() => {
         return runner;
-    }, {created: 0, subscribed: 0, disposed: 2000});
+    }, {created: 0, subscribed: 0, disposed: 2000000});
 
     return {subscription, output};
 };
