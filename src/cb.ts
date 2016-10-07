@@ -34,6 +34,8 @@ const cliSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
 
 if (parsed.execute) {
     runFromCli(parsed, cliOutputObserver, cliSignalObserver);
+} else {
+    cliOutputObserver.onNext({origin: ReportTypes.CLIParserOutput, data: parsed.output});
 }
 
 function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {

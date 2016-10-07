@@ -4,5 +4,10 @@
     "type": "array",
     "alias": ["b"],
     "default": []
+  },
+  "block": {
+    "desc": "Ignore subsequent file-changes until tasks complete",
+    "type": "boolean",
+    "default": false
   }
 }

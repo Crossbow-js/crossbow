@@ -5,6 +5,7 @@ import parse, {FlagsOutput} from "./cli.parse";
 export interface PostCLIParse {
     cli: FlagsOutput
     execute: boolean
+    output: string[]
 }
 
 export default function (args: string[]): PostCLIParse  {
@@ -18,8 +19,7 @@ export default function (args: string[]): PostCLIParse  {
         const cli = parse(['no-command', ...args], require('../opts/global-common.json'));
 
         if (cli.flags.version) {
-            console.log(require('../package.json').version);
-            return {cli, execute: false};
+            return {cli, execute: false, output: [require('../package.json').version]};
         }
 
         const commandOptions = commands['run'].opts.map(require);
@@ -30,15 +30,10 @@ export default function (args: string[]): PostCLIParse  {
          * If there was additional input, try to run a task
          */
         if (cli2.input.length > 1) {
-            return {cli: cli2, execute: true}
+            return {cli: cli2, execute: true, output: []}
         }
 
-        /**
-         * Show global help
-         */
-        printHelp(commands);
-
-        return {cli: cli2, execute: false};
+        return {cli: cli2, execute: false, output: [printHelp(commands)]};
     }
 
     const commandName    = match[0];
@@ -51,14 +46,14 @@ export default function (args: string[]): PostCLIParse  {
      * command. So we show command-specific help
      */
     if (cli.flags.help) {
-        console.log(commands[match[0]].help);
+        return {cli, execute: false, output: [commands[match[0]].help]};
     }
 
-    return {cli, execute: true};
+    return {cli, execute: true, output: []};
 }
 
 function printHelp (commands) {
-    console.log(`
+    return `
 Usage: crossbow [command] [..args] [OPTIONS]
 
 Commands: 
@@ -76,7 +71,7 @@ For more detailed help, use the command name + the --help flag.
 
     $ crossbow run --help
     $ crossbow init --help
-`);
+`
 }
 
 export function getCommand(incoming: string, commands: CLICommands): string[] {

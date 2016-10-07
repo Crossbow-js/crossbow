@@ -27,6 +27,7 @@ export enum ReporterErrorTypes {
 export interface ReporterError {type: ReporterErrorTypes, file?: ExternalFile}
 export interface ReporterFileNotFoundError extends ReporterError {}
 export interface ReporterTypeNotSupportedError extends ReporterError {}
+
 export enum ReporterTypes {
     InlineFunction   = <any>"InlineFunction",
     ExternalFile     = <any>"ExternalFile",
@@ -81,6 +82,7 @@ export enum ReportTypes {
     Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",
     SignalReceived                 = <any>"SignalReceived",
+    CLIParserOutput                = <any>"CLIParserOutput",
 }
 
 export interface IncomingReport {

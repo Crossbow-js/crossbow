@@ -1,5 +1,3 @@
-import {twoCol} from "./reporters/task.list";
-import {log} from "debug/node";
 const _ = require('../lodash.custom');
 export interface CommandOption {
     alias: string[],
@@ -29,16 +27,20 @@ export const commands: CLICommands = {
         ],
         help: `Usage: crossbow run [...tasks] [OPTIONS]
 
-Run Options:
+{bold:Run Options:}
+
 ${optionsList(_.merge({}, require('../opts/command.run.opts.json'), require(runcommon)))}
 
-Global Options:
+{bold:Global Options:}
+
 ${optionsList(_.merge({}, require(globalcommon), require(common)))}
 
-Example: run 2 named tasks in parallel 
+{bold:Example: run 2 named tasks in parallel} 
+
     $ crossbow run task1 task2 -p
 
-Example: use a config file from another folder 
+{bold:Example: use a config file from another folder} 
+
     $ crossbow run <task-name> -c .conf/crossbow.yaml
     `
     },
@@ -53,16 +55,20 @@ Example: use a config file from another folder
         ],
         help: `Usage: crossbow watch [...watcher] [OPTIONS]
 
-Watch Options:
+{bold:Watch Options:}
+
 ${twoColFromJson(_.merge({}, require('../opts/command.watch.opts.json'), require('../opts/run-common.json')), 'desc')}
 
-Global Options:
+{bold:Global Options:}
+
 ${twoColFromJson(_.merge({}, require(globalcommon), require(common)), 'desc')}
 
-Example: run 2 named tasks in parallel 
+{bold:Example: run 2 named tasks in parallel} 
+
     $ crossbow run task1 task2 -p
 
-Example: use a config file from another folder 
+{bold:Example: use a config file from another folder} 
+
     $ crossbow run <task-name> -c .conf/crossbow.yaml
     `
     },
@@ -77,13 +83,16 @@ Example: use a config file from another folder
         ],
         help: `Usage: crossbow tasks [OPTIONS]
 
-Options:
+{bold:Options:}
+
 ${twoColFromJson(_.merge({}, require(globalcommon), require(common)), 'desc')}
 
-Example: show all available tasks 
+{bold:Example: show all available tasks} 
+
     $ crossbow tasks
 
-Example: show all tasks different config file 
+{bold:Example: show all tasks different config file} 
+
     $ crossbow tasks -c conf/config.js
     `
     },
@@ -97,10 +106,12 @@ Example: show all tasks different config file
         ],
         help: `Usage: crossbow watchers [OPTIONS]
         
-Options: 
+{bold:Options:} 
+
 ${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
-Example: Show watchers from a config file
+{bold:Example: Show watchers from a config file}
+
     $ crossbow watchers -c conf/config.js
 `
     },
@@ -114,16 +125,20 @@ Example: Show watchers from a config file
         ],
         help: `Usage: crossbow init [OPTIONS]
 
-Init Options:
+{bold:Init Options:}
+
 ${twoColFromJson(_.merge({}, require('../opts/command.init.opts.json')), 'desc')}
 
-Options:
+{bold:Options:}
+
 ${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
-Examples: Create a config file in default format (yaml)
+{bold:Examples: Create a config file in default format (yaml)}
+
     $ crossbow init
 
-Examples: Create a config file in JSON format
+{bold:Examples: Create a config file in JSON format}
+
     $ crossbow init --type json
 `
     },
