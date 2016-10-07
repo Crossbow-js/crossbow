@@ -277,15 +277,17 @@ Or to see multiple tasks running, with some in parallel, try:
         return `Entering interactive mode as you didn't provide a watcher to run`;
     },
     [reports.ReportTypes.Watchers]: function (report: reports.WatchersReport): string[] {
-        const lines = [
-            `{yellow:+} Watching...`
-        ];
+        const lines = [];
+        lines.push(``);
         report.data.watchTasks.forEach(function (watchTask) {
-            const o = archy({
-                label: `{yellow:+ input: '${watchTask.name}'}`, nodes: watchTask.watchers.map(getWatcherNode)
+            watchTask.watchers.forEach(function (watcher) {
+                lines.push(`{bold:'${watcher.patterns.map(x => _e(x)).join(', ')}}'`);
+                lines.push(` {yellow:->} ${watcher.tasks.join(', ')}`)
             });
-            lines.push(multiLineTree(o));
+            lines.push(``);
         });
+        lines.push('Watching for changes...');
+
         return lines;
     },
     [reports.ReportTypes.WatcherNames]: function (report: reports.WatcherNamesReport): string[] {

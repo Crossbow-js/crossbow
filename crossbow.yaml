@@ -1,7 +1,7 @@
 watch:
-
-#  default:
-#    "*.json": ['@npm echo "hello"']
+  default:
+    "*.json:*.html": ['@npm sleep 20', 'shane']
+    "*.js":   ['@npm echo "JS watcher"']
 
   block:
     options:

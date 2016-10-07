@@ -112,45 +112,12 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
         reporter({type: ReportTypes.BeforeTaskList, data: {sequence: beforeTasks.sequence, cli, config: trigger.config}});
     }
 
+    reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
+
     /**
      * todo: actually begin the watchers
      */
     return createObservablesForWatchers(watchRunners.valid, trigger);
-
-    // /**
-    //  * To begin the watchers, we first create a runner for the 'before' tasks.
-    //  * If this completes (tasks complete or return true) then we continue
-    //  * to create the file-watchers and hook up the tasks
-    //  */
-    // const watcher$ = Rx.Observable.concat(
-    //     /**
-    //      * The 'before' runner can be `true`, complete, or throw.
-    //      * If it throws, the login in the `do` block below will not run
-    //      * and the watchers will not begin
-    //      */
-    //     createBeforeRunner(before)
-    //         .catch(err => {
-    //             // Only intercept Crossbow errors
-    //             // otherwise just allow it to be thrown
-    //             // For example, 'before' runner may want
-    //             // to terminate the stream, but not with a throwable
-    //             if (err._cb) {
-    //                 sub.dispose();
-    //                 return Rx.Observable.empty();
-    //             }
-    //             return Rx.Observable.throw(err);
-    //         })
-    //         .do(() => {
-    //             reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
-    //         }),
-    //     createObservablesForWatchers(runners.valid, trigger)).share();
-    //
-    // const sub = watcher$.subscribe();
-    //
-    // return {
-    //     watcher$,
-    //     tracker$: trigger.tracker$
-    // };
 }
 
 export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

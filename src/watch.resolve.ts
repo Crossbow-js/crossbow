@@ -1,6 +1,5 @@
 /// <reference path="../typings/main.d.ts" />
 import {isPlainObject} from './task.utils';
-const merge = require('../lodash.custom').merge;
 import {WatchOptions} from "chokidar";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
@@ -12,6 +11,7 @@ import {CommandTrigger} from "./command.run";
 import {TaskCollection} from "./task.resolve";
 
 const blacklist = ['options', 'bs-config', 'before', 'id'];
+const _         = require('../lodash.custom');
 
 export const defaultWatchOptions = <CBWatchOptions>{
     ignoreInitial: true,
@@ -67,7 +67,7 @@ function createOne(name: string, index:number, item, itemOptions, globalOptions)
             return {
                 patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
                 tasks:      [].concat(item.tasks),
-                options:    merge({}, defaultWatchOptions, globalOptions, itemOptions),
+                options:    _.merge({}, defaultWatchOptions, globalOptions, itemOptions),
                 watcherUID: `${name}-${index}`
             };
         }
@@ -181,9 +181,13 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
 
 function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): WatchTask {
 
-    const incoming  = preprocessWatchTask(taskName);
-    const selection = trigger.input.watch[incoming.taskName] || {};
-    const watchers  = getFormattedTask(incoming.taskName, selection, trigger.input.watch.options || {});
+    const globalOptions = _.assign({}, trigger.input.watch.options, {
+        block: trigger.config.block
+    });
+
+    const incoming      = preprocessWatchTask(taskName);
+    const selection     = trigger.input.watch[incoming.taskName] || {};
+    const watchers      = getFormattedTask(incoming.taskName, selection, globalOptions);
 
     const errors = gatherWatchTaskErrors(
         incoming,

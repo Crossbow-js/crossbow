@@ -6,7 +6,7 @@ import Rx = require("rx");
 import {SequenceItem} from "./task.sequence.factories";
 import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
-import {WatchCommandEventTypes, WatchCommandReport, WatchCommandSetupErrors} from "./command.watch";
+import {WatchCommandEventTypes, WatchCommandReport} from "./command.watch";
 
 const debug = require('debug')('cb:watch.runner');
 
@@ -74,7 +74,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
         .filter((x: WatchEventWithContext) => {
             if (x.watcher.options.block) {
                 const blocked = !~blockable$.getValue().indexOf(x.watchEvent.watcherUID);
-                debug(`${x.watchEvent.watcherUID} blocked`);
+                debug(`BLOCKED - ${x.watchEvent.watcherUID} ${x.watchEvent.path} ${x.watchEvent.event}`);
                 return blocked
             }
             return true;
@@ -222,6 +222,7 @@ export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter
         const chokidarWatcher = require('chokidar').watch(watcher.patterns, watcher.options)
 
             .on('all', function (event, path) {
+                debug(`└─ CHOKIDAR EVENT ${event} - ${path}`);
                 observer.onNext({
                     event: event,
                     path: path,

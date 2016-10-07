@@ -97,11 +97,12 @@ module.exports.getComplete = (runner) =>
         .filter(x => x.value.value.type === 'Complete')
         .map(x => x.value.value.data)[0];
 
-module.exports.getFileWatcher = (args, input, fileEvents) => {
+module.exports.getFileWatcher = (args, input, fileEvents, config) => {
 
     const scheduler = new Rx.TestScheduler();
     const output    = new Rx.ReplaySubject(100);
     const cli       = {};
+    config          = config || {};
 
     const fileEventsObservable = scheduler.createHotObservable.apply(scheduler, fileEvents);
 
@@ -111,6 +112,10 @@ module.exports.getFileWatcher = (args, input, fileEvents) => {
         outputObserver: output,
         fileChangeObserver: fileEventsObservable
     };
+
+    Object.keys(config).forEach(function (key) {
+        cli.flags[key] = config[key];
+    });
 
     const runner = cb.default(cli, input);
 

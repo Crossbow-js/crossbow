@@ -48,6 +48,7 @@ export interface CrossbowConfiguration {
     skip: string[]
     tasksDir: string[]
     nodeModulesPaths: string[]
+    block: boolean
 
     // docs command
     file?: string
@@ -150,6 +151,10 @@ const defaults = <CrossbowConfiguration>{
      * Tasks that should be run before any watchers begin
      */
     before: [],
+    /**
+     * Global block flag for watcher tasks
+     */
+    block: false,
     /**
      * Any tasks that should be skipped
      */

@@ -168,4 +168,44 @@ describe('responding to file change events', function () {
             2101  // 2 start
         ])
     });
+    it('accepts --block as CLI flag', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000)
+            }
+        }, [
+            // 1 should make it
+            onNext(100,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+
+            // these should be ignored
+            onNext(101,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(102,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(103,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+
+            // this should make it
+            onNext(1101, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+        ], {
+            block: true
+        });
+
+        const watchReports = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(watchReports.length, 4);
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
+        assert.deepEqual(outTimes, [
+            100,  // 1 start
+            1100, // 1 end (1000ms task)
+            1101,  // 2 start
+            2101  // 2 start
+        ])
+    });
 });
