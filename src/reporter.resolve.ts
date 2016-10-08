@@ -1,4 +1,4 @@
-import {CrossbowConfiguration, ExitSignal, CBSignal, OutgoingSignals} from "./config";
+import {CrossbowConfiguration, ExitSignal, CBSignal, OutgoingSignals, FileWriteSignal} from "./config";
 import {CrossbowInput, CLI} from "./index";
 import {readFilesFromDisk, ExternalFile, ExternalFileInput, ExternalFileContent, HashDirErrorTypes} from "./file.utils";
 import {TaskReport} from "./task.runner";
@@ -45,7 +45,7 @@ export enum ReportTypes {
     DuplicateInputFile             = <any>"DuplicateInputFile",
     InputFileCreated               = <any>"InputFileCreated",
     InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
-    InputError                     = <any>"InputFileNotFound",
+    InputError                     = <any>"InputError",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
     UsingInputFile                 = <any>"UsingInputFile",
@@ -100,6 +100,12 @@ export interface UsingConfigFileReport extends IncomingReport {
 }
 export interface InputFileNotFoundReport extends IncomingReport {
     data: {sources: ExternalFileInput[]}
+}
+export interface InputErrorReport extends IncomingReport {
+    data: {
+        errors: any[],
+        sources: ExternalFileInput[]
+    }
 }
 export interface TaskReportReport {
     data: {report: TaskReport,trigger: CommandTrigger}
@@ -347,10 +353,11 @@ export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObs
     /**
      * Default is to log each report to the console
      */
-    const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
+    const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>();
 
     defaultSignalObserver.subscribe(xs => {
-        console.log(xs);
+        // todo - handle default signals
+        // console.log(xs);
         // xs.data.forEach(function (x) {
         //     logger.info(x);
         // });

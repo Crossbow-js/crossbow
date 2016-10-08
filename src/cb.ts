@@ -12,7 +12,7 @@ import * as file from "./file.utils";
 import {InitCommandComplete} from "./command.init";
 import {WatchersCommandComplete} from "./command.watchers";
 import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
-import {ExitSignal, CBSignal, SignalTypes} from "./config";
+import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
 import {RunComplete, RunCommandReportTypes, RunCommandCompletionReport} from "./command.run.execute";
@@ -86,6 +86,16 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                 }
             })
             .subscribe();
+
+        cliSignalObserver
+            .filter(x => x.type === SignalTypes.FileWrite)
+            .subscribe((x: CBSignal<FileWriteSignal>) => {
+                if (prepared.config.dryRun) {
+                    console.log('should skip');
+                } else {
+                    file.writeFileToDisk(x.data.file, x.data.content);
+                }
+            });
 
         cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)

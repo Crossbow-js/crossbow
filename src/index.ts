@@ -108,7 +108,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
     // Bail early if a user tried to load a specific file
     // but it didn't exist, or had some other error
     if (userInput.errors.length) {
-        reportFn({type: reports.ReportTypes.InputError, data: {sources: userInput.sources}});
+        reportFn({type: reports.ReportTypes.InputError, data: userInput});
         return {
             userInput,
             cli,

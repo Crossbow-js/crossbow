@@ -15,7 +15,8 @@ export enum InputErrorTypes {
     FileNotFound        = <any>"FileNotFound",
     NotAFile            = <any>"NotAFile",
     InvalidYaml         = <any>"InvalidYaml",
-    InvalidInput        = <any>"InvalidInput"
+    InvalidInput        = <any>"InvalidInput",
+    InvalidJson         = <any>"InvalidJson"
 }
 
 export interface InputFileNotFoundError extends InputError {}

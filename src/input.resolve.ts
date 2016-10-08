@@ -15,6 +15,7 @@ export enum InputTypes {
     ExternalFile = <any>"ExternalFile",
     InlineObject = <any>"InlineObject",
     CBFile = <any>"CBFile",
+    InlineJSON = <any>"InlineJSON",
 }
 
 export interface UserInput {
@@ -61,6 +62,25 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
                  */
                 mergedInputs
             ],
+        }
+    }
+
+    if (config.fromJson) {
+        try {
+            const parsed = JSON.parse(config.fromJson);
+            return {
+                errors: [],
+                sources: [],
+                type: InputTypes.InlineJSON,
+                inputs: [generateBaseInput(parsed)]
+            }
+        } catch (e) {
+            return {
+                errors: [{type: InputErrorTypes.InvalidJson, json: config.fromJson, error: e}],
+                sources: [],
+                type: InputTypes.InlineJSON,
+                inputs: []
+            }
         }
     }
 

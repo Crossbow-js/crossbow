@@ -50,13 +50,26 @@ const reporterFunctions = {
             return `Using: {cyan.bold:${input.relative}}`;
         }).join('\n');
     },
-    [reports.ReportTypes.InputFileNotFound]: function (report: reports.InputFileNotFoundReport): string[] {
+    [reports.ReportTypes.InputError]: function (report: reports.InputErrorReport): string[] {
         const lines = [`Sorry, there were errors resolving your input files`];
+        const {sources, errors} = report.data;
 
-        report.data.sources.forEach(function (item) {
-            lines.push(`{red.bold:x ${item.rawInput}}`);
-            lines.push.apply(lines, getExternalError(item.errors[0].type, item.errors[0], item).split('\n'));
-        });
+        /**
+         * If the report has 'sources' it means it was an external file
+         */
+        if (sources.length) {
+            sources.forEach(function (item) {
+                lines.push(`{red.bold:x ${item.rawInput}}`);
+                lines.push.apply(lines, getExternalError(item.errors[0].type, item.errors[0], item).split('\n'));
+            });
+        } else {
+            /**
+             * Otherwise it was some other input error
+             */
+            errors.forEach(function (error) {
+                lines.push.apply(lines, getExternalError(error.type, error).split('\n'));
+            });
+        }
 
         return lines;
     },

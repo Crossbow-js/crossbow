@@ -5,11 +5,13 @@ import {OutgoingReport} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
 import {WatchEvent} from "./watch.file-watcher";
+import {ExternalFile} from "./file.utils";
 
 const _ = require('../lodash.custom');
 
 export enum SignalTypes {
-    Exit = <any>'Exit'
+    Exit = <any>'Exit',
+    FileWrite = <any>'FileWrite'
 }
 
 export interface CBSignal<T> {
@@ -17,10 +19,15 @@ export interface CBSignal<T> {
     data?: T
 }
 
-export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal>>
+export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>
 
 export interface ExitSignal {
     code: number
+}
+
+export interface FileWriteSignal {
+    file: ExternalFile
+    content: string
 }
 
 export interface CrossbowConfiguration {
@@ -49,6 +56,7 @@ export interface CrossbowConfiguration {
     tasksDir: string[]
     nodeModulesPaths: string[]
     block: boolean
+    fromJson?: string
 
     // docs command
     file?: string
@@ -57,7 +65,7 @@ export interface CrossbowConfiguration {
     dryRunDuration?: number
     outputObserver?:     Rx.Observable<OutgoingReport>
     fileChangeObserver?: Rx.Observable<WatchEvent>
-    signalObserver?:     Rx.Subject<CBSignal<ExitSignal>>
+    signalObserver?:     OutgoingSignals
     scheduler?:          Rx.IScheduler
 }
 

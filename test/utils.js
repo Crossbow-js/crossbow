@@ -71,11 +71,11 @@ module.exports.watch = (args, input, config) => {
 };
 
 module.exports.executeRun = (args, input, config) => {
-    const output = new Rx.ReplaySubject(100);
-    const cli    = {};
+    const output         = new Rx.ReplaySubject(100);
+    const cli            = {};
 
     cli.input                = ['run'].concat(args);
-    cli.flags                = cli.flags || config || {};
+    cli.flags                = config || {};
     cli.flags.outputObserver = output;
 
     return cb.default(cli, input);
