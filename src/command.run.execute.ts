@@ -16,6 +16,7 @@ const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
     InvalidTasks = <any>"InvalidTasks",
+    NoTasks      = <any>"NoTasks",
     Setup        = <any>"Setup",
     Complete     = <any>"Complete",
     TaskReport   = <any>"TaskReport"
@@ -32,8 +33,9 @@ export interface RunCommandReport<T> {
 export type RunComplete = Rx.Observable<RunCommandReport<RunCommandSetup|RunCommandCompletionReport|TaskReport>>
 
 export interface RunCommandSetup {
-    tasks: Tasks,
-    sequence: SequenceItem[]
+    tasks?: Tasks,
+    sequence?: SequenceItem[]
+    errors: RunCommandSetupErrors[]
 }
 
 export interface RunCommandCompletionReport {
@@ -168,7 +170,8 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
             type: RunCommandReportTypes.Setup,
             data: {
                 sequence,
-                tasks
+                tasks,
+                errors: []
             } as RunCommandSetup
         };
 
