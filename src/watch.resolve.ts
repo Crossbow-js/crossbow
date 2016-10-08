@@ -107,7 +107,7 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
          * names such as `options` or `before`
          */
         .filter(x => blacklist.indexOf(x) === -1)
-        .reduce((all: Watcher[], item: string) => {
+        .reduce((all: Watcher[], item: string, index: number) => {
             /**
              * Here we assume the long-hand version is being
              * used where the watchers property is provided.
@@ -172,7 +172,7 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
              *  eg:
              *      "*.js": ['uglify']
              */
-            return all.concat(createOne(name, 0, {
+            return all.concat(createOne(name, index, {
                 patterns: item,        // key as the pattern
                 tasks: watchTaskParent[item] // value as the tasks array
             }, watchTaskParent.options, globalOptions));

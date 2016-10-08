@@ -21,6 +21,15 @@ describe('Resolving watch tasks', function () {
         assert.equal(runner.watchTasks.valid[0].watchers[0].patterns[0], '*.css');
         assert.deepEqual(runner.watchTasks.valid[0].watchers[0].tasks, ['sass', 'js']);
         assert.deepEqual(runner.watchTasks.valid[0].watchers[0].options, defaultWatchOptions);
+
+        assert.deepEqual(
+            runner.watchTasks.valid[0].watchers.map(x => x.watcherUID),
+            [
+                'shane-0',
+                'shane-1',
+                'shane-2'
+            ]
+        );
     });
     it('can maintain personal before tasks even when before given globally too', function () {
         const runner = utils.getWatcher(['default', 'dev'], {
