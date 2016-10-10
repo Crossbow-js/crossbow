@@ -114,9 +114,6 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
 
     reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
 
-    /**
-     * todo: actually begin the watchers
-     */
     return createObservablesForWatchers(watchRunners.valid, trigger);
 }
 

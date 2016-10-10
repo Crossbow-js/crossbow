@@ -109,8 +109,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             } as WatcherTriggeredTasksReport);
 
             /**
-             * todo: Is there a way to handle this without
-             * subscribing manually?
+             * todo: Is there a way to handle this without subscribing manually?
              */
             watcher._runner.series()
                 .do(taskReport => obs.onNext({

@@ -114,7 +114,7 @@ export function teardown (emitter, task: Task) {
 }
 
 export function getStdio (trigger: CommandTrigger) {
-    // todo - prefixed logging
+    // todo - prefixed logging for child processes
     if (trigger.config.suppressOutput) {
         return ['pipe', 'pipe', 'pipe'];
     }
@@ -167,7 +167,6 @@ export default function (task: Task, trigger: CommandTrigger) {
         const stdio = getStdio(trigger);
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
-        // todo close all child tasks following the exit of the main process
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,

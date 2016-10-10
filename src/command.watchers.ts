@@ -38,13 +38,6 @@ function execute(trigger: CommandTrigger): WatchersCommandComplete {
      */
     if (runners.invalid.length) {
         /**
-         * Log valid runners first, so that errors are not lost in the console output
-         * // todo, again, is it confusing to have none-errored watchers listed here
-         */
-        // runners.valid.forEach(runner => {
-        //     _reporter.reportWatchTaskTasksErrors(runner._tasks.all, runner, config)
-        // });
-        /**
          * Now log the invalid runners
          */
         runners.invalid.forEach(runner => {

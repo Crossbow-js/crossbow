@@ -71,7 +71,7 @@ function createOne(name: string, index:number, item, itemOptions, globalOptions)
                 watcherUID: `${name}-${index}`
             };
         }
-        // todo: Add error handling for incorrect watcher formats ie: user syntax error
+        // todo: error handling for incorrect watcher formats ie: missing probs etc
     }
     return item;
 }

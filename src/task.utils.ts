@@ -38,7 +38,7 @@ export function locateModule(config: CrossbowConfiguration, taskName: string): E
     
     /**
      * Exit early if this file exists
-     * TODO - allow this lookup to be cached to prevent future calls
+     * TODO - allow this lookup to be cached to prevent future file IO
      * TODO - skip file/node look-ups when key matches top-level task definition
      */
     if (tasksByName.length) return tasksByName;

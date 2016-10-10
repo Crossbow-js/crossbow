@@ -25,10 +25,6 @@ export const enum LogLevel {
     Verbose
 }
 
-// @TODO - this file predates most of the changes made
-// to crossbow and therefor would be well suited to a complete
-// rewrite.
-
 export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
     if (typeof reporterFunctions[report.type] === 'function') {
         const outputFn = reporterFunctions[report.type];
@@ -347,10 +343,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`;
     },
     [reports.ReportTypes.DocsGenerated]: function () {
-
-        // Todo - should we always output to the console?
-        // l(`{green:✔} Documentation generated - copy/paste the following markdown into a readme.md file`);
-        // console.log(markdown);
+        /** noop **/
     },
     [reports.ReportTypes.DocsInputFileNotFound]: function (report: reports.DocsInputFileNotFoundReport): string[] {
         const {error} = report.data;

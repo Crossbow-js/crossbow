@@ -19,7 +19,8 @@ const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);
 const lstatAsObservable    = Rx.Observable.fromNodeCallback(lstat);
 
 const _ = require('../lodash.custom');
-// todo windows support
+
+// todo windows support for .bat files etc
 const supportedTaskFileExtensions = ['.js', '.sh'];
 
 export interface ExternalFile {

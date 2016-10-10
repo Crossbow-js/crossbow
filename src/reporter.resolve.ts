@@ -355,12 +355,8 @@ export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObs
      */
     const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>();
 
-    defaultSignalObserver.subscribe(xs => {
-        // todo - handle default signals
-        // console.log(xs);
-        // xs.data.forEach(function (x) {
-        //     logger.info(x);
-        // });
+    defaultSignalObserver.subscribe(signal => {
+        // default signals are no-ops
     });
 
     return defaultSignalObserver;
