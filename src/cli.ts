@@ -53,21 +53,21 @@ export default function (args: string[]): PostCLIParse  {
 }
 
 function printHelp (commands) {
-    return `
-Usage: crossbow [command] [..args] [OPTIONS]
+    return `Usage: crossbow [command] [..args] [OPTIONS]
 
-Commands: 
+{bold:Crossbow Commands:} 
+
 ${twoColFromJson(commands, 'description')}
 
-Example: Run the task 'build-js'
+{bold:Example: Run the task 'build-js'}
 
     $ crossbow run build-js
     
-Example: Run the tasks build-css and build-js in sequence
+{bold:Example: Run the tasks build-css and build-js in sequence}
 
     $ crossbow run build-css build-js
         
-For more detailed help, use the command name + the --help flag.
+{bold:For more detailed help, use the command name + the --help flag}
 
     $ crossbow run --help
     $ crossbow init --help

@@ -81,7 +81,23 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                     reports.push(data);
                 }
                 if (x.type === RunCommandReportTypes.Complete) {
+
                     const data = <RunCommandCompletionReport>x.data;
+
+                    /**
+                     * Main summary report
+                     */
+                    prepared.reportFn({
+                        type: ReportTypes.Summary,
+                        data: {
+                            errors: data.taskErrors,
+                            sequence: data.decoratedSequence,
+                            cli: data.cli,
+                            config: data.config,
+                            runtime: data.runtime
+                        }
+                    } as SummaryReport);
+
                     require('./command.run.post-execution').postCliExecution(data);
                 }
             })

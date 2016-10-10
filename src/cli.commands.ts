@@ -198,6 +198,6 @@ export function twoColFromJson(json, rightSidePropertyName: string, leftside?: F
         return tuple;
     });
     return padded.reduce(function (acc, item) {
-        return acc.concat('  ' + item.join('  '));
+        return acc.concat('    ' + item.join('  '));
     }, []).join('\n');
 }

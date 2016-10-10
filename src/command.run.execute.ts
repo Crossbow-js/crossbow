@@ -11,6 +11,7 @@ import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
 import {SummaryReport, TaskErrorsReport} from "./reporter.resolve";
 import {CrossbowConfiguration} from "./config";
+import {CLI} from "./index";
 
 const debug = require('debug')('cb:command.run.execute');
 
@@ -48,6 +49,7 @@ export interface RunCommandCompletionReport {
     runtime?: number
     errors: RunCommandSetupErrors[]
     taskErrors: TaskReport[]
+    cli: CLI
 }
 
 export interface CompletionReport {
@@ -191,26 +193,6 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
         const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
 
         /**
-         * Did any errors occur in this run?
-         * @type {TaskReport[]}
-         */
-        const errors = reports.filter(x => x.type === TaskReportType.error);
-
-        /**
-         * Main summary report
-         */
-        reporter({
-            type: ReportTypes.Summary,
-            data: {
-                errors: errors,
-                sequence: decoratedSequence,
-                cli,
-                config,
-                runtime
-            }
-        } as SummaryReport);
-        
-        /**
          * Push a 'Completion report' onto the $complete Observable.
          * This means consumers will get everything when they call
          */
@@ -218,6 +200,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
             type: RunCommandReportTypes.Complete,
             data: {
                 reports,
+                cli: trigger.cli,
                 tasks,
                 sequence,
                 runner,
