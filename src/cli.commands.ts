@@ -152,16 +152,20 @@ ${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
         ],
         help: `Usage: crossbow docs [OPTIONS]
 
-Docs Options:
+{bold:Docs Options:}
+
 ${twoColFromJson(_.merge({}, require('../opts/command.docs.opts.json')), 'desc')}
 
-Options:
+{bold:Options:}
+
 ${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
-Examples: Create a config file in default format (yaml)
+{bold:Examples: Create a config file in default format (yaml)}
+
     $ crossbow init
 
-Examples: Create a config file in JSON format
+{bold:Examples: Create a config file in JSON format}
+
     $ crossbow init --type json
 `
     }
