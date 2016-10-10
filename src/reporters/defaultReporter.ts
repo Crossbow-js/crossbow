@@ -28,7 +28,7 @@ export const enum LogLevel {
 export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
     if (typeof reporterFunctions[report.type] === 'function') {
         const outputFn = reporterFunctions[report.type];
-        const output   = outputFn.call(null, report);
+        const output = outputFn.call(null, report);
         if (typeof output === 'string') {
             if (output === '') return;
             observer.onNext({origin: report.type, data: [output]});
@@ -367,13 +367,34 @@ Or to see multiple tasks running, with some in parallel, try:
     [reports.ReportTypes.SignalReceived]: function reportSummary(report: reports.SignalReceivedReport): string[] {
         return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.data.code})} {yellow:~~~}`];
     },
+    [reports.ReportTypes.WatcherSummary]: function reportSummary(report: reports.WatcherSummaryReport): string[] {
+        const {sequence, cli, config, runtime, watcher, watchEvent} = report.data;
+
+        const runnableTasks = collectRunnableTasks(sequence, []);
+        const errorTasks = runnableTasks.filter(x => x.stats.errors.length > 0);
+        const skippedTasks = runnableTasks.filter(x => x.stats.skipped);
+        const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
+
+        const lines = [];
+
+        // todo - show a reduced tree showing only errors
+        if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
+            lines.push(reportSequenceTree(sequence, config, `+ Results from ${watcher.parent}`, true));
+        }
+
+        if (errorTasks.length) {
+            lines.push(`{red:x} ${errorTasks.length} error(s) from watcher {yellow:${watcher.parent}}`);
+        }
+
+        return lines;
+    },
     [reports.ReportTypes.Summary]: function reportSummary(report: reports.SummaryReport): string[] {
 
         const {sequence, cli, config, runtime} = report.data;
 
-        const runnableTasks  = collectRunnableTasks(sequence, []);
-        const errorTasks     = runnableTasks.filter(x => x.stats.errors.length > 0);
-        const skippedTasks   = runnableTasks.filter(x => x.stats.skipped);
+        const runnableTasks = collectRunnableTasks(sequence, []);
+        const errorTasks = runnableTasks.filter(x => x.stats.errors.length > 0);
+        const skippedTasks = runnableTasks.filter(x => x.stats.skipped);
         const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
 
         const lines = [];
@@ -445,7 +466,7 @@ function incomingTaskItemAsString(x: IncomingTaskItem): string {
         return _e(x);
     }
     if (typeof x === 'function') {
-        const fn : any = x;
+        const fn: any = x;
         if (fn.name) {
             return `[Function: ${fn.name}]`;
         }

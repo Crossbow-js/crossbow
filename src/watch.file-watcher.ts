@@ -141,13 +141,15 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
 
                     if (errors.length > 0) {
                         trigger.reporter({
-                            type: ReportTypes.Summary,
+                            type: ReportTypes.WatcherSummary,
                             data: {
                                 sequence: sequence,
                                 cli:      trigger.cli,
                                 title:    watcher.tasks.join(', '),
                                 config:   trigger.config,
-                                runtime:  x.timestamp - incoming.timestamp
+                                runtime:  x.timestamp - incoming.timestamp,
+                                watcher,
+                                watchEvent
                             }
                         });
                     } else {

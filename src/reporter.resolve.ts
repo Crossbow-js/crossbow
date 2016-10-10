@@ -12,6 +12,7 @@ import {WatchRunners} from "./watch.runner";
 import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.docs";
 import Rx = require('rx');
 import logger from './logger';
+import {WatchEvent} from "./watch.file-watcher";
 
 export interface Reporter {
     errors: {}[]
@@ -72,6 +73,7 @@ export enum ReportTypes {
     WatcherNames                   = <any>"WatcherNames",
     WatcherTriggeredTasksCompleted = <any>"WatcherTriggeredTasksCompleted",
     WatcherTriggeredTasks          = <any>"WatcherTriggeredTasks",
+    WatcherSummary                 = <any>"WatcherSummary",
 
     DocsAddedToFile                = <any>"DocsAddedToFile",
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
@@ -79,8 +81,8 @@ export enum ReportTypes {
     DocsOutputFileExists           = <any>"DocsOutputFileExists",
     DocsInvalidTasksSimple         = <any>"DocsInvalidTasksSimple",
 
-    Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",
+    Summary                        = <any>"Summary",
     SignalReceived                 = <any>"SignalReceived",
     CLIParserOutput                = <any>"CLIParserOutput",
 }
@@ -113,6 +115,7 @@ export interface TaskReportReport {
 export interface SignalReceivedReport extends IncomingReport {
     data: {code: number}
 }
+
 export interface SummaryReport extends IncomingReport {
     data: {
         sequence: SequenceItem[],
@@ -120,6 +123,17 @@ export interface SummaryReport extends IncomingReport {
         config: CrossbowConfiguration,
         runtime: number,
         errors: TaskReport[]
+    }
+}
+export interface WatcherSummaryReport extends IncomingReport {
+    data: {
+        sequence: SequenceItem[],
+        cli: CLI,
+        config: CrossbowConfiguration,
+        runtime: number,
+        errors: TaskReport[],
+        watchEvent: WatchEvent
+        watcher: Watcher
     }
 }
 export interface TaskListReport extends IncomingReport {
