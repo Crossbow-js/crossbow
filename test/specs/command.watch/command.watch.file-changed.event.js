@@ -208,4 +208,110 @@ describe('responding to file change events', function () {
             2101  // 2 start
         ])
     });
+    it('Executes tasks before watchers begin', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    before: ['js'],
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000),
+                js: utils.task(2000)
+            }
+        }, [
+            // This event happens after the js task completes (which takes 2s)
+            onNext(2100,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+        ]);
+
+        // console.log(out.subscription.messages);
+        const watchReports = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(watchReports.length, 2);
+
+        const beforeTasksReports = out.subscription.messages.filter(x => x.value.value.type === 'BeforeTasksComplete');
+        const beforeTaskComplete = beforeTasksReports[0].value.value.data.reports;
+
+        assert.equal(beforeTaskComplete.length,  2);
+        assert.equal(beforeTaskComplete[0].type, 'start');
+        assert.equal(beforeTaskComplete[1].type, 'end');
+        assert.equal(beforeTaskComplete[1].stats.duration, 2000);
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
+        assert.deepEqual(outTimes, [
+            2100,  // 1 start
+            3100, // 1 end (1000ms task)
+        ]);
+    });
+    it('Does NOT EXIT if before tasks error but --no-fail given', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    before: ['js'],
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000),
+                js: [utils.task(2000), utils.error(100)]
+            }
+        }, [
+            // This event happens after the js task completes (which takes 2s)
+            onNext(3000,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+        ], {fail: false});
+
+        // console.log(out.subscription.messages);
+        const watchReports = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(watchReports.length, 2);
+
+        const beforeTasksReports = out.subscription.messages.filter(x => x.value.value.type === 'BeforeTasksComplete');
+        const beforeTaskComplete = beforeTasksReports[0].value.value.data.reports;
+
+        assert.equal(beforeTaskComplete.length,  4);
+        assert.equal(beforeTaskComplete[0].type, 'start');
+        assert.equal(beforeTaskComplete[1].type, 'end');
+        assert.equal(beforeTaskComplete[2].type, 'start');
+        assert.equal(beforeTaskComplete[3].type, 'error');
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport').map(x => x.time);
+        assert.deepEqual(outTimes, [
+            3000,  // 1 start
+            4000, // 1 end (1000ms task)
+        ]);
+    });
+    it('exits if before tasks error', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    before: ['js'],
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000),
+                js: [utils.task(2000), utils.error(100)]
+            }
+        });
+
+        const beforeTasksReports = out.subscription.messages[0].value.value.data.reports;
+        assert.equal(beforeTasksReports.length,   4);
+        assert.equal(beforeTasksReports[0].type,  'start');
+        assert.equal(beforeTasksReports[1].type,  'end');
+        assert.equal(beforeTasksReports[2].type,  'start');
+        assert.equal(beforeTasksReports[3].type,  'error');
+
+        assert.equal(out.subscription.messages[1].value.kind, 'C');
+    });
 });

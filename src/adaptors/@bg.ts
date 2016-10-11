@@ -7,6 +7,8 @@ const merge = require('../../lodash.custom').merge;
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
+    // todo teardown multiple backgroud emitters on ExitSignal
+    //
     let emitter;
 
     trigger.config.signalObserver.subscribe(function (signal) {
