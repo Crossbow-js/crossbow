@@ -42,6 +42,7 @@ export interface WatchCommandSetup {
 
 export interface WatchCommandBefore {
     reports: TaskReport[]
+    errors:  TaskReport[]
 }
 
 export type WatchCommmandComplete = Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete|WatchCommandBefore>>;
@@ -114,33 +115,82 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
     }
 
     /**
-     * List the tasks that must complete before any watchers begin
+     * If there are no before tasks to execute, just begin the watchers
      */
-    if (beforeTasks.tasks.valid.length) {
-        reporter({type: ReportTypes.BeforeTaskList, data: {sequence: beforeTasks.sequence, cli, config: trigger.config}});
+    if (!beforeTasks.tasks.valid.length) {
+        reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
+        return createObservablesForWatchers(watchRunners.valid, trigger);
     }
 
-    // todo try to execute before tasks here before
+    reporter({type: ReportTypes.BeforeTaskList, data: {sequence: beforeTasks.sequence, cli, config: trigger.config}});
 
-    const beforeShiz = beforeTasks.runner.series().toArray().map((reports: TaskReport[]) => {
+    return Rx.Observable.zip(
+            /**
+             * Timestamp the beginning
+             */
+            Rx.Observable.just(true).timestamp(config.scheduler).map(x => x.timestamp),
+            /**
+             * Run the tasks
+             */
+            beforeTasks.runner.series().toArray().timestamp(config.scheduler),
+            /**
+             * Combine the start time + report from the runner
+             */
+            (start: number, x: {value: TaskReport[], timestamp: number}) => {
+                const reports = x.value;
+                const endtime = x.timestamp;
+                return {duration: endtime - start, reports};
+            })
+        /**
+         * At this point, before tasks have executed and we have
+         * access to all task reports + run duration
+         */
+        .flatMap((x: {duration: number, reports: TaskReport[]}) => {
 
-        const sequence = seq.decorateSequenceWithReports(beforeTasks.sequence, reports);
-        const errors   = reports.filter(x => x.type === TaskReportType.error);
+            const {duration, reports}  = x;
+            const sequence = seq.decorateSequenceWithReports(beforeTasks.sequence, reports);
+            const errors   = reports.filter(x => x.type === TaskReportType.error);
 
-        // Todo - terminate here with erros and don't allow watchers to start
+            reporter({
+                type: ReportTypes.BeforeTasksSummary,
+                data: {
+                    sequence: sequence,
+                    cli,
+                    config,
+                    runtime: duration,
+                    errors
+                }
+            });
 
-        return {
-            type: WatchCommandEventTypes.BeforeTasksComplete,
-            data: {
-                reports,
-                errors
+            const beforeReport = {
+                type: WatchCommandEventTypes.BeforeTasksComplete,
+                data: {
+                    reports,
+                    errors
+                }
+            } as WatchCommandReport<WatchCommandBefore>;
+
+            /**
+             * If an error occured, and the user did not provide --no-fail flag
+             * don't continue with the watchers
+             */
+            if (errors.length && config.fail) {
+                return Rx.Observable.just(beforeReport);
             }
-        }
-    });
 
-    reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
+            /**
+             * Report running watchers
+             */
+            reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
 
-    return Rx.Observable.concat(beforeShiz, createObservablesForWatchers(watchRunners.valid, trigger));
+            /**
+             * Send the before report followed by the following watch task reports
+             */
+            return Rx.Observable.concat(
+                Rx.Observable.just(beforeReport),
+                createObservablesForWatchers(watchRunners.valid, trigger)
+            )
+        });
 }
 
 export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

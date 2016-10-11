@@ -367,13 +367,31 @@ Or to see multiple tasks running, with some in parallel, try:
     [reports.ReportTypes.SignalReceived]: function reportSummary(report: reports.SignalReceivedReport): string[] {
         return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.data.code})} {yellow:~~~}`];
     },
+    [reports.ReportTypes.BeforeTasksSummary]: function reportSummary(report: reports.BeforeTasksSummaryReport): string[] {
+        const {sequence, config, runtime} = report.data;
+
+        const runnableTasks  = collectRunnableTasks(sequence, []);
+        const errorTasks     = runnableTasks.filter(x => x.stats.errors.length > 0);
+        const lines          = [];
+
+        // todo - show a reduced tree showing only errors
+        if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
+            lines.push(reportSequenceTree(sequence, config, `+ Results from before tasks`, true));
+        } else {
+            lines.push(`{ok: } Before tasks completed {yellow:(${duration(runtime)})}`);
+        }
+
+        if (errorTasks.length) {
+            lines.push(`{red:x} ${errorTasks.length} error(s) from before tasks`);
+        }
+
+        return lines;
+    },
     [reports.ReportTypes.WatcherSummary]: function reportSummary(report: reports.WatcherSummaryReport): string[] {
-        const {sequence, cli, config, runtime, watcher, watchEvent} = report.data;
+        const {sequence, config, watcher} = report.data;
 
         const runnableTasks = collectRunnableTasks(sequence, []);
         const errorTasks = runnableTasks.filter(x => x.stats.errors.length > 0);
-        const skippedTasks = runnableTasks.filter(x => x.stats.skipped);
-        const completedTasks = runnableTasks.filter(x => x.stats.completed && !x.stats.skipped);
 
         const lines = [];
 

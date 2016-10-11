@@ -63,6 +63,7 @@ export enum ReportTypes {
     BeforeWatchTaskErrors          = <any>"BeforeWatchTaskErrors",
     BeforeTaskList                 = <any>"BeforeTaskList",
     BeforeTasksDidNotComplete      = <any>"BeforeTasksDidNotComplete",
+    BeforeTasksSummary             = <any>"BeforeTasksSummary",
     WatchTaskTasksErrors           = <any>"WatchTaskTasksErrors",
     WatchTaskErrors                = <any>"WatchTaskErrors",
     WatchTaskReport                = <any>"WatchTaskReport",
@@ -117,6 +118,14 @@ export interface SignalReceivedReport extends IncomingReport {
 }
 
 export interface SummaryReport extends IncomingReport {
+    data: {
+        sequence: SequenceItem[],
+        cli: CLI,
+        config: CrossbowConfiguration,
+        runtime: number,
+        errors: TaskReport[]
+    }
+}export interface BeforeTasksSummaryReport extends IncomingReport {
     data: {
         sequence: SequenceItem[],
         cli: CLI,

@@ -6,7 +6,7 @@ import Rx = require("rx");
 import {SequenceItem} from "./task.sequence.factories";
 import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
-import {WatchCommandEventTypes, WatchCommandReport} from "./command.watch";
+import {WatchCommandEventTypes, WatchCommandReport, WatchCommmandComplete} from "./command.watch";
 
 const debug = require('debug')('cb:watch.runner');
 
@@ -38,7 +38,7 @@ export interface WatchRunnerComplete {
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchCommandReport<WatchTaskReport|WatchRunnerComplete>> {
+export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): WatchCommmandComplete {
 
     /**
      * Wrap every chokidar watcher in an observable
