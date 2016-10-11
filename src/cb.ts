@@ -107,7 +107,7 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
             .filter(x => x.type === SignalTypes.FileWrite)
             .subscribe((x: CBSignal<FileWriteSignal>) => {
                 if (prepared.config.dryRun) {
-                    console.log('should skip');
+                    // should skip / noop here
                 } else {
                     file.writeFileToDisk(x.data.file, x.data.content);
                 }
