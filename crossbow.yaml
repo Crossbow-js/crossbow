@@ -42,6 +42,10 @@ tasks:
   compile:
     - '@npm tsc'
 
+  ui:
+    - '@npm sleep 1'
+    - '@npm sleep 2'
+
   lint:   '@npm eslint lib'
   unit:   '@npm mocha test/specs --recursive'
 
@@ -65,6 +69,7 @@ tasks:
 
   slow-stream: 'test/fixtures/tasks/slow-stream.js'
   stream: 'test/fixtures/tasks/stream.js --name=shane'
+  error: test/fixtures/tasks/error
 
   docker:
     - '@sh printenv'
