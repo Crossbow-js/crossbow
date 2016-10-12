@@ -34,10 +34,10 @@ export interface WatchCommandReport <T> {
 }
 
 export interface WatchCommandSetup {
-    beforeTasks:  BeforeTasks
-    watchTasks:   WatchTasks
-    watchRunners: WatchRunners
-    errors:       WatchCommandSetupErrors[]
+    beforeTasks?:  BeforeTasks
+    watchTasks?:   WatchTasks
+    watchRunners?: WatchRunners
+    errors:        WatchCommandSetupErrors[]
 }
 
 export interface WatchCommandBefore {
@@ -193,7 +193,7 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
         });
 }
 
-export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
+export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): WatchCommmandComplete {
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
 
@@ -236,20 +236,26 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
     function enterInteractive() {
         if (!topLevelWatchers.length) {
             reporter({type: ReportTypes.NoWatchersAvailable});
-            return;
+            return Rx.Observable.just<WatchCommandReport<WatchCommandSetup>>({
+                type: WatchCommandEventTypes.SetupError,
+                data: {
+                    errors: [{type: ReportTypes.NoWatchersAvailable}]
+                }
+            });
         }
         reporter({type: ReportTypes.NoWatchTasksProvided});
-        return promptForWatchCommand(cli, input, config).then(function (answers) {
-            const cliMerged = _.merge({}, cli, {input: answers.watch});
-            return executeWatchCommand({
-                shared: sharedMap,
-                cli: cliMerged,
-                input,
-                config,
-                reporter,
-                type: TriggerTypes.watcher
+        return promptForWatchCommand(cli, input, config)
+            .flatMap(function (answers) {
+                const cliMerged = _.merge({}, cli, {input: answers.watch});
+                return executeWatchCommand({
+                    shared: sharedMap,
+                    cli: cliMerged,
+                    input,
+                    config,
+                    reporter,
+                    type: TriggerTypes.watcher
+                });
             });
-        });
     }
 
     return executeWatchCommand(getModifiedWatchContext({

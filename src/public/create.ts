@@ -3,10 +3,11 @@ import {CBWatchOptions} from "../watch.resolve";
 import {CrossbowConfiguration} from "../config";
 import {getFileChangeStream} from "../watch.file-watcher";
 import {defaultWatchOptions} from "../watch.resolve";
-import watchCommand from '../command.watch';
+// todo why are these imports needed here?
+import watchCommand, {WatchCommandBefore, WatchCommandReport, WatchCommandSetup} from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
-import {WatchEvent} from '../watch.file-watcher';
+import {WatchEvent, WatchRunnerComplete, WatchTaskReport} from '../watch.file-watcher';
 const merge = require('../../lodash.custom').merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
