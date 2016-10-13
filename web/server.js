@@ -15,7 +15,9 @@ server.listen(port, function () {
 });
 
 // Routing
+app.use(require('compression')());
 app.use(express.static(__dirname));
+app.use(express.static('./'));
 
 // Chatroom
 
@@ -23,11 +25,14 @@ app.use(express.static(__dirname));
 //
 io.on('connection', function (socket) {
     const prepared = cli.prepareInput({input: [], flags: {}}, null, outputObserver, signalObserver);
+
     if (prepared.errors.length) {
         console.log(prepared.errors);
     }
+
     const input = prepared.userInput.inputs[0].tasks;
     socket.emit('TopLevelTasks', Object.keys(input));
+
     socket.on('execute', function (incoming) {
         const prepared = cli.prepareInput(incoming.cli, null, outputObserver, signalObserver);
         if (prepared.errors.length) {

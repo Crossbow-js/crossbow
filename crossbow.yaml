@@ -46,6 +46,13 @@ tasks:
     - '@npm sleep 1'
     - '@npm sleep 2'
 
+  ui-p:
+    runMode: parallel
+    description: 'This will run 2 tasks in parallel'
+    tasks:
+      - '@npm sleep 1'
+      - '@npm sleep 2'
+
   lint:   '@npm eslint lib'
   unit:   '@npm mocha test/specs --recursive'
 
@@ -62,6 +69,7 @@ tasks:
     tasks:
       - '@npm sleep 1'
       - '@npm sleep 1'
+      - '@npm echo "runnning last bro"'
 
   sleep2: '@npm sleep 1'
   sleep3: '@npm sleep 1'
