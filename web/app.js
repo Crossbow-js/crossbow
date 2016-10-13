@@ -1,28 +1,44 @@
 (function (io, angular, Rx) {
 
-    const template = `
-<div ng-show="ctrl.current.runnables.length">
+    const runnerTemplate = `
+<div class="runnable-list">
     <ol>
-        <li ng-repeat="runnable in ctrl.current.runnables track by runnable.seqUID">
-            <pre>{{runnable.task.taskName}}</pre>
-            <pre>{{runnable.task}}</pre>
-            <span ng-show="runnable.stats.started && !runnable.stats.completed">started</span>
-            <span ng-show="runnable.stats.completed">done {{runnable.stats.duration/1000}}s</span>
-            <span style="color: red" ng-show="runnable.stats.errors.length">Failed {{runnable.stats.errors[0]}}</span>
+        <li ng-repeat="seq in task.runner.sequence track by $index">
+            <pre>{{seq|json}}</pre>
         </li>
     </ol>
-    <div ng-show="ctrl.current.complete"><button ng-click="ctrl.reset()">Back to tasks</button></div>
+    <div ng-show="ctrl.complete"><button ng-click="ctrl.reset()">Back to tasks</button></div>
 </div>
-<ul ng-show="!ctrl.current.runnables.length">
-    <li ng-repeat="task in ctrl.tasks track by $index">
-        <code>{{task}}</code> 
-        <a href="" ng-click="ctrl.execute(task)">Run</a>
+`;
+    const template = `
+<ul class="task-list">
+    <li ng-repeat="task in ctrl.tasks track by task.task.name" class="task-list__item" ng-class="{'task-list__item--expanded': task.expanded}">
+        <code>{{task.task.name}}</code>
+        <span class="svg-icon" ng-click="ctrl.expand(task)">
+            <svg viewBox="0 0 100 100"><path d="M 10,50 L 60,100 L 70,90 L 30,50  L 70,10 L 60,0 Z" class="arrow"></path></svg>
+        </span>
+        <runnable-list task="task.task" ng-if="task.expanded"></runnable-list>
     </li>
 </ul>`;
 
+    
     angular
         .module('crossbow', [])
         .service('Tasks', TasksService)
+        .directive('runnableList', function () {
+            return {
+                template: runnerTemplate,
+                controllerAs: 'ctrl',
+                restrict: 'E',
+                replace: true,
+                scope: {
+                    task: "="
+                },
+                controller: ['$timeout', '$scope', 'Tasks', function ($timeout, $scope) {
+                    console.log($scope.task.name);
+                }]
+            }
+        })
         .directive('taskList', function () {
             return {
                 template,
@@ -59,9 +75,24 @@
 
         Tasks.task$.subscribe(x => {
             $timeout(function () {
-                ctrl.tasks = x;
+                ctrl.tasks = x.map(function (task) {
+                    return {
+                        task: task,
+                        expanded: false
+                    }
+                });
             });
         });
+
+        ctrl.expand = function (task) {
+            ctrl.tasks.forEach(function (_task) {
+                if (_task.task.name === task.task.name) {
+                    _task.expanded = !_task.expanded;
+                } else {
+                    _task.expanded = false;
+                }
+            });
+        };
 
         ctrl.execute = function (task) {
 

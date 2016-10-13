@@ -1,0 +1,72 @@
+body {
+  font-family: Open sans, Helvetica, sans-serif;
+  background: #133864;
+  color: white;
+  margin: 0; }
+
+.site-header {
+  padding: 1rem; }
+
+.site-main {
+  background: #0e1a28; }
+
+.task-list {
+  margin: 0;
+  list-style: none;
+  padding: 0; }
+
+.task-list__item {
+  background: #04264b;
+  padding: 1rem;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+  border-bottom: 1px solid #174479; }
+
+.task-list__item .svg-icon {
+    -webkit-transform: rotate(-90deg);
+            transform: rotate(-90deg);
+    margin-left: auto;
+    -ms-flex-negative: 0;
+        flex-shrink: 0;
+    cursor: pointer; }
+
+.task-list__item .svg-icon:hover {
+      color: greenyellow;
+      border-color: greenyellow; }
+
+.task-list__item .svg-icon svg {
+      top: 4px;
+      left: 5px; }
+
+.task-list__item--expanded .svg-icon {
+  -webkit-transform: rotate(90deg);
+          transform: rotate(90deg); }
+
+.svg-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-radius: 50%;
+  position: relative; }
+
+.svg-icon svg {
+    fill: currentColor;
+    position: absolute;
+    display: block;
+    width: 12px;
+    height: 12px;
+    top: 2px;
+    left: 2px; }
+
+.runnable-list {
+  width: 100%;
+  outline: 1px solid red; }
+
+/*# sourceMappingURL=core.css.map */
