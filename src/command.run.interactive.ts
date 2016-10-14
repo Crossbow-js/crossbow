@@ -1,4 +1,4 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {isInternal} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');

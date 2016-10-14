@@ -1,4 +1,4 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {isPlainObject} from './task.utils';
 import {WatchOptions} from "chokidar";
 import {preprocessWatchTask} from "./watch.preprocess";

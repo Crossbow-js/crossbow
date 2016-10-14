@@ -1,4 +1,4 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {LogLevel} from './reporters/defaultReporter';

@@ -1,4 +1,4 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {stripBlacklisted} from "./watch.utils";
 import Rx = require('rx');
 const debug = require('debug')('cb:command.run');
