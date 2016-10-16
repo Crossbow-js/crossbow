@@ -34,7 +34,7 @@ describe('Resolving watch task errors', function () {
             watch: {
                 before: "@ns",
                 def: {
-                    before: "css",
+                    before: "some-rando-task",
                     "app/**": ["js"]
                 }
             },
@@ -49,7 +49,7 @@ describe('Resolving watch task errors', function () {
             watch: {
                 before: "@ns",
                 def: {
-                    before: "css",
+                    before: "some-rando-task",
                     "app/**": ["js"]
                 },
                 shane: {

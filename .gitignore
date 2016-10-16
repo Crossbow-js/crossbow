@@ -7,7 +7,6 @@ npm-debug.log
 /_tasks.json
 /_config.json
 /_sequence.json
-/sequence.json
 /reports.json
 /_reports.json
 /runner.json
@@ -17,3 +16,4 @@ npm-debug.log
 /r.js
 /.crossbow
 .DS_Store
+/typings

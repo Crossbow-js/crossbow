@@ -4,6 +4,10 @@ import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
 import {TaskReport, TaskReportType} from "../task.runner";
 
+export interface WriteableStream {
+    columns: number
+}
+
 function taskPreviews(item: Task) {
     if (!item.tasks.length) {
         if (item.type === TaskTypes.InlineFunction) {

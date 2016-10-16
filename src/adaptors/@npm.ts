@@ -15,7 +15,9 @@ var sh = 'sh';
 var shFlag = '-c';
 
 if (process.platform === 'win32') {
-    sh = process.env.comspec || 'cmd';
+    // todo test in windows env to ensure this hasn't broken anything
+    // sh = process.env.comspec || 'cmd';
+    sh = 'cmd';
     shFlag = '/d /s /c';
 }
 

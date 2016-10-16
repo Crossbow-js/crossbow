@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/// <reference path="../typings/main.d.ts" />
 import runner = require('./command.run');
 import {CrossbowConfiguration, merge, OutgoingSignals} from './config';
 import {getRequirePaths} from './file.utils';
