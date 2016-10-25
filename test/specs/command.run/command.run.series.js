@@ -192,4 +192,26 @@ describe("Running tasks in series", function () {
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.error);
     });
+    it.only("gives nice function name output in report", function () {
+
+        const runner = utils.run({
+            input: ['run', 'js'],
+            flags: {
+                progress: true
+            }
+        }, {
+            tasks: {
+                'js':  [function () {}, function withName() {}]
+            }
+        });
+
+        const reports  = utils.getReports(runner);
+        const complete = utils.getComplete(runner);
+
+        runner.output.filter(x => x.origin === 'TaskReport').subscribe(x => {
+            console.log(x);
+        });
+
+        assert.equal(reports.length, 4);
+    });
 });
