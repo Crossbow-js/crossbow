@@ -126,7 +126,14 @@ export function _taskReport(report: TaskReport): string {
         return labelPrefix;
     })());
 
-    return (function () {
+    const withFlags = (function (label) {
+        if (Object.keys(task.flags).length) {
+            return `${label}${task.rawInput.replace(label, '')}`;
+        }
+        return label;
+    })(label);
+
+    return (function (label) {
         if (report.type === TaskReportType.start) {
             if (skipped) {
                 return `{yellow:-} ${label} {yellow:(skipped)}`;
@@ -142,7 +149,7 @@ export function _taskReport(report: TaskReport): string {
         if (report.type === TaskReportType.error) {
             return `{red:x} ${label}`;
         }
-    })();
+    })(withFlags);
 }
 
 export function duration(ms) {
