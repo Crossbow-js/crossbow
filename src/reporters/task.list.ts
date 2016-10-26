@@ -112,7 +112,7 @@ export function _taskReport(report: TaskReport): string {
     const task        = item.task;
     const labelPrefix = getLabel(task);
 
-    const label       = escapeNewLines((function () {
+    const label = escapeNewLines((function () {
         if (item.subTaskName) {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
         }

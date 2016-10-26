@@ -195,13 +195,20 @@ describe("Running tasks in series", function () {
     it.only("gives nice function name output in report", function () {
 
         const runner = utils.run({
-            input: ['run', 'js'],
+            input: ['run', 'js', 'css', 'css:dev', 'css:*'],
             flags: {
                 progress: true
             }
         }, {
             tasks: {
-                'js':  [function () {}, function withName() {}]
+                'js':  [function () {}, function withName() {}],
+                'css': function myCssFunction() {}
+            },
+            options: {
+                css: {
+                    dev:  {name: 'shane'},
+                    prod: {name: 'kittie'},
+                }
             }
         });
 
@@ -221,5 +228,17 @@ describe("Running tasks in series", function () {
         assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
         assert.equal(out[2], `{yellow:>} [Function: withName]`);
         assert.equal(out[3], `{green:✔} [Function: withName] {yellow:(0.00s)}`);
+
+        assert.equal(out[4], `{yellow:>} [Function: myCssFunction]`);
+        assert.equal(out[5], `{green:✔} [Function: myCssFunction] {yellow:(0.00s)}`);
+
+        assert.equal(out[6], `{yellow:>} css:{bold:dev}`);
+        assert.equal(out[7], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`);
+
+        assert.equal(out[8], `{yellow:>} css:{bold:dev}`, 'first from star');
+        assert.equal(out[9], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`, 'first from star');
+
+        assert.equal(out[10], `{yellow:>} css:{bold:prod}`,                 'second from star');
+        assert.equal(out[11], `{green:✔} css:{bold:prod} {yellow:(0.00s)}`, 'second from star');
     });
 });
