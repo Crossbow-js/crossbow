@@ -245,7 +245,7 @@ describe("Running tasks in series", function () {
         assert.equal(out[12], `{yellow:>} test/fixtures/tasks/simple.js`);
         assert.equal(out[13], `{green:✔} test/fixtures/tasks/simple.js {yellow:(0.10s)}`, 'second from star');
     });
-    it.only("shows when tasks have been run with flags", function () {
+    it("shows when tasks have been run with flags", function () {
 
         const runner = utils.run({
             input: ['run', 'js --name=kittie'],
