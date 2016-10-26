@@ -110,8 +110,11 @@ export interface InputErrorReport extends IncomingReport {
         sources: ExternalFileInput[]
     }
 }
-export interface TaskReportReport {
-    data: {report: TaskReport,trigger: CommandTrigger}
+export interface TaskReportReport extends IncomingReport {
+    data: {
+        report: TaskReport,
+        progress: boolean
+    }
 }
 export interface SignalReceivedReport extends IncomingReport {
     data: {code: number}

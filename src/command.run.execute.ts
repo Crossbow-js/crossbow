@@ -1,5 +1,5 @@
 import {CommandTrigger, getRunCommandSetup} from "./command.run";
-import {ReportTypes} from "./reporter.resolve";
+import {ReportTypes, TaskReportReport} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner, RunContext, TaskErrorStats} from "./task.runner";
@@ -151,7 +151,13 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
         const each = mode
             .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
             .do((report: TaskReport) => {
-                reporter({type: ReportTypes.TaskReport, data: {report, trigger}});
+                reporter({
+                    type: ReportTypes.TaskReport,
+                    data: {
+                        report,
+                        progress: trigger.config.progress
+                    }
+                } as TaskReportReport);
             })
             .do(records)
             .map(x => {

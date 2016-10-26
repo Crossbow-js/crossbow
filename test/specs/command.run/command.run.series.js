@@ -208,10 +208,18 @@ describe("Running tasks in series", function () {
         const reports  = utils.getReports(runner);
         const complete = utils.getComplete(runner);
 
-        runner.output.filter(x => x.origin === 'TaskReport').subscribe(x => {
-            console.log(x);
-        });
+        const types     = require('../../../dist/reporter.resolve').ReportTypes.TaskReport;
+        const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
+        const fn        = reporters[types];
+        const out       = reports.map(x => fn({
+            data: {
+                report: x,
+                progress: true
+            }
+        }));
 
-        assert.equal(reports.length, 4);
+        assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
+        assert.equal(out[2], `{yellow:>} [Function: withName]`);
+        assert.equal(out[3], `{green:✔} [Function: withName] {yellow:(0.00s)}`);
     });
 });
