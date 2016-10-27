@@ -6,7 +6,7 @@ import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
 import {WatchEvent} from "./watch.file-watcher";
 import {ExternalFile} from "./file.utils";
-
+import Rx = require('rx');
 const _ = require('../lodash.custom');
 
 export enum SignalTypes {

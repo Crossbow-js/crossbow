@@ -3,6 +3,7 @@ import {Task, TaskOriginTypes, TaskRunModes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
 import {TaskReport, TaskReportType} from "../task.runner";
+import {getLabel} from "./defaultReporter";
 
 export interface WriteableStream {
     columns: number
@@ -106,8 +107,10 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
 
 export function _taskReport(report: TaskReport): string {
 
-    const skipped = report.item.task.skipped || report.stats.skipped;
-    const item = report.item;
+    const skipped     = report.item.task.skipped || report.stats.skipped;
+    const item        = report.item;
+    const task        = item.task;
+    const labelPrefix = getLabel(task);
 
     const label = escapeNewLines((function () {
         if (item.subTaskName) {
@@ -120,10 +123,17 @@ export function _taskReport(report: TaskReport): string {
             }
             return item.viaName;
         }
-        return item.task.rawInput;
+        return labelPrefix;
     })());
 
-    return (function () {
+    const withFlags = (function (label) {
+        if (Object.keys(task.flags).length) {
+            return `${label}${task.rawInput.replace(label, '')}`;
+        }
+        return label;
+    })(label);
+
+    return (function (label) {
         if (report.type === TaskReportType.start) {
             if (skipped) {
                 return `{yellow:-} ${label} {yellow:(skipped)}`;
@@ -139,7 +149,7 @@ export function _taskReport(report: TaskReport): string {
         if (report.type === TaskReportType.error) {
             return `{red:x} ${label}`;
         }
-    })();
+    })(withFlags);
 }
 
 export function duration(ms) {

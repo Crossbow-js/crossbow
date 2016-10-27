@@ -40,7 +40,7 @@ export default function (report: reports.IncomingReport, observer: Rx.Observer<r
     }
 }
 
-const reporterFunctions = {
+export const reporterFunctions = {
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.data.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;
@@ -151,7 +151,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        if (report.data.trigger.config.progress) {
+        if (report.data.progress) {
             return _taskReport(report.data.report);
         }
         return '';
@@ -846,9 +846,9 @@ export function getLabel(task) {
             if (task.inlineFunctions[0].name !== '') {
                 return `[Function: ${task.inlineFunctions[0].name}]`;
             }
-            return '[Function]';
+            return `[Function: ${task.taskName}]`;
         })();
-        return maybeErrorLabel(task, `${task.taskName} ${fnName}`);
+        return maybeErrorLabel(task, fnName);
     }
 
     if (task.origin === TaskOriginTypes.NpmScripts) {

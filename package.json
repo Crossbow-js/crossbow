@@ -74,7 +74,7 @@
     "strip-ansi": "3.0.1",
     "through2": "2.0.0",
     "typescript": "^2.0.3",
-    "typings": "0.6.6",
+    "typings": "latest",
     "vinyl-fs": "2.4.3",
     "watchify": "3.7.0",
     "webpack": "1.13.1"

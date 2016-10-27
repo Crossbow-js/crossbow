@@ -11,3 +11,5 @@ tasks:
   commit:
     - '@npm sleep 1'
     - '@npm ls'
+  file:
+    - 'test/fixtures/tasks/simple.js'

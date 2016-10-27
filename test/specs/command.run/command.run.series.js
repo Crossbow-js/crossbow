@@ -192,4 +192,112 @@ describe("Running tasks in series", function () {
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.error);
     });
+    it("gives nice function name output in report", function () {
+
+        const runner = utils.run({
+            input: ['run', 'js', 'css', 'css:dev', 'css:*', 'js-file'],
+            flags: {
+                progress: true
+            }
+        }, {
+            tasks: {
+                'js':      [function () {}, function withName() {}],
+                'css':     function myCssFunction() {},
+                'js-file': 'test/fixtures/tasks/simple.js'
+            },
+            options: {
+                css: {
+                    dev:  {name: 'shane'},
+                    prod: {name: 'kittie'},
+                }
+            }
+        });
+
+        const reports  = utils.getReports(runner);
+        const complete = utils.getComplete(runner);
+
+        const types     = require('../../../dist/reporter.resolve').ReportTypes.TaskReport;
+        const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
+        const fn        = reporters[types];
+        const out       = reports.map(x => fn({
+            data: {
+                report: x,
+                progress: true
+            }
+        }));
+
+        assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
+        assert.equal(out[2], `{yellow:>} [Function: withName]`);
+        assert.equal(out[3], `{green:✔} [Function: withName] {yellow:(0.00s)}`);
+
+        assert.equal(out[4], `{yellow:>} [Function: myCssFunction]`);
+        assert.equal(out[5], `{green:✔} [Function: myCssFunction] {yellow:(0.00s)}`);
+
+        assert.equal(out[6], `{yellow:>} css:{bold:dev}`);
+        assert.equal(out[7], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`);
+
+        assert.equal(out[8], `{yellow:>} css:{bold:dev}`, 'first from star');
+        assert.equal(out[9], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`, 'first from star');
+
+        assert.equal(out[10], `{yellow:>} css:{bold:prod}`,                 'second from star');
+        assert.equal(out[11], `{green:✔} css:{bold:prod} {yellow:(0.00s)}`, 'second from star');
+
+        assert.equal(out[12], `{yellow:>} test/fixtures/tasks/simple.js`);
+        assert.equal(out[13], `{green:✔} test/fixtures/tasks/simple.js {yellow:(0.10s)}`, 'second from star');
+    });
+    it("shows when tasks have been run with flags", function () {
+
+        const runner = utils.run({
+            input: ['run', 'js --name=kittie'],
+            flags: {
+                progress: true
+            }
+        }, {
+            tasks: {
+                'js': function withName() {
+
+                }
+            },
+            options: {
+                css: {
+                    dev:  {name: 'shane'},
+                    prod: {name: 'kittie'},
+                }
+            }
+        });
+
+        const reports  = utils.getReports(runner);
+        const complete = utils.getComplete(runner);
+
+        const types     = require('../../../dist/reporter.resolve').ReportTypes.TaskReport;
+        const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
+        const fn        = reporters[types];
+        const out       = reports.map(x => fn({
+            data: {
+                report: x,
+                progress: true
+            }
+        }));
+
+        console.log(out);
+
+        // assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
+        // assert.equal(out[2], `{yellow:>} [Function: withName]`);
+        // assert.equal(out[3], `{green:✔} [Function: withName] {yellow:(0.00s)}`);
+        //
+        // assert.equal(out[4], `{yellow:>} [Function: myCssFunction]`);
+        // assert.equal(out[5], `{green:✔} [Function: myCssFunction] {yellow:(0.00s)}`);
+        //
+        // assert.equal(out[6], `{yellow:>} css:{bold:dev}`);
+        // assert.equal(out[7], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`);
+        //
+        // assert.equal(out[8], `{yellow:>} css:{bold:dev}`, 'first from star');
+        // assert.equal(out[9], `{green:✔} css:{bold:dev} {yellow:(0.00s)}`, 'first from star');
+        //
+        // assert.equal(out[10], `{yellow:>} css:{bold:prod}`,                 'second from star');
+        // assert.equal(out[11], `{green:✔} css:{bold:prod} {yellow:(0.00s)}`, 'second from star');
+        //
+        // assert.equal(out[12], `{yellow:>} test/fixtures/tasks/simple.js`);
+        // assert.equal(out[13], `{green:✔} test/fixtures/tasks/simple.js {yellow:(0.10s)}`, 'second from star');
+    });
 });
