@@ -16,11 +16,12 @@ import {CLI} from "./index";
 const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
-    InvalidTasks = <any>"InvalidTasks",
-    NoTasks      = <any>"NoTasks",
-    Setup        = <any>"Setup",
-    Complete     = <any>"Complete",
-    TaskReport   = <any>"TaskReport"
+    InvalidTasks    = <any>"InvalidTasks",
+    NoTasks         = <any>"NoTasks",
+    Setup           = <any>"Setup",
+    Complete        = <any>"Complete",
+    TaskReport      = <any>"TaskReport",
+    NoTasksProvided = <any>"NoTasksProvided"
 }
 export interface RunCommandSetupErrors {
     type: RunCommandReportTypes
@@ -63,13 +64,13 @@ export interface RunContextCompletion {
 
 export default function executeRunCommand(trigger: CommandTrigger): RunComplete {
 
-    const {cli, input, config, reporter} = trigger;
-    const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
+    const {cli, input, config} = trigger;
+    const {tasks, sequence, runner} = getRunCommandSetup(trigger);
 
     if (trigger.config.dump) {
-        writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
-        writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
-        writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
+        // writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
+        // writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
+        // writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
     }
 
     /**
@@ -78,30 +79,29 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
      */
     if (tasks.invalid.length) {
 
-        reporter({
-            type: ReportTypes.TaskErrors,
-            data: {
-                tasks: tasks.all,
-                taskCollection: cli.input.slice(1),
-                input,
-                config
-            }
-        } as TaskErrorsReport);
-
-        return Rx.Observable.just({
-            type: RunCommandReportTypes.InvalidTasks,
-            data: {
-                errors: [
-                    {type: RunCommandReportTypes.InvalidTasks}
-                ],
-                taskErrors: [],
-                tasks,
-                sequence,
-                runner,
-                config,
-                type: RunCommandReportTypes.InvalidTasks
-            }
-        });
+        // reporter({
+        //     type: ReportTypes.TaskErrors,
+        //     data: {
+        //         tasks: tasks.all,
+        //         taskCollection: cli.input.slice(1),
+        //         input,
+        //         config
+        //     }
+        // } as TaskErrorsReport);
+        // return Rx.Observable.just({
+        //     type: RunCommandReportTypes.InvalidTasks,
+        //     data: {
+        //         errors: [
+        //             {type: RunCommandReportTypes.InvalidTasks}
+        //         ],
+        //         taskErrors: [],
+        //         tasks,
+        //         sequence,
+        //         runner,
+        //         config,
+        //         type: RunCommandReportTypes.InvalidTasks
+        //     }
+        // });
     }
 
     debug(`~ run mode from config in mode: '${config.runMode}'`);
@@ -109,7 +109,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
     /**
      * Report task list that's about to run
      */
-    reporter({type: ReportTypes.TaskList, data: {sequence, cli, titlePrefix: '', config}});
+    // reporter({type: ReportTypes.TaskList, data: {sequence, cli, titlePrefix: '', config}});
 
     /**
      * Get a run context for this execution.
@@ -150,15 +150,6 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
         const records = new Rx.ReplaySubject();
         const each = mode
             .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
-            .do((report: TaskReport) => {
-                reporter({
-                    type: ReportTypes.TaskReport,
-                    data: {
-                        report,
-                        progress: trigger.config.progress
-                    }
-                } as TaskReportReport);
-            })
             .do(records)
             .map(x => {
                 return {

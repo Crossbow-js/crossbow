@@ -25,17 +25,14 @@ export const enum LogLevel {
     Verbose
 }
 
-export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
+export default function (report: reports.IncomingReport) {
     if (typeof reporterFunctions[report.type] === 'function') {
         const outputFn = reporterFunctions[report.type];
         const output = outputFn.call(null, report);
         if (typeof output === 'string') {
-            if (output === '') return;
-            observer.onNext({origin: report.type, data: [output]});
+            return {origin: report.type, data: [output]};
         } else if (Array.isArray(output) && output.length) {
-            observer.onNext({origin: report.type, data: output});
-        } else {
-            console.log('STRING or ARRAY not returned for', report.type);
+            return {origin: report.type, data: output};
         }
     }
 }
@@ -151,10 +148,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        if (report.data.progress) {
-            return _taskReport(report.data.report);
-        }
-        return '';
+        return _taskReport(report.data.report);
     },
     [reports.ReportTypes.DocsInvalidTasksSimple]: function (): string[] {
         return [

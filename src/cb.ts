@@ -20,6 +20,9 @@ import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup} from "./command.run";
 import * as seq from "./task.sequence";
 import {SummaryReport} from "./reporter.resolve";
+import defaultReporter from "./reporters/defaultReporter";
+import {TaskReportReport} from "./reporter.resolve";
+import {TaskErrorsReport} from "./reporter.resolve";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -49,7 +52,11 @@ if (parsed.execute) {
 
 function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
 
-    const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
+    const prepared = prepareInput(parsed.cli);
+    const {config} = prepared;
+    const report = (obj) => {
+        cliOutputObserver.onNext(defaultReporter(obj));
+    };
 
     /**
      * Any errors found on input preparation
@@ -57,7 +64,12 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
      * requires no further work other than to exit
      * with a non-zero code
      */
-    if (prepared.errors.length) {
+    if (prepared.reporters.invalid.length) {
+        // todo multireporters
+    }
+
+    if (prepared.userInput.errors.length) {
+        report({type: reports.ReportTypes.InputError, data: prepared.userInput});
         return process.exit(1);
     }
 
@@ -73,12 +85,40 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
             .do(x => {
                 if (x.type === RunCommandReportTypes.Setup) {
                     const data = <RunCommandSetup>x.data;
-                    sequence = data.sequence;
-                    tasks    = data.tasks;
+                    sequence   = data.sequence;
+                    tasks      = data.tasks;
+                    const cli  = data.cli;
+                    if (data.errors.length) {
+                        data.errors.forEach(function (err) {
+                            if (err.type === RunCommandReportTypes.InvalidTasks) {
+                                report({
+                                    type: ReportTypes.TaskErrors,
+                                    data: {
+                                        tasks: tasks.all,
+                                        taskCollection: cli.input.slice(1),
+                                        config
+                                    }
+                                } as TaskErrorsReport);
+                            }
+                            if (err.type === RunCommandReportTypes.NoTasks) {
+                                report({type: ReportTypes.NoTasksAvailable});
+                            }
+                            if (err.type === RunCommandReportTypes.NoTasksProvided) {
+                                report({type: ReportTypes.NoTasksProvided});
+                            }
+                        });
+                    }
                 }
                 if (x.type === RunCommandReportTypes.TaskReport) {
                     const data = <TaskReport>x.data;
                     reports.push(data);
+                    report({
+                        type: ReportTypes.TaskReport,
+                        data: {
+                            report: data,
+                            progress: config.progress
+                        }
+                    } as TaskReportReport);
                 }
                 if (x.type === RunCommandReportTypes.Complete) {
 
@@ -87,7 +127,7 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                     /**
                      * Main summary report
                      */
-                    prepared.reportFn({
+                    report({
                         type: ReportTypes.Summary,
                         data: {
                             errors: data.taskErrors,

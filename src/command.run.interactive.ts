@@ -17,7 +17,7 @@ export interface Answers {
     tasks: string[]
 }
 
-export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
+export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
 
     const inquirer = require('inquirer');
     const resolved = resolveTasks(Object.keys(input.tasks), {
@@ -25,13 +25,13 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
         cli,
         input,
         config,
-        reporter,
         type: TriggerTypes.command
     });
 
     if (resolved.invalid.length) {
 
-        reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
+        // reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
+
         return Rx.Observable.empty<Answers>();
 
     } else {
