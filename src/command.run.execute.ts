@@ -1,4 +1,4 @@
-import {CommandTrigger, getRunCommandSetup} from "./command.run";
+import {CommandTrigger, getRunCommandSetup, RunCommandSetup} from "./command.run";
 import {ReportTypes, TaskReportReport} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
@@ -32,13 +32,8 @@ export interface RunCommandReport<T> {
     data: T
 }
 
-export type RunComplete = Rx.Observable<RunCommandReport<RunCommandSetup|RunCommandCompletionReport|TaskReport>>
+export type RunComplete = Rx.Observable<RunCommandReport<RunCommandCompletionReport|TaskReport>>
 
-export interface RunCommandSetup {
-    tasks?: Tasks,
-    sequence?: SequenceItem[]
-    errors: RunCommandSetupErrors[]
-}
 
 export interface RunCommandCompletionReport {
     tasks: Tasks,
@@ -62,54 +57,10 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function executeRunCommand(trigger: CommandTrigger): RunComplete {
+export default function executeRunCommand(runCommandSetup: RunCommandSetup, trigger: CommandTrigger): RunComplete {
 
     const {cli, input, config} = trigger;
-    const {tasks, sequence, runner} = getRunCommandSetup(trigger);
-
-    if (trigger.config.dump) {
-        // writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
-        // writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
-        // writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
-    }
-
-    /**
-     * Never continue if any tasks were flagged as invalid and we've not handed
-     * off
-     */
-    if (tasks.invalid.length) {
-
-        // reporter({
-        //     type: ReportTypes.TaskErrors,
-        //     data: {
-        //         tasks: tasks.all,
-        //         taskCollection: cli.input.slice(1),
-        //         input,
-        //         config
-        //     }
-        // } as TaskErrorsReport);
-        // return Rx.Observable.just({
-        //     type: RunCommandReportTypes.InvalidTasks,
-        //     data: {
-        //         errors: [
-        //             {type: RunCommandReportTypes.InvalidTasks}
-        //         ],
-        //         taskErrors: [],
-        //         tasks,
-        //         sequence,
-        //         runner,
-        //         config,
-        //         type: RunCommandReportTypes.InvalidTasks
-        //     }
-        // });
-    }
-
-    debug(`~ run mode from config in mode: '${config.runMode}'`);
-
-    /**
-     * Report task list that's about to run
-     */
-    // reporter({type: ReportTypes.TaskList, data: {sequence, cli, titlePrefix: '', config}});
+    const {tasks, sequence, runner} = runCommandSetup;
 
     /**
      * Get a run context for this execution.
@@ -165,17 +116,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunComplete 
                 return handleCompletion(complete.value, complete.timestamp - startTime)
             });
 
-        const setup = {
-            type: RunCommandReportTypes.Setup,
-            data: {
-                sequence,
-                tasks,
-                errors: []
-            } as RunCommandSetup
-        };
-
-        return Rx.Observable.concat(Rx.Observable.just(setup), each, complete);
-
+        return Rx.Observable.concat(each, complete);
     }
 
     /**
