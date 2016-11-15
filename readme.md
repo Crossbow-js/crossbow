@@ -17,7 +17,7 @@ Crossbow allows mix'n'match of various systems, the following examples show this
 tasks:
   build:
     - clean
-    - crossbow
+    - build-static
     - htmlmin
   clean: '@shell rm -rf ./public'
   htmlmin: >
@@ -27,16 +27,17 @@ tasks:
     --collapse-whitespace
 ```
 
-Both `clean` and `htmlmin` are just scripts, where `crossbow` points to a file 
+Both `clean` and `htmlmin` are just scripts, where `build-static` points to a file 
  in the `tasks` directory.
  
+**./tasks/build-static.js**
 ```js
 var vfs = require('vinyl-fs');
-var crossbow = require('crossbow');
+var cbSites = require('crossbow-sites');
 
 module.exports = function (options) {
     return vfs.src(options.input)
-        .pipe(crossbow.stream({
+        .pipe(cbSites.stream({
             config: options.config,
             data: options.data
         }))
