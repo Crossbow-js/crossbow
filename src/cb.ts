@@ -16,10 +16,6 @@ import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
-import {
-    RunComplete, RunCommandReportTypes, RunCommandCompletionReport,
-    default as executeRunCommand
-} from "./command.run.execute";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup, getRunCommandSetup, TriggerTypes} from "./command.run";
 import * as seq from "./task.sequence";
@@ -27,6 +23,7 @@ import {SummaryReport} from "./reporter.resolve";
 import defaultReporter from "./reporters/defaultReporter";
 import {TaskReportReport} from "./reporter.resolve";
 import {TaskErrorsReport} from "./reporter.resolve";
+import {InvalidReporterReport} from "./reporter.resolve";
 
 const parsed = cli(process.argv.slice(2));
 
@@ -69,7 +66,8 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
      * with a non-zero code
      */
     if (prepared.reporters.invalid.length) {
-        // todo multireporters
+        report({type: reports.ReportTypes.InvalidReporter, data: {reporters: prepared.reporters}} as InvalidReporterReport);
+        return process.exit(1);
     }
 
     if (prepared.userInput.errors.length) {
@@ -95,18 +93,13 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
         if (runCommandSetup.tasks.invalid.length) {
             console.log('Errors, dont run');
         } else {
-
-            console.log(executeRunCommand(runCommandSetup, prepared.config));
+            const executeRunCommand = require('./command.run.execute-cli').default;
+            executeRunCommand(runCommandSetup, report, prepared.config)
+                .subscribe(x => {
+                    require('./command.run.post-execution').postCliExecution(x);
+                });
         }
 
-        // console.log(runCommandSetup);
-
-        // const subscription = handleIncoming<RunComplete>(prepared);
-        // const reports      = [];
-        //
-        // let sequence;
-        // let tasks;
-        //
         // const subscription1 = subscription
         //     .do(x => {
         //         if (x.type === RunCommandReportTypes.Setup) {

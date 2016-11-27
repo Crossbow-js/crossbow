@@ -148,7 +148,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        return _taskReport(report.data.report);
+        return _taskReport(report.data.taskReport);
     },
     [reports.ReportTypes.DocsInvalidTasksSimple]: function (): string[] {
         return [

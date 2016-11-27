@@ -105,10 +105,10 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
     });
 }
 
-export function _taskReport(report: TaskReport): string {
+export function _taskReport(taskReport: TaskReport): string {
 
-    const skipped     = report.item.task.skipped || report.stats.skipped;
-    const item        = report.item;
+    const skipped     = taskReport.item.task.skipped || taskReport.stats.skipped;
+    const item        = taskReport.item;
     const task        = item.task;
     const labelPrefix = getLabel(task);
 
@@ -134,19 +134,19 @@ export function _taskReport(report: TaskReport): string {
     })(label);
 
     return (function (label) {
-        if (report.type === TaskReportType.start) {
+        if (taskReport.type === TaskReportType.start) {
             if (skipped) {
                 return `{yellow:-} ${label} {yellow:(skipped)}`;
             }
             return `{yellow:>} ${label}`;
         }
-        if (report.type === TaskReportType.end) {
+        if (taskReport.type === TaskReportType.end) {
             if (skipped) {
                 return '';
             }
-            return `{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`;
+            return `{green:✔} ${label} {yellow:(${duration(taskReport.stats.duration)})}`;
         }
-        if (report.type === TaskReportType.error) {
+        if (taskReport.type === TaskReportType.error) {
             return `{red:x} ${label}`;
         }
     })(withFlags);

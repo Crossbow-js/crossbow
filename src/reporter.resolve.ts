@@ -112,8 +112,7 @@ export interface InputErrorReport extends IncomingReport {
 }
 export interface TaskReportReport extends IncomingReport {
     data: {
-        report: TaskReport,
-        progress: boolean
+        taskReport: TaskReport
     }
 }
 export interface SignalReceivedReport extends IncomingReport {
