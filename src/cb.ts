@@ -80,21 +80,22 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
     if (parsed.cli.command === 'run') {
 
         const sharedMap = new Rx.BehaviorSubject(Immutable.Map({}));
-        const type = TriggerTypes.command;
+        const type      = TriggerTypes.command;
+
         const trigger = {
             shared: sharedMap,
             cli: parsed.cli,
             input: prepared,
             config,
             type
+        };
 
-        }
         const runCommandSetup = getRunCommandSetup(trigger);
 
         if (runCommandSetup.tasks.invalid.length) {
             console.log('Errors, dont run');
         } else {
-            console.log('No errors, you can try to run');
+
             console.log(executeRunCommand(runCommandSetup, prepared.config));
         }
 

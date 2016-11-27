@@ -45,7 +45,6 @@ export interface RunCommandCompletionReport {
     runtime?: number
     errors: RunCommandSetupErrors[]
     taskErrors: TaskReport[]
-    cli: CLI
 }
 
 export interface CompletionReport {
@@ -57,9 +56,8 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function executeRunCommand(runCommandSetup: RunCommandSetup, trigger: CommandTrigger): RunComplete {
+export default function (runCommandSetup: RunCommandSetup, config: CrossbowConfiguration): RunComplete {
 
-    const {cli, input, config} = trigger;
     const {tasks, sequence, runner} = runCommandSetup;
 
     /**
@@ -68,8 +66,8 @@ export default function executeRunCommand(runCommandSetup: RunCommandSetup, trig
      * to hash directories etc. A run context is just a key=>value
      * map of read-only values.
      */
-    return getContext(tasks.all, trigger)
-        .timestamp(trigger.config.scheduler)
+    return getContext(tasks.all, config)
+        .timestamp(config.scheduler)
         .flatMap((complete: RunContextCompletion) => {
             return run(complete.value, complete.timestamp)
         })
@@ -89,7 +87,7 @@ export default function executeRunCommand(runCommandSetup: RunCommandSetup, trig
          * @type {Rx.Observable<TaskReport>|Rx.Observable<TaskReport>}
          */
         const mode = (function () {
-            if (trigger.config.runMode === TaskRunModes.parallel) {
+            if (config.runMode === TaskRunModes.parallel) {
                 return runner.parallel(runContext);
             }
             return runner.series(runContext);
@@ -100,7 +98,7 @@ export default function executeRunCommand(runCommandSetup: RunCommandSetup, trig
          */
         const records = new Rx.ReplaySubject();
         const each = mode
-            .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
+            // .do(report => trigger.tracker.onNext(report)) // TODO: propagate reports into tracker
             .do(records)
             .map(x => {
                 return {
@@ -111,7 +109,7 @@ export default function executeRunCommand(runCommandSetup: RunCommandSetup, trig
 
         const complete = records
             .toArray()
-            .timestamp(trigger.config.scheduler)
+            .timestamp(config.scheduler)
             .flatMap((complete: CompletionReport) => {
                 return handleCompletion(complete.value, complete.timestamp - startTime)
             });
@@ -138,7 +136,6 @@ export default function executeRunCommand(runCommandSetup: RunCommandSetup, trig
             type: RunCommandReportTypes.Complete,
             data: {
                 reports,
-                cli: trigger.cli,
                 tasks,
                 sequence,
                 runner,

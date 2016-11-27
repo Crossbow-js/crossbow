@@ -6,24 +6,24 @@ import {HashDirErrorTypes} from "./file.utils";
 import {ReportTypes, HashDirErrorReport} from "./reporter.resolve";
 import Rx = require('rx');
 import {join} from "path";
-import {SignalTypes} from "./config";
+import {SignalTypes, CrossbowConfiguration} from "./config";
 
-export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observable<{[index: string]: any}> {
+export function createHashes(tasks: Task[], config: CrossbowConfiguration): Rx.Observable<{[index: string]: any}> {
 
     const ifLookups = utils.concatProps(tasks, [], "ifChanged");
 
     if (!ifLookups.length) return Rx.Observable.empty();
 
-    const existingFile = file.readOrCreateJsonFile(join('.crossbow', 'history.json'), trigger.config.cwd);
+    const existingFile = file.readOrCreateJsonFile(join('.crossbow', 'history.json'), config.cwd);
 
     if (!existingFile.data.hashes) {
         existingFile.data.hashes = [];
     }
 
-    return file.hashItems(ifLookups, trigger.config.cwd, existingFile.data.hashes)
+    return file.hashItems(ifLookups, config.cwd, existingFile.data.hashes)
         .do((hashResults: file.IHashResults) => {
             // Write the hashes to disk
-            trigger.config.signalObserver.onNext({
+            config.signalObserver.onNext({
                 type: SignalTypes.FileWrite,
                 data: {
                     file: existingFile,
@@ -44,13 +44,14 @@ export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observa
             if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
             if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
 
-            trigger.reporter({
-                type: ReportTypes.HashDirError,
-                data: {
-                    error: e,
-                    cwd: trigger.config.cwd
-                }
-            } as HashDirErrorReport);
+            // TODO handle hash errors
+            // trigger.reporter({
+            //     type: ReportTypes.HashDirError,
+            //     data: {
+            //         error: e,
+            //         cwd: trigger.config.cwd
+            //     }
+            // } as HashDirErrorReport);
 
             return Rx.Observable.just({});
         });
