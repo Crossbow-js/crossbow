@@ -1,9 +1,7 @@
 import {Task} from "./task.resolve";
-import {CommandTrigger} from "./command.run";
 import * as file from "./file.utils";
 import * as utils from "./task.utils";
 import {HashDirErrorTypes} from "./file.utils";
-import {ReportTypes, HashDirErrorReport} from "./reporter.resolve";
 import Rx = require('rx');
 import {join} from "path";
 import {SignalTypes, CrossbowConfiguration} from "./config";
@@ -20,16 +18,21 @@ export function createHashes(tasks: Task[], config: CrossbowConfiguration): Rx.O
         existingFile.data.hashes = [];
     }
 
-    return file.hashItems(ifLookups, config.cwd, existingFile.data.hashes)
+    return file
+        .hashItems(ifLookups, config.cwd, existingFile.data.hashes)
         .do((hashResults: file.IHashResults) => {
             // Write the hashes to disk
-            config.signalObserver.onNext({
-                type: SignalTypes.FileWrite,
-                data: {
-                    file: existingFile,
-                    content: JSON.stringify({hashes: hashResults.output}, null, 2)
-                }
-            });
+            try {
+                config.signalObserver.onNext({
+                    type: SignalTypes.FileWrite,
+                    data: {
+                        file: existingFile,
+                        content: JSON.stringify({hashes: hashResults.output}, null, 2)
+                    }
+                });
+            } catch (e) {
+                console.log(e);
+            }
         })
         .map(function (hashResults: file.IHashResults) {
             // Send in the marked hashes to the run context

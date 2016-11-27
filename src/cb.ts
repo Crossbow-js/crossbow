@@ -55,7 +55,9 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     const prepared = prepareInput(parsed.cli);
     const {config} = prepared;
-    const report = (obj) => {
+    config.signalObserver = cliSignalObserver;
+
+    const report   = (obj) => {
         cliOutputObserver.onNext(defaultReporter(obj));
     };
 
@@ -83,7 +85,7 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
         const trigger = {
             shared: sharedMap,
             cli: parsed.cli,
-            input: prepared,
+            input: prepared.userInput.inputs[0],
             config,
             type
         };
@@ -91,129 +93,76 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
         const runCommandSetup = getRunCommandSetup(trigger);
 
         if (runCommandSetup.tasks.invalid.length) {
-            console.log('Errors, dont run');
+            report({
+                type: reports.ReportTypes.TaskErrors,
+                data: {
+                    tasks: runCommandSetup.tasks.invalid,
+                    taskCollection: parsed.cli.input.slice(1),
+                    input: trigger.input,
+                    config
+                }
+            } as TaskErrorsReport);
+            return process.exit(1);
         } else {
             const executeRunCommand = require('./command.run.execute-cli').default;
-            executeRunCommand(runCommandSetup, report, prepared.config)
-                .subscribe(x => {
-                    require('./command.run.post-execution').postCliExecution(x);
-                });
-        }
 
-        // const subscription1 = subscription
-        //     .do(x => {
-        //         if (x.type === RunCommandReportTypes.Setup) {
-        //             const data = <RunCommandSetup>x.data;
-        //             sequence   = data.sequence;
-        //             tasks      = data.tasks;
-        //             const cli  = data.cli;
-        //             if (data.errors.length) {
-        //                 data.errors.forEach(function (err) {
-        //                     if (err.type === RunCommandReportTypes.InvalidTasks) {
-        //                         report({
-        //                             type: ReportTypes.TaskErrors,
-        //                             data: {
-        //                                 tasks: tasks.all,
-        //                                 taskCollection: cli.input.slice(1),
-        //                                 config
-        //                             }
-        //                         } as TaskErrorsReport);
-        //                     }
-        //                     if (err.type === RunCommandReportTypes.NoTasks) {
-        //                         report({type: ReportTypes.NoTasksAvailable});
-        //                     }
-        //                     if (err.type === RunCommandReportTypes.NoTasksProvided) {
-        //                         report({type: ReportTypes.NoTasksProvided});
-        //                     }
-        //                 });
-        //             }
-        //         }
-        //         if (x.type === RunCommandReportTypes.TaskReport) {
-        //             const data = <TaskReport>x.data;
-        //             reports.push(data);
-        //             report({
-        //                 type: ReportTypes.TaskReport,
-        //                 data: {
-        //                     report: data,
-        //                     progress: config.progress
-        //                 }
-        //             } as TaskReportReport);
-        //         }
-        //         if (x.type === RunCommandReportTypes.Complete) {
-        //
-        //             const data = <RunCommandCompletionReport>x.data;
-        //
-        //             /**
-        //              * Main summary report
-        //              */
-        //             report({
-        //                 type: ReportTypes.Summary,
-        //                 data: {
-        //                     errors: data.taskErrors,
-        //                     sequence: data.decoratedSequence,
-        //                     cli: data.cli,
-        //                     config: data.config,
-        //                     runtime: data.runtime
-        //                 }
-        //             } as SummaryReport);
-        //
-        //             require('./command.run.post-execution').postCliExecution(data);
-        //         }
-        //     })
-        //     .subscribe();
-        //
-        // cliSignalObserver
-        //     .filter(x => x.type === SignalTypes.FileWrite)
-        //     .subscribe((x: CBSignal<FileWriteSignal>) => {
-        //         if (prepared.config.dryRun) {
-        //             // should skip / noop here
-        //         } else {
-        //             file.writeFileToDisk(x.data.file, x.data.content);
-        //         }
-        //     });
-        //
-        // cliSignalObserver
-        //     .filter(x => x.type === SignalTypes.Exit)
-        //     .do((cbSignal: CBSignal<ExitSignal>) => {
-        //
-        //         /**
-        //          * Allow the signal-sender's task to complete
-        //          */
-        //         process.nextTick(function () {
-        //             subscription1.dispose();
-        //         });
-        //
-        //         /**
-        //          * Merge sequence tree with Task Reports
-        //          */
-        //         const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-        //
-        //         /**
-        //          * Did any errors occur in this run?
-        //          * @type {TaskReport[]}
-        //          */
-        //         const errors = reports.filter(x => x.type === TaskReportType.error);
-        //
-        //         prepared.reportFn({
-        //             type: ReportTypes.SignalReceived,
-        //             data: cbSignal.data
-        //         });
-        //
-        //         /**
-        //          * Main summary report
-        //          */
-        //         prepared.reportFn({
-        //             type: ReportTypes.Summary,
-        //             data: {
-        //                 errors: errors,
-        //                 sequence: decoratedSequence,
-        //                 cli: prepared.cli,
-        //                 config: prepared.config,
-        //                 runtime: 0
-        //             }
-        //         } as SummaryReport);
-        //
-        //     }).subscribe();
+            executeRunCommand(runCommandSetup, report, prepared.config).subscribe(x => {
+                require('./command.run.post-execution').postCliExecution(x);
+            });
+
+            cliSignalObserver
+                .filter(x => x.type === SignalTypes.FileWrite)
+                .subscribe((x: CBSignal<FileWriteSignal>) => {
+                    if (prepared.config.dryRun) {
+                        // should skip / noop here
+                    } else {
+                        file.writeFileToDisk(x.data.file, x.data.content);
+                    }
+                });
+
+            // cliSignalObserver
+            //     .filter(x => x.type === SignalTypes.Exit)
+            //     .do((cbSignal: CBSignal<ExitSignal>) => {
+            //
+            //         /**
+            //          * Allow the signal-sender's task to complete
+            //          */
+            //         process.nextTick(function () {
+            //             subscription1.dispose();
+            //         });
+            //
+            //         /**
+            //          * Merge sequence tree with Task Reports
+            //          */
+            //         const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
+            //
+            //         /**
+            //          * Did any errors occur in this run?
+            //          * @type {TaskReport[]}
+            //          */
+            //         const errors = reports.filter(x => x.type === TaskReportType.error);
+            //
+            //         prepared.reportFn({
+            //             type: ReportTypes.SignalReceived,
+            //             data: cbSignal.data
+            //         });
+            //
+            //         /**
+            //          * Main summary report
+            //          */
+            //         prepared.reportFn({
+            //             type: ReportTypes.Summary,
+            //             data: {
+            //                 errors: errors,
+            //                 sequence: decoratedSequence,
+            //                 cli: prepared.cli,
+            //                 config: prepared.config,
+            //                 runtime: 0
+            //             }
+            //         } as SummaryReport);
+            //
+            //     }).subscribe();
+        }
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {

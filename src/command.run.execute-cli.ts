@@ -52,7 +52,9 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function (runCommandSetup: RunCommandSetup, report: Function, config: CrossbowConfiguration): RunComplete {
+export default function (runCommandSetup: RunCommandSetup,
+                         report: Function,
+                         config: CrossbowConfiguration): RunComplete {
 
     const {tasks, sequence, runner, cli} = runCommandSetup;
 

@@ -169,7 +169,12 @@ export interface TaskTreeReport extends IncomingReport {
     data: {tasks: Task[], config: CrossbowConfiguration, title: string}
 }
 export interface TaskErrorsReport extends IncomingReport {
-    data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
+    data: {
+        tasks: Task[],
+        taskCollection: TaskCollection,
+        input: CrossbowInput,
+        config: CrossbowConfiguration
+    }
 }
 export interface WatchersReport extends IncomingReport {
     data: {watchTasks: WatchTask[]}

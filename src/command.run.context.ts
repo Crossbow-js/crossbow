@@ -4,7 +4,7 @@ const {fromJS, Map} = Immutable;
 import Rx = require('rx');
 import {CrossbowConfiguration} from "./config";
 
-type PreExecutionTask = (tasks: Task[], config: CrossbowConfiguration) => Rx.Observable<any>
+type PreExecutionTask = (tasks: Task[], config: CrossbowConfiguration, signalObserver) => Rx.Observable<any>
 
 /**
  * A task context is just an Immutable Map of key=>value pairs
