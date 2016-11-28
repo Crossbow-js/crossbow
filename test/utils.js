@@ -24,7 +24,7 @@ module.exports.run = (cli, input) => {
 
     const runner       = cb.default(cli, input);
     const subscription = scheduler.startScheduler(() => {
-        return runner;
+        return runner.update$;
     }, {created: 0, subscribed: 0, disposed: 200000});
     return {subscription, output};
 };
@@ -88,7 +88,6 @@ module.exports.getOutput   = (runner) => runner.subscription.messages[0].value.v
 
 module.exports.getReports  = (runner) => runner.subscription.messages
     .filter(x => x.value.kind === 'N')
-    .filter(x => x.value.value.type === 'TaskReport')
     .map(x => x.value.value.data);
 
 module.exports.getComplete = (runner) =>

@@ -63,43 +63,14 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const subscription = handleIncoming<RunComplete>(prepared);
-        const reports      = [];
+        const run               = handleIncoming<RunComplete>(prepared);
+        const reports           = [];
+        const {sequence, tasks} = run.runSetup;
 
-        let sequence;
-        let tasks;
-
-        const subscription1 = subscription
+        const subscription1     = run.update$
             .do(x => {
-                if (x.type === RunCommandReportTypes.Setup) {
-                    const data = <RunCommandSetup>x.data;
-                    sequence = data.sequence;
-                    tasks    = data.tasks;
-                }
-                if (x.type === RunCommandReportTypes.TaskReport) {
-                    const data = <TaskReport>x.data;
-                    reports.push(data);
-                }
-                if (x.type === RunCommandReportTypes.Complete) {
-
-                    const data = <RunCommandCompletionReport>x.data;
-
-                    /**
-                     * Main summary report
-                     */
-                    prepared.reportFn({
-                        type: ReportTypes.Summary,
-                        data: {
-                            errors: data.taskErrors,
-                            sequence: data.decoratedSequence,
-                            cli: data.cli,
-                            config: data.config,
-                            runtime: data.runtime
-                        }
-                    } as SummaryReport);
-
-                    require('./command.run.post-execution').postCliExecution(data);
-                }
+                const data = <TaskReport>x.data;
+                reports.push(data);
             })
             .subscribe();
 
