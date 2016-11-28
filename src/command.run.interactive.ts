@@ -7,17 +7,15 @@ import {compile} from './logger';
 import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
 import {resolveTasks} from "./task.resolve";
-import {TriggerTypes} from "./command.run";
+import {TriggerTypes} from "./command.run-cli";
 import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
-import {reportTaskTree} from "./reporters/defaultReporter";
-import {ReportTypes} from "./reporter.resolve";
 
 export interface Answers {
     tasks: string[]
 }
 
-export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
+export default function promptForRunCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<Answers> {
 
     const inquirer = require('inquirer');
     const resolved = resolveTasks(Object.keys(input.tasks), {
@@ -29,8 +27,6 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
     });
 
     if (resolved.invalid.length) {
-
-        // reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
 
         return Rx.Observable.empty<Answers>();
 

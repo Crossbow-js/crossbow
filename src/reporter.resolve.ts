@@ -124,8 +124,7 @@ export interface SummaryReport extends IncomingReport {
         sequence: SequenceItem[],
         cli: CLI,
         config: CrossbowConfiguration,
-        runtime: number,
-        errors: TaskReport[]
+        runtime: number
     }
 }export interface BeforeTasksSummaryReport extends IncomingReport {
     data: {

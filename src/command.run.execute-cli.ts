@@ -1,11 +1,8 @@
-import {CommandTrigger, getRunCommandSetup, RunCommandSetup} from "./command.run";
 import {ReportTypes, TaskReportReport} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
 import {Runner, RunContext, TaskErrorStats} from "./task.runner";
 import {TaskReport, TaskReportType} from "./task.runner";
-import {writeFileSync} from "fs";
-import {join} from "path";
 import Rx = require('rx');
 import * as reports from "./reporter.resolve";
 import * as seq from "./task.sequence";
@@ -13,25 +10,9 @@ import getContext from "./command.run.context";
 import {SummaryReport, TaskErrorsReport} from "./reporter.resolve";
 import {CrossbowConfiguration} from "./config";
 import {CLI} from "./index";
+import {RunCommandSetup} from "./command.run-cli";
 
 const debug = require('debug')('cb:command.run.execute');
-
-export enum RunCommandReportTypes {
-    InvalidTasks    = <any>"InvalidTasks",
-    NoTasks         = <any>"NoTasks",
-    Setup           = <any>"Setup",
-    Complete        = <any>"Complete",
-    TaskReport      = <any>"TaskReport",
-    NoTasksProvided = <any>"NoTasksProvided"
-}
-export interface RunCommandSetupErrors {
-    type: RunCommandReportTypes
-}
-
-export interface RunCommandReport<T> {
-    type: RunCommandReportTypes
-    data: T
-}
 
 export type RunComplete = Rx.Observable<RunCommandCompletionReport>
 
@@ -52,7 +33,7 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function (runCommandSetup: RunCommandSetup,
+export default function executeRunCommand(runCommandSetup: RunCommandSetup,
                          report: Function,
                          config: CrossbowConfiguration): RunComplete {
 
@@ -130,45 +111,4 @@ export default function (runCommandSetup: RunCommandSetup,
                 } as SummaryReport);
             });
     }
-
-    // /**
-    //  * Because errors are handled by reports, task executions ALWAYS complete
-    //  * and we handle that here.
-    //  */
-    // function handleCompletion (reports: TaskReport[], runtime: number): RunComplete {
-    //
-    //     /**
-    //      * Merge sequence tree with Task Reports
-    //      */
-    //     const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-    //
-    //     report({
-    //         type: ReportTypes.Summary,
-    //         data: {
-    //             sequence: decoratedSequence,
-    //             runtime: runtime,
-    //             cli,
-    //             config
-    //         }
-    //     } as SummaryReport);
-    //
-    //     /**
-    //      * Push a 'Completion report' onto the $complete Observable.
-    //      * This means consumers will get everything when they call
-    //      */
-    //     return Rx.Observable.just({
-    //         type: RunCommandReportTypes.Complete,
-    //         data: {
-    //             reports,
-    //             tasks,
-    //             sequence,
-    //             runner,
-    //             decoratedSequence,
-    //             runtime: runtime,
-    //             config,
-    //             errors: [],
-    //             taskErrors: reports.filter(x => x.type === TaskReportType.error)
-    //         }
-    //     });
-    // }
 }

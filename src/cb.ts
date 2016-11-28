@@ -16,13 +16,7 @@ import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
-import {TaskReport, TaskReportType} from "./task.runner";
-import {RunCommandSetup, getRunCommandSetup, TriggerTypes} from "./command.run";
-import * as seq from "./task.sequence";
-import {SummaryReport} from "./reporter.resolve";
 import defaultReporter from "./reporters/defaultReporter";
-import {TaskReportReport} from "./reporter.resolve";
-import {TaskErrorsReport} from "./reporter.resolve";
 import {InvalidReporterReport} from "./reporter.resolve";
 
 const parsed = cli(process.argv.slice(2));
@@ -57,6 +51,16 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
     const {config} = prepared;
     config.signalObserver = cliSignalObserver;
 
+    cliSignalObserver
+        .filter(x => x.type === SignalTypes.FileWrite)
+        .subscribe((x: CBSignal<FileWriteSignal>) => {
+            if (prepared.config.dryRun) {
+                // should skip / noop here
+            } else {
+                file.writeFileToDisk(x.data.file, x.data.content);
+            }
+        });
+
     const report   = (obj) => {
         cliOutputObserver.onNext(defaultReporter(obj));
     };
@@ -79,46 +83,8 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const sharedMap = new Rx.BehaviorSubject(Immutable.Map({}));
-        const type      = TriggerTypes.command;
-
-        const trigger = {
-            shared: sharedMap,
-            cli: parsed.cli,
-            input: prepared.userInput.inputs[0],
-            config,
-            type
-        };
-
-        const runCommandSetup = getRunCommandSetup(trigger);
-
-        if (runCommandSetup.tasks.invalid.length) {
-            report({
-                type: reports.ReportTypes.TaskErrors,
-                data: {
-                    tasks: runCommandSetup.tasks.invalid,
-                    taskCollection: parsed.cli.input.slice(1),
-                    input: trigger.input,
-                    config
-                }
-            } as TaskErrorsReport);
-            return process.exit(1);
-        } else {
-            const executeRunCommand = require('./command.run.execute-cli').default;
-
-            executeRunCommand(runCommandSetup, report, prepared.config).subscribe(x => {
-                require('./command.run.post-execution').postCliExecution(x);
-            });
-
-            cliSignalObserver
-                .filter(x => x.type === SignalTypes.FileWrite)
-                .subscribe((x: CBSignal<FileWriteSignal>) => {
-                    if (prepared.config.dryRun) {
-                        // should skip / noop here
-                    } else {
-                        file.writeFileToDisk(x.data.file, x.data.content);
-                    }
-                });
+        const run = require('./command.run-cli').default;
+        run(parsed.cli, prepared.userInput.inputs[0], config, report);
 
             // cliSignalObserver
             //     .filter(x => x.type === SignalTypes.Exit)
@@ -162,7 +128,6 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
             //         } as SummaryReport);
             //
             //     }).subscribe();
-        }
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
