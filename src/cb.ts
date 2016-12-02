@@ -52,6 +52,20 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
     const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
 
     /**
+     * Handle file-writes
+     * @type {Rx.Observable<CBSignal<FileWriteSignal>>|Rx.Observable<T>}
+     */
+    cliSignalObserver
+        .filter(x => x.type === SignalTypes.FileWrite)
+        .do(function (x: CBSignal<FileWriteSignal>) {
+            if (prepared.config.dryRun) {
+                // should skip / noop here
+            } else {
+                file.writeFileToDisk(x.data.file, x.data.content);
+            }
+        });
+
+    /**
      * Any errors found on input preparation
      * will be sent to the output observer and
      * requires no further work other than to exit
@@ -63,19 +77,11 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const run                        = handleIncoming<RunComplete>(prepared);
-        const reports: Array<TaskReport> = [];
         const setUp$                     = new Rx.BehaviorSubject({});
-        const reports$                   = new Rx.ReplaySubject();
-        let sequence, tasks;
+        const reports$                   = new Rx.BehaviorSubject([]);
 
-        const subscription1 = run
-            /**
-             * Save the setup data
-             */
-            .do(x => {
-                setUp$.onNext(x.runSetup);
-            })
+        const runSubscription = handleIncoming<RunComplete>(prepared)
+            .do(x => setUp$.onNext(x.runSetup)) // first item is the setup
             .flatMap(x => {
                 if (x.runSetup.errors.length) {
                     console.log('Error in setup', x.runSetup.errors);
@@ -83,63 +89,43 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                 }
                 return x.update$
                     .do((taskReport: TaskReport) => {
-                        reports$.onNext(taskReport);
+                        reports$.onNext(reports$.getValue().concat(taskReport));
                     });
-            }).subscribe();
+            });
 
-        cliSignalObserver
-            .filter(x => x.type === SignalTypes.FileWrite)
-            .subscribe((x: CBSignal<FileWriteSignal>) => {
-                if (prepared.config.dryRun) {
-                    // should skip / noop here
-                } else {
-                    file.writeFileToDisk(x.data.file, x.data.content);
+        const exitSignal = cliSignalObserver
+            .filter(x => x.type === SignalTypes.Exit)
+            .withLatestFrom(setUp$, reports$) // todo pass latest values from reports + setup
+            .do((incoming) => {
+
+                const cbSignal: CBSignal<ExitSignal> = incoming[0];
+                const setup: RunCommandSetup         = incoming[1];
+                const reports: TaskReport[]          = incoming[2];
+                const decoratedSequence              = seq.decorateSequenceWithReports(setup.sequence, reports);
+                const errors                         = reports.filter(x => x.type === TaskReportType.error);
+
+                prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data});
+
+                /**
+                 * Main summary report, although here it could be partial
+                 * (as an exit command could occur at any time)
+                 */
+                if ((setup.tasks.valid.length * 2) !== reports.length) {
+                    prepared.reportFn({
+                        type: ReportTypes.Summary,
+                        data: {
+                            errors,
+                            sequence: decoratedSequence,
+                            cli: prepared.cli,
+                            config: prepared.config,
+                            runtime: 1000
+                        }
+                    } as SummaryReport);
                 }
             });
 
-        cliSignalObserver
-            .filter(x => x.type === SignalTypes.Exit)
-            .withLatestFrom() // todo pass latest values from reports + setup
-            .do((cbSignal: CBSignal<ExitSignal>) => {
-
-                /**
-                 * Allow the signal-sender's task to complete
-                 */
-                process.nextTick(function () {
-                    subscription1.dispose();
-                });
-
-                /**
-                 * Merge sequence tree with Task Reports
-                 */
-                const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-
-                /**
-                 * Did any errors occur in this run?
-                 * @type {TaskReport[]}
-                 */
-                const errors = reports.filter(x => x.type === TaskReportType.error);
-
-                prepared.reportFn({
-                    type: ReportTypes.SignalReceived,
-                    data: cbSignal.data
-                });
-
-                /**
-                 * Main summary report
-                 */
-                prepared.reportFn({
-                    type: ReportTypes.Summary,
-                    data: {
-                        errors: errors,
-                        sequence: decoratedSequence,
-                        cli: prepared.cli,
-                        config: prepared.config,
-                        runtime: 0
-                    }
-                } as SummaryReport);
-
-            }).subscribe();
+        // todo, figure out why this delay is needed
+        runSubscription.takeUntil(exitSignal.delay(1)).subscribe();
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
