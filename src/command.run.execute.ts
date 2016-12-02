@@ -26,7 +26,9 @@ export interface RunCommandSetupErrors {
     type: RunCommandReportTypes
 }
 
-export interface RunComplete {
+export type RunComplete = Rx.Observable<RunActions>
+
+export interface RunActions {
     runSetup: RunCommandSetup
     update$: Rx.Observable<TaskReport>
 }
@@ -59,7 +61,7 @@ export interface RunContextCompletion {
     value: RunContext
 }
 
-export default function executeRunCommand(trigger: CommandTrigger): RunComplete {
+export default function executeRunCommand(trigger: CommandTrigger): RunActions {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);

@@ -63,16 +63,29 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const run               = handleIncoming<RunComplete>(prepared);
-        const reports           = [];
-        const {sequence, tasks} = run.runSetup;
+        const run                        = handleIncoming<RunComplete>(prepared);
+        const reports: Array<TaskReport> = [];
+        const setUp$                     = new Rx.BehaviorSubject({});
+        const reports$                   = new Rx.ReplaySubject();
+        let sequence, tasks;
 
-        const subscription1     = run.update$
+        const subscription1 = run
+            /**
+             * Save the setup data
+             */
             .do(x => {
-                const data = <TaskReport>x.data;
-                reports.push(data);
+                setUp$.onNext(x.runSetup);
             })
-            .subscribe();
+            .flatMap(x => {
+                if (x.runSetup.errors.length) {
+                    console.log('Error in setup', x.runSetup.errors);
+                    return Rx.Observable.empty();
+                }
+                return x.update$
+                    .do((taskReport: TaskReport) => {
+                        reports$.onNext(taskReport);
+                    });
+            }).subscribe();
 
         cliSignalObserver
             .filter(x => x.type === SignalTypes.FileWrite)
@@ -86,6 +99,7 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
         cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
+            .withLatestFrom() // todo pass latest values from reports + setup
             .do((cbSignal: CBSignal<ExitSignal>) => {
 
                 /**
