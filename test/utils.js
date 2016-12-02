@@ -1,5 +1,5 @@
 const Rx          = require('rx');
-const cb          = require('../dist/index');
+const cb          = require('../dist/index').default;
 const Oempty      = Rx.Observable.empty;
 const Othrow      = Rx.Observable.throw;
 const Ojust       = Rx.Observable.just;
@@ -22,11 +22,20 @@ module.exports.run = (cli, input) => {
     cli.flags.outputObserver = output;
     cli.flags.scheduler      = scheduler;
 
-    const runner       = cb.default(cli, input);
+    const runner       = cb(cli, input);
     const subscription = scheduler.startScheduler(() => {
-        return runner.update$;
+        return runner.flatMap(x => {
+            return x.update$;
+        });
     }, {created: 0, subscribed: 0, disposed: 200000});
     return {subscription, output};
+};
+
+module.exports.getSetup = (cli) => {
+    const scheduler  = new Rx.TestScheduler();
+    const results   = scheduler.startScheduler(() => cb(cli).pluck('runSetup'));
+
+    return results.messages[0].value.value;
 };
 
 module.exports.getRunner = (args, input, config) => {
@@ -88,7 +97,7 @@ module.exports.getOutput   = (runner) => runner.subscription.messages[0].value.v
 
 module.exports.getReports  = (runner) => runner.subscription.messages
     .filter(x => x.value.kind === 'N')
-    .map(x => x.value.value.data);
+    .map(x => x.value.value);
 
 module.exports.getComplete = (runner) =>
     runner.subscription.messages

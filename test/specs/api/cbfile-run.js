@@ -16,23 +16,22 @@ describe('Using a cbfile', function () {
         if (require.cache[absPath3]) delete require.cache[absPath3];
     });
     it('works with non-array inputs', function () {
-    	const runner = cb({
+    	const runner = utils.getSetup({
             input: ['build-js'],
             flags: {
-                handoff: true,
                 outputObserver: utils.nullOutput(),
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
+
         assert.equal(runner.tasks.valid[0].tasks.length, 2); //has a callback also
         assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
         assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
     });
     it('works with inline functions', function () {
-    	const runner = cb({
+    	const runner = utils.getSetup({
             input: ['shane'],
             flags: {
-                handoff: true,
                 outputObserver: utils.nullOutput(),
                 cbfile: 'test/fixtures/cbfile.js'
             }
@@ -51,6 +50,7 @@ describe('Using a cbfile', function () {
                 cbfile: 'test/fixtures/cbfile.js'
             }
         });
+
         const reports  = utils.getReports(runner);
 
         assert.equal(reports[0].type, TaskReportType.start);
