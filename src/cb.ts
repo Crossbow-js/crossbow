@@ -20,6 +20,8 @@ import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup} from "./command.run";
 import * as seq from "./task.sequence";
 import {SummaryReport} from "./reporter.resolve";
+import {TaskReportReport} from "./reporter.resolve";
+const debug = require('debug')('cb:cli');
 
 const parsed = cli(process.argv.slice(2));
 
@@ -47,7 +49,7 @@ if (parsed.execute) {
     }
 }
 
-function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
+function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
 
     const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
 
@@ -77,32 +79,27 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
 
     if (parsed.cli.command === 'run') {
 
-        const setUp$                     = new Rx.BehaviorSubject({});
-        const reports$                   = new Rx.BehaviorSubject([]);
+        const setUp$ = new Rx.BehaviorSubject({});
+        const progress$ = new Rx.BehaviorSubject([]);
 
-        const runSubscription = handleIncoming<RunComplete>(prepared)
-            .do(x => setUp$.onNext(x.runSetup)) // first item is the setup
+        const reports$ = handleIncoming<RunComplete>(prepared)
+            .do(x => setUp$.onNext(x.setup)) // first item is the setup
             .flatMap(x => {
-                if (x.runSetup.errors.length) {
-                    console.log('Error in setup', x.runSetup.errors);
+                if (x.setup.errors.length) {
+                    console.log('Error in setup', x.setup.errors);
                     return Rx.Observable.empty();
                 }
-                return x.update$
-                    .do((taskReport: TaskReport) => {
-                        reports$.onNext(reports$.getValue().concat(taskReport));
-                    });
+                return x.update$;
             });
 
-        const exitSignal = cliSignalObserver
+        const exitSignal$ = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
-            .withLatestFrom(setUp$, reports$) // todo pass latest values from reports + setup
+            .withLatestFrom(setUp$, progress$)
             .do((incoming) => {
 
                 const cbSignal: CBSignal<ExitSignal> = incoming[0];
-                const setup: RunCommandSetup         = incoming[1];
-                const reports: TaskReport[]          = incoming[2];
-                const decoratedSequence              = seq.decorateSequenceWithReports(setup.sequence, reports);
-                const errors                         = reports.filter(x => x.type === TaskReportType.error);
+                const setup:    RunCommandSetup      = incoming[1];
+                const reports:  TaskReport[]         = incoming[2];
 
                 prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data});
 
@@ -111,21 +108,82 @@ function runFromCli (parsed: PostCLIParse, cliOutputObserver, cliSignalObserver)
                  * (as an exit command could occur at any time)
                  */
                 if ((setup.tasks.valid.length * 2) !== reports.length) {
-                    prepared.reportFn({
-                        type: ReportTypes.Summary,
-                        data: {
-                            errors,
-                            sequence: decoratedSequence,
-                            cli: prepared.cli,
-                            config: prepared.config,
-                            runtime: 1000
-                        }
-                    } as SummaryReport);
+                    handleCompletion(reports, setup, 1000);
+                } else {
+                    console.log('Exit signal, but summary given from main handler');
                 }
             });
 
-        // todo, figure out why this delay is needed
-        runSubscription.takeUntil(exitSignal.delay(1)).subscribe();
+        reports$
+            .do(x => progress$.onNext(progress$.getValue().concat(x)))
+            .do((report: TaskReport) => {
+                prepared.reportFn({
+                    type: ReportTypes.TaskReport,
+                    data: {
+                        report,
+                        progress: prepared.config.progress
+                    }
+                } as TaskReportReport);
+            })
+            .takeUntil(exitSignal$)
+            .toArray()
+            .filter(x => x.length > 0)
+            .withLatestFrom(setUp$, (reports: TaskReport[], setup: RunCommandSetup) => {
+                return {reports, setup};
+            })
+            .subscribe(incoming => {
+                try {
+                    const reports: TaskReport[]  = incoming.reports;
+                    const setup: RunCommandSetup = incoming.setup;
+                    if (reports.length < (setup.tasks.valid.length * 2)) {
+                        debug('Summary handled elsewhere as report length is lower than expected');
+                    } else {
+                        handleCompletion(reports, setup, 1000);
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }, err => {
+                console.log(err);
+            });
+
+    }
+
+    /**
+     * Because errors are handled by reports, task executions ALWAYS complete
+     * and we handle that here.
+     */
+    function handleCompletion (reports: TaskReport[], setup: RunCommandSetup, runtime: number): void {
+
+        /**
+         * Merge sequence tree with Task Reports
+         */
+        const decoratedSequence = seq.decorateSequenceWithReports(setup.sequence, reports);
+
+        /**
+         * Push a 'Completion report' onto the $complete Observable.
+         * This means consumers will get everything when they call
+         */
+        const errors = reports.filter(x => x.type === TaskReportType.error);
+
+        const completeData = {
+            errors,
+            runtime,
+            taskErrors: errors,
+            sequence:   decoratedSequence,
+            cli:        prepared.cli,
+            config:     prepared.config
+        };
+
+        /**
+         * Main summary report
+         */
+        prepared.reportFn({
+            type: ReportTypes.Summary,
+            data: completeData
+        } as SummaryReport);
+
+        require('./command.run.post-execution').postCliExecution(completeData);
     }
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {

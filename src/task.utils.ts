@@ -3,7 +3,6 @@ import {existsSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
-import {ParsedPath} from "path";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
@@ -133,7 +132,12 @@ const traverse = require('traverse');
  *    CB_OPTIONS_DOCKER_PORT=8000
  */
 export function envifyObject(object:any, prefix:string, objectKeyName: string) {
-    return traverse(object).reduce(function (acc, x) {
+    const subject = _.cloneDeep(object);
+    return traverse(subject).reduce(function (acc, x) {
+        if (this.level > 4) {
+            this.remove();
+            return acc;
+        }
         if (this.circular) {
             this.remove();
             return acc;
@@ -146,6 +150,14 @@ export function envifyObject(object:any, prefix:string, objectKeyName: string) {
 }
 
 const merge = require('../lodash.custom').merge;
+
+export function excludeKeys(input: any, blacklist: string[]): any {
+    return Object.keys(input).filter(x => blacklist.indexOf(x) === -1).reduce(function(acc, key) {
+        acc[key] = input[key];
+        return acc;
+    }, {});
+}
+
 /**
  * Currently we add the following from the toplevel of inputs
  * 1. options
@@ -153,6 +165,8 @@ const merge = require('../lodash.custom').merge;
  * 3. CLI trailing args + command
  * 4. env
  */
+const configBlacklist = ['outputObserver','fileChangeObserver','signalObserver','scheduler'];
+
 export function getCBEnv (trigger: CommandTrigger): {} {
     const prefix = trigger.config.envPrefix;
 
@@ -160,7 +174,7 @@ export function getCBEnv (trigger: CommandTrigger): {} {
     const cbOptionsEnv = envifyObject(trigger.input.options, prefix, 'options');
 
     // 2. Crossbow config (from config key or CLI flags)
-    const cbConfigEnv  = envifyObject(trigger.config, prefix, 'config');
+    const cbConfigEnv  = envifyObject(excludeKeys(trigger.config, configBlacklist), prefix, 'config');
 
     // 3. command + trailing cli args
     const {trailing, command} = trigger.cli;

@@ -1,7 +1,7 @@
 /**
  * @license
  * lodash (Custom Build) <https://lodash.com/>
- * Build: `lodash include="merge,mergeWith,get,set,assign,values,toArray" exports="node"`
+ * Build: `lodash include="merge,mergeWith,get,set,assign,values,toArray,cloneDeep" exports="node" --source-map`
  * Copyright jQuery Foundation and other contributors <https://jquery.org/>
  * Released under MIT license <https://lodash.com/license>
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
@@ -2167,6 +2167,28 @@
   /*------------------------------------------------------------------------*/
 
   /**
+   * This method is like `_.clone` except that it recursively clones `value`.
+   *
+   * @static
+   * @memberOf _
+   * @since 1.0.0
+   * @category Lang
+   * @param {*} value The value to recursively clone.
+   * @returns {*} Returns the deep cloned value.
+   * @see _.clone
+   * @example
+   *
+   * var objects = [{ 'a': 1 }, { 'b': 2 }];
+   *
+   * var deep = _.cloneDeep(objects);
+   * console.log(deep[0] === objects[0]);
+   * // => false
+   */
+  function cloneDeep(value) {
+    return baseClone(value, true, true);
+  }
+
+  /**
    * Performs a
    * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
    * comparison between two values to determine if they are equivalent.
@@ -3140,6 +3162,7 @@
   /*------------------------------------------------------------------------*/
 
   // Add methods that return unwrapped values in chain sequences.
+  lodash.cloneDeep = cloneDeep;
   lodash.eq = eq;
   lodash.get = get;
   lodash.isArguments = isArguments;

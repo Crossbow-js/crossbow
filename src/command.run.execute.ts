@@ -29,7 +29,7 @@ export interface RunCommandSetupErrors {
 export type RunComplete = Rx.Observable<RunActions>
 
 export interface RunActions {
-    runSetup: RunCommandSetup
+    setup: RunCommandSetup
     update$: Rx.Observable<TaskReport>
 }
 
@@ -89,7 +89,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunActions {
         } as TaskErrorsReport);
 
         return {
-            runSetup: {
+            setup: {
                 sequence,
                 tasks,
                 errors: []
@@ -112,7 +112,7 @@ export default function executeRunCommand(trigger: CommandTrigger): RunActions {
      * map of read-only values.
      */
     return {
-        runSetup: {
+        setup: {
             sequence,
             tasks,
             errors: []
@@ -145,31 +145,33 @@ export default function executeRunCommand(trigger: CommandTrigger): RunActions {
             return runner.series(runContext);
         })();
 
-        /**
-         * Now add side effects
-         */
-        const records = new Rx.ReplaySubject();
-        const each = mode
-            .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
-            .do((report: TaskReport) => {
-                reporter({
-                    type: ReportTypes.TaskReport,
-                    data: {
-                        report,
-                        progress: trigger.config.progress
-                    }
-                } as TaskReportReport);
-            })
-            .do(records);
+        return mode;
 
-        const complete = records
-            .toArray()
-            .timestamp(trigger.config.scheduler)
-            .do((complete: CompletionReport) => {
-                handleCompletion(complete.value, complete.timestamp - startTime)
-            });
-
-        return Rx.Observable.concat(each, <any>complete.ignoreElements());
+        // /**
+        //  * Now add side effects
+        //  */
+        // const records = new Rx.ReplaySubject();
+        // const each = mode
+        //     .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
+        //     .do((report: TaskReport) => {
+        //         reporter({
+        //             type: ReportTypes.TaskReport,
+        //             data: {
+        //                 report,
+        //                 progress: trigger.config.progress
+        //             }
+        //         } as TaskReportReport);
+        //     })
+        //     .do(records);
+        //
+        // const complete = records
+        //     .toArray()
+        //     .timestamp(trigger.config.scheduler)
+        //     .do((complete: CompletionReport) => {
+        //         handleCompletion(complete.value, complete.timestamp - startTime)
+        //     });
+        //
+        // return Rx.Observable.concat(each, <any>complete.ignoreElements());
     }
 
     /**

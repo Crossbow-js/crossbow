@@ -33,7 +33,7 @@ module.exports.run = (cli, input) => {
 
 module.exports.getSetup = (cli) => {
     const scheduler  = new Rx.TestScheduler();
-    const results   = scheduler.startScheduler(() => cb(cli).pluck('runSetup'));
+    const results   = scheduler.startScheduler(() => cb(cli).pluck('setup'));
 
     return results.messages[0].value.value;
 };

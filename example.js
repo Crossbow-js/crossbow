@@ -1,46 +1,51 @@
-const Rx = require('rx');
-var Observable = Rx.Observable,
-    TestScheduler = Rx.TestScheduler,
-    onNext = Rx.ReactiveTest.onNext,
-    onError = Rx.ReactiveTest.onError,
-    onCompleted = Rx.ReactiveTest.onCompleted,
-    subscribe = Rx.ReactiveTest.subscribe,
-    created = Rx.ReactiveTest.created,
-    disposed = Rx.ReactiveTest.disposed;
+const traverse = require('traverse');
+/**
+ * Convert a JS object into ENV vars
+ * eg:
+ *    var obj = {
+ *      options: {
+ *        docker: {
+ *          port: 8000
+ *        }
+ *      }
+ *    }
+ * ->
+ *    envifyObject(obj, 'CB', 'OPTIONS')
+ * ->
+ *    CB_OPTIONS_DOCKER_PORT=8000
+ */
+const blacklist = ['scheduler'];
+function envifyObject(object, prefix, objectKeyName) {
+    return traverse(object)
+        .reduce(function (acc, x) {
+            if (this.level >= 3) {
+                this.remove(true);
+                return acc;
+            }
+            if (this.circular) {
+                this.remove(true);
+                return acc;
+            }
+            if (this.isLeaf) {
+                acc[[prefix, objectKeyName, ...this.path].join('_').toUpperCase()] = String(this.node);
+            }
+        return acc;
+    }, {});
+}
 
-var names = [
-    'shane',
-    'kittie'
-];
+const input = {
+    docker: {
+        port: 8000
+    },
+    scheduler: {
+        subscribe: {
+            num: 1,
+            person: {
+                name: 'shane'
+            }
+        }
+    }
+};
 
-const scheduler = new Rx.TestScheduler();
-
-var xs1 = scheduler.createHotObservable(
-    onNext(100, {name: 'kittie 1'}),
-    onNext(110, {name: 'kittie 2'}),
-    onNext(120, {name: 'kittie 3'})
-);
-
-var xs2 = scheduler.createHotObservable(
-    onNext(101, {name: 'shane 1'}),
-    onNext(102, {name: 'shane 2'}),
-    onNext(140, {name: 'shane 3'})
-);
-
-const lax = Rx.Observable.from([xs1, xs2]).mergeAll();
-
-// var xs3 = scheduler.createHotObservable(
-//     onNext(101, {name: 'shane'})
-// );
-//
-// var out = xs.flatMap(x => {
-//     return xs3
-// });
-//
-
-// console.log(xs1);
-const results = scheduler.startScheduler(function () {
-    return xs1;
-}, {created: 0, subscribed: 0, disposed: 2000});
-
-console.log(results.messages);
+console.log(envifyObject(input, 'CB', 'OPTIONS'));
+console.log(input);

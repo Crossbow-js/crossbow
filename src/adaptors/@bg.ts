@@ -1,13 +1,13 @@
 import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand, teardown, getEnv, getStdio} from './@npm';
 import {Task} from "../task.resolve";
-import {envifyObject, getCBEnv} from "../task.utils";
+import {getCBEnv} from "../task.utils";
 const debug = require('debug')('cb:@bg');
 const merge = require('../../lodash.custom').merge;
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
-    // todo teardown multiple backgroud emitters on ExitSignal
+    // todo teardown multiple background emitters on ExitSignal
     //
     let emitter;
 

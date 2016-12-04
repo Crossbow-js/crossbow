@@ -63,6 +63,7 @@ export interface CrossbowConfiguration {
     output?: string
     dryRun?: boolean
     dryRunDuration?: number
+
     outputObserver?:     Rx.Observable<OutgoingReport>
     fileChangeObserver?: Rx.Observable<WatchEvent>
     signalObserver?:     OutgoingSignals
