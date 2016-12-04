@@ -7,15 +7,18 @@ const TaskOriginTypes = require('../../../dist/task.resolve').TaskOriginTypes;
 
 describe('Gathering run tasks (1)', function () {
     it('Accepts single string for adaptor task', function () {
-        var runner = utils.getRunner(['@npm ls'], {});
+        var runner = utils.getSetup(['@npm ls'], {});
 
         assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
         assert.equal(runner.tasks.valid[0].command, 'ls');
     });
-    it('can gather from a default yaml file', function () {
-        const runner = utils.getRunner(['js'], {}, {
+    it.only('can gather from a default yaml file', function () {
+        const runner = utils.getSetup(['js'], {}, {
             input: 'examples/crossbow.yaml'
         });
+        // todo get more setup info here...
+        console.log(runner);
+        console.log(runner.tasks.invalid[0]);
         assert.equal(runner.tasks.valid.length, 1);
     });
     it('can gather simple tasks', function () {

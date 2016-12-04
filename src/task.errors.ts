@@ -13,7 +13,7 @@ export enum TaskErrorTypes {
     SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
     AdaptorNotFound = <any>"AdaptorNotFound",
     FlagNotFound = <any>"FlagNotFound",
-    FlagNotProvided = <any>"FlagNotProvided",
+    CBFlagNotProvided = <any>"CBFlagNotProvided",
     InvalidTaskInput = <any>"InvalidTaskInput",
     CircularReference = <any>"CircularReference",
     FileTypeNotSupported = <any>"FileTypeNotSupported"
@@ -76,7 +76,7 @@ function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          */
         if (flag === '') {
             return all.concat(<CBFlagNotProvidedError>{
-                type: TaskErrorTypes.FlagNotProvided,
+                type: TaskErrorTypes.CBFlagNotProvided,
                 taskName: task.taskName
             });
         }

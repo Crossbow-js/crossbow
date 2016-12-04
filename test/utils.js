@@ -1,5 +1,5 @@
 const Rx          = require('rx');
-const cb          = require('../dist/index').default;
+const cb          = require('../dist/index');
 const Oempty      = Rx.Observable.empty;
 const Othrow      = Rx.Observable.throw;
 const Ojust       = Rx.Observable.just;
@@ -22,32 +22,48 @@ module.exports.run = (cli, input) => {
     cli.flags.outputObserver = output;
     cli.flags.scheduler      = scheduler;
 
-    const runner       = cb(cli, input);
+    const runner       = cb.default(cli, input);
     const subscription = scheduler.startScheduler(() => {
         return runner.flatMap(x => {
             return x.update$;
         });
     }, {created: 0, subscribed: 0, disposed: 200000});
+
     return {subscription, output};
 };
 
-module.exports.getSetup = (cli) => {
+module.exports.getSetup = (args, input) => {
     const scheduler  = new Rx.TestScheduler();
-    const results   = scheduler.startScheduler(() => cb(cli).pluck('setup'));
+    const output     = new Rx.ReplaySubject(100);
+
+    const cli                = {};
+    cli.input                = ['run'].concat(args);
+    cli.flags                = args.flags || {};
+    cli.flags.outputObserver = output;
+    cli.flags.scheduler      = scheduler;
+
+    const results    = scheduler.startScheduler(() => cb.default(cli, input).map(x => {
+        return x.setup;
+    }));
 
     return results.messages[0].value.value;
 };
 
 module.exports.getRunner = (args, input, config) => {
-    const output = new Rx.ReplaySubject(100);
-    const cli    = {};
-
+    const output    = new Rx.ReplaySubject(100);
+    const cli       = {};
+    const scheduler = new Rx.TestScheduler();
+    //
     cli.input                = ['run'].concat(args);
     cli.flags                = config || {};
     cli.flags.handoff        = true;
     cli.flags.outputObserver = output;
-
-    return cb.default(cli, input);
+    // cli.flags.scheduler      = scheduler;
+    //
+    // console.log(results.messages[0].value.value.type);
+    // return results.messages;
+    const prepared = cb.prepareInput(cli, input, output);
+    return cb.handleIncoming(prepared).flatMap(x => x.update$);
 };
 
 module.exports.getWatcher = (args, input, config) => {

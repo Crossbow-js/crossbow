@@ -18,10 +18,10 @@ describe('running tasks with config', function () {
                 css: '@sh sleep $JJSSJJ_OPTIONS_SOME_NESTED_PROP'
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
+                console.log(xs);
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });
@@ -50,8 +50,7 @@ describe('running tasks with config', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
