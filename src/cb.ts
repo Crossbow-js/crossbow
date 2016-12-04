@@ -65,7 +65,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             } else {
                 file.writeFileToDisk(x.data.file, x.data.content);
             }
-        });
+        }).subscribe();
 
     /**
      * Any errors found on input preparation
@@ -79,29 +79,19 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'run') {
 
-        const setUp$ = new Rx.BehaviorSubject({});
+        const setUp$    = new Rx.BehaviorSubject({});
         const progress$ = new Rx.BehaviorSubject([]);
-
-        const reports$ = handleIncoming<RunComplete>(prepared)
-            .do(x => setUp$.onNext(x.setup)) // first item is the setup
-            .flatMap(x => {
-                if (x.setup.errors.length) {
-                    console.log('Error in setup', x.setup.errors);
-                    return Rx.Observable.empty();
-                }
-                return x.update$;
-            });
 
         const exitSignal$ = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
-            .withLatestFrom(setUp$, progress$)
+            .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data}))
+            .withLatestFrom(setUp$, progress$, (signal, setup, reports) => {
+                return {reports, setup, signal};
+            })
             .do((incoming) => {
 
-                const cbSignal: CBSignal<ExitSignal> = incoming[0];
-                const setup:    RunCommandSetup      = incoming[1];
-                const reports:  TaskReport[]         = incoming[2];
-
-                prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data});
+                const setup:    RunCommandSetup      = incoming.setup;
+                const reports:  TaskReport[]         = incoming.reports;
 
                 /**
                  * Main summary report, although here it could be partial
@@ -114,7 +104,42 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                 }
             });
 
-        reports$
+        const reports$ = handleIncoming<RunComplete>(prepared)
+            .do(x => setUp$.onNext(x.setup)) // first item is the setup
+            .timestamp(prepared.config.scheduler)
+            .flatMap<{runtime: number, value: TaskReport[]}>(x => {
+                if (x.value.setup.errors.length) {
+                    console.log('Error in setup', x.value.setup.errors);
+                    return Rx.Observable.empty();
+                }
+                return getStream(x.value.update$, progress$, exitSignal$, x.timestamp, prepared.config.scheduler);
+            })
+            // .do(x => console.log(x))
+            .filter(x => x.value.length > 0)
+            .withLatestFrom(setUp$, (incoming: {value: TaskReport[], runtime:number}, setup: RunCommandSetup) => {
+                return {reports: incoming.value, setup, runtime: incoming.runtime};
+            })
+            .subscribe(incoming => {
+                try {
+                    const reports: TaskReport[]  = incoming.reports;
+                    const setup: RunCommandSetup = incoming.setup;
+                    const runtime: number        = incoming.runtime;
+
+                    if (reports.length < (setup.tasks.valid.length * 2)) {
+                        debug('Summary handled elsewhere as report length is lower than expected');
+                    } else {
+                        handleCompletion(reports, setup, runtime);
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }, err => {
+                console.log(err);
+            });
+    }
+
+    function getStream (base: Rx.Observable<any>, progress$, exit$, startTime, scheduler): Rx.Observable<{runtime: number, value: TaskReport[]}> {
+        return base
             .do(x => progress$.onNext(progress$.getValue().concat(x)))
             .do((report: TaskReport) => {
                 prepared.reportFn({
@@ -125,28 +150,12 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     }
                 } as TaskReportReport);
             })
-            .takeUntil(exitSignal$)
+            .takeUntil(exit$)
             .toArray()
-            .filter(x => x.length > 0)
-            .withLatestFrom(setUp$, (reports: TaskReport[], setup: RunCommandSetup) => {
-                return {reports, setup};
-            })
-            .subscribe(incoming => {
-                try {
-                    const reports: TaskReport[]  = incoming.reports;
-                    const setup: RunCommandSetup = incoming.setup;
-                    if (reports.length < (setup.tasks.valid.length * 2)) {
-                        debug('Summary handled elsewhere as report length is lower than expected');
-                    } else {
-                        handleCompletion(reports, setup, 1000);
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }, err => {
-                console.log(err);
+            .timestamp(scheduler)
+            .map(x => {
+                return {runtime: x.timestamp - startTime, value: x.value};
             });
-
     }
 
     /**

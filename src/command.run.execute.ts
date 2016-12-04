@@ -118,96 +118,11 @@ export default function executeRunCommand(trigger: CommandTrigger): RunActions {
             errors: []
         },
         update$: getContext(tasks.all, trigger)
-            .timestamp(trigger.config.scheduler)
-            .flatMap((complete: RunContextCompletion) => {
-                return run(complete.value, complete.timestamp)
-            })
-            .share()
+            .flatMap((runContext: RunContext) => {
+                if (trigger.config.runMode === TaskRunModes.parallel) {
+                    return runner.parallel(runContext);
+                }
+                return runner.series(runContext);
+            }).share()
     };
-
-    /**
-     * Return the stream so a consumer can receive the RunCompletionReport
-     */
-
-    /**
-     * Now actually execute the tasks.
-     */
-    function run(runContext: RunContext, startTime: number): Rx.Observable<TaskReport> {
-
-        /**
-         * series/parallel running have VERY different characteristics
-         * @type {Rx.Observable<TaskReport>|Rx.Observable<TaskReport>}
-         */
-        const mode = (function () {
-            if (trigger.config.runMode === TaskRunModes.parallel) {
-                return runner.parallel(runContext);
-            }
-            return runner.series(runContext);
-        })();
-
-        return mode;
-
-        // /**
-        //  * Now add side effects
-        //  */
-        // const records = new Rx.ReplaySubject();
-        // const each = mode
-        //     .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
-        //     .do((report: TaskReport) => {
-        //         reporter({
-        //             type: ReportTypes.TaskReport,
-        //             data: {
-        //                 report,
-        //                 progress: trigger.config.progress
-        //             }
-        //         } as TaskReportReport);
-        //     })
-        //     .do(records);
-        //
-        // const complete = records
-        //     .toArray()
-        //     .timestamp(trigger.config.scheduler)
-        //     .do((complete: CompletionReport) => {
-        //         handleCompletion(complete.value, complete.timestamp - startTime)
-        //     });
-        //
-        // return Rx.Observable.concat(each, <any>complete.ignoreElements());
-    }
-
-    /**
-     * Because errors are handled by reports, task executions ALWAYS complete
-     * and we handle that here.
-     */
-    function handleCompletion (reports: TaskReport[], runtime: number): void {
-
-        /**
-         * Merge sequence tree with Task Reports
-         */
-        const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-
-        /**
-         * Push a 'Completion report' onto the $complete Observable.
-         * This means consumers will get everything when they call
-         */
-        const errors = reports.filter(x => x.type === TaskReportType.error);
-
-        const completeData = {
-            errors: reports.filter(x => x.type === TaskReportType.error),
-            taskErrors: errors,
-            sequence: decoratedSequence,
-            cli: trigger.cli,
-            config,
-            runtime
-        };
-
-        /**
-         * Main summary report
-         */
-        reporter({
-            type: ReportTypes.Summary,
-            data: completeData
-        } as SummaryReport);
-
-        require('./command.run.post-execution').postCliExecution(completeData);
-    }
 }
