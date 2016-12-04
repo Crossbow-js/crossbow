@@ -3,7 +3,8 @@ import {TaskErrorStats} from "./task.runner";
 
 export function postCliExecution(complete: RunCommandCompletionReport) {
 
-    const {errors, taskErrors, config} = complete;
+    const {taskErrors, config} = complete;
+
     /**
      * If an error occurred, we need to exit the process
      * with any error codes if given
@@ -18,10 +19,6 @@ export function postCliExecution(complete: RunCommandCompletionReport) {
             process.exit(stats.cbExitCode);
         }
 
-        process.exit(1);
-    }
-
-    if (errors.length) {
         process.exit(1);
     }
 }

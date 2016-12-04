@@ -15,7 +15,7 @@ import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
 import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
-import {RunComplete, RunCommandReportTypes, RunCommandCompletionReport} from "./command.run.execute";
+import {RunComplete} from "./command.run.execute";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup} from "./command.run";
 import * as seq from "./task.sequence";

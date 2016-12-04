@@ -9,7 +9,7 @@ describe("Exit codes following error", function () {
         });
     });
     it("should not exit with exit code 1 if --no-fail flag given", function (done) {
-        exec('node dist/cb run "@npm sleep" --no-fail', function (err) {
+        exec('node dist/cb run "@npm sleep" --no-fail', function (err, stdout) {
             assert.isNull(err);
             done();
         });
