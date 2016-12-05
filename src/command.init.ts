@@ -34,7 +34,7 @@ export interface InitCommandOutput {
     outputFileName?: string
     templateFilePath?: string
 }
-export type InitCommandComplete = Rx.Observable<InitCommandOutput>;
+export type InitCommandComplete = Rx.Observable<{setup:InitCommandOutput}>;
 
 export enum InitConfigFileTypes {
     yaml   = <any>"yaml",
@@ -72,9 +72,11 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
             } as InitInputFileTypeNotSupportedReport);
         }
         return Rx.Observable.just({
-            existingFilesInCwd: [],
-            matchingFiles: [],
-            errors
+            setup: {
+                existingFilesInCwd: [],
+                matchingFiles: [],
+                errors
+            }
         });
     }
 
@@ -128,7 +130,13 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
             }
         } as DuplicateConfigFile);
 
-        return Rx.Observable.just({existingFilesInCwd, matchingFiles, errors});
+        return Rx.Observable.just({
+            setup: {
+                existingFilesInCwd,
+                matchingFiles,
+                errors
+            }
+        });
     }
 
     const templateFilePath = join(templateDir, outputFileName);
@@ -150,7 +158,7 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
         }
     } as ConfigFileCreatedReport);
 
-    return Rx.Observable.just(output);
+    return Rx.Observable.just({setup: output});
 }
 
 export default function handleIncomingInitCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

@@ -9,7 +9,7 @@ import {PostCLIParse} from "./cli";
 import {prepareInput} from "./index";
 import {DocsFileOutput, DocsCommandComplete, DocsCommandOutput} from "./command.docs";
 import * as file from "./file.utils";
-import {InitCommandComplete} from "./command.init";
+import {InitCommandComplete, InitCommandOutput} from "./command.init";
 import {WatchersCommandComplete} from "./command.watchers";
 import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
@@ -231,11 +231,12 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'init') {
         handleIncoming<InitCommandComplete>(prepared)
-            .subscribe(x => {
-                if (x.errors.length) {
+            .pluck('setup')
+            .subscribe((setup: InitCommandOutput) => {
+                if (setup.errors.length) {
                     return process.exit(1);
                 }
-                writeFileSync(x.outputFilePath, readFileSync(x.templateFilePath));
+                writeFileSync(setup.outputFilePath, readFileSync(setup.templateFilePath));
             });
     }
 
