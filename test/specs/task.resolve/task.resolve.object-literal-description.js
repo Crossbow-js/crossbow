@@ -4,7 +4,7 @@ const SequenceItemTypes = require("../../../dist/task.sequence.factories").Seque
 
 describe('task.resolve object literals with task description', function () {
     it('applies description to current task', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: {
                     input: '@npm sleep 0.1',
@@ -15,7 +15,7 @@ describe('task.resolve object literals with task description', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].description, "Runs the JS task");
     });
     it('applies description for multiple child tasks', function () {
-        const runner = utils.getRunner(['js', 'haml'], {
+        const runner = utils.getSetup(['js', 'haml'], {
             tasks: {
                 'js': {
                     tasks: ['css', 'haml'],

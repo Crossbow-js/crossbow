@@ -16,12 +16,9 @@ describe('Using a cbfile', function () {
         if (require.cache[absPath3]) delete require.cache[absPath3];
     });
     it('works with non-array inputs', function () {
-    	const runner = utils.getSetup({
-            input: ['build-js'],
-            flags: {
-                outputObserver: utils.nullOutput(),
-                cbfile: 'test/fixtures/cbfile.js'
-            }
+    	const runner = utils.getSetup(['build-js'], {}, {
+            outputObserver: utils.nullOutput(),
+            cbfile: 'test/fixtures/cbfile.js'
         });
 
         assert.equal(runner.tasks.valid[0].tasks.length, 2); //has a callback also
@@ -29,8 +26,8 @@ describe('Using a cbfile', function () {
         assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
     });
     it('works with inline functions', function () {
-    	const runner = utils.getSetup({
-            input: ['shane'],
+    	const runner = utils.getGenericSetup({
+            input: ['run', 'shane'],
             flags: {
                 outputObserver: utils.nullOutput(),
                 cbfile: 'test/fixtures/cbfile.js'
@@ -44,7 +41,7 @@ describe('Using a cbfile', function () {
     });
     it('works with options', function () {
         const runner = utils.run({
-            input: ['kittie:dev'],
+            input: ['run', 'kittie:dev'],
             flags: {
                 outputObserver: utils.nullOutput(),
                 cbfile: 'test/fixtures/cbfile.js'
@@ -73,7 +70,7 @@ describe('Using a cbfile', function () {
     });
     it('works with top-level env', function () {
         const runner = utils.run({
-            input: ['wait-env'],
+            input: ['run', 'wait-env'],
             flags: {
                 cbfile: 'test/fixtures/cbfile.js'
             }
@@ -86,7 +83,7 @@ describe('Using a cbfile', function () {
     });
     it('runs with mix of array + fn + callbacks', function () {
         const runner = utils.run({
-            input: ['build-js'],
+            input: ['run', 'build-js'],
             flags: {
                 cbfile: 'test/fixtures/cbfile.js'
             }
@@ -102,7 +99,7 @@ describe('Using a cbfile', function () {
     });
     it('runs with object in place of tasks deps', function () {
         const runner = utils.run({
-            input: ['obj'],
+            input: ['run', 'obj'],
             flags: {
                 cbfile: 'test/fixtures/cbfile.js'
             }

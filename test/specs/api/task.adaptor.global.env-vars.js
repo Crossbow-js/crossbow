@@ -19,8 +19,7 @@ describe('Adaptor tasks + global option vars', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
@@ -44,8 +43,7 @@ describe('Adaptor tasks + global option vars', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);

@@ -29,7 +29,7 @@ module.exports.run = (cli, input) => {
         });
     }, {created: 0, subscribed: 0, disposed: 200000});
 
-    return {subscription, output};
+    return {subscription, output, scheduler};
 };
 
 module.exports.getGenericSetup = (cli, input, config) => {
@@ -91,9 +91,9 @@ module.exports.getWatcher = (args, input, config) => {
     cli.flags.outputObserver = output;
 
     const runner       = cb.default(cli, input);
-    const subscription = scheduler.startScheduler(() => runner, {created: 0, subscribed: 0, disposed: 200000});
+    const subscription = scheduler.startScheduler(() => runner.map(x => x.setup), {created: 0, subscribed: 0, disposed: 200000});
     const firstValue   = subscription.messages[0].value.value;
-    return firstValue.data;
+    return firstValue;
 };
 
 module.exports.watch = (args, input, config) => {
@@ -159,7 +159,7 @@ module.exports.getFileWatcher = (args, input, fileEvents, config) => {
     const runner = cb.default(cli, input);
 
     const subscription = scheduler.startScheduler(() => {
-        return runner;
+        return runner.flatMap(x => x.update$);
     }, {created: 0, subscribed: 0, disposed: 2000000});
 
     return {subscription, output};

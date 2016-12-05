@@ -4,7 +4,7 @@ const TaskTypes = require("../../../dist/task.resolve").TaskTypes;
 
 describe('task.resolve from file path', function () {
     it('can retrieve task-name using file-lookup', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: 'test/fixtures/tasks/error.js'
             }
@@ -13,7 +13,7 @@ describe('task.resolve from file path', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'test/fixtures/tasks/error.js');
     });
     it('can retrieve task-name using file-lookup + cbflags', function () {
-        const runner = utils.getRunner(['js@p'], {
+        const runner = utils.getSetup(['js@p'], {
             tasks: {
                 js: 'test/fixtures/tasks/error.js'
             }
@@ -23,12 +23,12 @@ describe('task.resolve from file path', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'test/fixtures/tasks/error.js');
     });
     it('can retrieve task-name using file-lookup without tasks definitions', function () {
-        const runner = utils.getRunner(['test/fixtures/tasks/error.js'], {});
+        const runner = utils.getSetup(['test/fixtures/tasks/error.js'], {});
         assert.equal(runner.tasks.valid[0].externalTasks[0].rawInput, 'test/fixtures/tasks/error.js');
         assert.equal(runner.tasks.valid[0].externalTasks[0].relative, 'test/fixtures/tasks/error.js');
     });
     it('can retrieve task-name using file-lookup with leading . (dot)', function () {
-        const runner = utils.getRunner(['./test/fixtures/tasks/error.js'], {});
+        const runner = utils.getSetup(['./test/fixtures/tasks/error.js'], {});
         assert.equal(runner.tasks.valid[0].type, TaskTypes.ExternalTask);
     });
 });

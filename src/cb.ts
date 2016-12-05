@@ -10,7 +10,7 @@ import {prepareInput} from "./index";
 import {DocsFileOutput, DocsCommandComplete, DocsCommandOutput} from "./command.docs";
 import * as file from "./file.utils";
 import {InitCommandComplete, InitCommandOutput} from "./command.init";
-import {WatchersCommandComplete} from "./command.watchers";
+import {WatchersCommandComplete, WatchersCommandOutput} from "./command.watchers";
 import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
 import {ReportTypes} from "./reporter.resolve";
@@ -21,6 +21,7 @@ import {RunCommandSetup} from "./command.run";
 import * as seq from "./task.sequence";
 import {SummaryReport} from "./reporter.resolve";
 import {TaskReportReport} from "./reporter.resolve";
+import {WatchTaskReport} from "./watch.file-watcher";
 const debug = require('debug')('cb:cli');
 
 const parsed = cli(process.argv.slice(2));
@@ -242,8 +243,9 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'watchers') {
         handleIncoming<WatchersCommandComplete>(prepared)
-            .subscribe(x => {
-                if (x.errors.length) {
+            .pluck('setup')
+            .subscribe((setup: WatchersCommandOutput) => {
+                if (setup.errors.length) {
                     return process.exit(1);
                 }
             });
@@ -251,13 +253,13 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'watch') {
         handleIncoming<WatchCommmandComplete>(prepared)
-            .subscribe(x => {
-                if (x.type === WatchCommandEventTypes.SetupError) {
-                    const data = <WatchCommandSetup>x.data;
-                    if (data.errors.length) {
-                        process.exit(1);
-                    }
+            .flatMap((x: {setup:WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
+                if (x.setup.errors.length) {
+                    process.exit(1);
+                    return Rx.Observable.empty();
                 }
-            });
+                return x.update$;
+            })
+            .subscribe();
     }
 }

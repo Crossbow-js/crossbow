@@ -229,7 +229,7 @@ describe('responding to file change events', function () {
             onNext(2100,  {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
         ]);
 
-        // console.log(out.subscription.messages);
+
         const watchReports = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
         assert.equal(watchReports.length, 2);
 

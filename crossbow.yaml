@@ -1,3 +1,13 @@
+watch:
+  options:
+    block: true
+  default:
+    '*.json': '@npm sleep 1'
+  others:
+    '*.js': '@npm sleep 1'
+    '.gitignore': '@npm sleep 1'
+  git:
+    '.git': '@sh ls .git/objects'
 tasks:
   js:
     - '@npm sleep 1'

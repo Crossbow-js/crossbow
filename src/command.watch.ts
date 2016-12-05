@@ -28,11 +28,10 @@ export interface WatchCommandSetupErrors {
     type: ReportTypes
 }
 
-export interface WatchCommandReport <T> {
-    type: WatchCommandEventTypes
-    data: T
+export interface WatchCommandOutput {
+    setup: WatchCommandSetup
+    update$: Rx.Observable<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}>
 }
-
 export interface WatchCommandSetup {
     beforeTasks?:  BeforeTasks
     watchTasks?:   WatchTasks
@@ -45,7 +44,7 @@ export interface WatchCommandBefore {
     errors:  TaskReport[]
 }
 
-export type WatchCommmandComplete = Rx.Observable<WatchCommandReport<WatchCommandSetup|WatchTaskReport|WatchRunnerComplete|WatchCommandBefore>>;
+export type WatchCommmandComplete = Rx.Observable<WatchCommandOutput>;
 
 export enum WatchCommandEventTypes {
     SetupError           = <any>'SetupError',
@@ -67,13 +66,13 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
     if (beforeTasks.tasks.invalid.length) {
         reporter({type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
         return Rx.Observable.just({
-            type: WatchCommandEventTypes.SetupError,
-            data:  {
+            setup: {
                 watchTasks,
                 watchRunners: watchRunners,
                 beforeTasks: beforeTasks,
                 errors: [{type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}}]
-            }
+            },
+            update$: <any>Rx.Observable.empty()
         });
     }
 
@@ -84,13 +83,13 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
     if (watchTasks.invalid.length) {
         reporter({type: ReportTypes.WatchTaskErrors, data: {watchTasks: watchTasks.all, cli, input}});
         return Rx.Observable.just({
-            type: WatchCommandEventTypes.SetupError,
-            data: {
+            setup: {
                 watchTasks,
                 watchRunners: watchRunners,
                 beforeTasks: beforeTasks,
                 errors: [{type: ReportTypes.WatchTaskErrors, data: {watchTasks, trigger}}]
-            }
+            },
+            update$: <any>Rx.Observable.empty()
         });
     }
 
@@ -104,13 +103,13 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
         });
 
         return Rx.Observable.just({
-            type: WatchCommandEventTypes.SetupError,
-            data: {
+            setup: {
                 watchTasks,
                 watchRunners: watchRunners,
                 beforeTasks: beforeTasks,
                 errors: [{type: ReportTypes.WatchTaskTasksErrors}]
-            }
+            },
+            update$: <any>Rx.Observable.empty()
         });
     }
 
@@ -119,12 +118,20 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
      */
     if (!beforeTasks.tasks.valid.length) {
         reporter({type: ReportTypes.Watchers, data: {watchTasks: watchTasks.valid, config}});
-        return createObservablesForWatchers(watchRunners.valid, trigger);
+        return Rx.Observable.just({
+            setup: {
+                watchTasks,
+                watchRunners: watchRunners,
+                beforeTasks: beforeTasks,
+                errors: []
+            },
+            update$: createObservablesForWatchers(watchRunners.valid, trigger)
+        });
     }
 
     reporter({type: ReportTypes.BeforeTaskList, data: {sequence: beforeTasks.sequence, cli, config: trigger.config}});
 
-    return Rx.Observable.zip(
+    const withBefore$ = Rx.Observable.zip(
             /**
              * Timestamp the beginning
              */
@@ -168,10 +175,10 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
                     reports,
                     errors
                 }
-            } as WatchCommandReport<WatchCommandBefore>;
+            };
 
             /**
-             * If an error occured, and the user did not provide --no-fail flag
+             * If an error occurred, and the user did not provide --no-fail flag
              * don't continue with the watchers
              */
             if (errors.length && config.fail) {
@@ -186,11 +193,21 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
             /**
              * Send the before report followed by the following watch task reports
              */
-            return Rx.Observable.concat(
+            return Rx.Observable.concat<any>(
                 Rx.Observable.just(beforeReport),
                 createObservablesForWatchers(watchRunners.valid, trigger)
             )
         });
+
+    return Rx.Observable.just({
+        setup: {
+            watchTasks,
+            watchRunners: watchRunners,
+            beforeTasks: beforeTasks,
+            errors: []
+        },
+        update$: <any>withBefore$
+    });
 }
 
 export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): WatchCommmandComplete {
@@ -233,14 +250,14 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
      * If no watchers given, or if user has selected interactive mode,
      * show the UI for watcher selection
      */
-    function enterInteractive() {
+    function enterInteractive(): WatchCommmandComplete {
         if (!topLevelWatchers.length) {
             reporter({type: ReportTypes.NoWatchersAvailable});
-            return Rx.Observable.just<WatchCommandReport<WatchCommandSetup>>({
-                type: WatchCommandEventTypes.SetupError,
-                data: {
+            return Rx.Observable.just({
+                setup: {
                     errors: [{type: ReportTypes.NoWatchersAvailable}]
-                }
+                },
+                update$: <any>Rx.Observable.empty()
             });
         }
         reporter({type: ReportTypes.NoWatchTasksProvided});

@@ -27,8 +27,7 @@ describe('Adaptor tasks + env vars', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
@@ -49,8 +48,7 @@ describe('Adaptor tasks + env vars', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
@@ -76,8 +74,7 @@ describe('Adaptor tasks + env vars', function () {
                 __SLEEP__: '0.1'
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
@@ -105,8 +102,7 @@ describe('Adaptor tasks + env vars', function () {
                 __SLEEP__: '0.1'
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (xs) {
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);

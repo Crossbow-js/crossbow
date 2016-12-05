@@ -52,4 +52,3 @@ cb.task('wait-env', function (opts, ctx) {
 });
 
 cb.task('multi', ['shane', ['build-js', '@sh sleep 1']]);
-

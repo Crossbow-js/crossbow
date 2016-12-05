@@ -3,7 +3,7 @@ const utils = require("../../utils");
 
 describe('task.resolve with --skip', function () {
     it('can skip child tasks when set on a parent', function () {
-        const runner = utils.getRunner(['build'], {
+        const runner = utils.getSetup(['build'], {
             tasks: {
                 build: ['js', 'css'],
                 js: 'test/fixtures/tasks/simple.multi.js',
@@ -28,12 +28,18 @@ describe('task.resolve with --skip', function () {
         }, {
             tasks: {
                 build: ['js', 'css'],
-                js: 'test/fixtures/tasks/simple.multi.js',
-                css: '@npm sleep 1',
+                js: utils.task(1000),
+                css: utils.task(2000),
             }
         });
 
-        const complete = utils.getComplete(runner);
-        assert.equal(complete.runtime, 2100); // from simple.multi tasks
+        const reports = utils.getReports(runner);
+        const stats = reports.map(x => x.stats);
+        assert.equal(reports.length, 4);
+        assert.equal(stats[3].duration, 0);
+        assert.equal(stats[3].skipped, true);
+        assert.equal(stats[0].skipped, false);
+        assert.equal(stats[1].skipped, false);
+        assert.equal(stats[1].duration, 1000);
     });
 });

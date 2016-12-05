@@ -5,7 +5,7 @@ const TaskErrorTypes = require("../../../dist/task.errors").TaskErrorTypes;
 
 describe('task.resolve from installed node_modules', function () {
     it('can retrieve task-name using require()', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: 'sass'
             }
@@ -17,7 +17,7 @@ describe('task.resolve from installed node_modules', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].relative, 'test/fixtures/fake_modules/sass.js');
     });
     it('can retrieve task-name using require() + sub tasks + flags', function () {
-        const runner = utils.getRunner(['js@p'], {
+        const runner = utils.getSetup(['js@p'], {
             tasks: {
                 js: 'sass:cat'
             },
@@ -33,7 +33,7 @@ describe('task.resolve from installed node_modules', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].externalTasks[0].rawInput, 'sass');
     });
     it('can give good errors when module not found', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: 'Krossbow-scass' // typo
             }
@@ -41,7 +41,7 @@ describe('task.resolve from installed node_modules', function () {
         assert.equal(runner.tasks.invalid[0].tasks[0].errors[0].type, TaskErrorTypes.TaskNotFound);
     });
     it('does not look at any files if the name matches a task definition', function () {
-        const runner = utils.getRunner(['archy'], {
+        const runner = utils.getSetup(['archy'], {
             tasks: {
                 archy: ['@npm webpack']
             }
