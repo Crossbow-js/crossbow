@@ -7,7 +7,7 @@ import Rx = require('rx');
 import * as reports from "./reporter.resolve";
 import {PostCLIParse} from "./cli";
 import {prepareInput} from "./index";
-import {DocsFileOutput, DocsCommandComplete} from "./command.docs";
+import {DocsFileOutput, DocsCommandComplete, DocsCommandOutput} from "./command.docs";
 import * as file from "./file.utils";
 import {InitCommandComplete} from "./command.init";
 import {WatchersCommandComplete} from "./command.watchers";
@@ -218,11 +218,12 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'docs') {
         handleIncoming<DocsCommandComplete>(prepared)
-            .subscribe(x => {
-                if (x.errors.length) {
+            .pluck('setup')
+            .subscribe((setup: DocsCommandOutput) => {
+                if (setup.errors.length) {
                     return process.exit(1);
                 }
-                x.output.forEach(function (outputItem: DocsFileOutput) {
+                setup.output.forEach(function (outputItem: DocsFileOutput) {
                     file.writeFileToDisk(outputItem.file, outputItem.content);
                 });
             })

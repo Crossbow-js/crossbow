@@ -160,13 +160,17 @@ ${twoColFromJson(_.merge({}, require('../opts/command.docs.opts.json')), 'desc')
 
 ${twoColFromJson(_.merge({}, require(globalcommon)), 'desc')}
 
-{bold:Examples: Create a config file in default format (yaml)}
+{bold:Example: Generate documentation in the current directory}
 
-    $ crossbow init
+    $ crossbow docs
 
-{bold:Examples: Create a config file in JSON format}
+{bold:Example: Create a NEW file containing documentation}
 
-    $ crossbow init --type json
+    $ crossbow docs --output docs.md
+    
+{bold:Example: Override documentation in an existing file}
+
+    $ crossbow docs --file existing-docs.md
 `
     }
 };
