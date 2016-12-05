@@ -20,8 +20,7 @@ describe('Running tasks from inline-functions with errors', function () {
                 }
             }
         });
-        runner.runner
-            .parallel()
+        runner
             .toArray()
             .subscribe(function (reports) {
                 assert.equal(reports[0].type, TaskReportType.start);
@@ -45,8 +44,7 @@ describe('Running tasks from inline-functions with errors', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (reports) {
                 assert.equal(reports[0].type, TaskReportType.start);

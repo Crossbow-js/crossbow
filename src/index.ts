@@ -167,7 +167,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
 export function handleIncoming<ReturnType>(preparedInput: PreparedInput): ReturnType {
 
     const {cli, userInput, config, reportFn} = preparedInput;
-
+    
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {

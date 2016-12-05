@@ -20,8 +20,7 @@ describe('returning teardown logic from a task', function () {
             }
         });
         // console.log(runner.tasks.invalid[0].tasks[0])
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(called, 2);

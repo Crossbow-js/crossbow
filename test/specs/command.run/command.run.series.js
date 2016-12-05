@@ -33,10 +33,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 4);
-        assert.equal(complete.runtime, 300);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[2].type, TaskReportType.start);
@@ -54,10 +52,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 4);
-        assert.equal(complete.runtime, 300);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[2].type, TaskReportType.start);
@@ -75,10 +71,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 14);
-        assert.equal(complete.runtime, 1100);
     });
     it("object literal", function () {
 
@@ -91,10 +85,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 6);
-        assert.equal(complete.runtime, 300);
     });
     it("inline object literal", function () {
 
@@ -109,10 +101,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 8);
-        assert.equal(complete.runtime, 400);
     });
     it("alias", function () {
 
@@ -128,10 +118,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 2);
-        assert.equal(complete.runtime, 100);
     });
     it("alias mixes", function () {
 
@@ -147,10 +135,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 4);
-        assert.equal(complete.runtime, 200);
     });
     it("error [1, x]", function () {
 
@@ -164,10 +150,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 4);
-        assert.equal(complete.runtime, 2100);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[2].type, TaskReportType.start);
@@ -185,10 +169,8 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         assert.equal(reports.length, 2);
-        assert.equal(complete.runtime, 2000);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.error);
     });
@@ -214,7 +196,6 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         const types     = require('../../../dist/reporter.resolve').ReportTypes.TaskReport;
         const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
@@ -267,7 +248,6 @@ describe("Running tasks in series", function () {
         });
 
         const reports  = utils.getReports(runner);
-        const complete = utils.getComplete(runner);
 
         const types     = require('../../../dist/reporter.resolve').ReportTypes.TaskReport;
         const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
@@ -278,8 +258,6 @@ describe("Running tasks in series", function () {
                 progress: true
             }
         }));
-
-        console.log(out);
 
         // assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
         // assert.equal(out[2], `{yellow:>} [Function: withName]`);

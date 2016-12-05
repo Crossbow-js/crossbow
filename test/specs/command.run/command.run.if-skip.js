@@ -7,7 +7,7 @@ const path = require("path");
 describe("skipping tasks", function () {
     it("resolves tasks with children + if props", function () {
 
-        const runner = utils.getRunner(['js', 'svg'], {
+        const runner = utils.getSetup(['js', 'svg'], {
             tasks: {
                 js: {
                     ifChanged: ['test/fixtures/js'],

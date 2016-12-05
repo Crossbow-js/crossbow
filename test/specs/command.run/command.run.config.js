@@ -21,7 +21,6 @@ describe('running tasks with config', function () {
         runner
             .toArray()
             .subscribe(function (xs) {
-                console.log(xs);
                 assert.ok(xs.slice(-1)[0].stats.duration > 100);
                 done();
             });

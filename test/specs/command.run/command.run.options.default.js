@@ -24,8 +24,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input,  'kittie');
@@ -55,8 +54,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts.length, 2);
@@ -92,8 +90,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input,  'kittie');
@@ -132,8 +129,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts.length, 4);
@@ -172,8 +168,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts.length, 2);
@@ -214,8 +209,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts.length, 4);
@@ -259,8 +253,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
 
@@ -295,8 +288,7 @@ describe('Adding options from _default ket', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
 

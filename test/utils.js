@@ -32,13 +32,13 @@ module.exports.run = (cli, input) => {
     return {subscription, output};
 };
 
-module.exports.getSetup = (args, input) => {
+module.exports.getSetup = (args, input, config) => {
     const scheduler  = new Rx.TestScheduler();
     const output     = new Rx.ReplaySubject(100);
 
     const cli                = {};
     cli.input                = ['run'].concat(args);
-    cli.flags                = args.flags || {};
+    cli.flags                = config || {};
     cli.flags.outputObserver = output;
     cli.flags.scheduler      = scheduler;
 

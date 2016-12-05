@@ -4,7 +4,7 @@ var TaskErrorTypes = require('../../../dist/task.errors').TaskErrorTypes;
 
 describe('Detecting Circular references in task definitions', function () {
     it('Can defend against an infinite loop of task resolutions', function () {
-        const runner = utils.getRunner(["js", "test/fixtures/tasks/stream.js"], {
+        const runner = utils.getSetup(["js", "test/fixtures/tasks/stream.js"], {
             tasks: {
                 js: ["dummy"],
                 dummy: ["test/fixtures/tasks/simple.js", "test/fixtures/tasks/simple2.js", "js"]

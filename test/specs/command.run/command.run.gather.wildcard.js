@@ -6,7 +6,7 @@ describe('Gathering run tasks with wildcard', function () {
 
     it('can handle multi tasks with wildcard', function () {
 
-    	const runner = utils.getRunner(['test/fixtures/tasks/single-export.js:*'], {
+    	const runner = utils.getSetup(['test/fixtures/tasks/single-export.js:*'], {
             options: {
                 "test/fixtures/tasks/single-export.js": {
                     site: {

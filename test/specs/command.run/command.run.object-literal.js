@@ -49,8 +49,7 @@ describe('Running tasks from object literals', function () {
                 }]
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (reports) {
                 assert.ok(reports.slice(-1)[0].stats.duration > 100);
@@ -68,8 +67,7 @@ describe('Running tasks from object literals', function () {
                 }]
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function (reports) {
                 assert.ok(reports.slice(-1)[0].stats.duration > 100);

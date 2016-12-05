@@ -8,7 +8,7 @@ const TaskRunModes = require('../../../dist/task.resolve').TaskRunModes;
 
 describe('Gathering run tasks, grouped by runMode', function () {
     it('can gather groups in series', function () {
-        var runner = utils.getRunner(['js'], {
+        var runner = utils.getSetup(['js'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -30,7 +30,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].items[3].options.name, 'kittie');
     });
     it('can gather groups in parallel', function () {
-        var runner = utils.getRunner(['build-all@p'], {
+        var runner = utils.getSetup(['build-all@p'], {
             tasks: {
                 'build-all': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -66,7 +66,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].items[0].items[3].options.name, 'kittie');
     });
     it('can gather groups in parallel when @p in task name', function () {
-        var runner = utils.getRunner(['build-all'], {
+        var runner = utils.getSetup(['build-all'], {
             tasks: {
                 'build-all@p': ['js', 'css'],
                 'js':        ['test/fixtures/tasks/simple.multi.js:*'],
@@ -92,7 +92,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[0].items[0].items.length, 4);
     });
     it('can gather groups in parallel in a nested array', function () {
-        var runner = utils.getRunner(['build-all'], {
+        var runner = utils.getSetup(['build-all'], {
             tasks: {
                 'build-all': ['clean', ['js', 'css', 'svg']],
                 'clean': 'test/fixtures/tasks/simple.js',
@@ -139,7 +139,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(reports[7].type, 'end');
     });
     it('can gather groups in parallel in a nested array (cbfile)', function () {
-        var runner = utils.getRunner(['multi'], {}, {cbfile: 'test/fixtures/cbfile.js'});
+        var runner = utils.getSetup(['multi'], {}, {cbfile: 'test/fixtures/cbfile.js'});
 
         assert.equal(runner.tasks.all[0].tasks[0].runMode, TaskRunModes.series);
         assert.equal(runner.tasks.all[0].tasks[1].runMode, TaskRunModes.parallel);
@@ -151,7 +151,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         assert.equal(runner.sequence[0].items[1].items.length, 2);
     });
     it('can gather groups in parallel when @p call site', function () {
-        var runner = utils.getRunner(['build-all'], {
+        var runner = utils.getSetup(['build-all'], {
             tasks: {
                 'build-all': ['js:*@p', 'css@p'],
                 'js': {

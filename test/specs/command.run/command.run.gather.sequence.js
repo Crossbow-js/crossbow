@@ -5,11 +5,11 @@ const utils = require("../../utils");
 
 describe('Gathering run tasks', function () {
     it('Accepts single string for on-disk file', function () {
-        var runner = utils.getRunner(['test/fixtures/tasks/observable.js'], {});
+        var runner = utils.getSetup(['test/fixtures/tasks/observable.js'], {});
         assert.equal(runner.sequence.length, 2); // 2 exported functions
     });
     it('Accepts single string for nested tasks', function () {
-        var runner = utils.getRunner(['js'], {
+        var runner = utils.getSetup(['js'], {
             tasks: {
                 js: 'test/fixtures/tasks/simple.js'
             }
@@ -17,7 +17,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence.length, 1); // 2 exported functions
     });
     it('Accepts single string for multi nested tasks on disk', function () {
-        var runner = utils.getRunner(['js'], {
+        var runner = utils.getSetup(['js'], {
             tasks: {
                 js: 'js2',
                 js2: 'js3',
@@ -30,11 +30,11 @@ describe('Gathering run tasks', function () {
         assert.deepEqual(runner.sequence[0].items[0].items[0].items[0].items[0].task.parents, ['js', 'js2', 'js3', 'js4']);
     });
     it('can combine files to form sequence', function () {
-        const runner = utils.getRunner(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
+        const runner = utils.getSetup(['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'], {});
         assert.equal(runner.sequence.length, 2);
     });
     it('can gather opts for sub tasks', function () {
-        const runner = utils.getRunner(["test/fixtures/tasks/simple.js:dev"], {
+        const runner = utils.getSetup(["test/fixtures/tasks/simple.js:dev"], {
             options: {
                 "test/fixtures/tasks/simple.js": {
                     default: {
@@ -52,7 +52,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[0].subTaskName, 'dev');
     });
     it('can gather tasks when multi given in alias', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
@@ -77,7 +77,7 @@ describe('Gathering run tasks', function () {
         assert.equal(runner.sequence[0].items[1].options.output, 'css/core.css');
     });
     it('can gather tasks wth query-options', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js?input=app.js']
             },

@@ -120,7 +120,7 @@ describe("Running mix of tasks in seq + parallel", function () {
     });
     it("reports grouped tasks with @p", function () {
 
-        const runner = utils.getRunner(['build'], {
+        const runner = utils.getSetup(['build'], {
             tasks: {
                 'build': ['css', 'js'],
                 css: function cssTask() {

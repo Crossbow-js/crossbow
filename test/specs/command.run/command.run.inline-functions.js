@@ -13,8 +13,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 // console.log('assert');
@@ -32,8 +31,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(called, 3);
@@ -50,8 +48,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].name, 'shane');
@@ -82,8 +79,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input, 'src/app.js');
@@ -119,8 +115,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].dev.input,  'kittie', 'first JS "dev" task');
@@ -156,8 +151,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
@@ -193,8 +187,7 @@ describe('Running tasks from inline-functions', function () {
                 }
             }
         });
-        runner.runner
-            .series()
+        runner
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
@@ -206,7 +199,7 @@ describe('Running tasks from inline-functions', function () {
     });
     it('Allows errors when options not defined options ', function () {
         const opts = [];
-        const runner = utils.getRunner(['js:dev:typo --production'], {
+        const runner = utils.getSetup(['js:dev:typo --production'], {
             options: {
                 js: {
                     dev: {

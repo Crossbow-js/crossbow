@@ -12,18 +12,16 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].taskName, '@npm ls');
         assert.equal(runner.tasks.valid[0].command, 'ls');
     });
-    it.only('can gather from a default yaml file', function () {
+    it('can gather from a default yaml file', function () {
         const runner = utils.getSetup(['js'], {}, {
             input: 'examples/crossbow.yaml'
         });
         // todo get more setup info here...
-        console.log(runner);
-        console.log(runner.tasks.invalid[0]);
         assert.equal(runner.tasks.valid.length, 1);
     });
     it('can gather simple tasks', function () {
 
-        const runner = utils.getRunner(['test/fixtures/tasks/simple.js:dev'], {
+        const runner = utils.getSetup(['test/fixtures/tasks/simple.js:dev'], {
             options: {
                 "test/fixtures/tasks/simple.js": {
                     dev: {
@@ -37,7 +35,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
     it('can gather tasks when multi given in alias', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.js:dev', "test/fixtures/tasks/simple.js:default"]
             },
@@ -64,7 +62,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].tasks[1].subTasks[0], 'default');
     });
     it('can gather multiple valid tasks when using an alias', function () {
-        const runner = utils.getRunner(["css", "js"], {
+        const runner = utils.getSetup(["css", "js"], {
             tasks: {
                 css: ['test/fixtures/tasks/simple.js', 'test/fixtures/tasks/simple2.js'],
                 js: ['test/fixtures/tasks/simple.js']
@@ -79,7 +77,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(first.tasks[1].taskName, 'test/fixtures/tasks/simple2.js');
     });
     it('can tasks with inline flags', function () {
-        const runner = utils.getRunner(['js@p'], {
+        const runner = utils.getSetup(['js@p'], {
             tasks: {
                 js: ['test/fixtures/tasks/simple.multi.js']
             }
@@ -89,7 +87,7 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].runMode, TaskRunModes.series);
     });
     it('accepts object literal within array', function () {
-        const runner = utils.getRunner(['js'], {
+        const runner = utils.getSetup(['js'], {
             tasks: {
                 js: [
                     'test/fixtures/tasks/simple.js',
