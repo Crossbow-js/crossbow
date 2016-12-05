@@ -17,7 +17,7 @@ export interface WatchersCommandOutput {
     runners?: WatchRunners
     errors: WatchersCommandError[]
 }
-export type WatchersCommandComplete = Rx.Observable<WatchersCommandOutput>
+export type WatchersCommandComplete = Rx.Observable<{setup:WatchersCommandOutput}>
 
 function execute(trigger: CommandTrigger): WatchersCommandComplete {
     const {input, config, reporter} = trigger;
@@ -27,7 +27,11 @@ function execute(trigger: CommandTrigger): WatchersCommandComplete {
         reporter({
             type: ReportTypes.NoWatchersAvailable
         });
-        return Rx.Observable.just({errors: [{type: ReportTypes.NoWatchersAvailable}]});
+        return Rx.Observable.just({
+            setup: {
+                errors: [{type: ReportTypes.NoWatchersAvailable}]
+            }
+        });
     }
 
     const watchTasks = resolveWatchTasks(topLevelWatchers, trigger);
@@ -44,12 +48,24 @@ function execute(trigger: CommandTrigger): WatchersCommandComplete {
             reporter({type: ReportTypes.WatchTaskTasksErrors, data: {tasks: runner._tasks.all, runner, config}});
         });
 
-        return Rx.Observable.just({watchTasks, runners, errors: [{type: ReportTypes.WatchTaskTasksErrors}]});
+        return Rx.Observable.just({
+            setup: {
+                watchTasks,
+                runners,
+                errors: [{type: ReportTypes.WatchTaskTasksErrors}]
+            }
+        });
     }
 
     reporter({type: ReportTypes.WatcherNames, data: {runners, trigger}});
 
-    return Rx.Observable.just({watchTasks, runners, errors: []});
+    return Rx.Observable.just({
+        setup: {
+            watchTasks,
+            runners,
+            errors: []
+        }
+    });
 }
 
 export default function handleIncomingWatchersCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {

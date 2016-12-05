@@ -23,7 +23,6 @@ module.exports.run = (cli, input) => {
     cli.flags.scheduler      = scheduler;
 
     const runner       = cb.default(cli, input);
-    console.log(runner);
     const subscription = scheduler.startScheduler(() => {
         return runner.flatMap(x => {
             return x.update$;

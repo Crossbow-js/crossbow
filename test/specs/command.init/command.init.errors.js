@@ -4,7 +4,7 @@ const path = require('path');
 const utils = require("../../utils");
 const InitConfigFileErrorTypes = require('../../../dist/command.init').InitConfigFileErrorTypes;
 
-describe.only('Init command', function () {
+describe('Init command', function () {
     it('returns errors when attempting to create a file in the same place as existing', function () {
         const output = utils.getGenericSetup({
             input: ['init'],
