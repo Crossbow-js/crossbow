@@ -5,7 +5,7 @@ const docs = require('../../../dist/command.docs');
 
 describe('Running docs commands', function () {
     it('creates valid markdown', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs']
         }, {
             tasks: {
@@ -29,11 +29,10 @@ $ crossbow run <taskname>
 |<pre>\`version-rev\`</pre>|**Alias for:**<br>- \`@sh versioner | xargs ls\`|
 |<pre>\`css\`</pre>|**Alias for:**<br>- \`@npm node-sass\`<br>- \`@npm cssmin\`|
 <!--crossbow-docs-end-->`;
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(expected, output.markdown);
     });
     it('skips private tasks', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs']
         }, {
             tasks: {
@@ -55,12 +54,11 @@ $ crossbow run <taskname>
 |---|---|
 |<pre>\`build-css\`</pre>|**Alias for:**<br>- \`_css\`<br>- \`_version-rev\`|
 <!--crossbow-docs-end-->`;
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(output.markdown, expected);
     });
     it('handles missing file', function () {
         const testfile = 'test/fixtures/docs/readme-typo.md';
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 file: testfile
@@ -72,13 +70,12 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(output.errors.length, 1);
         assert.equal(output.errors[0].type, DocsErrorTypes.DocsInputFileNotFound);
     });
     it('Looks at an existing file', function () {
         const testfile = 'test/fixtures/docs/readme-no-existing.md';
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 file: testfile
@@ -91,14 +88,13 @@ $ crossbow run <taskname>
             }
         });
 
-        const output = runner.subscription.messages[0].value.value;
         const before = require('fs').readFileSync(testfile, 'utf8');
 
         assert.equal([before, output.markdown].join('\n'), output.output[0].content);
     });
     it('Adds in-between exiting comments', function () {
         const testfile = 'test/fixtures/docs/readme-existing.md';
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 file: testfile
@@ -112,13 +108,12 @@ $ crossbow run <taskname>
         });
 
         const before = require('fs').readFileSync(testfile, 'utf8');
-        const output = runner.subscription.messages[0].value.value;
         const expected = before.replace(docs.hasRegExp, output.markdown);
 
         assert.equal(expected, output.output[0].content);
     });
     it('bails when --output flag given to existing file', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 output: 'package.json'
@@ -130,12 +125,11 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(output.errors.length, 1);
         assert.equal(output.errors[0].type, DocsErrorTypes.DocsOutputFileExists);
     });
     it('Creates output for a new file ready to be created', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 output: 'name.md'
@@ -147,12 +141,11 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(output.errors.length, 0);
         assert.equal(output.output[0].content, output.markdown);
     });
     it('Uses an existing readme.md from a directory when --file && --output missing', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs']
         }, {
             tasks: {
@@ -161,11 +154,10 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const output = runner.subscription.messages[0].value.value;
         assert.include(output.output[0].content, output.markdown);
     });
     it('Creates a new readme.md file when nothing is found in cwd', function () {
-        const runner = utils.run({
+        const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
                 cwd: 'test'
@@ -177,7 +169,6 @@ $ crossbow run <taskname>
                 css: ['@npm node-sass', '@npm cssmin']
             }
         });
-        const output = runner.subscription.messages[0].value.value;
         assert.equal(output.output[0].content, output.markdown);
     });
 });

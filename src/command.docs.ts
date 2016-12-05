@@ -36,7 +36,8 @@ export interface DocsCommandOutput {
     output?: DocsFileOutput[]
 }
 
-export type DocsCommandComplete = Rx.Observable<DocsCommandOutput>;
+
+export type DocsCommandComplete = Rx.Observable<{setup:DocsCommandOutput}>;
 
 function execute(trigger: CommandTrigger): DocsCommandComplete {
 
@@ -55,8 +56,10 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
     if (tasks.all.length === 0) {
         reporter({type: ReportTypes.NoTasksAvailable});
         return Rx.Observable.just({
-            tasks,
-            errors: []
+            setup: {
+                tasks,
+                errors: []
+            }
         });
     }
 
@@ -70,8 +73,10 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
         debug(`Tasks were invalid, so skipping doc generation completely`);
         reporter({type: ReportTypes.DocsInvalidTasksSimple});
         return Rx.Observable.just({
-            tasks,
-            errors: []
+            setup: {
+                tasks,
+                errors: []
+            }
         });
     }
 
@@ -83,14 +88,14 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * append them
      */
     if (config.file) {
-        return Rx.Observable.just(handleFileFlag(tasks, markdown, trigger));
+        return Rx.Observable.just({setup: handleFileFlag(tasks, markdown, trigger)});
     }
 
     /**
      * If a user provides the 'output' flag, it means they want a new file creating
      */
     if (config.output) {
-        return Rx.Observable.just(handleOutputFlag(tasks, markdown, trigger));
+        return Rx.Observable.just({setup:handleOutputFlag(tasks, markdown, trigger)});
     }
 
     /**
@@ -105,13 +110,15 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
     if (existingReadmeFiles.length) {
         const output = existingReadmeFiles.map(x => getFileOutput(x, markdown));
 
-        addDocsToFile(output, trigger);
+        reportAddToDocs(output, trigger);
 
         return Rx.Observable.just({
-            errors: [],
-            tasks,
-            markdown,
-            output
+            setup: {
+                errors: [],
+                tasks,
+                markdown,
+                output
+            }
         })
     }
 
@@ -128,13 +135,15 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
         content: markdown
     }];
 
-    addDocsToFile(output, trigger);
+    reportAddToDocs(output, trigger);
 
     return Rx.Observable.just({
-        errors: [],
-        tasks,
-        markdown,
-        output
+        setup: {
+            errors: [],
+            tasks,
+            markdown,
+            output
+        }
     });
 }
 
@@ -209,8 +218,8 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         content: markdown
     }];
 
-    // Now we can write to disk
-    addDocsToFile(output, trigger);
+    // Now we can report about writing to disk
+    reportAddToDocs(output, trigger);
 
     return {
         errors: [],
@@ -275,7 +284,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
     /**
      * Now write to file
      */
-    addDocsToFile(output, trigger);
+    reportAddToDocs(output, trigger);
 
     /**
      * Always return everything gathered
@@ -326,11 +335,10 @@ $ crossbow run <taskname>
     return [docStartComment, tasksHeader, tableHeader, body, docEndComment].join('\n');
 }
 
-function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
+function reportAddToDocs(output: DocsFileOutput[], trigger: CommandTrigger) {
+
     const {config} = trigger;
-    /**
-     * If not handing off, we actually write to disk here
-     */
+
     if (!config.handoff) {
         output.forEach(x => {
             trigger.reporter({

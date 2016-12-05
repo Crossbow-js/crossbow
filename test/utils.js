@@ -23,6 +23,7 @@ module.exports.run = (cli, input) => {
     cli.flags.scheduler      = scheduler;
 
     const runner       = cb.default(cli, input);
+    console.log(runner);
     const subscription = scheduler.startScheduler(() => {
         return runner.flatMap(x => {
             return x.update$;
@@ -30,6 +31,21 @@ module.exports.run = (cli, input) => {
     }, {created: 0, subscribed: 0, disposed: 200000});
 
     return {subscription, output};
+};
+
+module.exports.getGenericSetup = (cli, input, config) => {
+    const scheduler  = new Rx.TestScheduler();
+    const output     = new Rx.ReplaySubject(100);
+
+    cli.flags                = config || cli.flags || {};
+    cli.flags.outputObserver = output;
+    cli.flags.scheduler      = scheduler;
+    
+    const results = scheduler.startScheduler(() => cb.default(cli, input).map(x => {
+        return x.setup;
+    }));
+
+    return results.messages[0].value.value;
 };
 
 module.exports.getSetup = (args, input, config) => {
