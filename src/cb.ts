@@ -49,6 +49,12 @@ if (parsed.execute) {
     }
 }
 
+export interface CLIResults {
+    setup: RunCommandSetup,
+    reports: TaskReport[],
+    timestamp: number
+}
+
 function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
 
     const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
@@ -79,67 +85,55 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'run') {
 
-        const setUp$    = new Rx.BehaviorSubject({});
-        const progress$ = new Rx.BehaviorSubject([]);
+        const setUp$     = new Rx.BehaviorSubject({});
+        const progress$  = new Rx.BehaviorSubject([]);
+        let summaryGiven = false; // todo remove the need for this as it breaks the encapsulation
 
         const exitSignal$ = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
             .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data}))
             .withLatestFrom(setUp$, progress$, (signal, setup, reports) => {
                 return {reports, setup, signal};
-            })
-            .do((incoming) => {
-
-                const setup:    RunCommandSetup      = incoming.setup;
-                const reports:  TaskReport[]         = incoming.reports;
-
-                /**
-                 * Main summary report, although here it could be partial
-                 * (as an exit command could occur at any time)
-                 */
-                if ((setup.tasks.valid.length * 2) !== reports.length) {
-                    handleCompletion(reports, setup, 1000);
-                } else {
-                    console.log('Exit signal, but summary given from main handler');
-                }
             });
 
-        const reports$ = handleIncoming<RunComplete>(prepared)
+        const exits$ = Rx.Observable.zip(
+            Rx.Observable.just(true).timestamp(prepared.config.scheduler),
+            exitSignal$.timestamp(prepared.config.scheduler),
+            (begin: {value:boolean,timestamp:number}, signal:{value: {reports:TaskReport[], setup:RunCommandSetup, signal: CBSignal<ExitSignal>}, timestamp: number}) => {
+                return {begin, signal};
+            }
+        ).do((incoming) => {
+
+            const {signal, begin} = incoming;
+            const setup:    RunCommandSetup      = signal.value.setup;
+            const reports:  TaskReport[]         = signal.value.reports;
+
+            const startTime = begin.timestamp;
+            const endTime   = signal.timestamp;
+
+            /**
+             * Main summary report, although here it could be partial
+             * (as an exit command could occur at any time)
+             */
+            if ((setup.tasks.valid.length * 2) !== reports.length) {
+                if (!summaryGiven) {
+                    summaryGiven = true;
+                    handleCompletion(reports, setup, endTime - startTime);
+                }
+            } else {
+                console.log('Exit signal, but summary given from main handler');
+            }
+        });
+
+        const reports$: Rx.Observable<CLIResults> = handleIncoming<RunComplete>(prepared)
             .do(x => setUp$.onNext(x.setup)) // first item is the setup
-            .timestamp(prepared.config.scheduler)
-            .flatMap<{runtime: number, value: TaskReport[]}>(x => {
-                if (x.value.setup.errors.length) {
-                    console.log('Error in setup', x.value.setup.errors);
+            .flatMap(x => {
+                if (x.setup.errors.length) {
+                    console.log('Error in setup', x.setup.errors);
                     return Rx.Observable.empty();
                 }
-                return getStream(x.value.update$, progress$, exitSignal$, x.timestamp, prepared.config.scheduler);
+                return x.update$;
             })
-            // .do(x => console.log(x))
-            .filter(x => x.value.length > 0)
-            .withLatestFrom(setUp$, (incoming: {value: TaskReport[], runtime:number}, setup: RunCommandSetup) => {
-                return {reports: incoming.value, setup, runtime: incoming.runtime};
-            })
-            .subscribe(incoming => {
-                try {
-                    const reports: TaskReport[]  = incoming.reports;
-                    const setup: RunCommandSetup = incoming.setup;
-                    const runtime: number        = incoming.runtime;
-
-                    if (reports.length < (setup.tasks.valid.length * 2)) {
-                        debug('Summary handled elsewhere as report length is lower than expected');
-                    } else {
-                        handleCompletion(reports, setup, runtime);
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }, err => {
-                console.log(err);
-            });
-    }
-
-    function getStream (base: Rx.Observable<any>, progress$, exit$, startTime, scheduler): Rx.Observable<{runtime: number, value: TaskReport[]}> {
-        return base
             .do(x => progress$.onNext(progress$.getValue().concat(x)))
             .do((report: TaskReport) => {
                 prepared.reportFn({
@@ -150,12 +144,34 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     }
                 } as TaskReportReport);
             })
-            .takeUntil(exit$)
+            .takeUntil(exits$)
             .toArray()
-            .timestamp(scheduler)
-            .map(x => {
-                return {runtime: x.timestamp - startTime, value: x.value};
+            .filter(reports => reports.length > 0)
+            .timestamp(prepared.config.scheduler)
+            .withLatestFrom(setUp$, (incoming: {value: TaskReport[], timestamp:number}, setup: RunCommandSetup) => {
+                return {
+                    setup,
+                    reports: incoming.value,
+                    timestamp: incoming.timestamp
+                };
             });
+
+        Rx.Observable.zip(
+            Rx.Observable.just(true).timestamp(prepared.config.scheduler),
+            reports$,
+            (begin: {value: boolean, timestamp: number}, result: CLIResults) => {
+                return {begin, result};
+            }
+        ).subscribe(function (incoming) {
+            if (!summaryGiven) {
+                summaryGiven = true;
+                handleCompletion(
+                    incoming.result.reports,
+                    incoming.result.setup,
+                    incoming.result.timestamp - incoming.begin.timestamp
+                );
+            }
+        });
     }
 
     /**

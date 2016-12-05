@@ -1,22 +1,18 @@
 import {CommandTrigger, getRunCommandSetup} from "./command.run";
-import {ReportTypes, TaskReportReport} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner, RunContext, TaskErrorStats} from "./task.runner";
-import {TaskReport, TaskReportType} from "./task.runner";
-import {writeFileSync} from "fs";
-import {join} from "path";
+import {Runner, RunContext} from "./task.runner";
+import {TaskReport} from "./task.runner";
 import Rx = require('rx');
-import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
-import {SummaryReport, TaskErrorsReport} from "./reporter.resolve";
+import {TaskErrorsReport} from "./reporter.resolve";
 import {CrossbowConfiguration} from "./config";
 import {CLI} from "./index";
 
 const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
-    InvalidTasks = <any>"InvalidTasks",
     NoTasks      = <any>"NoTasks",
     Setup        = <any>"Setup",
     Complete     = <any>"Complete",
@@ -52,25 +48,10 @@ export interface RunCommandCompletionReport {
     cli: CLI
 }
 
-export interface CompletionReport {
-    timestamp: number
-    value: TaskReport[]
-}
-export interface RunContextCompletion {
-    timestamp: number
-    value: RunContext
-}
-
 export default function executeRunCommand(trigger: CommandTrigger): RunActions {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
-
-    // if (trigger.config.dump) {
-    //     writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
-    //     writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
-    //     writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
-    // }
 
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
