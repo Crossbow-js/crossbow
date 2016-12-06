@@ -16,7 +16,6 @@ describe('Gathering run tasks (1)', function () {
         const runner = utils.getSetup(['js'], {}, {
             input: 'examples/crossbow.yaml'
         });
-        // todo get more setup info here...
         assert.equal(runner.tasks.valid.length, 1);
     });
     it('can gather simple tasks', function () {

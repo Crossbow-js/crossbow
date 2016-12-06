@@ -102,7 +102,7 @@ describe('responding to file change events', function () {
             200 // end 2
         ]);
     });
-    it('can block the running of tasks', function () {
+    it('can block the running of tasks (task level)', function () {
 
         const out = utils.getFileWatcher(['default'], {
             watch: {
@@ -110,6 +110,31 @@ describe('responding to file change events', function () {
                     options: {
                         block: true
                     },
+                    "*.css": ["css"],
+                },
+                dev: {
+                    "*.html": "html-min"
+                }
+            },
+            tasks: {
+                css: utils.task(1000)
+            }
+        }, [
+            onNext(100, {event: 'change', path: 'style.css', watcherUID: 'default-0'}),
+            onNext(200, {event: 'change', path: 'style.css', watcherUID: 'default-0'})
+        ]);
+
+        const outTimes = out.subscription.messages.filter(x => x.value.value.type === 'WatchTaskReport');
+        assert.equal(outTimes.length, 2);
+    });
+    it('can block the running of tasks (TOP level)', function () {
+
+        const out = utils.getFileWatcher(['default'], {
+            watch: {
+                options: {
+                    block: true
+                },
+                default: {
                     "*.css": ["css"],
                 },
                 dev: {
