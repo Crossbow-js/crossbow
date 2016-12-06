@@ -55,7 +55,9 @@ export interface CrossbowConfiguration {
     skip: string[]
     tasksDir: string[]
     nodeModulesPaths: string[]
-    block: boolean
+    block?: boolean
+    debounce?: boolean
+    throttle?: boolean
     fromJson?: string
 
     // docs command
@@ -160,10 +162,7 @@ const defaults = <CrossbowConfiguration>{
      * Tasks that should be run before any watchers begin
      */
     before: [],
-    /**
-     * Global block flag for watcher tasks
-     */
-    block: false,
+
     /**
      * Any tasks that should be skipped
      */

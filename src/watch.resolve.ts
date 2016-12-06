@@ -181,9 +181,15 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
 
 function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): WatchTask {
 
-    const globalOptions = _.assign({}, trigger.input.watch.options, {
-        block: trigger.config.block
-    });
+    const fromCli = ['block', 'throttle', 'debounce'].reduce(function(acc, key) {
+        // console.log(typeof trigger.config[key]);
+        if (typeof trigger.config[key] !== 'undefined') {
+            acc[key] = trigger.config[key];
+        }
+        return acc;
+    }, {});
+
+    const globalOptions = _.assign({}, trigger.input.watch.options, fromCli);
 
     const incoming      = preprocessWatchTask(taskName);
     const selection     = trigger.input.watch[incoming.taskName] || {};
