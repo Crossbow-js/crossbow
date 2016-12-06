@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const utils = require("../../utils");
+const yaml = require("js-yaml");
 
 const TaskRunModes = require('../../../dist/task.resolve').TaskRunModes;
 const TaskTypes = require('../../../dist/task.resolve').TaskTypes;
@@ -32,6 +33,21 @@ describe('Gathering run tasks (1)', function () {
         });
 
         assert.equal(runner.tasks.valid[0].subTasks.length, 1);
+    });
+    it.only('can gather grouped tasks', function () {
+        const input = yaml.safeLoad(`
+tasks: 
+  (js):
+    clean: 
+      - '@npm rm -rf js/dist'
+      - '@npm webpack'
+    webpack: '@npm webpack'
+    deploy: '@npm webpack'
+`);
+        const runner = utils.getSetup(['js:clean'], input);
+        console.log(runner.tasks.valid[0].tasks[0]);
+        // console.log(runner.sequence[0].items[0].items[0]);
+        // assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
     it('can gather tasks when multi given in alias', function () {
         const runner = utils.getSetup(['js'], {

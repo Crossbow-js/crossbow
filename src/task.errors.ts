@@ -87,7 +87,7 @@ function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 
 function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     /**
-     * Now validate any subtasks given with colon syntax
+     * Now validate any sub tasks given with colon syntax
      *  eg: sass:dev
      *   -> must have a configuration object under the key sass.dev
      *   -> VALID
@@ -129,6 +129,14 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          */
         if (subTaskName === '*') {
             return all.concat(handleWildcardSubtask(configKeys, subTaskName));
+        }
+
+        /**
+         * Now check if this is an attempt at loading a grouped task
+         */
+        if (subTaskName.length) {
+            const matching = task.tasks.filter(x => x.taskName === subTaskName);
+            if (matching.length) return all;
         }
 
         if (!configKeys.length) {

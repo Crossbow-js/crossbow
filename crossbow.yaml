@@ -23,3 +23,10 @@ tasks:
     - '@npm ls'
   file:
     - 'test/fixtures/tasks/simple.js'
+
+  (sh):
+    ls: '@sh ls -a'
+    sleep:
+      - '@sh sleep 1'
+      - '@cb delay 2000'
+      - 'js'

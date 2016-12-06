@@ -267,6 +267,32 @@ function getTasks(items, incoming, trigger, parents) {
             return acc.concat(createCircularReferenceTask(incoming, parents));
         }
 
+        if (isPlainObject(taskItem) && Object.keys(taskItem) && incoming.subTasks.length) {
+
+            const match = _.get(taskItem, incoming.subTasks);
+            if (match) {
+                const last  = incoming.subTasks[incoming.subTasks.length-1];
+                const fake  = {
+                    tasks: match
+                };
+                const flattenedTask = createFlattenedTask(fake, parents.concat(incoming.baseTaskName), trigger);
+                flattenedTask.baseTaskName = last;
+                flattenedTask.taskName     = last;
+                flattenedTask.rawInput     = last;
+                return acc.concat(flattenedTask);
+            }
+
+            // const outgoing = incoming.subTasks.reduce(function (acc, item) {
+            //     return acc.concat()
+            // });
+
+            // console.log(incoming.subTasks);
+            // const oneMatch = Object.keys(taskItem).reduce(function (acc, key) {
+            //     console.log(key);
+                // return acc.concat([]);
+            // }, []);
+        }
+
         const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
 
         /**
@@ -320,13 +346,24 @@ export function createCircularReferenceTask(incoming: Task, parents: string[]): 
  * Match a task name with a top-level value from 'tasks'
  */
 function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
+
     const exactMatch = trigger.input.tasks[incoming.baseTaskName];
 
     if (exactMatch !== undefined) {
         return exactMatch;
     }
 
-    const maybes = Object.keys(trigger.input.tasks).filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
+    // console.log('here', incoming.baseTaskName);
+    // console.log(Object.keys(trigger.input.tasks));
+    const maybeGroup = Object.keys(trigger.input.tasks)
+            .filter(x => x.indexOf(`(${incoming.baseTaskName})`) > -1);
+
+    if (maybeGroup.length) {
+        return trigger.input.tasks[maybeGroup[0]];
+    }
+
+    const maybes = Object.keys(trigger.input.tasks)
+        .filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
 
     if (maybes.length) {
         return trigger.input.tasks[maybes[0]];
