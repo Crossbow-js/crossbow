@@ -135,6 +135,7 @@ function stubAdaptor (string, taskLiteral, parents) {
  *  - build (which may be an alias for many other tasks)
  */
 function handleStringInput (taskName:string, input:CrossbowInput, parents:string[]) {
+
     /**
      * Never modify the current task if it begins
      * with a `@` - instead just return early with
@@ -181,6 +182,13 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         taskName: baseTaskName,
         rawInput: <string>taskName
     });
+
+    /**
+     * Is this a parent group?
+     */
+    if (input.tasks[`(${taskName})`]) {
+        incomingTask.type = TaskTypes.ParentGroup;
+    }
 
     /**
      * Now pass it off to allow any flags to applied

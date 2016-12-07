@@ -24,9 +24,10 @@ export type IncomingTaskItem = string|CBFunction|Task;
 export type IncomingInlineArray = { tasks: Array<IncomingTaskItem>; runMode: TaskRunModes; }
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
-    ExternalTask = <any>"ExternalTask",
-    Adaptor  = <any>"Adaptor",
-    TaskGroup    = <any>"TaskGroup",
+    ExternalTask   = <any>"ExternalTask",
+    Adaptor        = <any>"Adaptor",
+    TaskGroup      = <any>"TaskGroup",
+    ParentGroup    = <any>"ParentGroup",
     InlineFunction = <any>"InlineFunction"
 }
 
@@ -132,8 +133,18 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {Task|Task}
      */
     incoming = (function () {
-        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
-            return createTask(_.merge(incoming, toplevelValue));
+        if (isPlainObject(toplevelValue)) {
+
+            /**
+             * if the tasks property exists, it's just a TaskGroup object with tasks
+             */
+            if (toplevelValue.tasks) {
+                return createTask(_.merge(incoming, toplevelValue));
+            }
+
+            if (incoming.type === TaskTypes.ParentGroup) {
+                return incoming;
+            }
         }
         return incoming;
     })();
@@ -196,6 +207,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {TaskTypes}
      */
     incoming.type = (function () {
+        if (typeof incoming.type !== 'undefined') return incoming.type;
         if (incoming.externalTasks.length) {
             return TaskTypes.ExternalTask;
         }
@@ -233,6 +245,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         incoming,
         trigger
     );
+    console.log(incoming.errors);
 
     debug(`errors: ${incoming.errors}`);
 
@@ -267,30 +280,26 @@ function getTasks(items, incoming, trigger, parents) {
             return acc.concat(createCircularReferenceTask(incoming, parents));
         }
 
-        if (isPlainObject(taskItem) && Object.keys(taskItem) && incoming.subTasks.length) {
+        if (isPlainObject(taskItem) && Object.keys(taskItem)) {
 
-            const match = _.get(taskItem, incoming.subTasks);
-            if (match) {
-                const last  = incoming.subTasks[incoming.subTasks.length-1];
-                const fake  = {
-                    tasks: match
-                };
-                const flattenedTask = createFlattenedTask(fake, parents.concat(incoming.baseTaskName), trigger);
-                flattenedTask.baseTaskName = last;
-                flattenedTask.taskName     = last;
-                flattenedTask.rawInput     = last;
-                return acc.concat(flattenedTask);
+            if (incoming.subTasks.length) {
+                const match = _.get(taskItem, incoming.subTasks);
+
+                if (match) {
+                    const last  = incoming.subTasks[incoming.subTasks.length-1];
+                    const fake  = {
+                        tasks: match
+                    };
+                    const flattenedTask        = createFlattenedTask(fake, parents.concat(incoming.baseTaskName), trigger);
+                    flattenedTask.baseTaskName = last;
+                    flattenedTask.taskName     = last;
+                    flattenedTask.rawInput     = last;
+
+                    return acc.concat(flattenedTask);
+                }
+            } else {
+                return acc;
             }
-
-            // const outgoing = incoming.subTasks.reduce(function (acc, item) {
-            //     return acc.concat()
-            // });
-
-            // console.log(incoming.subTasks);
-            // const oneMatch = Object.keys(taskItem).reduce(function (acc, key) {
-            //     console.log(key);
-                // return acc.concat([]);
-            // }, []);
         }
 
         const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);

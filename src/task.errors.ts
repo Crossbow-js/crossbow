@@ -24,12 +24,14 @@ export function gatherTaskErrors(task: Task, trigger: CommandTrigger): TaskError
         getModuleErrors,
         getFileTypeErrors,
         getCBFlagErrors,
-        getSubTaskErrors
+        getSubTaskErrors,
+        getParentGroupErrors,
+
     ].reduce((all, fn) => all.concat(fn(task, trigger)), []);
 }
 
 function getModuleErrors(task: Task, trigger: CommandTrigger): TaskError[] {
-
+    if (task.type === TaskTypes.ParentGroup)    return [];
     if (task.type === TaskTypes.ExternalTask)   return [];
     if (task.type === TaskTypes.InlineFunction) return [];
 
@@ -162,6 +164,10 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
         return all;
 
     }, []);
+}
+
+function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[] {
+
 }
 
 function handleWildcardSubtask(configKeys: string[], name: string): SubtaskWildcardNotAvailableError[] {

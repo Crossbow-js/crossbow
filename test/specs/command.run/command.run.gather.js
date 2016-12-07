@@ -44,8 +44,8 @@ tasks:
     webpack: '@npm webpack'
     deploy: '@npm webpack'
 `);
-        const runner = utils.getSetup(['js:clean'], input);
-        console.log(runner.tasks.valid[0].tasks[0]);
+        const runner = utils.getSetup(['js'], input);
+        require('fs').writeFileSync('_tasks.json', JSON.stringify(runner.tasks.all, null, 2))
         // console.log(runner.sequence[0].items[0].items[0]);
         // assert.equal(runner.tasks.valid[0].subTasks.length, 1);
     });
