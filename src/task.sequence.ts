@@ -24,6 +24,7 @@ import {isInternal} from "./task.utils";
 
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
+    // todo - allow sequence to generated from ParentGroups
     return flatten(tasks, []);
 
     function flatten(items: Task[], initial: SequenceItem[], options?, viaName?): SequenceItem[] {

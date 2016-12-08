@@ -186,7 +186,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
     /**
      * Is this a parent group?
      */
-    if (input.tasks[`(${taskName})`]) {
+    if (input.tasks[`(${splitTask[0]})`]) {
         incomingTask.type = TaskTypes.ParentGroup;
     }
 

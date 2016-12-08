@@ -6,17 +6,17 @@ import {ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
 
 export enum TaskErrorTypes {
-    TaskNotFound = <any>"TaskNotFound",
-    SubtasksNotInConfig = <any>"SubtasksNotInConfig",
-    SubtaskNotProvided = <any>"SubtaskNotProvided",
-    SubtaskNotFound = <any>"SubtaskNotFound",
+    TaskNotFound                = <any>"TaskNotFound",
+    SubtasksNotInConfig         = <any>"SubtasksNotInConfig",
+    SubtaskNotProvided          = <any>"SubtaskNotProvided",
+    SubtaskNotFound             = <any>"SubtaskNotFound",
     SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
-    AdaptorNotFound = <any>"AdaptorNotFound",
-    FlagNotFound = <any>"FlagNotFound",
-    CBFlagNotProvided = <any>"CBFlagNotProvided",
-    InvalidTaskInput = <any>"InvalidTaskInput",
-    CircularReference = <any>"CircularReference",
-    FileTypeNotSupported = <any>"FileTypeNotSupported"
+    AdaptorNotFound             = <any>"AdaptorNotFound",
+    FlagNotFound                = <any>"FlagNotFound",
+    CBFlagNotProvided           = <any>"CBFlagNotProvided",
+    InvalidTaskInput            = <any>"InvalidTaskInput",
+    CircularReference           = <any>"CircularReference",
+    FileTypeNotSupported        = <any>"FileTypeNotSupported"
 }
 
 export function gatherTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
@@ -25,7 +25,7 @@ export function gatherTaskErrors(task: Task, trigger: CommandTrigger): TaskError
         getFileTypeErrors,
         getCBFlagErrors,
         getSubTaskErrors,
-        getParentGroupErrors,
+        getParentGroupErrors
 
     ].reduce((all, fn) => all.concat(fn(task, trigger)), []);
 }
@@ -88,6 +88,9 @@ function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 }
 
 function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
+
+    if (task.type === TaskTypes.ParentGroup) return [];
+
     /**
      * Now validate any sub tasks given with colon syntax
      *  eg: sass:dev
@@ -167,7 +170,34 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 }
 
 function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[] {
+    /**
+     * This only applies to ParentGroups
+     */
+    if (task.type !== TaskTypes.ParentGroup) return [];
 
+    /**
+     * If the type is a ParentGroup, it requires that a sub-task is provided also
+     */
+    if (task.subTasks.length === 0) {
+        return [<SubtaskNotProvidedError>{
+            type: TaskErrorTypes.SubtaskNotProvided,
+            name: ''
+        }];
+    }
+
+    function match (name) {
+        return _.get(trigger.input.tasks, [`(${task.baseTaskName})`, name]);
+    }
+
+    return task.subTasks.reduce(function(acc, subTask) {
+        if (!match(subTask)) {
+            return acc.concat([<SubtaskNotFoundError>{
+                type: TaskErrorTypes.SubtaskNotFound,
+                name: subTask
+            }]);
+        }
+        return acc;
+    }, []);
 }
 
 function handleWildcardSubtask(configKeys: string[], name: string): SubtaskWildcardNotAvailableError[] {

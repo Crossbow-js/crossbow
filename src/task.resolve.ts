@@ -42,7 +42,7 @@ export enum TaskOriginTypes {
 }
 
 export enum TaskRunModes {
-    series = <any>"series",
+    series   = <any>"series",
     parallel = <any>"parallel",
 }
 
@@ -223,6 +223,11 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {boolean}
      */
     incoming.valid = (function () {
+    	if (incoming.type === TaskTypes.ParentGroup) {
+    	    if (incoming.tasks.length) {
+    	        return true;
+            }
+        }
     	if (incoming.type === TaskTypes.TaskGroup)      return true;
     	if (incoming.type === TaskTypes.InlineFunction) return true;
     	if (incoming.type === TaskTypes.ExternalTask)   return true;
@@ -245,7 +250,6 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         incoming,
         trigger
     );
-    console.log(incoming.errors);
 
     debug(`errors: ${incoming.errors}`);
 
@@ -283,6 +287,7 @@ function getTasks(items, incoming, trigger, parents) {
         if (isPlainObject(taskItem) && Object.keys(taskItem)) {
 
             if (incoming.subTasks.length) {
+
                 const match = _.get(taskItem, incoming.subTasks);
 
                 if (match) {
@@ -297,9 +302,8 @@ function getTasks(items, incoming, trigger, parents) {
 
                     return acc.concat(flattenedTask);
                 }
-            } else {
-                return acc;
             }
+            return acc;
         }
 
         const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
