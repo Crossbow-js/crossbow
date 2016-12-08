@@ -190,6 +190,10 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         incomingTask.type = TaskTypes.ParentGroup;
     }
 
+    if (splitTask[0].match(/^\(.+?\)$/) && input.tasks[splitTask[0]]) {
+        incomingTask.type = TaskTypes.ParentGroup;
+    }
+
     /**
      * Now pass it off to allow any flags to applied
      */

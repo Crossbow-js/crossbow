@@ -61,6 +61,35 @@ export const transforms = {
             }
             return tasks;
         }
+    },
+    'Pass options/flags/query from Groups -> Tasks': {
+        predicate () {
+            return true;
+        },
+        fn (tasks: Task[]): Task[] {
+
+            addProps(tasks);
+
+            function addProps(tasks: Task[]) {
+                tasks.forEach(function(task: Task) {
+                    if (task.type === TaskTypes.TaskGroup) {
+                        task.tasks.forEach(function(childTask) {
+                            if (childTask.type === TaskTypes.TaskGroup) {
+                                addProps(childTask.tasks);
+                            } else {
+                                childTask.flags = _.merge({}, childTask.flags, task.flags);
+                                childTask.query = _.merge({}, childTask.query, task.query);
+                            }
+                        });
+                    }
+                    if (task.type === TaskTypes.ParentGroup && task.tasks.length) {
+                        addProps(task.tasks);
+                    }
+                });
+            }
+
+            return tasks;
+        }
     }
 };
 

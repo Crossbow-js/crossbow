@@ -24,7 +24,6 @@ import {isInternal} from "./task.utils";
 
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
-    // todo - allow sequence to generated from ParentGroups
     return flatten(tasks, []);
 
     function flatten(items: Task[], initial: SequenceItem[], options?, viaName?): SequenceItem[] {
@@ -36,7 +35,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * nested observables for it (a task with children cannot itself
              * be a task that should be run)
              */
-            if (task.type === TaskTypes.TaskGroup) {
+            if (task.type === TaskTypes.TaskGroup || task.type === TaskTypes.ParentGroup) {
 
                 /**
                  * If we're looking at a group of tasks that was run

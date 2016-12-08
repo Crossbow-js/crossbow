@@ -293,7 +293,11 @@ function getTasks(items, incoming, trigger, parents) {
                 if (match) {
                     const last  = incoming.subTasks[incoming.subTasks.length-1];
                     const fake  = {
-                        tasks: match
+                        tasks: match,
+                        baseTaskName: last,
+                        flags: incoming.flags,
+                        query: incoming.query,
+                        options: incoming.options
                     };
                     const flattenedTask        = createFlattenedTask(fake, parents.concat(incoming.baseTaskName), trigger);
                     flattenedTask.baseTaskName = last;
@@ -366,8 +370,6 @@ function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
         return exactMatch;
     }
 
-    // console.log('here', incoming.baseTaskName);
-    // console.log(Object.keys(trigger.input.tasks));
     const maybeGroup = Object.keys(trigger.input.tasks)
             .filter(x => x.indexOf(`(${incoming.baseTaskName})`) > -1);
 

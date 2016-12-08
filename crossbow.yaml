@@ -25,7 +25,8 @@ tasks:
     - 'test/fixtures/tasks/simple.js'
 
   (sh):
-    ls: '@sh ls -a'
+    ls:
+      - '@sh sleep 2'
     sleep:
       - '@sh sleep 1'
       - '@cb delay 2000'
