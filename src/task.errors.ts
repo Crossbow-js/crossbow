@@ -1,6 +1,6 @@
 import {Task} from "./task.resolve";
 import {TaskTypes} from "./task.resolve";
-import {isSupportedFileType} from "./task.utils";
+import {isSupportedFileType, isParentGroupName} from "./task.utils";
 import {CommandTrigger} from "./command.run";
 import {ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
@@ -9,6 +9,7 @@ export enum TaskErrorTypes {
     TaskNotFound                = <any>"TaskNotFound",
     SubtasksNotInConfig         = <any>"SubtasksNotInConfig",
     SubtaskNotProvided          = <any>"SubtaskNotProvided",
+    SubtaskNotProvidedForParent = <any>"SubtaskNotProvidedForParent",
     SubtaskNotFound             = <any>"SubtaskNotFound",
     SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
     AdaptorNotFound             = <any>"AdaptorNotFound",
@@ -179,9 +180,17 @@ function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[]
      * If the type is a ParentGroup, it requires that a sub-task is provided also
      */
     if (task.subTasks.length === 0) {
-        return [<SubtaskNotProvidedError>{
-            type: TaskErrorTypes.SubtaskNotProvided,
-            name: ''
+        const available = (function () {
+            const match = isParentGroupName(task.baseTaskName);
+            if (match) {
+                return Object.keys(_.get(trigger.input.tasks, [task.baseTaskName], {}))
+            }
+            return Object.keys(_.get(trigger.input.tasks, ['('+ task.baseTaskName+ ')'], {}));
+        })();
+        return [<SubtaskNotProvidedForParentError>{
+            type: TaskErrorTypes.SubtaskNotProvidedForParent,
+            name: task.baseTaskName,
+            available
         }];
     }
 
@@ -224,6 +233,10 @@ export interface SubtasksNotInConfigError extends TaskError {
 }
 export interface SubtaskNotProvidedError extends TaskError {
     name: string
+}
+export interface SubtaskNotProvidedForParentError extends TaskError {
+    name: string
+    available: string[]
 }
 export interface SubtaskWildcardNotAvailableError extends TaskError {
     name: string
