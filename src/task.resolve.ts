@@ -292,14 +292,24 @@ function getTasks(items, incoming, trigger, parents) {
 
                 if (match) {
                     const last  = incoming.subTasks[incoming.subTasks.length-1];
-                    const fake  = {
-                        tasks: match,
-                        baseTaskName: last,
-                        flags: incoming.flags,
-                        query: incoming.query,
-                        options: incoming.options
-                    };
-                    const flattenedTask        = createFlattenedTask(fake, parents.concat(incoming.baseTaskName), trigger);
+                    const newTask = (function () {
+                        if (isPlainObject(match)) {
+                            return _.merge({}, match, {
+                                baseTaskName: last,
+                                flags: incoming.flags,
+                                query: incoming.query,
+                                options: incoming.options
+                            });
+                        }
+                        return {
+                            tasks: [].concat(match),
+                            baseTaskName: last,
+                            flags: incoming.flags,
+                            query: incoming.query,
+                            options: incoming.options
+                        };
+                    })();
+                    const flattenedTask        = createFlattenedTask(newTask, parents.concat(incoming.baseTaskName), trigger);
                     flattenedTask.baseTaskName = last;
                     flattenedTask.taskName     = last;
                     flattenedTask.rawInput     = last;

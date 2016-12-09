@@ -1,4 +1,4 @@
-import {longestString, padLine, escapeNewLines, isInternal} from "../task.utils";
+import {longestString, padLine, escapeNewLines, isInternal, getChildTaskNames} from "../task.utils";
 import {Task, TaskOriginTypes, TaskRunModes} from "../task.resolve";
 import {TaskTypes} from "../task.resolve";
 import {WatchRunners} from "../watch.runner";
@@ -10,6 +10,7 @@ export interface WriteableStream {
 }
 
 function taskPreviews(item: Task) {
+
     if (!item.tasks.length) {
         if (item.type === TaskTypes.InlineFunction) {
             if (item.inlineFunctions[0].name) {
@@ -21,6 +22,7 @@ function taskPreviews(item: Task) {
     const names = item.tasks.map((x:Task) => {
         return escapeNewLines(x.baseTaskName);
     });
+
     return `[ ${names.join(', ')} ]`;
 }
 
@@ -42,18 +44,27 @@ export function getSimpleTaskList(tasks: Task[]) {
 
 export function twoCol (tasks: Task[]): Array<string[]> {
 
-    const longest = longestString(tasks.map(x => {
-        if (x.runMode === TaskRunModes.parallel) {
-            return x.baseTaskName + ' <p>';
+    const longest = longestString(tasks.reduce((acc, task) => {
+
+        if (task.type === TaskTypes.ParentGroup) {
+            return acc.concat(getChildTaskNames(task));
         }
-        return x.baseTaskName;
-    }));
+
+        if (task.runMode === TaskRunModes.parallel) {
+            return acc.concat(task.baseTaskName + ' <p>');
+        }
+
+        return acc.concat(task.baseTaskName);
+    }, []));
 
     const cols = process.stdout.columns;
 
     return tasks.map(function (item) {
-
+        
         const outgoingName = (function () {
+            if (item.type === TaskTypes.ParentGroup) {
+                return `${item.baseTaskName}:${item.subTasks[0]}`;
+            }
             if (item.runMode === TaskRunModes.parallel) {
                 return item.baseTaskName + ' <p>';
             }
@@ -82,6 +93,10 @@ export function twoCol (tasks: Task[]): Array<string[]> {
              */
             if (item.origin === TaskOriginTypes.FileSystem) {
                 return limit(`Run via: ${item.externalTasks[0].parsed.name}`, desclength);
+            }
+
+            if (item.type === TaskTypes.ParentGroup) {
+                return limit(taskPreviews(item.tasks[0]), desclength);
             }
 
             return limit(taskPreviews(item), desclength);

@@ -45,7 +45,16 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
         /**
          * Now build up available tasks using input + tasks directories
          */
-        const taskNamesToResolve    = Object.keys(input.tasks).filter(key => !isParentGroupName(key));
+        const taskNamesToResolve = Object.keys(input.tasks)
+            .reduce(function (acc, key) {
+                const matchParent = isParentGroupName(key);
+                if (matchParent) {
+                    const childKeys = Object.keys(input.tasks[key]);
+                    const plainName = matchParent[1];
+                    return acc.concat(childKeys.map(x => `${plainName}:${x}`));
+                }
+                return acc.concat(key);
+            }, []);
         const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
         return [...taskNamesToResolve, ...taskNamesFromTasksDir];
     })();

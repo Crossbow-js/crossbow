@@ -4,6 +4,7 @@ import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
+import {Task} from "./task.resolve";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -47,6 +48,10 @@ export function locateModule(config: CrossbowConfiguration, taskName: string): E
     if (tasksByRequire.length) return tasksByRequire;
 
     return [];
+}
+
+export function getChildTaskNames (task: Task): string[] {
+    return task.tasks.map(x => `${task.baseTaskName}:${x.baseTaskName}`);
 }
 
 function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalFile[] {
