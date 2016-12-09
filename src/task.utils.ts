@@ -265,6 +265,10 @@ export function isPublicTask (taskName: string): boolean {
     return taskName[0] !== '_';
 }
 
+export function isParentGroupName (name: string): RegExpMatchArray {
+    return name.match(/^\((.+?)\)$/);
+}
+
 export function isInternal (incoming: string): boolean {
     return /_internal_fn_\d{0,10}$/.test(incoming);
 }

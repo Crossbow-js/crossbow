@@ -10,6 +10,7 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
+import {isParentGroupName} from "./task.utils";
 
 export interface TasksCommandCompletionReport {
     tasks: Tasks,
@@ -44,7 +45,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
         /**
          * Now build up available tasks using input + tasks directories
          */
-        const taskNamesToResolve    = Object.keys(input.tasks);
+        const taskNamesToResolve    = Object.keys(input.tasks).filter(key => !isParentGroupName(key));
         const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
         return [...taskNamesToResolve, ...taskNamesFromTasksDir];
     })();
