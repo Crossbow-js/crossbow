@@ -115,7 +115,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
         return [
-            '{yellow:Available Tasks:',
+            `{yellow:${report.data.title}:`,
             ...report.data.lines
         ];
     },

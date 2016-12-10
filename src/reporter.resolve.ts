@@ -152,7 +152,7 @@ export interface TaskListReport extends IncomingReport {
     data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}
 }
 export interface SimpleTaskListReport extends IncomingReport {
-    data: {lines: string[]}
+    data: {lines: string[], title: string}
 }
 export interface InvalidReporterReport extends IncomingReport {
     data: {reporters: Reporters}
