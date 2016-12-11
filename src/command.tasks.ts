@@ -3,7 +3,7 @@ import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks, TaskTypes, TaskRunModes} from './task.resolve';
+import {resolveTasks, Tasks, TaskTypes, TaskRunModes, Task} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
 
 import Immutable = require('immutable');
@@ -11,13 +11,20 @@ import Rx = require('rx');
 import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
 import {
-    isParentGroupName, isParentRef, getChildTask, getChildItems, getChildName, longestString,
+    isParentGroupName, isParentRef, getChildItems, getChildName, longestString,
     getChildTaskNames, getLongestTaskName
 } from "./task.utils";
 
+export interface TaskGroup {
+    title: string
+    tasks: Task[]
+}
+
 export interface TasksCommandCompletionReport {
-    tasks: Tasks,
-    errors: Error[]
+    setup: {
+        groups: TaskGroup[],
+        errors: Error[]
+    }
 }
 
 export type TasksCommandComplete = Rx.Observable<TasksCommandCompletionReport>;
@@ -29,6 +36,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
     const allNames          = Object.keys(trigger.input.tasks);
     const possibleParents   = allNames.filter(x => isParentGroupName(x));
     const possibleDefaults  = allNames.filter(x => !isParentGroupName(x));
+
     const cliInput          = trigger.cli.input.slice(1);
     const defaultInputNames = cliInput.filter(x => !isParentRef(x, possibleParents));
     const parentInputNames  = cliInput.filter(x => isParentRef(x, possibleParents));
@@ -81,38 +89,38 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
         }, {});
 
     function getParents (resolvedParents, trigger) {
-        return Object.keys(resolvedParents).map(function (key) {
+        return Object.keys(resolvedParents).map(function (key): TaskGroup {
             const parent = resolvedParents[key];
             const items  = parent.map(x => `${key}:${x}`);
             const resolved = resolveTasks(items, trigger);
-            return {title: key, items: resolved.all};
+            return {title: key, tasks: resolved.all};
         });
     }
 
     const groups = (function() {
         if (resolvedDefault.all.length) {
             return [
-                {title: 'Default Tasks', items: resolvedDefault.all},
+                {title: 'Default Tasks', tasks: resolvedDefault.all},
                 ...getParents(resolvedParents, trigger)
             ];
         }
         return getParents(resolvedParents, trigger);
     })();
 
-    const tasks   = groups.reduce((acc, item) => acc.concat(item.items), []);
-    const longest = getLongestTaskName(tasks);
+    const tasks       = groups.reduce((acc, group) => acc.concat(group.tasks), []);
+    const longestName = getLongestTaskName(tasks);
 
     groups.forEach(function(group) {
         reporter({
             type: ReportTypes.SimpleTaskList,
             data: {
-                lines: getSimpleTaskList(group.items, longest),
+                lines: getSimpleTaskList(group.tasks, longestName),
                 title: group.title
             }
         } as SimpleTaskListReport);
     });
 
-    return Rx.Observable.just({tasks: resolvedDefault, errors: []});
+    return Rx.Observable.just({setup: {groups, errors: []}});
 }
 
 export default function handleIncomingTasksCommand(

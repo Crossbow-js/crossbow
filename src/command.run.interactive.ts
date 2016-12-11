@@ -1,5 +1,5 @@
 
-import {isInternal} from "./task.utils";
+import {isInternal, getLongestTaskName} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 import Immutable = require('immutable');
@@ -53,7 +53,8 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
 export function getTaskList(tasks: Task[]) {
     const topLevelTasks = tasks.filter(x => !isInternal(x.baseTaskName));
-    const col = twoCol(topLevelTasks);
+    const longest = getLongestTaskName(topLevelTasks);
+    const col = twoCol(topLevelTasks, longest);
     return col.map((tuple, i) => {
         return {
             name: compile(`${tuple[0]} ${tuple[1]}`),
