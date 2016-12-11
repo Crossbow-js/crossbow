@@ -10,10 +10,11 @@ import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {TaskStats} from "../task.runner";
 import {countSequenceErrors, collectSkippedTasks, collectRunnableTasks} from "../task.sequence";
-import {InputErrorTypes, _e, isInternal, getFunctionName, __e} from "../task.utils";
-import {duration, _taskReport} from "./task.list";
+import {InputErrorTypes, _e, isInternal, getFunctionName, __e, getLongestTaskName} from "../task.utils";
+import {duration, _taskReport, getSimpleTaskList} from "./task.list";
 import * as reports from "../reporter.resolve";
 import not = Rx.helpers.not;
+import {SimpleTaskListReport} from "../reporter.resolve";
 
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
@@ -114,11 +115,17 @@ Or to see multiple tasks running, with some in parallel, try:
         ];
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
-        return [
-            '',
-            `{green.underline:${report.data.title} }`,
-            ...report.data.lines
-        ];
+        const {groups, tasks} = report.data;
+        const lines       = [];
+        const longestName = getLongestTaskName(tasks);
+
+        groups.forEach(function(group) {
+            lines.push('');
+            lines.push(`{bgGreen: ${group.title} `);
+            lines.push.apply(lines, getSimpleTaskList(group.tasks.valid, longestName));
+        });
+
+        return lines;
     },
     [reports.ReportTypes.TaskTree]: function (report: reports.TaskTreeReport): string[] {
         return reportTaskTree(report.data.tasks, report.data.config, report.data.title);
@@ -470,7 +477,7 @@ export function multiLineTree(tree: string): string {
     lines.push(split[0]);
 
     split.slice(1, -1).forEach(function (line) {
-        lines.push(`   ${line}`);
+        lines.push(`${line}`);
     });
 
     return lines.join('\n');
@@ -738,9 +745,10 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
     let errorCount = 0;
     const toLog = getTasks(tasks, [], 0);
     const archy = require('archy');
-    const output = archy({label: `{yellow:${title}}`, nodes: toLog});
+    const output = archy({label: `{bgGreen: ${title} }`, nodes: toLog});
 
     return [
+        '',
         ...multiLineTree(output).split('\n'),
         errorSummary(errorCount)
     ];

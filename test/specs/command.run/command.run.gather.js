@@ -111,4 +111,14 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.ExternalTask);
         assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.ExternalTask);
     });
+    it('accepts object literal as top level', function () {
+        const runner = utils.getSetup(['js'], {
+            tasks: {
+                js: {input: '@npm sleep'}
+            }
+        });
+
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.Adaptor);
+    });
 });

@@ -22,6 +22,10 @@ import * as seq from "./task.sequence";
 import {SummaryReport} from "./reporter.resolve";
 import {TaskReportReport} from "./reporter.resolve";
 import {WatchTaskReport} from "./watch.file-watcher";
+import {getLongestTaskName} from "./task.utils";
+import {SimpleTaskListReport} from "./reporter.resolve";
+import {TaskTreeReport} from "./reporter.resolve";
+import {LogLevel} from "./reporters/defaultReporter";
 const debug = require('debug')('cb:cli');
 
 const parsed = cli(process.argv.slice(2));
@@ -214,7 +218,27 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
     if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
         handleIncoming<TasksCommandComplete>(prepared)
-            .subscribe();
+            .subscribe(x => {
+                const {groups, tasks} = x.setup;
+                const invalid = groups.reduce((acc, group) => acc.concat(group.tasks.invalid), []);
+
+                if (invalid.length || prepared.config.verbose === LogLevel.Verbose) {
+                    return prepared.reportFn({
+                        type: ReportTypes.TaskTree,
+                        data: {
+                            tasks,
+                            config: prepared.config,
+                            title: invalid.length ? 'Errors found:' : 'Available Tasks:'
+                        }
+                    } as TaskTreeReport);
+                }
+
+                prepared.reportFn({
+                    type: ReportTypes.SimpleTaskList,
+                    data: x.setup
+                } as SimpleTaskListReport);
+                // console.log(groups);
+            });
     }
 
     if (parsed.cli.command === 'docs') {

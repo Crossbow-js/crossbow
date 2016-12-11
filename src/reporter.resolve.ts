@@ -13,6 +13,7 @@ import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.d
 import Rx = require('rx');
 import logger from './logger';
 import {WatchEvent} from "./watch.file-watcher";
+import {TasksCommandCompletionReport, TaskCommandSetup} from "./command.tasks";
 
 export interface Reporter {
     errors: {}[]
@@ -152,7 +153,7 @@ export interface TaskListReport extends IncomingReport {
     data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}
 }
 export interface SimpleTaskListReport extends IncomingReport {
-    data: {lines: string[], title: string}
+    data: TaskCommandSetup
 }
 export interface InvalidReporterReport extends IncomingReport {
     data: {reporters: Reporters}

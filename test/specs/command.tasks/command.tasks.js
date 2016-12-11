@@ -2,99 +2,94 @@ const assert = require('chai').assert;
 const reports = require('../../../dist/reporter.resolve');
 const utils = require('../../utils');
 
+const input1 = {
+    tasks: {
+        'other': function() {
+            console.log('ere');
+        },
+        'other2': function() {
+            console.log('ere');
+        },
+        '(docker)': {
+            exec: ['@npm sleep 1']
+        },
+        '(sh)': {
+            'build': ['@npm auto prefxier', '@sh s3 deploy assets'],
+            css: function cssTask() {},
+            js: function jsTask() {},
+            other: {
+                description: 'My description bro',
+                tasks: ['@npm sleep 1']
+            }
+        }
+    }
+};
+
 describe('command.tasks', function () {
-    it("reports tasks with @p", function () {
-        const runner = utils.run({
+    it("resolves default tasks", function () {
+        const setup = utils.getGenericSetup({
             input: ['tasks']
         }, {
             tasks: {
-                'build@p': ['css', 'js'],
-                css: function cssTask() {},
-                js: function jsTask() {}
+                docker: '@sh docker ps'
             }
         });
 
-        runner
-            .output
-            .filter(x => x.origin === 'SimpleTaskList')
-            .pluck('data')
-            .subscribe(function (data) {
-                assert.include(data[1], 'build <p>'); // 1s + 2 parallel at 100ms each === 1.10s
-            });
+        // console.log(setup);
+        assert.equal(setup.errors.length, 0);
+        assert.equal(setup.groups[0].title, 'Default Tasks');
+        assert.equal(setup.groups[0].tasks.valid.length, 1);
     });
-    it("reports tasks with Parent", function () {
-        const runner = utils.run({
+    it("resolves all default + Parent tasks", function () {
+        const setup = utils.getGenericSetup({
             input: ['tasks']
-        }, {
-            tasks: {
-                docker: [
-                    '@npm sleep 1'
-                ],
-                '(sh)': {
-                    'build': ['@npm auto prefxier', '@sh s3 deploy assets'],
-                    css: function cssTask() {},
-                    js: function jsTask() {},
-                    other: {
-                        description: 'My description bro',
-                        tasks: ['@npm sleep 1']
-                    }
-                }
-            }
-        });
+        }, input1);
 
-        runner
-            .output
-            .filter(x => x.origin === 'SimpleTaskList')
-            .pluck('data')
-            .take(2)
-            .toArray()
-            .subscribe(function (data) {
-                assert.deepEqual(data[0], [ '{yellow:Available tasks:', 'docker   [ @npm sleep 1 ]' ]);
-                assert.deepEqual(data[1], [ '{yellow:sh:',
-                    'sh:build   [ @npm auto prefxier, @sh s3 deploy assets ]',
-                    'sh:css     [ _inline_fn_0_cssTask ]',
-                    'sh:js      [ _inline_fn_1_jsTask ]',
-                    'sh:other   [ @npm sleep 1 ]' ]);
-            });
+        assert.equal(setup.errors.length, 0);
+        assert.equal(setup.groups.length, 3, 'should be 1 default + 2 parents');
+        assert.equal(setup.groups[0].title, 'Default Tasks');
+        assert.equal(setup.groups[1].title, 'docker');
+        assert.equal(setup.groups[2].title, 'sh');
+
+        assert.equal(setup.groups[0].tasks.valid.length, 2);
+        assert.equal(setup.groups[1].tasks.valid.length, 1);
+        assert.equal(setup.groups[2].tasks.valid.length, 4);
     });
-    it.only("reports tasks with Parent + selection", function () {
-        const runner = utils.run({
-            input: ['tasks']
-        }, {
-            tasks: {
-                'other': function() {
-                    console.log('ere');
-                },
-                'other2': function() {
-                    console.log('ere');
-                },
-                '(docker)': {
-                    exec: ['@npm sleep 1']
-                },
-                '(sh)': {
-                    'build': ['@npm auto prefxier', '@sh s3 deploy assets'],
-                    css: function cssTask() {},
-                    js: function jsTask() {},
-                    other: {
-                        description: 'My description bro',
-                        tasks: ['@npm sleep 1']
-                    }
-                }
-            }
-        });
+    it("resolves tasks default selected", function () {
+        const setup = utils.getGenericSetup({
+            input: ['tasks', 'other', 'other2']
+        }, input1);
 
-        runner
-            .output
-            .filter(x => x.origin === 'SimpleTaskList')
-            .pluck('data')
-            .subscribe(function (data) {
-                console.log(data.join('\n'));
-                // assert.deepEqual(data, [ '{yellow:sh:',
-                //     'sh:build   [ @npm auto prefxier, @sh s3 deploy assets ]',
-                //     'sh:css     [ _inline_fn_0_cssTask ]',
-                //     'sh:js      [ _inline_fn_1_jsTask ]',
-                //     'sh:other   [ @npm sleep 1 ]' ]);
-            });
+        assert.equal(setup.groups.length, 1);
+        assert.equal(setup.groups[0].title, 'Default Tasks');
+        assert.equal(setup.groups[0].tasks.valid.length, 2);
+    });
+    it("resolves tasks with parent selected", function () {
+        const setup = utils.getGenericSetup({
+            input: ['tasks', 'docker']
+        }, input1);
+
+        assert.equal(setup.groups.length, 1);
+        assert.equal(setup.groups[0].title, 'docker');
+        assert.equal(setup.groups[0].tasks.valid.length, 1);
+    });
+    it("resolves tasks with a mix of default & parent selections", function () {
+        const setup = utils.getGenericSetup({
+            input: ['tasks', 'docker', 'other']
+        }, input1);
+
+        assert.equal(setup.groups.length, 2);
+        assert.equal(setup.groups[0].title, 'Default Tasks');
+        assert.equal(setup.groups[1].title, 'docker');
+
+        assert.equal(setup.groups[0].tasks.valid.length, 1);
+        assert.equal(setup.groups[1].tasks.valid.length, 1);
+    });
+    it("resolves with no groups if input empty", function () {
+        const setup = utils.getGenericSetup({
+            input: ['tasks']
+        }, {});
+        assert.deepEqual(setup, { groups: [], tasks: [], errors: [] })
     });
 });
 

@@ -10,7 +10,7 @@ module.exports = {
                 },
                 '@npm sleep 1'
             ],
-            runSass: function runSass(){}
+            runSass: 'docke'
         },
         '(css)': {
             dev: [

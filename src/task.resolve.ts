@@ -284,7 +284,13 @@ function getTasks(items, incoming, trigger, parents) {
             return acc.concat(createCircularReferenceTask(incoming, parents));
         }
 
+
         if (isPlainObject(taskItem) && Object.keys(taskItem)) {
+
+            const obj = handleObjectInput(taskItem, trigger.input, parents);
+            if (obj.errors.length === 0) {
+                return acc.concat(obj);
+            }
 
             if (incoming.subTasks.length) {
 

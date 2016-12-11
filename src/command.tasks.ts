@@ -8,30 +8,31 @@ import {getSimpleTaskList} from "./reporters/task.list";
 
 import Immutable = require('immutable');
 import Rx = require('rx');
-import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
 import {
-    isParentGroupName, isParentRef, getChildItems, getChildName, longestString,
-    getChildTaskNames, getLongestTaskName
+    isParentGroupName, isParentRef, getChildItems, getChildName
 } from "./task.utils";
 
 export interface TaskGroup {
     title: string
+    tasks: Tasks
+}
+
+export interface TaskCommandSetup {
+    groups: TaskGroup[],
     tasks: Task[]
+    errors: Error[]
 }
 
 export interface TasksCommandCompletionReport {
-    setup: {
-        groups: TaskGroup[],
-        errors: Error[]
-    }
+    setup: TaskCommandSetup
 }
 
 export type TasksCommandComplete = Rx.Observable<TasksCommandCompletionReport>;
 
 function execute(trigger: CommandTrigger): TasksCommandComplete {
 
-    const {input, config, reporter} = trigger;
+    const {input, config}   = trigger;
 
     const allNames          = Object.keys(trigger.input.tasks);
     const possibleParents   = allNames.filter(x => isParentGroupName(x));
@@ -93,34 +94,31 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
             const parent = resolvedParents[key];
             const items  = parent.map(x => `${key}:${x}`);
             const resolved = resolveTasks(items, trigger);
-            return {title: key, tasks: resolved.all};
+            return {title: key, tasks: resolved};
         });
     }
 
-    const groups = (function() {
+    const groups: Array<TaskGroup> = (function() {
         if (resolvedDefault.all.length) {
             return [
-                {title: 'Default Tasks', tasks: resolvedDefault.all},
+                {title: 'Default Tasks', tasks: resolvedDefault},
                 ...getParents(resolvedParents, trigger)
             ];
         }
         return getParents(resolvedParents, trigger);
     })();
 
-    const tasks       = groups.reduce((acc, group) => acc.concat(group.tasks), []);
-    const longestName = getLongestTaskName(tasks);
+    const tasks = groups.reduce((acc, group): Task[] => {
+        return acc.concat(group.tasks.all);
+    }, []);
 
-    groups.forEach(function(group) {
-        reporter({
-            type: ReportTypes.SimpleTaskList,
-            data: {
-                lines: getSimpleTaskList(group.tasks, longestName),
-                title: group.title
-            }
-        } as SimpleTaskListReport);
+    return Rx.Observable.just({
+        setup: {
+            groups,
+            tasks,
+            errors: []
+        }
     });
-
-    return Rx.Observable.just({setup: {groups, errors: []}});
 }
 
 export default function handleIncomingTasksCommand(
