@@ -131,6 +131,19 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?): UserInp
      * so we try to load any defaults that are in the CWD
      */
     const defaultInputputFiles = file.retrieveDefaultInputFiles(config);
+    const notMissingFileErrors = defaultInputputFiles.invalid
+        .filter(x => x.errors[0].type !== InputErrorTypes.InputFileNotFound);
+
+    if (notMissingFileErrors.length) {
+        debug(`Default input found with errors ${notMissingFileErrors[0].resolved}`);
+        return {
+            errors: notMissingFileErrors.reduce((acc, x) => acc.concat(x.errors), []),
+            type: InputTypes.DefaultExternalFile,
+            sources: notMissingFileErrors,
+            inputs: []
+        }
+    }
+
     if (defaultInputputFiles.valid.length) {
         debug(`Default input found ${defaultInputputFiles.valid[0].resolved}`);
         return {

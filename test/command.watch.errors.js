@@ -29,7 +29,7 @@ describe('Resolving watch task errors', function () {
         });
         assert.equal(runner.before.tasks.invalid.length, 1);
     });
-    it('returns errors about global before task that is invalid + local before task that is invalid' , function () {
+    it.skip('returns errors about global before task that is invalid + local before task that is invalid' , function () {
         const runner = cli.getWatcher(["def"], {
             watch: {
                 before: "@ns",
@@ -44,7 +44,7 @@ describe('Resolving watch task errors', function () {
         });
         assert.equal(runner.before.tasks.invalid.length, 2);
     });
-    it('returns errors when others are valid' , function () {
+    it.skip('returns errors when others are valid' , function () {
         const runner = cli.getWatcher(["def", "shane"], {
             watch: {
                 before: "@ns",
