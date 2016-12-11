@@ -245,7 +245,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         handleIncoming<DocsCommandComplete>(prepared)
             .pluck('setup')
             .subscribe((setup: DocsCommandOutput) => {
-                if (setup.errors.length) {
+                if (setup.errors.length || setup.tasks.invalid.length) {
                     return process.exit(1);
                 }
                 setup.output.forEach(function (outputItem: DocsFileOutput) {

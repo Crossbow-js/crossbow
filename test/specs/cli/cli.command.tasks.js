@@ -1,7 +1,7 @@
 const assert = require('chai').assert;
 const exec = require('child_process').exec;
 
-describe.only("list available tasks", function () {
+describe("list available tasks", function () {
     it("lists tasks in simple format", function (done) {
         exec(`node dist/cb tasks -i examples/crossbow.js`, function (err, stdout, stderr) {
             assert.include(stdout, 'webpack        [ @npm sleep 1 ]');

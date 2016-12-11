@@ -27,7 +27,7 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
     it('can provide error when subtask not provided for ParentGroup', function () {
         const runner = utils.getSetup(['js'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvided);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvidedForParent);
     });
     it('can resolve sub task correctly', function () {
         const runner = utils.getSetup(['js:clean'], input());
@@ -41,11 +41,6 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.Adaptor);
         assert.equal(runner.tasks.valid[0].tasks[0].tasks[1].type, TaskTypes.Adaptor);
 
-        require('fs').writeFileSync('_tasks.json', JSON.stringify(runner.tasks.valid, null, 2));
-        assert.deepEqual(runner.tasks.valid[0].tasks[0].tasks[0].flags, {production: true});
-
-
-        // assert.equal(runner.sequence);
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 1);
         assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.SeriesGroup);
@@ -85,6 +80,6 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
     it('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
-        assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvided);
+        assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvidedForParent);
     });
 });
