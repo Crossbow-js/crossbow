@@ -115,7 +115,8 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
         return [
-            `{yellow:${report.data.title}:`,
+            '',
+            `{green.underline:${report.data.title} }`,
             ...report.data.lines
         ];
     },
@@ -839,7 +840,7 @@ function npmScriptLabel(task: Task) {
     return `{magenta:[npm script]} ${task.command}`;
 }
 
-export function getLabel(task) {
+export function getLabel(task: Task) {
 
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {

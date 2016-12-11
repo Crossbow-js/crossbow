@@ -3,14 +3,17 @@ import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks} from './task.resolve';
+import {resolveTasks, Tasks, TaskTypes, TaskRunModes} from './task.resolve';
 import {getSimpleTaskList} from "./reporters/task.list";
 
 import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportTypes, TaskTreeReport, SimpleTaskListReport} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
-import {isParentGroupName} from "./task.utils";
+import {
+    isParentGroupName, isParentRef, getChildTask, getChildItems, getChildName, longestString,
+    getChildTaskNames, getLongestTaskName
+} from "./task.utils";
 
 export interface TasksCommandCompletionReport {
     tasks: Tasks,
@@ -23,6 +26,13 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
 
     const {input, config, reporter} = trigger;
 
+    const allNames          = Object.keys(trigger.input.tasks);
+    const possibleParents   = allNames.filter(x => isParentGroupName(x));
+    const possibleDefaults  = allNames.filter(x => !isParentGroupName(x));
+    const cliInput          = trigger.cli.input.slice(1);
+    const defaultInputNames = cliInput.filter(x => !isParentRef(x, possibleParents));
+    const parentInputNames  = cliInput.filter(x => isParentRef(x, possibleParents));
+
     /**
      * Either resolve ALL tasks, or a subset if given
      * via the cli.
@@ -31,46 +41,37 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
      *      crossbow ls -> all tasks
      *      crossbow ls build-all -> only build all tasks
      */
-    const toResolve = (function () {
-
-        /**
-         * First look if there's trailing task names in cli input
-         * @type {string[]}
-         */
-        const cliTasks = trigger.cli.input.slice(1);
-        if (cliTasks.length) {
-            return cliTasks;
+    const defaultsToResolve = (function () {
+        if (defaultInputNames.length) {
+            return defaultInputNames;
         }
-
-        /**
-         * Now build up available tasks using input + tasks directories
-         */
-        const taskNamesToResolve = Object.keys(input.tasks).filter(key => !isParentGroupName(key));
-            // .reduce(function (acc, key) {
-            //     const matchParent = isParentGroupName(key);
-            //     if (matchParent) {
-            //         const childKeys = Object.keys(input.tasks[key]);
-            //         const plainName = matchParent[1];
-            //         return acc.concat(childKeys.map(x => `${plainName}:${x}`));
-            //     }
-            //     return acc.concat(key);
-            // }, []);
+        if (parentInputNames.length) {
+            return [];
+        }
         const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
-        return [...taskNamesToResolve, ...taskNamesFromTasksDir];
+        return [...possibleDefaults, ...taskNamesFromTasksDir];
+    })();
+
+    const parentsToResolve = (function () {
+        if (parentInputNames.length) {
+            return parentInputNames;
+        }
+        if (defaultInputNames.length) {
+            return [];
+        }
+        return possibleParents;
     })();
 
     /**
      * Resolve the subset
      * @type {Tasks}
      */
-    console.log(toResolve);
-    const resolved = resolveTasks(toResolve, trigger);
-    const resolvedParents = Object.keys(input.tasks)
-        .filter(key => isParentGroupName(key))
+    const resolvedDefault = resolveTasks(defaultsToResolve, trigger);
+    const resolvedParents = parentsToResolve
+        .map(getChildName)
         .reduce(function (acc, key) {
-            const matchParent = isParentGroupName(key);
-            const childKeys = Object.keys(input.tasks[key]);
-            const plainName = matchParent[1];
+            const childKeys   = Object.keys(getChildItems(key, input.tasks));
+            const plainName   = key.slice(1, -1);
             if (!acc[plainName]) {
                 acc[plainName] = childKeys;
             } else {
@@ -79,60 +80,39 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
             return acc;
         }, {});
 
-    doReport('Available tasks', resolved);
+    function getParents (resolvedParents, trigger) {
+        return Object.keys(resolvedParents).map(function (key) {
+            const parent = resolvedParents[key];
+            const items  = parent.map(x => `${key}:${x}`);
+            const resolved = resolveTasks(items, trigger);
+            return {title: key, items: resolved.all};
+        });
+    }
 
-    Object.keys(resolvedParents).forEach(function (key) {
-        const parent = resolvedParents[key];
-        const items  = parent.map(x => `${key}:${x}`);
-        const resolved = resolveTasks(items, trigger);
-        doReport(key, resolved);
+    const groups = (function() {
+        if (resolvedDefault.all.length) {
+            return [
+                {title: 'Default Tasks', items: resolvedDefault.all},
+                ...getParents(resolvedParents, trigger)
+            ];
+        }
+        return getParents(resolvedParents, trigger);
+    })();
+
+    const tasks   = groups.reduce((acc, item) => acc.concat(item.items), []);
+    const longest = getLongestTaskName(tasks);
+
+    groups.forEach(function(group) {
+        reporter({
+            type: ReportTypes.SimpleTaskList,
+            data: {
+                lines: getSimpleTaskList(group.items, longest),
+                title: group.title
+            }
+        } as SimpleTaskListReport);
     });
 
-    return Rx.Observable.just({tasks: resolved, errors: []});
-
-    function doReport (title, resolved) {
-
-        /**
-         * handoff if requested
-         */
-        if (trigger.config.handoff) {
-            return Rx.Observable.just({tasks: resolved, errors: []});
-        }
-
-        /**
-         * If no tasks were matched, give the usual error
-         */
-        if (resolved.all.length === 0) {
-            reporter({type: ReportTypes.NoTasksAvailable});
-            return Rx.Observable.just({tasks: resolved, errors: []});
-        }
-
-        /**
-         * If any were invalid or if the user gave the verbose
-         * flag, show the full tree
-         */
-        if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
-            reporter({
-                type: ReportTypes.TaskTree,
-                data: {
-                    tasks: resolved.all,
-                    config,
-                    title
-                }
-            } as TaskTreeReport);
-        } else {
-            /**
-             * Otherwise just print a simple two-col list
-             */
-            reporter({
-                type: ReportTypes.SimpleTaskList,
-                data: {
-                    lines: getSimpleTaskList(resolved.all),
-                    title
-                }
-            } as SimpleTaskListReport);
-        }
-    }
+    return Rx.Observable.just({tasks: resolvedDefault, errors: []});
 }
 
 export default function handleIncomingTasksCommand(

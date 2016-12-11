@@ -4,7 +4,7 @@ import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
-import {Task} from "./task.resolve";
+import {Task, TaskTypes, TaskRunModes} from "./task.resolve";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -274,6 +274,24 @@ export function isParentGroupName (name: string): RegExpMatchArray {
     return name.match(/^\((.+?)\)$/);
 }
 
+export function isParentRef (name: string, names: string[]): boolean {
+    if (names.indexOf(name) > -1)        return true;
+    if (names.indexOf(`(${name})`) > -1) return true;
+    return false;
+}
+
+export function getChildItems (name:string, input) {
+    if (isParentGroupName(name)) {
+        return _.get(input, [name], {});
+    }
+    return _.get(input, [`(${name})`], {});
+}
+
+export function getChildName (name) {
+    if (isParentGroupName(name)) return name;
+    return `(${name})`;
+}
+
 export function isInternal (incoming: string): boolean {
     return /_internal_fn_\d{0,10}$/.test(incoming);
 }
@@ -298,6 +316,21 @@ export function __e(x) {
 
 export function longestString (col: string[]): number {
     return col.reduce((val, item) => item.length > val ? item.length : val, 0);
+}
+
+export function getLongestTaskName (tasks: Task[]): number {
+    return longestString(tasks.reduce((acc, task) => {
+
+        if (task.type === TaskTypes.ParentGroup) {
+            return acc.concat(getChildTaskNames(task));
+        }
+
+        if (task.runMode === TaskRunModes.parallel) {
+            return acc.concat(task.baseTaskName + ' <p>');
+        }
+
+        return acc.concat(task.baseTaskName);
+    }, []));
 }
 
 export function padLine(incoming, max?) {

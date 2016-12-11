@@ -9,7 +9,8 @@ module.exports = {
                     console.log('opts', opts);
                 },
                 '@npm sleep 1'
-            ]
+            ],
+            runSass: function runSass(){}
         },
         '(css)': {
             dev: [

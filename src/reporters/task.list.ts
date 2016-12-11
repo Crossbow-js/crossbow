@@ -20,7 +20,7 @@ function taskPreviews(item: Task) {
         }
     }
     const names = item.tasks.map((x:Task) => {
-        return escapeNewLines(x.baseTaskName);
+        return escapeNewLines(getLabel(x));
     });
 
     return `[ ${names.join(', ')} ]`;
@@ -34,41 +34,28 @@ function limit (string, linelength) {
     return string;
 }
 
-export function getSimpleTaskList(tasks: Task[]) {
+export function getSimpleTaskList(tasks: Task[], longest: number) {
     const filtered = tasks
         .filter(x => !isInternal(x.taskName))
         .filter(x => x.baseTaskName[0] !== '_');
 
-    return twoCol(filtered).map(x => `${x[0]}  ${x[1]}`)
+    return twoCol(filtered, longest).map(x => `${x[0]}  ${x[1]}`)
 }
 
-export function twoCol (tasks: Task[]): Array<string[]> {
-
-    const longest = longestString(tasks.reduce((acc, task) => {
-
-        if (task.type === TaskTypes.ParentGroup) {
-            return acc.concat(getChildTaskNames(task));
-        }
-
-        if (task.runMode === TaskRunModes.parallel) {
-            return acc.concat(task.baseTaskName + ' <p>');
-        }
-
-        return acc.concat(task.baseTaskName);
-    }, []));
+export function twoCol (tasks: Task[], longest: number): Array<string[]> {
 
     const cols = process.stdout.columns;
 
-    return tasks.map(function (item) {
-        
+    return tasks.map(function (task: Task) {
+
         const outgoingName = (function () {
-            if (item.type === TaskTypes.ParentGroup) {
-                return `${item.baseTaskName}:${item.subTasks[0]}`;
+            if (task.type === TaskTypes.ParentGroup) {
+                return `${task.baseTaskName}:${task.subTasks[0]}`;
             }
-            if (item.runMode === TaskRunModes.parallel) {
-                return item.baseTaskName + ' <p>';
+            if (task.runMode === TaskRunModes.parallel) {
+                return task.baseTaskName + ' <p>';
             }
-            return item.baseTaskName;
+            return task.baseTaskName;
         })();
 
         const name = padLine(outgoingName, longest + 1);
@@ -77,32 +64,32 @@ export function twoCol (tasks: Task[]): Array<string[]> {
 
         const desc = (function () {
 
-            if (item.description) {
-                return limit(item.description, desclength);
+            if (task.description) {
+                return limit(task.description, desclength);
             }
 
             /**
              * .js files on disk
              */
-            if (item.type === TaskTypes.ExternalTask) {
-                return limit(`Run via: ${item.externalTasks[0].parsed.name}`, desclength);
+            if (task.type === TaskTypes.ExternalTask) {
+                return limit(`Run via: ${task.externalTasks[0].parsed.name}`, desclength);
             }
 
             /**
              * .sh files on disk
              */
-            if (item.origin === TaskOriginTypes.FileSystem) {
-                return limit(`Run via: ${item.externalTasks[0].parsed.name}`, desclength);
+            if (task.origin === TaskOriginTypes.FileSystem) {
+                return limit(`Run via: ${task.externalTasks[0].parsed.name}`, desclength);
             }
 
-            if (item.type === TaskTypes.ParentGroup) {
-                return limit(taskPreviews(item.tasks[0]), desclength);
+            if (task.type === TaskTypes.ParentGroup) {
+                return limit(taskPreviews(task.tasks[0]), desclength);
             }
 
-            return limit(taskPreviews(item), desclength);
+            return limit(taskPreviews(task), desclength);
         })();
 
-        return [name, desc];
+        return [`{yellow:${name}}`, desc];
     });
 }
 export function twoColWatchers (runners: WatchRunners): Array<string[]> {
