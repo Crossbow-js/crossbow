@@ -233,11 +233,14 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     } as TaskTreeReport);
                 }
 
+                if (!groups.length) {
+                    return prepared.reportFn({type: ReportTypes.NoTasksAvailable});
+                }
+
                 prepared.reportFn({
                     type: ReportTypes.SimpleTaskList,
                     data: x.setup
                 } as SimpleTaskListReport);
-                // console.log(groups);
             });
     }
 
