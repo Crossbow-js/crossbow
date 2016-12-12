@@ -50,6 +50,7 @@ ${optionsList(_.merge({}, require(globalcommon), require(common)))}
         description: 'Run a watcher(s)',
         opts: [
             '../opts/command.watch.opts.json',
+            globalcommon,
             runcommon,
             common
         ],
@@ -63,13 +64,13 @@ ${twoColFromJson(_.merge({}, require('../opts/command.watch.opts.json'), require
 
 ${twoColFromJson(_.merge({}, require(globalcommon), require(common)), 'desc')}
 
-{bold:Example: run 2 named tasks in parallel} 
+{bold:Example: run a watcher called 'dev'} 
 
-    $ crossbow run task1 task2 -p
+    $ crossbow watch dev
 
-{bold:Example: use a config file from another folder} 
+{bold:Example: run a shorthand watcher } 
 
-    $ crossbow run <task-name> -c .conf/crossbow.yaml
+    $ crossbow watch '*.json -> my-task' --debounce 500 --block
     `
     },
 
