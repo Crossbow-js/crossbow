@@ -5,12 +5,12 @@ module.exports = {
         ],
         '(sh)': {
             shane: [
-                function (opts) {
+                function (opts, ctx) {
                     console.log('opts', opts);
                 },
                 '@npm sleep 1'
             ],
-            runSass: 'docke'
+            runSass: 'docker'
         },
         '(css)': {
             dev: [

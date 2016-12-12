@@ -305,6 +305,7 @@ export function getWatchCommandSetup (trigger: CommandTrigger): WatchCommandSetu
     /**
      * Create runners for watch tasks;
      */
+    // todo - resolve parent+child for watchers
     const watchRunners = createWatchRunners(watchTasks, trigger);
 
     /**
