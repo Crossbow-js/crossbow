@@ -1,16 +1,15 @@
 
-import {isInternal, getLongestTaskName} from "./task.utils";
+import {isInternal, getLongestTaskName, isParentGroupName, getChildItems, getPossibleTaskNames} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {compile} from './logger';
 import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
-import {resolveTasks} from "./task.resolve";
+import {resolveTasks, TaskTypes} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
-import {reportTaskTree} from "./reporters/defaultReporter";
 import {ReportTypes} from "./reporter.resolve";
 
 export interface Answers {
@@ -19,8 +18,10 @@ export interface Answers {
 
 export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
-    const inquirer = require('inquirer');
-    const resolved = resolveTasks(Object.keys(input.tasks), {
+    const inquirer           = require('inquirer');
+    const taskNamesToResolve = getPossibleTaskNames(input);
+    
+    const resolved = resolveTasks(taskNamesToResolve, {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
@@ -53,12 +54,18 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
 export function getTaskList(tasks: Task[]) {
     const topLevelTasks = tasks.filter(x => !isInternal(x.baseTaskName));
-    const longest = getLongestTaskName(topLevelTasks);
-    const col = twoCol(topLevelTasks, longest);
+    const longest       = getLongestTaskName(topLevelTasks);
+    const col           = twoCol(topLevelTasks, longest);
     return col.map((tuple, i) => {
         return {
             name: compile(`${tuple[0]} ${tuple[1]}`),
-            value: topLevelTasks[i].baseTaskName
+            value: (function () {
+                const task = topLevelTasks[i];
+                if (task.type === TaskTypes.ParentGroup) {
+                    return `${task.baseTaskName}:${task.subTasks[0]}`;
+                }
+                return topLevelTasks[i].baseTaskName;
+            })()
         }
     });
 }

@@ -5,6 +5,7 @@ import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
 import {Task, TaskTypes, TaskRunModes} from "./task.resolve";
+import {CrossbowInput} from "./index";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -285,6 +286,18 @@ export function getChildItems (name:string, input) {
         return _.get(input, [name], {});
     }
     return _.get(input, [`(${name})`], {});
+}
+
+export function getPossibleTaskNames (input: CrossbowInput) {
+    const allNames          = Object.keys(input.tasks);
+    const possibleParents   = allNames.filter(x => isParentGroupName(x));
+    const possibleDefaults  = allNames.filter(x => !isParentGroupName(x));
+    const parents           = possibleParents.reduce((acc, key) => {
+        const childKeys   = Object.keys(getChildItems(key, input.tasks));
+        const plainName   = key.slice(1, -1);
+        return acc.concat(childKeys.map(childKey => `${plainName}:${childKey}`));
+    }, []);
+    return [...possibleDefaults, ...parents];
 }
 
 export function getChildName (name) {
