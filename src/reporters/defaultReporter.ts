@@ -868,7 +868,7 @@ export function getLabel(task: Task) {
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName}}`;
         }
-        return `{bold:${task.taskName}}`;
+        return task.taskName;
     }
 
     if (task.type === TaskTypes.ExternalTask) {
@@ -883,7 +883,7 @@ export function getLabel(task: Task) {
         return `{red.bold:x ${task.taskName}}`;
     }
 
-    return `${task.taskName}}`;
+    return task.taskName;
 }
 
 function maybeErrorLabel(task: Task, label: string): string {

@@ -56,6 +56,40 @@ $ crossbow run <taskname>
 <!--crossbow-docs-end-->`;
         assert.equal(output.markdown, expected);
     });
+    it('support parent + child tasks', function () {
+        const output = utils.getGenericSetup({
+            input: ['docs']
+        }, {
+            tasks: {
+                "js": {
+                    description: "My tasks",
+                    tasks: function() {}
+                },
+                "(css)": {
+                    build: {
+                        description: "My css->build task",
+                        tasks: [function() {}]
+                    }
+                }
+            }
+        });
+        const expected = `<!--crossbow-docs-start-->
+## Crossbow tasks
+
+The following tasks have been defined by this project's Crossbow configuration.
+Run any of them in the following way
+ 
+\`\`\`shell
+$ crossbow run <taskname>
+\`\`\`
+|Task name|Description|
+|---|---|
+|<pre>\`js\`</pre>|My tasks|
+|<pre>\`css:build\`</pre>|My css->build task|
+<!--crossbow-docs-end-->`;
+        // console.log(output.markdown);
+        assert.equal(output.markdown, expected);
+    });
     it('handles missing file', function () {
         const testfile = 'test/fixtures/docs/readme-typo.md';
         const output = utils.getGenericSetup({
@@ -155,20 +189,5 @@ $ crossbow run <taskname>
             }
         });
         assert.include(output.output[0].content, output.markdown);
-    });
-    it('Creates a new readme.md file when nothing is found in cwd', function () {
-        const output = utils.getGenericSetup({
-            input: ['docs'],
-            flags: {
-                cwd: 'test'
-            }
-        }, {
-            tasks: {
-                "build-css": ['css', 'version-rev'],
-                'version-rev': '@sh versioner | xargs ls',
-                css: ['@npm node-sass', '@npm cssmin']
-            }
-        });
-        assert.equal(output.output[0].content, output.markdown);
     });
 });

@@ -1,15 +1,16 @@
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks} from './task.resolve';
+import {resolveTasks, Tasks, TaskTypes} from './task.resolve';
 import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
+import {removeNewlines, InputErrorTypes, isPublicTask, getPossibleTaskNames} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
 import {DocsAddedToFileReport} from "./reporter.resolve";
+import {getLabel} from "./reporters/defaultReporter";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -48,7 +49,8 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * that will used in the docs
      * @type {Tasks}
      */
-    const tasks = resolveTasks(Object.keys(input.tasks).filter(isPublicTask), trigger);
+    const toResolve = getPossibleTaskNames(input);
+    const tasks = resolveTasks(toResolve.filter(isPublicTask), trigger);
 
     /**
      * If there were 0 tasks, exit with error
@@ -317,14 +319,28 @@ $ crossbow run <taskname>
      * Create the body for the table with taskname + description
      * @type {string[]}
      */
-    const body     = tasks.map((x: Task) => {
-        const name = `|<pre>\`${x.baseTaskName}\`</pre>`;
+    const body     = tasks.map((task: Task) => {
+        const isParent = task.type === TaskTypes.ParentGroup;
+        const name = (function () {
+            if (isParent) {
+                return `|<pre>\`${task.baseTaskName}:${task.subTasks[0]}\`</pre>`;
+            }
+            return `|<pre>\`${task.baseTaskName}\`</pre>`;
+        })();
         const desc = (function () {
-                if (x.description) return removeNewlines(x.description);
-                if (x.tasks.length) {
-                    return ['**Alias for:**'].concat(x.tasks.map(x => `- \`${removeNewlines(x.baseTaskName)}\``)).join('<br>');
+            if (task.description) return removeNewlines(task.description);
+            if (isParent) {
+                if (task.tasks[0].description) {
+                    return removeNewlines(task.tasks[0].description);
                 }
-            })() + '|';
+            }
+            if (task.tasks.length) {
+                const subject = isParent ? task.tasks[0].tasks : task.tasks;
+                return ['**Alias for:**']
+                    .concat(subject.map(x => `- \`${getLabel(x)}\``))
+                    .join('<br>');
+            }
+        })() + '|';
         return [name, desc].join('|');
     }).join('\n');
 
