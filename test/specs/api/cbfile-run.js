@@ -8,12 +8,14 @@ const TaskReportType = require('../../../dist/task.runner').TaskReportType;
 const absPath  = require('path').resolve(__dirname, '..', '..', '..', 'dist', 'public', 'index.js');
 const absPath3 = require('path').resolve(__dirname, '..', '..', '..', 'dist', 'public', 'create.js');
 const absPath2 = require('path').resolve(__dirname, '..', '..', 'fixtures', 'cbfile.js');
+const absPath4 = require('path').resolve(__dirname, '..', '..', 'fixtures', 'inputs', 'groups.js');
 
 describe('Using a cbfile', function () {
     beforeEach(function () {
         if (require.cache[absPath])  delete require.cache[absPath];
         if (require.cache[absPath2]) delete require.cache[absPath2];
         if (require.cache[absPath3]) delete require.cache[absPath3];
+        if (require.cache[absPath4]) delete require.cache[absPath4];
     });
     it('works with non-array inputs', function () {
     	const runner = utils.getSetup(['build-js'], {}, {
@@ -116,5 +118,14 @@ describe('Using a cbfile', function () {
             assert.include(stdout, 'Error: Cannot find module \'-fs\'');
             done();
         });
+    });
+    it('supports groups', function () {
+        const runner = utils.getGenericSetup({
+            input: ['run', 'js:deploy'],
+            flags: {
+                cbfile: 'test/fixtures/inputs/cb-files/groups.js'
+            }
+        });
+        assert.equal(runner.tasks.invalid.length, 0);
     });
 });

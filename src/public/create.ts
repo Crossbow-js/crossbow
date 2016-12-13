@@ -97,6 +97,9 @@ export const api = {
             }
         }
     },
+    group: function (groupName: string, tasks: {}) {
+        input.tasks[`(${groupName})`] = tasks;
+    },
     options: function (incoming: {}) {
         const res = incomingOptions.apply(null, arguments);
         input.options = merge(input.options, res);
