@@ -2,10 +2,8 @@ const assert = require('chai').assert;
 const utils = require("../../utils");
 const yaml = require("js-yaml");
 
-const TaskRunModes = require('../../../dist/task.resolve').TaskRunModes;
 const TaskTypes = require('../../../dist/task.resolve').TaskTypes;
 const TaskErrors = require('../../../dist/task.errors').TaskErrorTypes;
-const TaskOriginTypes = require('../../../dist/task.resolve').TaskOriginTypes;
 const SequenceItemTypes = require('../../../dist/task.sequence.factories').SequenceItemTypes;
 const input = () => yaml.safeLoad(`
 tasks: 
@@ -77,7 +75,7 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
                 assert.equal(callCount, 3);
             });
     });
-    it.only('can resolve wildcard subtasks', function () {
+    it('can resolve wildcard subtasks', function () {
         const runner = utils.getSetup([
             'js:*'
         ], {
@@ -88,11 +86,11 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
                 }
             }
         });
-        console.log(runner.tasks.valid[0]);
-        console.log(runner.sequence);
-        // assert.equal(runner.tasks.valid[0].baseTaskName, 'js');
-        // assert.equal(runner.tasks.valid[0].type, TaskTypes.ParentGroup);
-        // assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].type, SequenceItemTypes.Task);
+        assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].items[0].type, SequenceItemTypes.Task);
     });
     it('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());

@@ -205,6 +205,15 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
     }
 
     function resolveGroupOfTasks (task: Task) {
+        if (task.type === TaskTypes.ParentGroup) {
+            const opts = _.merge(
+                {},
+                task.options._default,
+                task.query,
+                task.flags
+            );
+            return flatten(task.tasks, [], opts, task.taskName);
+        }
         const lookupKeys = getLookupKeys(task.subTasks, task.options);
         return lookupKeys.reduce(function (acc, subTaskName:string) {
             const opts = _.merge(
