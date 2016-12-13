@@ -77,6 +77,23 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
                 assert.equal(callCount, 3);
             });
     });
+    it.only('can resolve wildcard subtasks', function () {
+        const runner = utils.getSetup([
+            'js:*'
+        ], {
+            tasks: {
+                '(js)': {
+                    clean: function() {},
+                    someother: function () {}
+                }
+            }
+        });
+        console.log(runner.tasks.valid[0]);
+        console.log(runner.sequence);
+        // assert.equal(runner.tasks.valid[0].baseTaskName, 'js');
+        // assert.equal(runner.tasks.valid[0].type, TaskTypes.ParentGroup);
+        // assert.equal(runner.tasks.valid[0].tasks.length, 2);
+    });
     it('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);

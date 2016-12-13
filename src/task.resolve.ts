@@ -284,36 +284,52 @@ function getTasks(items, incoming, trigger, parents) {
             return acc.concat(createCircularReferenceTask(incoming, parents));
         }
 
+        function extracted(match, subTaskName) {
+            const newTask = (function () {
+                if (isPlainObject(match)) {
+                    return _.merge({}, match, {
+                        baseTaskName: subTaskName,
+                        flags: incoming.flags,
+                        query: incoming.query,
+                        options: incoming.options
+                    });
+                }
+                return {
+                    tasks: [].concat(match),
+                    baseTaskName: subTaskName,
+                    flags: incoming.flags,
+                    query: incoming.query,
+                    options: incoming.options
+                };
+            })();
+
+            const flattenedTask = createFlattenedTask(newTask, parents.concat(incoming.baseTaskName), trigger);
+            flattenedTask.baseTaskName = subTaskName;
+            flattenedTask.taskName = subTaskName;
+            flattenedTask.rawInput = subTaskName;
+
+            return acc.concat(flattenedTask);
+        }
+
         if (incoming.type === TaskTypes.ParentGroup && isPlainObject(taskItem) && Object.keys(taskItem)) {
+
             if (incoming.subTasks.length) {
+
+                if (incoming.subTasks[0] === '*') {
+                    const output = Object.keys(taskItem).reduce(function (acc, keyName) {
+                        const match = _.get(taskItem, keyName);
+                        if (match) {
+                            return acc.concat(extracted(match, keyName));
+                        }
+                        return acc;
+                    }, []);
+                    return acc.concat(output);
+                }
 
                 const match = _.get(taskItem, incoming.subTasks);
 
                 if (match) {
-                    const last  = incoming.subTasks[incoming.subTasks.length-1];
-                    const newTask = (function () {
-                        if (isPlainObject(match)) {
-                            return _.merge({}, match, {
-                                baseTaskName: last,
-                                flags: incoming.flags,
-                                query: incoming.query,
-                                options: incoming.options
-                            });
-                        }
-                        return {
-                            tasks: [].concat(match),
-                            baseTaskName: last,
-                            flags: incoming.flags,
-                            query: incoming.query,
-                            options: incoming.options
-                        };
-                    })();
-                    const flattenedTask        = createFlattenedTask(newTask, parents.concat(incoming.baseTaskName), trigger);
-                    flattenedTask.baseTaskName = last;
-                    flattenedTask.taskName     = last;
-                    flattenedTask.rawInput     = last;
-
-                    return acc.concat(flattenedTask);
+                    return acc.concat(extracted(match, incoming.subTasks[incoming.subTasks.length - 1]));
                 }
             }
             return acc;

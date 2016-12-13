@@ -1,6 +1,6 @@
 import {Task} from "./task.resolve";
 import {TaskTypes} from "./task.resolve";
-import {isSupportedFileType, isParentGroupName} from "./task.utils";
+import {isSupportedFileType, isParentGroupName, getChildItems} from "./task.utils";
 import {CommandTrigger} from "./command.run";
 import {ExternalFile} from "./file.utils";
 const _ = require('../lodash.custom');
@@ -179,6 +179,12 @@ function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[]
     /**
      * If the type is a ParentGroup, it requires that a sub-task is provided also
      */
+    if (task.subTasks[0] === '*') {
+        const children = getChildItems(task.baseTaskName, trigger.input.tasks);
+        if (Object.keys(children).length) {
+            return [];
+        }
+    }
     if (task.subTasks.length === 0) {
         const available = (function () {
             const match = isParentGroupName(task.baseTaskName);
