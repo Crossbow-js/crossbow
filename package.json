@@ -9,7 +9,7 @@
     "lint": "eslint lib",
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray,cloneDeep exports=node",
-    "prepublish": "npm run ts",
+    "prepublish": "npm test",
     "types": "typings install"
   },
   "repository": "crossbow-js/crossbow",
