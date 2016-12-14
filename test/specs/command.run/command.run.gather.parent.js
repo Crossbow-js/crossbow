@@ -47,9 +47,9 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.sequence[0].items[0].items[1].type, SequenceItemTypes.Task);
     });
     it('can resolve sub task correctly with flags', function () {
-        let called = false;
-        let callCount = 0;
-        let args = [];
+        var called = false;
+        var callCount = 0;
+        var args = [];
         const runner = utils.getRunner([
             'js:clean --production',
             'js:clean --name=shane',
