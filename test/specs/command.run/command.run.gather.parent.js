@@ -22,7 +22,7 @@ options:
 `);
 
 describe('Gathering run tasks for ParentGroups (1)', function () {
-    it('can provide error when subtask not provided for ParentGroup', function () {
+    it.skip('can provide error when subtask not provided for ParentGroup', function () {
         const runner = utils.getSetup(['js'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvidedForParent);
@@ -92,7 +92,7 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items[1].items[0].type, SequenceItemTypes.Task);
     });
-    it('can resolve sub task correctly when full format given eg: (js)', function () {
+    it.skip('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvidedForParent);

@@ -18,10 +18,22 @@ export interface Answers {
 
 export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
+    const possibleSelection  = cli.input.slice(1);
     const inquirer           = require('inquirer');
-    const taskNamesToResolve = getPossibleTaskNames(input);
-    
-    const resolved = resolveTasks(taskNamesToResolve, {
+    const allTaskNames       = getPossibleTaskNames(input);
+
+    const filtered           = possibleSelection.reduce((acc, name) => {
+        return acc.concat(allTaskNames
+            .filter(x => x.indexOf(`${name}:`) === 0)
+        );
+    }, []);
+
+    const taskNamesToShow = (function () {
+        if (filtered.length) return filtered;
+        return allTaskNames;
+    })();
+
+    const resolved = resolveTasks(taskNamesToShow, {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
