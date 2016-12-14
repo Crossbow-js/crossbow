@@ -30,7 +30,7 @@ export interface WatchCommandSetupErrors {
 
 export interface WatchCommandOutput {
     setup: WatchCommandSetup
-    update$: Rx.Observable<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}>
+    update$: Rx.Observable<WatchReport>
 }
 export interface WatchCommandSetup {
     beforeTasks?:  BeforeTasks
@@ -39,12 +39,12 @@ export interface WatchCommandSetup {
     errors:        WatchCommandSetupErrors[]
 }
 
-export interface WatchCommandBefore {
-    reports: TaskReport[]
-    errors:  TaskReport[]
-}
-
 export type WatchCommmandComplete = Rx.Observable<WatchCommandOutput>;
+
+export interface WatchReport {
+    type: WatchCommandEventTypes,
+    data: WatchTaskReport|WatchRunnerComplete
+}
 
 export enum WatchCommandEventTypes {
     SetupError           = <any>'SetupError',
