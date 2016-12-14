@@ -1,8 +1,15 @@
 module.exports = {
     tasks: {
-        docker: [
-            '@npm sleep 1'
-        ],
+        docker: {
+            description: 'My cool task',
+            options: {
+                prod: {name: 'kittie'},
+                dev: {name: 'shane'},
+            },
+            tasks: function(opts) {
+                console.log(opts);
+            }
+        },
         '(sh)': {
             shane: [
                 function (opts, ctx) {
@@ -10,7 +17,14 @@ module.exports = {
                 },
                 '@npm sleep 1'
             ],
-            runSass: 'docker'
+            runSass: 'docker',
+            ls: {
+                description: "my other task",
+                options: {},
+                tasks: [function (opts) {
+                    console.log('ere', opts);
+                }]
+            }
         },
         '(css)': {
             dev: [

@@ -9,12 +9,10 @@ import {parse, dirname, join, relative} from "path";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
 import {TaskStats} from "../task.runner";
-import {countSequenceErrors, collectSkippedTasks, collectRunnableTasks} from "../task.sequence";
+import {collectRunnableTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e, getLongestTaskName} from "../task.utils";
 import {duration, _taskReport, getSimpleTaskList} from "./task.list";
 import * as reports from "../reporter.resolve";
-import not = Rx.helpers.not;
-import {SimpleTaskListReport} from "../reporter.resolve";
 
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
