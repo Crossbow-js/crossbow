@@ -15,7 +15,7 @@ describe('Detecting Circular references in task definitions', function () {
         assert.equal(runner.tasks.invalid[0].tasks[0].tasks[1].errors.length, 0);
         assert.equal(runner.tasks.invalid[0].tasks[0].tasks[2].errors[0].type, TaskErrorTypes.CircularReference);
     });
-    it.only('Can defend against an infinite loop of task resolutions with parents', function () {
+    it('Can defend against an infinite loop of task resolutions with parents', function () {
         // const runner = utils.getSetup(["dummy:js", 'inline', 'dummy:*'], {
         const runner = utils.getSetup(['dummy:kittie', 'rsync'], {
             tasks: {

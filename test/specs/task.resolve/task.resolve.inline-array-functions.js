@@ -63,7 +63,7 @@ describe('task.resolve (inline-functions)', function () {
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 2);
     });
-    it('sends correct options from options', function () {
+    it.only('sends correct options from options', function () {
         const runner = utils.getSetup(['js:dev:kittie --production', 'test/fixtures/tasks/promise.js --name="shane"'], {
             options: {
                 js: {

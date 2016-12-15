@@ -120,7 +120,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
     if (incoming.origin === TaskOriginTypes.InlineObject) {
         if (incoming.tasks) {
-            incoming.tasks = incoming.tasks.map(x => {
+            const taskItems = <any>incoming.tasks;
+            incoming.tasks = taskItems.map(x => {
                 if (parents.indexOf(x) > -1) {
                     return createCircularReferenceTask(incoming, parents);
                 }

@@ -3,6 +3,7 @@ const exec = require('child_process').exec;
 const utils = require('../../utils');
 const cb  = require('../../../dist/index')['default'];
 const TaskTypes  = require('../../../dist/task.resolve').TaskTypes;
+const TaskOriginTypes  = require('../../../dist/task.resolve').TaskOriginTypes;
 const TaskReportType = require('../../../dist/task.runner').TaskReportType;
 
 const absPath  = require('path').resolve(__dirname, '..', '..', '..', 'dist', 'public', 'index.js');
@@ -22,10 +23,12 @@ describe('Using a cbfile', function () {
             outputObserver: utils.nullOutput(),
             cbfile: 'test/fixtures/cbfile.js'
         });
-
-        assert.equal(runner.tasks.valid[0].tasks.length, 2); //has a callback also
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
-        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks.length, 1); // has a callback also
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[0].origin, TaskOriginTypes.InlineObject);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks[1].type, TaskTypes.InlineFunction);
     });
     it('works with inline functions', function () {
     	const runner = utils.getGenericSetup({
@@ -38,8 +41,11 @@ describe('Using a cbfile', function () {
         assert.equal(runner.tasks.valid.length, 1);
         assert.equal(runner.tasks.valid[0].tasks.length, 2);
         assert.equal(runner.tasks.valid[0].tasks[0].rawInput, 'kittie');
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
-        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.InlineFunction);
+
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
     });
     it('works with options', function () {
         const runner = utils.run({
