@@ -66,7 +66,10 @@ export interface TaskLiteral {
 let objectCount = 0;
 export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
-    if (taskLiteral.tasks && taskLiteral.tasks.length) {
+    /**
+     * Any value on the 'tasks' property
+     */
+    if (taskLiteral.tasks) {
 
         const name = 'AnonObject_' + objectCount++;
 
@@ -168,6 +171,11 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      */
     const baseTaskName = splitTask[0];
     const subTasks = splitTask.slice(1);
+    const isParentName = /^\(.+?\)$/.test(baseTaskName);
+    const normalisedTaskName = (function() {
+        if (isParentName) return baseTaskName.slice(1, -1);
+        return baseTaskName;
+    })();
 
     /**
      * Create the base task
@@ -177,9 +185,9 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         cbflags: split.cbflags,
         query: split.query,
         flags: split.flags,
-        baseTaskName,
+        baseTaskName: normalisedTaskName,
         subTasks,
-        taskName: baseTaskName,
+        taskName: normalisedTaskName,
         rawInput: <string>taskName
     });
 

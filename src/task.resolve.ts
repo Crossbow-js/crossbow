@@ -4,7 +4,7 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
+import {locateModule, removeTrailingNewlines, isPlainObject, getPossibleTaskNames} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask, handleObjectInput, handleArrayInput} from "./task.preprocess";
@@ -67,7 +67,7 @@ const defaultTask = <Task>{
     ifChanged:       [],
     options:         {}
 };
-
+let count = 0;
 /**
  * Entry point for resolving the task tree from any given point
  */
@@ -99,84 +99,46 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return incoming;
     }
 
-    /**
-     * A 'toplevelValue' is when the current baseTaskName matches a key
-     * in the given task definitions. This is classed an alias and we
-     * may want to handle sub-task resolution differently depending
-     * on when that value is.
-     *
-     * eg: If the user ran
-     *   $ crossbow run js
-     *
-     * and there's task config like:
-     *   js: ['task1', 'task2']
-     *
-     * -> Then the value is an array (2 items) that need resolving
-     * themselves and setting as children.
-     * @type {any}
-     */
-    let toplevelValue = getTopLevelValue(incoming, trigger);
+    if (incoming.type === TaskTypes.ParentGroup) {
+        const subtask       = incoming.subTasks[0];
+        const topLevelValue = _.get(trigger.input.tasks, [`(${incoming.baseTaskName})`], {});
+        const toResolve     = (subtask === '*') ? Object.keys(topLevelValue) : [subtask];
 
-    /**
-     * There's a special case where the toplevel property of a task
-     * maybe a group definition, like
-     *
-     * js:
-     *  - tasks: ['one', 'two']
-     *    description: 'Some description'
-     *    runMode: 'parallel'
-     *
-     * In this case, we want to resolve 'one' and 'two' as children,
-     * and not the object literal itself. A common use-case is when
-     * you want to be able to provide a description for group-level tasks
-     * but normally this is only possible on a per-task basis
-     * @type {Task|Task}
-     */
-    incoming = (function () {
-        if (isPlainObject(toplevelValue)) {
-
-            /**
-             * if the tasks property exists, it's just a TaskGroup object with tasks
-             */
-            if (toplevelValue.tasks) {
-                return createTask(_.merge(incoming, toplevelValue));
+        incoming.tasks = toResolve.reduce((acc,x) => {
+            const match = _.get(topLevelValue, [x]);
+            if (match) {
+                const combinedName = `${incoming.baseTaskName}:${x}`;
+                return acc.concat([].concat(match).map(x => {
+                    if (parents.indexOf(combinedName) > -1) {
+                        return createCircularReferenceTask(incoming, parents);
+                    }
+                    return createFlattenedTask(x, parents.concat(combinedName), trigger);
+                }));
             }
+        }, []);
+    }
 
-            if (incoming.type === TaskTypes.ParentGroup) {
-                return incoming;
+    if (incoming.origin === TaskOriginTypes.InlineObject) {
+        if (incoming.tasks) {
+            incoming.tasks = incoming.tasks.map(x => {
+                if (parents.indexOf(x) > -1) {
+                    return createCircularReferenceTask(incoming, parents);
+                }
+                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger)
+            });
+        }
+    }
+
+    const toplevelValue = getTopLevelValue(incoming, trigger);
+
+    if (toplevelValue && incoming.type !== TaskTypes.ParentGroup) {
+        incoming.tasks = [].concat(toplevelValue).map(x => {
+            if (parents.indexOf(x) > -1) {
+                return createCircularReferenceTask(incoming, parents);
             }
-        }
-        return incoming;
-    })();
-
-    /**
-     * Determine which sub tasks need converting as children.
-     * Based on what was explained above, we may want to pass the
-     * top level Value, or may want to use the tasks value directly
-     * @type {Array}
-     */
-    const toConvert = (function () {
-        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineArray) {
-            return incoming.tasks;
-        }
-        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineObject) {
-            return incoming.tasks;
-        }
-        if (toplevelValue == undefined) return [];
-        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
-            return [].concat(toplevelValue.tasks);
-        }
-        if (typeof toplevelValue === 'function') {
-            return [];
-        }
-        return [].concat(toplevelValue);
-    })();
-
-    /**
-     * Add child tasks
-     * @type {Array}
-     */
-    incoming.tasks = getTasks(toConvert, incoming, trigger, parents);
+            return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+        });
+    }
 
     /**
      * @type {CBFunction[]}
@@ -259,103 +221,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      */
     incoming.parents = parents;
 
-    return incoming
-}
-
-/**
- * Set child tasks
- * @type {Task[]}
- */
-function getTasks(items, incoming, trigger, parents) {
-
-    if (!items.length) {
-        return [];
-    }
-
-    return items.reduce((acc, taskItem) => {
-
-        if (Array.isArray(taskItem)) {
-            const out = handleArrayInput(taskItem, trigger.input, parents);
-            out.tasks = out.tasks.map(item => createFlattenedTask(item, parents.concat(incoming.baseTaskName), trigger));
-            return acc.concat(out);
-        }
-
-        if (parents.indexOf(taskItem) > -1) {
-            return acc.concat(createCircularReferenceTask(incoming, parents));
-        }
-
-        function extracted(match, subTaskName) {
-            const newTask = (function () {
-                if (isPlainObject(match)) {
-                    return _.merge({}, match, {
-                        baseTaskName: subTaskName,
-                        flags: incoming.flags,
-                        query: incoming.query,
-                        options: incoming.options
-                    });
-                }
-                return {
-                    tasks: [].concat(match),
-                    baseTaskName: subTaskName,
-                    flags: incoming.flags,
-                    query: incoming.query,
-                    options: incoming.options
-                };
-            })();
-
-            const flattenedTask = createFlattenedTask(newTask, parents.concat(incoming.baseTaskName), trigger);
-            flattenedTask.baseTaskName = subTaskName;
-            flattenedTask.taskName = subTaskName;
-            flattenedTask.rawInput = subTaskName;
-
-            return acc.concat(flattenedTask);
-        }
-
-        if (incoming.type === TaskTypes.ParentGroup && isPlainObject(taskItem) && Object.keys(taskItem)) {
-
-            if (incoming.subTasks.length) {
-
-                if (incoming.subTasks[0] === '*') {
-                    const output = Object.keys(taskItem).reduce(function (acc, keyName) {
-                        const match = _.get(taskItem, keyName);
-                        if (match) {
-                            return acc.concat(extracted(match, keyName));
-                        }
-                        return acc;
-                    }, []);
-                    return acc.concat(output);
-                }
-
-                const match = _.get(taskItem, incoming.subTasks);
-
-                if (match) {
-                    return acc.concat(extracted(match, incoming.subTasks[incoming.subTasks.length - 1]));
-                }
-            }
-            return acc;
-        }
-
-        const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
-
-        /**
-         * if a user has
-         *   tasks:
-         *      js: 'sometask:op1:op2'
-         *
-         *  And calls
-         *    $ cb js@p
-         *
-         *  The @p flag (parallel) need to be applied the resulting tasks
-         *  that are created from the above call.
-         *
-         */
-        if (flattenedTask.subTasks.length && !flattenedTask.cbflags.length) {
-            flattenedTask.runMode = incoming.runMode;
-        }
-
-        return acc.concat(flattenedTask);
-
-    }, []);
+    return incoming;
 }
 
 /**

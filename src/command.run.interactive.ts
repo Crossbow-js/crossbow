@@ -1,5 +1,4 @@
-
-import {isInternal, getLongestTaskName, isParentGroupName, getChildItems, getPossibleTaskNames} from "./task.utils";
+import {isInternal, getLongestTaskName, getPossibleTaskNames} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 import Immutable = require('immutable');
