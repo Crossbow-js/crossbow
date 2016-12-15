@@ -119,7 +119,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         groups.forEach(function(group) {
             lines.push('');
-            lines.push(`{bgGreen: ${group.title} `);
+            lines.push(`{green.underline:${group.title} `);
             lines.push.apply(lines, getSimpleTaskList(group.tasks.valid, longestName));
         });
 
@@ -743,7 +743,7 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
     let errorCount = 0;
     const toLog = getTasks(tasks, [], 0);
     const archy = require('archy');
-    const output = archy({label: `{bgGreen: ${title} }`, nodes: toLog});
+    const output = archy({label: `{green.underline:${title} }`, nodes: toLog});
 
     return [
         '',
