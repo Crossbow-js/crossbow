@@ -1,4 +1,4 @@
-import {Task} from "./task.resolve";
+import {Task, getTopLevelValue} from "./task.resolve";
 import parse from './cli.parse';
 import {CrossbowInput} from "./index";
 import {
@@ -170,26 +170,43 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * @type {string}
      */
     const baseTaskName = splitTask[0];
-    const subTasks = splitTask.slice(1);
+    const subTasks     = splitTask.slice(1);
     const isParentName = /^\(.+?\)$/.test(baseTaskName);
     const normalisedTaskName = (function() {
         if (isParentName) return baseTaskName.slice(1, -1);
         return baseTaskName;
     })();
 
+    // Before we create the base task, check if this is an alias
+    // to another top-level task
+    // console.log('-->', normalisedTaskName);
+    const topLevel = getTopLevelValue(normalisedTaskName, input);
+
     /**
      * Create the base task
      * @type {IncomingTask}
      */
-    const incomingTask = createTask({
-        cbflags: split.cbflags,
-        query: split.query,
-        flags: split.flags,
-        baseTaskName: normalisedTaskName,
-        subTasks,
-        taskName: normalisedTaskName,
-        rawInput: <string>taskName
-    });
+    const incomingTask = (function(){
+        const base = createTask({
+            cbflags: split.cbflags,
+            query: split.query,
+            flags: split.flags,
+            baseTaskName: normalisedTaskName,
+            subTasks,
+            taskName: normalisedTaskName,
+            rawInput: <string>taskName
+        });
+        if (isPlainObject(topLevel) && topLevel.tasks) {
+            /**
+             * Create the base task
+             */
+            return _.merge({}, base, topLevel, {
+                origin: TaskOriginTypes.InlineChildObject,
+                type: TaskTypes.TaskGroup
+            });
+        }
+        return base;
+    })();
 
     /**
      * Is this a parent group?
@@ -322,12 +339,14 @@ function getQuery (splitQuery: string[]): {} {
 /**
  * Apply any transformations to options based on
  * CB flags
+ * // todo refactor this
  * @param task
  * @returns {any}
  */
 function processFlags(task: Task): Task {
 
     const runMode = (function () {
+        if (task.runMode === TaskRunModes.parallel) return TaskRunModes.parallel;
         if (task.cbflags.indexOf('p') > -1) {
             return TaskRunModes.parallel;
         }

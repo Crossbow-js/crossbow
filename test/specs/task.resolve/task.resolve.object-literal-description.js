@@ -31,6 +31,7 @@ describe('task.resolve object literals with task description', function () {
                 haml: '@npm sleep 0.1'
             }
         });
+
         assert.equal(runner.tasks.valid[0].description, 'Run both tasks in sequence');
         assert.equal(runner.tasks.valid[0].tasks[0].description, '');
         assert.equal(runner.tasks.valid[0].tasks[1].description, '');

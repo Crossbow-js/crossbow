@@ -24,9 +24,11 @@ describe('task.resolve (inline-functions)', function () {
                 kittie: function () {}
             }
         });
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
         assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
-        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.series);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
     });
     it('with multiple inline functions with cbflags', function () {
         const runner = utils.getSetup(['js@p'], {
@@ -37,9 +39,10 @@ describe('task.resolve (inline-functions)', function () {
             }
         });
         assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
         assert.equal(runner.tasks.valid[0].runMode, TaskRunModes.parallel);
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
-        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
     });
     it('with flags', function () {
         const runner = utils.getSetup(['js'], {
@@ -63,7 +66,7 @@ describe('task.resolve (inline-functions)', function () {
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items.length, 2);
     });
-    it.only('sends correct options from options', function () {
+    it('sends correct options from options', function () {
         const runner = utils.getSetup(['js:dev:kittie --production', 'test/fixtures/tasks/promise.js --name="shane"'], {
             options: {
                 js: {

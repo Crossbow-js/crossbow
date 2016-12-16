@@ -32,13 +32,14 @@ export enum TaskTypes {
 }
 
 export enum TaskOriginTypes {
-    CrossbowConfig = <any>"CrossbowConfig",
-    NpmScripts     = <any>"NpmScripts",
-    FileSystem     = <any>"FileSystem",
-    Adaptor        = <any>"Adaptor",
-    InlineFunction = <any>"InlineFunction",
-    InlineArray    = <any>"InlineArray",
-    InlineObject   = <any>"InlineObject"
+    CrossbowConfig    = <any>"CrossbowConfig",
+    NpmScripts        = <any>"NpmScripts",
+    FileSystem        = <any>"FileSystem",
+    Adaptor           = <any>"Adaptor",
+    InlineFunction    = <any>"InlineFunction",
+    InlineArray       = <any>"InlineArray",
+    InlineObject      = <any>"InlineObject",
+    InlineChildObject = <any>"InlineChildObject"
 }
 
 export enum TaskRunModes {
@@ -118,7 +119,8 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         }, []);
     }
 
-    if (incoming.origin === TaskOriginTypes.InlineObject) {
+    if (incoming.origin === TaskOriginTypes.InlineObject || incoming.origin === TaskOriginTypes.InlineChildObject) {
+        // todo top level object lookup
         if (incoming.tasks) {
             const taskItems = <any>incoming.tasks;
             incoming.tasks = taskItems.map(x => {
@@ -130,15 +132,18 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         }
     }
 
-    const toplevelValue = getTopLevelValue(incoming, trigger);
+    if (incoming.type !== TaskTypes.ParentGroup && incoming.origin !== TaskOriginTypes.InlineChildObject) {
 
-    if (toplevelValue && incoming.type !== TaskTypes.ParentGroup) {
-        incoming.tasks = [].concat(toplevelValue).map(x => {
-            if (parents.indexOf(x) > -1) {
-                return createCircularReferenceTask(incoming, parents);
-            }
-            return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
-        });
+        const toplevelValue = getTopLevelValue(incoming.baseTaskName, trigger.input);
+
+        if (toplevelValue) {
+            incoming.tasks = [].concat(toplevelValue).map(x => {
+                if (parents.indexOf(x) > -1) {
+                    return createCircularReferenceTask(incoming, parents);
+                }
+                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+            });
+        }
     }
 
     /**
@@ -147,7 +152,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     incoming.inlineFunctions = (function () {
         if (incoming.inlineFunctions.length) return incoming.inlineFunctions;
         if (incoming.tasks.length)           return [];
-        const toplevel = getTopLevelValue(incoming, trigger);
+        const toplevel = getTopLevelValue(incoming.baseTaskName, trigger.input);
         if (typeof toplevel === 'function') {
             return [toplevel];
         }
@@ -254,26 +259,26 @@ export function createCircularReferenceTask(incoming: Task, parents: string[]): 
 /**
  * Match a task name with a top-level value from 'tasks'
  */
-function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
+export function getTopLevelValue(baseTaskName: string, input: CrossbowInput): any {
 
-    const exactMatch = trigger.input.tasks[incoming.baseTaskName];
+    const exactMatch = input.tasks[baseTaskName];
 
     if (exactMatch !== undefined) {
         return exactMatch;
     }
 
-    const maybeGroup = Object.keys(trigger.input.tasks)
-            .filter(x => x.indexOf(`(${incoming.baseTaskName})`) > -1);
+    const maybeGroup = Object.keys(input.tasks)
+            .filter(x => x.indexOf(`(${baseTaskName})`) > -1);
 
     if (maybeGroup.length) {
-        return trigger.input.tasks[maybeGroup[0]];
+        return input.tasks[maybeGroup[0]];
     }
 
-    const maybes = Object.keys(trigger.input.tasks)
-        .filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
+    const maybes = Object.keys(input.tasks)
+        .filter(taskName => taskName.match(new RegExp(`^${baseTaskName}($|@(.+?))`)) !== null);
 
     if (maybes.length) {
-        return trigger.input.tasks[maybes[0]];
+        return input.tasks[maybes[0]];
     }
 
     return undefined;

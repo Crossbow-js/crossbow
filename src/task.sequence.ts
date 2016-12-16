@@ -48,7 +48,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                      * Build the list of tasks/groups
                      * @type {Array}
                      */
-                    const output = resolveGroupOfTasks(task);
+                    const output = resolveGroupOfTasks(task, trigger.input);
 
                     /**
                      * Wrap as parallel group if this task has a runMode of 'parallel'
@@ -204,7 +204,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
         });
     }
 
-    function resolveGroupOfTasks (task: Task) {
+    function resolveGroupOfTasks (task: Task, input) {
         if (task.type === TaskTypes.ParentGroup) {
             const opts = _.merge(
                 {},
@@ -220,6 +220,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 {},
                 task.options._default,
                 _.get(task.options, subTaskName, {}),
+                _.get(input.options, [task.baseTaskName, subTaskName], {}),
                 task.query,
                 task.flags
             );
