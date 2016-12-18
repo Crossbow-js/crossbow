@@ -105,18 +105,24 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         const topLevelValue = _.get(trigger.input.tasks, [`(${incoming.baseTaskName})`], {});
         const toResolve     = (subtask === '*') ? Object.keys(topLevelValue) : [subtask];
 
-        incoming.tasks = toResolve.reduce((acc,x) => {
-            const match = _.get(topLevelValue, [x]);
-            if (match) {
-                const combinedName = `${incoming.baseTaskName}:${x}`;
-                return acc.concat([].concat(match).map(x => {
-                    if (parents.indexOf(combinedName) > -1) {
-                        return createCircularReferenceTask(incoming, parents);
-                    }
-                    return createFlattenedTask(x, parents.concat(combinedName), trigger);
-                }));
-            }
-        }, []);
+        if (incoming.tasks.length) {
+            const combinedName = `${incoming.baseTaskName}:${incoming.subTasks[0]}`;
+            incoming.tasks = incoming.tasks.map(x => createFlattenedTask(x, parents.concat(combinedName), trigger))
+        } else {
+            incoming.tasks = toResolve.reduce((acc,x) => {
+                const match = _.get(topLevelValue, [x]);
+                if (match) {
+                    const combinedName = `${incoming.baseTaskName}:${x}`;
+                    return acc.concat([].concat(match).map(x => {
+                        if (parents.indexOf(combinedName) > -1) {
+                            return createCircularReferenceTask(incoming, parents);
+                        }
+                        return createFlattenedTask(x, parents.concat(combinedName), trigger);
+                    }));
+                }
+            }, []);
+        }
+
     }
 
     if (incoming.origin === TaskOriginTypes.InlineObject || incoming.origin === TaskOriginTypes.InlineChildObject) {

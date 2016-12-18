@@ -44,6 +44,17 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
         assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.Task);
     });
+    it('can resolve sub task correctly when top-level Object given', function () {
+        const runner = utils.getSetup(['js:other@p'], input());
+        assert.equal(runner.tasks.valid[0].baseTaskName, 'js');
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.ParentGroup);
+        assert.equal(runner.tasks.valid[0].tasks.length, 1);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.Adaptor);
+
+        assert.equal(runner.sequence[0].type, SequenceItemTypes.ParallelGroup);
+        assert.equal(runner.sequence[0].items.length, 1);
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
+    });
     it('can resolve sub task correctly with flags', function () {
         var called = false;
         var callCount = 0;

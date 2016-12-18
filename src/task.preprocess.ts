@@ -172,6 +172,15 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
     const baseTaskName = splitTask[0];
     const subTasks     = splitTask.slice(1);
     const isParentName = /^\(.+?\)$/.test(baseTaskName);
+    const inputMatchesParentName = (function() {
+        if (input.tasks[`(${splitTask[0]})`]) {
+            return true;
+        }
+        if (splitTask[0].match(/^\(.+?\)$/) && input.tasks[splitTask[0]]) {
+            return true;
+        }
+    })();
+
     const normalisedTaskName = (function() {
         if (isParentName) return baseTaskName.slice(1, -1);
         return baseTaskName;
@@ -179,13 +188,23 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
 
     // Before we create the base task, check if this is an alias
     // to another top-level task
-    // console.log('-->', normalisedTaskName);
-    const topLevel        = getTopLevelValue(normalisedTaskName, input);
-    const topLevelOptions = _.get(input.options, [normalisedTaskName], {});
+    const topLevel = (function(){
+        const base = getTopLevelValue(normalisedTaskName, input);
+        if (inputMatchesParentName && subTasks.length) {
+            return _.get(base, [subTasks], {});
+        }
+        return base;
+    })();
+
+    const topLevelOptions = (function() {
+        if (inputMatchesParentName && subTasks.length) {
+            return _.get(input.options, [normalisedTaskName, ...subTasks], {});
+        }
+        return _.get(input.options, [normalisedTaskName], {});
+    })();
 
     /**
      * Create the base task
-     * @type {IncomingTask}
      */
     const incomingTask = (function(){
         const base = createTask({
@@ -205,20 +224,13 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
              */
             return _.merge({}, base, topLevel, {
                 origin: TaskOriginTypes.InlineChildObject,
-                type: TaskTypes.TaskGroup
+                type: inputMatchesParentName ? TaskTypes.ParentGroup : TaskTypes.TaskGroup
             });
         }
         return base;
     })();
 
-    /**
-     * Is this a parent group?
-     */
-    if (input.tasks[`(${splitTask[0]})`]) {
-        incomingTask.type = TaskTypes.ParentGroup;
-    }
-
-    if (splitTask[0].match(/^\(.+?\)$/) && input.tasks[splitTask[0]]) {
+    if (inputMatchesParentName) {
         incomingTask.type = TaskTypes.ParentGroup;
     }
 
