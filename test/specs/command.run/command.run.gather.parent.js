@@ -13,7 +13,10 @@ tasks:
       - '@npm webpack'
     webpack: '@npm webpack'
     deploy: '@npm webpack'
-    
+    other: 
+      tasks: 
+        - '@sh dig browsersync.io'
+      description: 'My Task'
 options:
   js:
     clean: 
@@ -27,24 +30,19 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.tasks.invalid[0].errors.length, 1);
         assert.equal(runner.tasks.invalid[0].errors[0].type, TaskErrors.SubtaskNotProvidedForParent);
     });
-    it.skip('can resolve sub task correctly', function () {
+    it('can resolve sub task correctly', function () {
         const runner = utils.getSetup(['js:clean'], input());
 
         assert.equal(runner.tasks.valid[0].baseTaskName, 'js');
         assert.equal(runner.tasks.valid[0].type, TaskTypes.ParentGroup);
-        assert.equal(runner.tasks.valid[0].tasks.length, 1);
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.TaskGroup);
-        assert.equal(runner.tasks.valid[0].tasks[0].baseTaskName, 'clean');
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks.length, 2);
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.Adaptor);
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks[1].type, TaskTypes.Adaptor);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.Adaptor);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.Adaptor);
 
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
-        assert.equal(runner.sequence[0].items.length, 1);
-        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.SeriesGroup);
-        assert.equal(runner.sequence[0].items[0].items.length, 2);
-        assert.equal(runner.sequence[0].items[0].items[0].type, SequenceItemTypes.Task);
-        assert.equal(runner.sequence[0].items[0].items[1].type, SequenceItemTypes.Task);
+        assert.equal(runner.sequence[0].items.length, 2);
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
+        assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.Task);
     });
     it('can resolve sub task correctly with flags', function () {
         var called = false;
