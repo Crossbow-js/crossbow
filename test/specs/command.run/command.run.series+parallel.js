@@ -1,4 +1,6 @@
 const TaskReportType = require('../../../dist/task.runner').TaskReportType;
+const TaskTypes = require('../../../dist/task.resolve').TaskTypes;
+const SequenceItemTypes = require('../../../dist/task.sequence.factories').SequenceItemTypes;
 const assert         = require('chai').assert;
 const utils          = require('../../utils');
 
@@ -143,19 +145,19 @@ describe("Running mix of tasks in seq + parallel", function () {
             }
         });
 
-        assert.equal(runner.sequence[0].type, 'SeriesGroup');
+        assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].taskName, 'build');
         assert.equal(runner.sequence[0].items.length, 2);
 
-        assert.equal(runner.sequence[0].items[0].type, 'Task');
-        assert.equal(runner.sequence[0].items[1].type, 'SeriesGroup');
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].items[0].type, SequenceItemTypes.Task);
+
         assert.equal(runner.sequence[0].items[1].taskName, 'js');
+        assert.equal(runner.sequence[0].items[1].items[0].type, SequenceItemTypes.ParallelGroup);
+        assert.equal(runner.sequence[0].items[1].items[0].items[0].type, SequenceItemTypes.Task);
+        assert.equal(runner.sequence[0].items[1].items[0].items[1].type, SequenceItemTypes.Task);
 
-        assert.equal(runner.sequence[0].items[1].items[0].type, 'ParallelGroup');
-        assert.equal(runner.sequence[0].items[1].items[0].items[0].type, 'Task');
-        assert.equal(runner.sequence[0].items[1].items[0].items[1].type, 'Task');
-
-        assert.equal(runner.sequence[0].items[1].items[0].type, 'ParallelGroup');
+        assert.equal(runner.sequence[0].items[1].items[0].type, SequenceItemTypes.ParallelGroup);
         assert.equal(runner.sequence[0].items[1].items[0].items.length, 2);
     });
 });

@@ -123,7 +123,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         // todo top level object lookup
         if (incoming.tasks) {
             const taskItems = <any>incoming.tasks;
-            incoming.tasks = taskItems.map(x => {
+            incoming.tasks = [].concat(taskItems).map(x => {
                 if (parents.indexOf(x) > -1) {
                     return createCircularReferenceTask(incoming, parents);
                 }
@@ -141,7 +141,24 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
                 if (parents.indexOf(x) > -1) {
                     return createCircularReferenceTask(incoming, parents);
                 }
-                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+                if (Array.isArray(x)) {
+                    const thisParents = parents.concat(incoming.baseTaskName);
+                    const task = createTask({
+                        runMode: TaskRunModes.parallel,
+                        tasks: x.map(x => createFlattenedTask(x, thisParents, trigger)),
+                        parents: thisParents,
+                        valid: true,
+                        type: TaskTypes.TaskGroup
+                    });
+                    return task;
+                }
+                const out = createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
+                if (incoming.runMode === TaskRunModes.parallel) {
+                    if (out.tasks.length > 1 || out.subTasks.length > 1) {
+                        out.runMode = incoming.runMode;
+                    }
+                }
+                return out;
             });
         }
     }

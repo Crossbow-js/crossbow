@@ -35,7 +35,7 @@ describe('Detecting Circular references in task definitions', function () {
             }
         });
 
-        fs.writeFileSync('_tasks.json', JSON.stringify(runner.tasks.all, null, 2));
+        // fs.writeFileSync('_tasks.json', JSON.stringify(runner.tasks.all, null, 2));
         // console.log(runner.tasks.invalid);
         // assert.equal(runner.tasks.invalid[0].tasks[0].tasks[0].errors.length, 0);
         // assert.equal(runner.tasks.invalid[0].tasks[0].tasks[1].errors.length, 0);

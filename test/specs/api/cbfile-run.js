@@ -23,12 +23,13 @@ describe('Using a cbfile', function () {
             outputObserver: utils.nullOutput(),
             cbfile: 'test/fixtures/cbfile.js'
         });
-        assert.equal(runner.tasks.valid[0].tasks.length, 1); // has a callback also
-        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.TaskGroup);
-        assert.equal(runner.tasks.valid[0].tasks[0].origin, TaskOriginTypes.InlineObject);
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks.length, 2);
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks[0].type, TaskTypes.InlineFunction);
-        assert.equal(runner.tasks.valid[0].tasks[0].tasks[1].type, TaskTypes.InlineFunction);
+
+        // assert.equal(runner.tasks.valid[0].tasks.length, 1); // has a callback also
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].origin, TaskOriginTypes.InlineChildObject);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.InlineFunction);
     });
     it('works with inline functions', function () {
     	const runner = utils.getGenericSetup({

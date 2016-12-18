@@ -120,8 +120,7 @@ describe('Running tasks from inline-functions', function () {
             .subscribe(function () {
                 assert.equal(opts[0].dev.input,  'kittie', 'first JS "dev" task');
                 assert.equal(opts[0].prod.input, 'sally', 'first JS "dev" task');
-                assert.equal(opts[1].dev.input,  'kittie', 'first JS "dev" task');
-                assert.equal(opts[1].prod.input, 'sally', 'first JS "dev" task');
+                assert.deepEqual(opts[1],  {}, 'first CSS task');
                 done();
             });
     });
@@ -155,9 +154,9 @@ describe('Running tasks from inline-functions', function () {
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
-                assert.equal(opts[1].input, 'kittie', 'first CSS "dev" task');
-                assert.equal(opts[2].input, 'sally',  'second CSS "dev" task');
-                assert.equal(opts[3].input, 'sally',  'second CSS "dev" task');
+                assert.deepEqual(opts[1], {}, 'first CSS task');
+                assert.equal(opts[2].input, 'sally',  'second JS "prod" task');
+                assert.deepEqual(opts[3], {}, 'second CSS task');
                 done();
             });
     });
@@ -191,9 +190,9 @@ describe('Running tasks from inline-functions', function () {
             .toArray()
             .subscribe(function () {
                 assert.equal(opts[0].input, 'kittie', 'first JS "dev" task');
-                assert.equal(opts[1].input, 'kittie', 'first CSS "dev" task');
-                assert.equal(opts[2].input, 'sally',  'second CSS "dev" task');
-                assert.equal(opts[3].input, 'sally',  'second CSS "dev" task');
+                assert.deepEqual(opts[1], {}, 'first CSS task');
+                assert.equal(opts[2].input, 'sally',  'second JS "prod" task');
+                assert.deepEqual(opts[3], {}, 'second CSS task');
                 done();
             });
     });

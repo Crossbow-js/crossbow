@@ -180,7 +180,8 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
     // Before we create the base task, check if this is an alias
     // to another top-level task
     // console.log('-->', normalisedTaskName);
-    const topLevel = getTopLevelValue(normalisedTaskName, input);
+    const topLevel        = getTopLevelValue(normalisedTaskName, input);
+    const topLevelOptions = _.get(input.options, [normalisedTaskName], {});
 
     /**
      * Create the base task
@@ -194,8 +195,10 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
             baseTaskName: normalisedTaskName,
             subTasks,
             taskName: normalisedTaskName,
-            rawInput: <string>taskName
+            rawInput: <string>taskName,
+            options: topLevelOptions
         });
+
         if (isPlainObject(topLevel) && topLevel.tasks) {
             /**
              * Create the base task

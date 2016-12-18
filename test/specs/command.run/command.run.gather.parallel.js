@@ -111,7 +111,8 @@ describe('Gathering run tasks, grouped by runMode', function () {
 
         assert.equal(runner.sequence[0].items[1].items[0].type, types.SeriesGroup);
         assert.equal(runner.sequence[0].items[1].items[1].type, types.SeriesGroup);
-        assert.equal(runner.sequence[0].items[1].items[2].type, types.Task);
+        assert.equal(runner.sequence[0].items[1].items[2].type, types.SeriesGroup);
+        assert.equal(runner.sequence[0].items[1].items[2].items[0].type, types.Task);
     });
     it('produces reports in the correct order', function () {
         var runner = utils.run({input: ['run', 'build-all']}, {
@@ -225,7 +226,8 @@ describe('Gathering run tasks, grouped by runMode', function () {
         ]);
     });
     it('can run in parallel groups in sequence (4 types)', function () {
-        var runner = utils.run({input:['run', 'js', 'css', 'img', 'img2@p']}, {
+        // var runner = utils.getSetup(['js', 'css', 'img', 'img2@p'], {
+        var runner = utils.run({input: ['run', 'js', 'css', 'img', 'img2@p']}, {
             tasks: {
                 'js':  {
                     tasks: 'test/fixtures/tasks/simple.multi.js:*@p'
@@ -250,6 +252,7 @@ describe('Gathering run tasks, grouped by runMode', function () {
         });
 
         const reports  = utils.getReports(runner);
+
         assert.deepEqual(reports.map(x => x.type), [
             // js
             TaskReportType.start,
