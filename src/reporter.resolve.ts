@@ -14,6 +14,7 @@ import Rx = require('rx');
 import logger from './logger';
 import {WatchEvent} from "./watch.file-watcher";
 import {TasksCommandCompletionReport, TaskCommandSetup} from "./command.tasks";
+import {WatchersCommandOutput} from "./command.watchers";
 
 export interface Reporter {
     errors: {}[]
@@ -201,7 +202,7 @@ export interface WatcherTriggeredTasksCompletedReport extends IncomingReport {
     data: {index: number, taskCollection: TaskCollection, time: number}
 }
 export interface WatcherNamesReport extends IncomingReport {
-    data: {runners: WatchRunners, trigger: CommandTrigger}
+    data: WatchersCommandOutput
 }
 export interface NoFilesMatchedReport extends IncomingReport {
     data: {watcher: Watcher}

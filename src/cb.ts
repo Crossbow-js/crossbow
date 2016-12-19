@@ -275,6 +275,10 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                 if (setup.errors.length) {
                     return process.exit(1);
                 }
+                prepared.reportFn({
+                    type: ReportTypes.WatcherNames,
+                    data: setup
+                });
             });
     }
 

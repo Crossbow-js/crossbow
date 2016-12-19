@@ -307,30 +307,35 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.WatcherNames]: function (report: reports.WatcherNamesReport): string[] {
 
-        const {runners} = report.data;
+        const {watchTasks} = report.data;
 
-        const lines = ['{yellow:Available Watchers:}'];
+        const lines = ['', '{yellow:Available Watchers:}'];
 
-        runners.valid.forEach(function (runner) {
+        watchTasks.valid.forEach(function (watchTask) {
             lines.push('');
-            lines.push(`    {bold:Name}:     ${runner.parent}`);
-            lines.push(`    {bold:Patterns}: ${runner.patterns.map(_e).join(', ')}`);
-            lines.push(`    {bold:Tasks}:    ${runner.tasks.join(', ')}`);
+            lines.push(`    {bold:Name}:     {green.underline:${watchTask.name} }`);
+            watchTask.watchers.forEach(function (watcher, i) {
+                if (i > 0) {
+                    lines.push('    {gray:-----}');
+                }
+                lines.push(`    Patterns: {cyan:${watcher.patterns.map(_e).join(', ')}}`);
+                lines.push(`    Tasks:    {yellow:${watcher.tasks.join(', ')}}`);
+            });
         });
 
         lines.push(``);
         lines.push(`Run your watchers in the following way:`);
         lines.push(``);
 
-        runners.valid.forEach(function (runner) {
-            lines.push(`    {gray:$} crossbow watch {bold:${runner.parent}}`);
+        watchTasks.valid.forEach(function (watchTask) {
+            lines.push(`    {gray:$} crossbow watch {bold:${watchTask.name}}`);
         });
 
-        if (runners.valid.length > 1) {
+        if (watchTasks.valid.length > 1) {
             lines.push('');
             lines.push('Or run multiple watchers at once, such as:');
             lines.push(``);
-            lines.push('    {gray:$} crossbow watch ' + runners.valid.slice(0, 2).map(x => `{bold:${x.parent}}`).join(' '));
+            lines.push('    {gray:$} crossbow watch ' + watchTasks.valid.slice(0, 2).map(x => `{bold:${x.name}}`).join(' '));
             lines.push('');
         }
         return lines;

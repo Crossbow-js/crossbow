@@ -57,8 +57,6 @@ function execute(trigger: CommandTrigger): WatchersCommandComplete {
         });
     }
 
-    reporter({type: ReportTypes.WatcherNames, data: {runners, trigger}});
-
     return Rx.Observable.just({
         setup: {
             watchTasks,
