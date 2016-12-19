@@ -83,7 +83,7 @@ export function twoCol (tasks: Task[], longest: number): Array<string[]> {
             }
 
             if (task.type === TaskTypes.ParentGroup) {
-                return limit(taskPreviews(task.tasks[0]), desclength);
+                return limit(taskPreviews(task), desclength);
             }
 
             return limit(taskPreviews(task), desclength);
