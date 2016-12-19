@@ -332,10 +332,9 @@ export function longestString (col: string[]): number {
 }
 
 export function getLongestTaskName (tasks: Task[]): number {
-    return longestString(tasks.reduce((acc, task) => {
-
+    const taskNames = tasks.reduce((acc, task) => {
         if (task.type === TaskTypes.ParentGroup) {
-            return acc.concat(getChildTaskNames(task));
+            return acc.concat(`${task.baseTaskName}:${task.subTasks[0]}`);
         }
 
         if (task.runMode === TaskRunModes.parallel) {
@@ -343,7 +342,8 @@ export function getLongestTaskName (tasks: Task[]): number {
         }
 
         return acc.concat(task.baseTaskName);
-    }, []));
+    }, []);
+    return longestString(taskNames);
 }
 
 export function padLine(incoming, max?) {

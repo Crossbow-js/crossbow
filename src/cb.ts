@@ -22,7 +22,6 @@ import * as seq from "./task.sequence";
 import {SummaryReport} from "./reporter.resolve";
 import {TaskReportReport} from "./reporter.resolve";
 import {WatchTaskReport} from "./watch.file-watcher";
-import {getLongestTaskName} from "./task.utils";
 import {SimpleTaskListReport} from "./reporter.resolve";
 import {TaskTreeReport} from "./reporter.resolve";
 import {LogLevel} from "./reporters/defaultReporter";

@@ -1,10 +1,8 @@
 
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks, TaskTypes, TaskRunModes, Task} from './task.resolve';
-import {getSimpleTaskList} from "./reporters/task.list";
+import {resolveTasks, Tasks, Task} from './task.resolve';
 
 import Immutable = require('immutable');
 import Rx = require('rx');
@@ -19,7 +17,7 @@ export interface TaskGroup {
 }
 
 export interface TaskCommandSetup {
-    groups: TaskGroup[],
+    groups: TaskGroup[]
     tasks: Task[]
     errors: Error[]
 }

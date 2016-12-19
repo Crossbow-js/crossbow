@@ -114,8 +114,8 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
         const {groups, tasks} = report.data;
-        const lines       = [];
-        const longestName = getLongestTaskName(tasks);
+        const lines           = [];
+        const longestName     = getLongestTaskName(tasks);
 
         groups.forEach(function(group) {
             lines.push('');
