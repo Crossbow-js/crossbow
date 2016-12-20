@@ -203,6 +203,7 @@ describe('Adding options from _default ket', function () {
                 css: {
                     description: 'css',
                     options: {
+                        _default: {output: 'aww'},
                         prod: {input: 'input.scss'},
                         dev: {input: 'input-dev.scss'}
                     },
@@ -215,13 +216,17 @@ describe('Adding options from _default ket', function () {
         runner
             .toArray()
             .subscribe(function () {
-                assert.deepEqual(opts, [
-                    { output: 'app/css', input: 'app/js' },
-                    { prod: { input: 'input.scss' }, dev: { input: 'input-dev.scss' } },
-                    { output: 'app/css', input: './tmp' },
-                    { prod: { input: 'input.scss' }, dev: { input: 'input-dev.scss' } },
-                    { input: 'input-dev.scss' }
-                ]);
+
+                assert.deepEqual(opts[0].output, 'app/css', 'default');
+                assert.deepEqual(opts[0].input, 'app/js', 'from flag, overrides local');
+
+                assert.deepEqual(opts[1].output, 'aww', 'default css');
+
+                assert.deepEqual(opts[2], { output: 'app/css', input: './tmp' });
+                assert.deepEqual(opts[3].output, 'aww', 'default css');
+
+                assert.deepEqual(opts[4], { output: 'aww', input: 'input-dev.scss' });
+
                 done();
             });
     });

@@ -68,6 +68,21 @@ const defaultTask = <Task>{
     ifChanged:       [],
     options:         {}
 };
+
+function mergeOptions (incoming) {
+    return function (task: Task): Task {
+        return _.merge(task, {
+            env:     incoming.env,
+            options: _.merge({},
+                _.get(incoming.options, '_default', {}),
+                _.get(incoming.options, [...incoming.subTasks], {})
+            ),
+            flags:   incoming.flags,
+            query:   incoming.query
+        });
+    }
+}
+
 let count = 0;
 /**
  * Entry point for resolving the task tree from any given point
@@ -107,7 +122,9 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
         if (incoming.tasks.length) {
             const combinedName = `${incoming.baseTaskName}:${incoming.subTasks[0]}`;
-            incoming.tasks = incoming.tasks.map(x => createFlattenedTask(x, parents.concat(combinedName), trigger))
+            incoming.tasks = [].concat(incoming.tasks)
+                .map(x => createFlattenedTask(x, parents.concat(combinedName), trigger))
+                .map(mergeOptions(incoming))
         } else {
             incoming.tasks = toResolve.reduce((acc,x) => {
                 const match = _.get(topLevelValue, [x]);
@@ -129,12 +146,13 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         // todo top level object lookup
         if (incoming.tasks) {
             const taskItems = <any>incoming.tasks;
-            incoming.tasks = [].concat(taskItems).map(x => {
-                if (parents.indexOf(x) > -1) {
-                    return createCircularReferenceTask(incoming, parents);
-                }
-                return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger)
-            });
+            incoming.tasks = [].concat(taskItems)
+                .map(x => {
+                    if (parents.indexOf(x) > -1) {
+                        return createCircularReferenceTask(incoming, parents);
+                    }
+                    return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger)
+                });
         }
     }
 

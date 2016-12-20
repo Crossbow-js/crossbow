@@ -99,6 +99,37 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
         assert.equal(runner.sequence[0].items[1].type, SequenceItemTypes.Task);
     });
+    it('can resolve single parent+child task with inline object', function () {
+        const runner = utils.getSetup([
+            'shane?prod=true'
+        ], {
+            tasks: {
+                '(js)': {
+                    clean: {
+                        tasks: '@npm sleep 1',
+                        env: {
+                            SOMETINGS: 'here'
+                        },
+                        options: {
+                            name: 'kittie'
+                        }
+                    }
+                },
+                shane: {
+                    description: "Clean it",
+                    tasks: '@npm sleep 1',
+                    env: {
+                        sometings: 'here'
+                    },
+                    options: {
+                        opt1: 'here'
+                    }
+                }
+            }
+        });
+        assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
+        assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
+    });
     it.skip('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());
         assert.equal(runner.tasks.invalid[0].errors.length, 1);

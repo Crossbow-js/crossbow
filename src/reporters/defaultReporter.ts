@@ -119,7 +119,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         groups.forEach(function(group) {
             lines.push('');
-            lines.push(`{green.underline:${group.title} `);
+            lines.push(`{green.underline:${group.title}`);
             lines.push.apply(lines, getSimpleTaskList(group.tasks.valid, longestName));
         });
 
@@ -313,7 +313,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         watchTasks.valid.forEach(function (watchTask) {
             lines.push('');
-            lines.push(`    {bold:Name}:     {green.underline:${watchTask.name} }`);
+            lines.push(`    {bold:Name}:     {green.underline:${watchTask.name}}`);
             watchTask.watchers.forEach(function (watcher, i) {
                 if (i > 0) {
                     lines.push('    {gray:-----}');

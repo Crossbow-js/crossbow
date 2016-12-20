@@ -1,6 +1,6 @@
 var _prefix = '{magenta.bold:»  }';
 var logger = require('eazy-logger').Logger({
-    prefix: _prefix,
+    // prefix: _prefix,
     useLevelPrefixes: false,
     logLevel: 'info',
     levels: {
