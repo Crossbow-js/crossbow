@@ -1,3 +1,4 @@
+require('source-map-support').install();
 const assert = require('chai').assert;
 const utils = require("../../utils");
 const yaml = require("js-yaml");
@@ -129,6 +130,19 @@ describe('Gathering run tasks for ParentGroups (1)', function () {
         });
         assert.equal(runner.sequence[0].type, SequenceItemTypes.SeriesGroup);
         assert.equal(runner.sequence[0].items[0].type, SequenceItemTypes.Task);
+    });
+    it('can resolve give error when parent alias used without child', function () {
+        const runner = utils.getSetup([
+            'shane'
+        ], {
+            tasks: {
+                '(js)': {dev: utils.task(100)},
+                shane: 'js'
+            }
+        });
+        assert.equal(runner.tasks.all[0].tasks[0].errors.length, 1);
+        assert.equal(runner.tasks.all[0].tasks[0].errors[0].type, 'SubtaskNotProvidedForParent');
+        assert.deepEqual(runner.tasks.all[0].tasks[0].errors[0].available, ['dev']);
     });
     it.skip('can resolve sub task correctly when full format given eg: (js)', function () {
         const runner = utils.getSetup(['(js)'], input());

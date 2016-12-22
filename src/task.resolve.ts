@@ -137,9 +137,9 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
                         return createFlattenedTask(x, parents.concat(combinedName), trigger);
                     }));
                 }
+                return acc;
             }, []);
         }
-
     }
 
     if (incoming.origin === TaskOriginTypes.InlineObject || incoming.origin === TaskOriginTypes.InlineChildObject) {
