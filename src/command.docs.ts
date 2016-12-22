@@ -11,7 +11,7 @@ import {readdirSync} from "fs";
 import * as file from "./file.utils";
 import {DocsAddedToFileReport} from "./reporter.resolve";
 import {getLabel} from "./reporters/defaultReporter";
-import {compile} from './logger';
+import {clean} from './logger';
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -342,7 +342,7 @@ $ crossbow run <taskname>
                 return ['**Alias for:**']
                     .concat(subject
                         .map(x => `- \`${getLabel(x)}\``)
-                        .map(x => compile(x))
+                        .map(x => clean(x))
                     )
                     .join('<br>');
             }

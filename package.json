@@ -36,7 +36,7 @@
     "archy": "1.0.0",
     "chokidar": "1.4.3",
     "debug": "2.2.0",
-    "eazy-logger": "3.0.2",
+    "eazy-logger": "^3.0.2",
     "hash-dir": "0.0.0",
     "immutable": "3.8.0",
     "inquirer": "1.0.1",
@@ -46,6 +46,7 @@
     "qs": "6.1.0",
     "rx": "4.1.0",
     "rx-node": "1.0.2",
+    "tfunk": "latest",
     "traverse": "0.6.6"
   },
   "bin": {
