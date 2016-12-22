@@ -4,7 +4,9 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines, isPlainObject, getPossibleTaskNames} from "./task.utils";
+import {
+    locateModule, removeTrailingNewlines, isParentGroupName
+} from "./task.utils";
 import * as adaptors from "./adaptors";
 
 import {preprocessTask, handleObjectInput, handleArrayInput} from "./task.preprocess";
@@ -83,6 +85,24 @@ function mergeOptions (incoming) {
     }
 }
 
+function fromInlineItems(incoming, current, name, parents, trigger) {
+    if (parents.indexOf(name) > -1) {
+        return createCircularReferenceTask(incoming, parents);
+    }
+    if (Array.isArray(current)) {
+        const thisParents = parents.concat(incoming.baseTaskName);
+        const task = createTask({
+            runMode: TaskRunModes.parallel,
+            tasks: current.map(x => createFlattenedTask(x, thisParents, trigger)),
+            parents: thisParents,
+            valid: true,
+            type: TaskTypes.TaskGroup
+        });
+        return task;
+    }
+    return createFlattenedTask(current, parents.concat(name), trigger)
+}
+
 let count = 0;
 /**
  * Entry point for resolving the task tree from any given point
@@ -123,19 +143,16 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         if (incoming.tasks.length) {
             const combinedName = `${incoming.baseTaskName}:${incoming.subTasks[0]}`;
             incoming.tasks = [].concat(incoming.tasks)
-                .map(x => createFlattenedTask(x, parents.concat(combinedName), trigger))
+                .map(x => fromInlineItems(incoming, x, combinedName, parents, trigger))
                 .map(mergeOptions(incoming))
         } else {
             incoming.tasks = toResolve.reduce((acc,x) => {
                 const match = _.get(topLevelValue, [x]);
                 if (match) {
                     const combinedName = `${incoming.baseTaskName}:${x}`;
-                    return acc.concat([].concat(match).map(x => {
-                        if (parents.indexOf(combinedName) > -1) {
-                            return createCircularReferenceTask(incoming, parents);
-                        }
-                        return createFlattenedTask(x, parents.concat(combinedName), trigger);
-                    }));
+                    return acc.concat(
+                        [].concat(match)
+                            .map(x => fromInlineItems(incoming, x, combinedName, parents, trigger)));
                 }
                 return acc;
             }, []);
@@ -147,12 +164,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         if (incoming.tasks) {
             const taskItems = <any>incoming.tasks;
             incoming.tasks = [].concat(taskItems)
-                .map(x => {
-                    if (parents.indexOf(x) > -1) {
-                        return createCircularReferenceTask(incoming, parents);
-                    }
-                    return createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger)
-                });
+                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
         }
     }
 
@@ -161,29 +173,18 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         const toplevelValue = getTopLevelValue(incoming.baseTaskName, trigger.input);
 
         if (toplevelValue) {
-            incoming.tasks = [].concat(toplevelValue).map(x => {
-                if (parents.indexOf(x) > -1) {
-                    return createCircularReferenceTask(incoming, parents);
-                }
-                if (Array.isArray(x)) {
-                    const thisParents = parents.concat(incoming.baseTaskName);
-                    const task = createTask({
-                        runMode: TaskRunModes.parallel,
-                        tasks: x.map(x => createFlattenedTask(x, thisParents, trigger)),
-                        parents: thisParents,
-                        valid: true,
-                        type: TaskTypes.TaskGroup
-                    });
-                    return task;
-                }
-                const out = createFlattenedTask(x, parents.concat(incoming.baseTaskName), trigger);
-                if (incoming.runMode === TaskRunModes.parallel) {
-                    if (out.tasks.length > 1 || out.subTasks.length > 1) {
-                        out.runMode = incoming.runMode;
+            incoming.tasks = [].concat(toplevelValue)
+                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
+                .map(out => {
+                    if (incoming.runMode === TaskRunModes.parallel) {
+                        if (out.tasks.length > 1 || out.subTasks.length > 1) {
+                            out.runMode = incoming.runMode;
+                        }
                     }
-                }
-                return out;
-            });
+                    return out;
+                });
+        } else {
+
         }
     }
 
@@ -316,6 +317,7 @@ export function getTopLevelValue(baseTaskName: string, input: CrossbowInput): an
     }
 
     const maybes = Object.keys(input.tasks)
+        .filter(x => !isParentGroupName(x))
         .filter(taskName => taskName.match(new RegExp(`^${baseTaskName}($|@(.+?))`)) !== null);
 
     if (maybes.length) {

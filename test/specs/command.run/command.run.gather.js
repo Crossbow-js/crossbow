@@ -121,4 +121,79 @@ describe('Gathering run tasks (1)', function () {
         assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
         assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.Adaptor);
     });
+    it('supports nested arrays', function () {
+        const runner = utils.getSetup(['js'], {
+            tasks: {
+                js: [
+                    utils.task(100),
+                    [utils.task(200), utils.task(300)]
+                ]
+            }
+        });
+
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].runMode, TaskRunModes.parallel);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[1].type, TaskTypes.InlineFunction);
+    });
+    it('supports nested arrays with parents', function () {
+        const runner = utils.getSetup(['js:dev'], {
+            tasks: {
+                '(js)': {
+                    dev: [
+                        utils.task(100),
+                        [utils.task(200), utils.task(300)]
+                    ]
+                }
+            }
+        });
+
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.ParentGroup);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].runMode, TaskRunModes.parallel);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[1].type, TaskTypes.InlineFunction);
+    });
+    it('supports nested arrays with top level obj', function () {
+        const runner = utils.getSetup(['js'], {
+            tasks: {
+                'js': {
+                    description: 'my desc',
+                    tasks: [
+                        utils.task(100),
+                        [utils.task(200), utils.task(300)]
+                    ]
+                }
+            }
+        });
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].runMode, TaskRunModes.parallel);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[1].type, TaskTypes.InlineFunction);
+    });
+    it('supports nested arrays with top level array', function () {
+        const runner = utils.getSetup(['js'], {
+            tasks: {
+                'js': [
+                    utils.task(100),
+                    [utils.task(200), utils.task(300)]
+                ]
+            }
+        });
+        assert.equal(runner.tasks.valid[0].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks.length, 2);
+        assert.equal(runner.tasks.valid[0].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].type, TaskTypes.TaskGroup);
+        assert.equal(runner.tasks.valid[0].tasks[1].runMode, TaskRunModes.parallel);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[0].type, TaskTypes.InlineFunction);
+        assert.equal(runner.tasks.valid[0].tasks[1].tasks[1].type, TaskTypes.InlineFunction);
+    });
 });

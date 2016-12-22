@@ -11,6 +11,7 @@ import {readdirSync} from "fs";
 import * as file from "./file.utils";
 import {DocsAddedToFileReport} from "./reporter.resolve";
 import {getLabel} from "./reporters/defaultReporter";
+import {compile} from './logger';
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -339,7 +340,10 @@ $ crossbow run <taskname>
             if (task.tasks.length) {
                 const subject = isParent ? task.tasks[0].tasks : task.tasks;
                 return ['**Alias for:**']
-                    .concat(subject.map(x => `- \`${getLabel(x)}\``))
+                    .concat(subject
+                        .map(x => `- \`${getLabel(x)}\``)
+                        .map(x => compile(x))
+                    )
                     .join('<br>');
             }
         })() + '|';
