@@ -6,7 +6,7 @@ import Immutable = require('immutable');
 import Rx = require('rx');
 import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, InputErrorTypes, isPublicTask, getPossibleTaskNames} from "./task.utils";
+import {removeNewlines, InputErrorTypes, isPublicTask, getPossibleTaskNames, isInternal} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
 import {DocsAddedToFileReport} from "./reporter.resolve";
@@ -50,7 +50,9 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * @type {Tasks}
      */
     const toResolve = getPossibleTaskNames(input);
-    const tasks = resolveTasks(toResolve.filter(isPublicTask), trigger);
+    const tasks     = resolveTasks(toResolve
+        .filter(isPublicTask)
+        .filter(x => !isInternal(x)), trigger);
 
     /**
      * If there were 0 tasks, exit with error

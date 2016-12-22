@@ -19,6 +19,7 @@ function taskPreviews(item: Task) {
             return '[ Function ]';
         }
     }
+
     const names = item.tasks.map((x:Task) => {
         return escapeNewLines(getLabel(x));
     });
@@ -65,7 +66,7 @@ export function twoCol (tasks: Task[], longest: number): Array<string[]> {
         const desc = (function () {
 
             if (task.description) {
-                return limit(task.description, desclength);
+                return `{bold:${limit(task.description, desclength)}`;
             }
 
             /**

@@ -190,4 +190,14 @@ $ crossbow run <taskname>
         });
         assert.include(output.output[0].content, output.markdown);
     });
+    it.skip('works with CBfiles', function () {
+        const output = utils.getGenericSetup({
+            input: ['docs'],
+            flags: {
+                cbfile: 'test/fixtures/cbfile.js'
+            }
+        });
+        console.log(output.output[0].content);
+        // assert.include(output.output[0].content, output.markdown);
+    });
 });

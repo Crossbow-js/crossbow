@@ -853,6 +853,10 @@ function npmScriptLabel(task: Task) {
 
 export function getLabel(task: Task) {
 
+    if (task.type === TaskTypes.ParentGroup) {
+        return maybeErrorLabel(task, `{underline:${task.baseTaskName}:${task.subTasks[0]}}`);
+    }
+
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {
             if (task.inlineFunctions[0].name !== '') {
@@ -871,7 +875,7 @@ export function getLabel(task: Task) {
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName}}`;
         }
-        return task.taskName;
+        return `{underline:${task.taskName}}`;
     }
 
     if (task.type === TaskTypes.ExternalTask) {
