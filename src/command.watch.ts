@@ -64,7 +64,12 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
      * Never continue if any BEFORE tasks were flagged as invalid
      */
     if (beforeTasks.tasks.invalid.length) {
-        reporter({type: ReportTypes.BeforeWatchTaskErrors, data: {watchTasks, trigger}} as BeforeWatchTaskErrorsReport);
+        reporter({
+            type: ReportTypes.BeforeWatchTaskErrors,
+            data: {
+                watchTasks, trigger
+            } as BeforeWatchTaskErrorsReport
+        });
         return Rx.Observable.just({
             setup: {
                 watchTasks,

@@ -49,8 +49,8 @@ export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observa
                 data: {
                     error: e,
                     cwd: trigger.config.cwd
-                }
-            } as HashDirErrorReport);
+                } as HashDirErrorReport
+            });
 
             return Rx.Observable.just({});
         });

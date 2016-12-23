@@ -145,8 +145,8 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     data: {
                         report,
                         progress: prepared.config.progress
-                    }
-                } as TaskReportReport);
+                    } as TaskReportReport
+                });
             })
             .takeUntil(exits$)
             .toArray()
@@ -210,7 +210,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         prepared.reportFn({
             type: ReportTypes.Summary,
             data: completeData
-        } as SummaryReport);
+        });
 
         require('./command.run.post-execution').postCliExecution(completeData);
     }
@@ -228,8 +228,8 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                             tasks,
                             config: prepared.config,
                             title: invalid.length ? 'Errors found:' : 'Available Tasks:'
-                        }
-                    } as TaskTreeReport);
+                        } as TaskTreeReport
+                    });
                 }
 
                 if (!groups.length) {
@@ -238,8 +238,8 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
                 prepared.reportFn({
                     type: ReportTypes.SimpleTaskList,
-                    data: x.setup
-                } as SimpleTaskListReport);
+                    data: {setup: x.setup}
+                });
             });
     }
 
@@ -276,7 +276,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                 }
                 prepared.reportFn({
                     type: ReportTypes.WatcherNames,
-                    data: setup
+                    data: {setup}
                 });
             });
     }

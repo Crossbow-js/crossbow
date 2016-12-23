@@ -68,8 +68,8 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
                 type: ReportTypes.InitInputFileTypeNotSupported,
                 data: {
                     error: errors[0]
-                }
-            } as InitInputFileTypeNotSupportedReport);
+                } as InitInputFileTypeNotSupportedReport
+            });
         }
         return Rx.Observable.just({
             setup: {
@@ -127,8 +127,8 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
             type: ReportTypes.DuplicateInputFile,
             data: {
                 error: errors[0]
-            }
-        } as DuplicateConfigFile);
+            } as DuplicateConfigFile
+        });
 
         return Rx.Observable.just({
             setup: {
@@ -155,8 +155,8 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
         type: ReportTypes.InputFileCreated,
         data: {
             parsed: parse(outputFilePath)
-        }
-    } as ConfigFileCreatedReport);
+        } as ConfigFileCreatedReport
+    });
 
     return Rx.Observable.just({setup: output});
 }

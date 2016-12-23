@@ -82,8 +82,8 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             type: reports.ReportTypes.InvalidReporter,
             data: {
                 reporters: resolvedReporters
-            }
-        } as reports.InvalidReporterReport, chosenOutputObserver);
+            } as reports.InvalidReporterReport
+        }, chosenOutputObserver);
 
         return {
             userInput,
@@ -135,7 +135,12 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
     // Check if any given reporter are invalid
     // and defer to default (again)
     if (resolvedReporters.invalid.length) {
-        reportFn({type: reports.ReportTypes.InvalidReporter, data: {reporters: resolvedReporters}} as reports.InvalidReporterReport);
+        reportFn({
+            type: reports.ReportTypes.InvalidReporter,
+            data: {
+                reporters: resolvedReporters
+            } as reports.InvalidReporterReport
+        });
         return {
             userInput,
             cli,

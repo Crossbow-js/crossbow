@@ -367,8 +367,8 @@ function reportAddToDocs(output: DocsFileOutput[], trigger: CommandTrigger) {
                 type: ReportTypes.DocsAddedToFile,
                 data: {
                     file: x.file
-                }
-            } as DocsAddedToFileReport);
+                } as DocsAddedToFileReport
+            });
         });
     }
 }

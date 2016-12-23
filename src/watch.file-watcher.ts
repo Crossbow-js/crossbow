@@ -106,8 +106,8 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                 data: {
                     index: i,
                     taskCollection: watcher.tasks
-                }
-            } as WatcherTriggeredTasksReport);
+                } as WatcherTriggeredTasksReport
+            });
 
             /**
              * todo: Is there a way to handle this without subscribing manually?

@@ -32,6 +32,8 @@ tasks:
       - 'js'
   (copy):
     js0stuff:
-      - js
+      description: 'Copy tasks'
+      tasks: js
     otherstuff:
-      - build-css
+      description: 'Copy other tasks'
+      tasks: build-css

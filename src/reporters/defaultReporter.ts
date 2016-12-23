@@ -27,7 +27,7 @@ export const enum LogLevel {
 export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
     if (typeof reporterFunctions[report.type] === 'function') {
         const outputFn = reporterFunctions[report.type];
-        const output = outputFn.call(null, report);
+        const output = outputFn.call(null, report.data);
         if (typeof output === 'string') {
             if (output === '') return;
             observer.onNext({origin: report.type, data: [output]});
@@ -41,13 +41,13 @@ export default function (report: reports.IncomingReport, observer: Rx.Observer<r
 
 export const reporterFunctions = {
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
-        return report.data.sources.map(function (input) {
+        return report.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;
         }).join('\n');
     },
     [reports.ReportTypes.InputError]: function (report: reports.InputErrorReport): string[] {
         const lines = [`Sorry, there were errors resolving your input files`];
-        const {sources, errors} = report.data;
+        const {sources, errors} = report;
 
         /**
          * If the report has 'sources' it means it was an external file
@@ -70,7 +70,7 @@ export const reporterFunctions = {
     },
     [reports.ReportTypes.InvalidReporter]: function (report: reports.InvalidReporterReport): string[] {
         const lines = [`{red.bold:x} Sorry, there were problems resolving your reporters`];
-        const {reporters} = report.data;
+        const {reporters} = report;
 
         reporters.invalid.forEach(function (reporter: reports.Reporter) {
             reporter.errors.forEach(function (err: reports.ReporterError) {
@@ -86,7 +86,7 @@ export const reporterFunctions = {
         return lines;
     },
     [reports.ReportTypes.DuplicateInputFile]: function (report: reports.DuplicateConfigFile): string[] {
-        const error = report.data.error;
+        const error = report.error;
         const lines = [
             `Sorry, this would cause an existing file to be overwritten`,
             `{red.bold:x ${error.file.rawInput}}`
@@ -94,7 +94,7 @@ export const reporterFunctions = {
         return lines.concat(getExternalError(error.type, error, error.file).split('\n'));
     },
     [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string[] {
-        return `{green:✔} Created file: {cyan.bold:${report.data.parsed.base}}
+        return `{green:✔} Created file: {cyan.bold:${report.parsed.base}}
  
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
  
@@ -105,7 +105,7 @@ Or to see multiple tasks running, with some in parallel, try:
   {gray:$} crossbow run {bold:all}`.split('\n');
     },
     [reports.ReportTypes.InitInputFileTypeNotSupported]: function (report: reports.InitInputFileTypeNotSupportedReport): string[] {
-        const error = report.data.error;
+        const error = report.error;
         return [
             `Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`,
             `{red.bold:x '${error.providedType}'}`,
@@ -113,7 +113,7 @@ Or to see multiple tasks running, with some in parallel, try:
         ];
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
-        const {groups, tasks} = report.data;
+        const {groups, tasks} = report.setup;
         const lines           = [];
         const longestName     = getLongestTaskName(tasks);
 
@@ -126,11 +126,11 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskTree]: function (report: reports.TaskTreeReport): string[] {
-        return reportTaskTree(report.data.tasks, report.data.config, report.data.title);
+        return reportTaskTree(report.tasks, report.config, report.title);
     },
     [reports.ReportTypes.TaskList]: function (report: reports.TaskListReport): string {
 
-        const {config, sequence, titlePrefix, cli} = report.data;
+        const {config, sequence, titlePrefix, cli} = report;
 
         if (config.verbose === LogLevel.Verbose) {
             const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
@@ -141,7 +141,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.TaskErrors]: function (report: reports.TaskErrorsReport): string[] {
 
-        const {taskCollection, tasks, config} = report.data;
+        const {taskCollection, tasks, config} = report;
 
         const lines = [
             '{gray.bold:------------------------------------------------}',
@@ -157,8 +157,8 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        if (report.data.progress) {
-            return _taskReport(report.data.report);
+        if (report.progress) {
+            return _taskReport(report.report);
         }
         return '';
     },
@@ -187,7 +187,7 @@ Or to see multiple tasks running, with some in parallel, try:
             '  So none of them were run, and no watchers have begun either.',
         ];
 
-        const {watchTasks, trigger} = report.data;
+        const {watchTasks, trigger} = report;
 
         watchTasks.all.forEach(function (watchTask) {
 
@@ -211,7 +211,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.BeforeTaskList]: function (report: reports.BeforeTaskListReport): string[] {
 
-        const {config, cli, sequence} = report.data;
+        const {config, cli, sequence} = report;
         const lines = [
             `{yellow:+} Before tasks for watcher: {bold:${cli.input.join(', ')}}`,
         ];
@@ -225,13 +225,13 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.BeforeTasksDidNotComplete]: function (report: reports.BeforeTasksDidNotCompleteReport): string[] {
         return [
-            `{red:x} ${report.data.error.message}`,
+            `{red:x} ${report.error.message}`,
             '  so none of the watchers started',
         ];
     },
     [reports.ReportTypes.WatchTaskTasksErrors]: function (report: reports.WatchTaskTasksErrorsReport): string[] {
 
-        const {runner, config, tasks} = report.data;
+        const {runner, config, tasks} = report;
 
         if (runner._tasks.invalid.length) {
             return [
@@ -257,7 +257,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.WatchTaskErrors]: function (report: reports.WatchTaskErrorsReport): string[] {
 
-        const {watchTasks} = report.data;
+        const {watchTasks} = report;
 
         const errorCount = watchTasks.reduce(function (acc, item) {
             return acc + item.errors.length;
@@ -279,7 +279,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.WatchTaskReport]: function (report: reports.WatchTaskReportReport): string {
-        return _taskReport(report.data.report);
+        return _taskReport(report.report);
     },
     [reports.ReportTypes.NoWatchersAvailable]: function (): string[] {
         return [
@@ -294,7 +294,7 @@ Or to see multiple tasks running, with some in parallel, try:
     [reports.ReportTypes.Watchers]: function (report: reports.WatchersReport): string[] {
         const lines = [];
         lines.push(``);
-        report.data.watchTasks.forEach(function (watchTask) {
+        report.watchTasks.forEach(function (watchTask) {
             watchTask.watchers.forEach(function (watcher) {
                 lines.push(`{bold:'${watcher.patterns.map(x => _e(x)).join(', ')}}'`);
                 lines.push(` {yellow:->} ${watcher.tasks.join(', ')}`)
@@ -307,7 +307,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.WatcherNames]: function (report: reports.WatcherNamesReport): string[] {
 
-        const {watchTasks} = report.data;
+        const {watchTasks} = report.setup;
 
         const lines = ['', '{yellow:Available Watchers:}'];
 
@@ -341,23 +341,23 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.NoFilesMatched]: function (report: reports.NoFilesMatchedReport): string {
-        const {watcher} = report.data;
+        const {watcher} = report;
         return `{red:x warning} {cyan:${watcher.patterns.join(' ')}} did not match any files`
     },
 
     [reports.ReportTypes.WatcherTriggeredTasks]: function (report: reports.WatcherTriggeredTasksReport): string {
-        const {index, taskCollection} = report.data;
+        const {index, taskCollection} = report;
         return `{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`;
     },
     [reports.ReportTypes.WatcherTriggeredTasksCompleted]: function (report: reports.WatcherTriggeredTasksCompletedReport): string {
-        const {index, taskCollection, time} = report.data;
+        const {index, taskCollection, time} = report;
         return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`;
     },
     [reports.ReportTypes.DocsGenerated]: function () {
         /** noop **/
     },
     [reports.ReportTypes.DocsInputFileNotFound]: function (report: reports.DocsInputFileNotFoundReport): string[] {
-        const {error} = report.data;
+        const {error} = report;
         return [
             `Sorry, there were errors resolving your input files`,
             `{red.bold:x '${error.file.resolved}'}`,
@@ -365,21 +365,21 @@ Or to see multiple tasks running, with some in parallel, try:
         ];
     },
     [reports.ReportTypes.DocsAddedToFile]: function (report: reports.DocsAddedToFileReport): string {
-        const {file} = report.data;
+        const {file} = report;
         return `{green:✔} Docs added to: {cyan.bold:${file.relative}}`;
     },
     [reports.ReportTypes.DocsOutputFileExists]: function (report: reports.DocsOutputFileExistsReport): string[] {
-        const {error} = report.data;
+        const {error} = report;
         return [
             `{red.bold:x '${error.file.resolved}'}`,
             ...getExternalError(error.type, error).split('\n')
         ]
     },
     [reports.ReportTypes.SignalReceived]: function reportSummary(report: reports.SignalReceivedReport): string[] {
-        return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.data.code})} {yellow:~~~}`];
+        return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.code})} {yellow:~~~}`];
     },
     [reports.ReportTypes.BeforeTasksSummary]: function reportSummary(report: reports.BeforeTasksSummaryReport): string[] {
-        const {sequence, config, runtime} = report.data;
+        const {sequence, config, runtime} = report;
 
         const runnableTasks  = collectRunnableTasks(sequence, []);
         const errorTasks     = runnableTasks.filter(x => x.stats.errors.length > 0);
@@ -399,7 +399,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.WatcherSummary]: function reportSummary(report: reports.WatcherSummaryReport): string[] {
-        const {sequence, config, watcher} = report.data;
+        const {sequence, config, watcher} = report;
 
         const runnableTasks = collectRunnableTasks(sequence, []);
         const errorTasks = runnableTasks.filter(x => x.stats.errors.length > 0);
@@ -419,7 +419,7 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.Summary]: function reportSummary(report: reports.SummaryReport): string[] {
 
-        const {sequence, cli, config, runtime} = report.data;
+        const {sequence, cli, config, runtime} = report;
 
         const runnableTasks = collectRunnableTasks(sequence, []);
         const errorTasks = runnableTasks.filter(x => x.stats.errors.length > 0);
@@ -460,7 +460,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.HashDirError]: function (report: reports.HashDirErrorReport): string[] {
-        const {error, cwd} = report.data;
+        const {error, cwd} = report;
         return [
             `{red.bold:x CB-History hash failed} (tasks will still run)`,
             ...getExternalError(error.type, error, cwd).split('\n')

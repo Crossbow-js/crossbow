@@ -100,127 +100,121 @@ export interface OutgoingReport {
     data: string[]
 }
 
-export interface UsingConfigFileReport extends IncomingReport {
-    data: {sources: ExternalFileInput[]}
+export interface UsingConfigFileReport {
+    sources: ExternalFileInput[]
 }
-export interface InputFileNotFoundReport extends IncomingReport {
-    data: {sources: ExternalFileInput[]}
+export interface InputFileNotFoundReport {
+    sources: ExternalFileInput[]
 }
-export interface InputErrorReport extends IncomingReport {
-    data: {
-        errors: any[],
-        sources: ExternalFileInput[]
-    }
+export interface InputErrorReport {
+    errors: any[]
+    sources: ExternalFileInput[]
 }
-export interface TaskReportReport extends IncomingReport {
-    data: {
-        report: TaskReport,
-        progress: boolean
-    }
+export interface TaskReportReport {
+    report: TaskReport
+    progress: boolean
 }
-export interface SignalReceivedReport extends IncomingReport {
-    data: {code: number}
+export interface SignalReceivedReport {
+    code: number
 }
-
-export interface SummaryReport extends IncomingReport {
-    data: {
-        sequence: SequenceItem[],
-        cli: CLI,
-        config: CrossbowConfiguration,
-        runtime: number,
-        errors: TaskReport[]
-    }
-}export interface BeforeTasksSummaryReport extends IncomingReport {
-    data: {
-        sequence: SequenceItem[],
-        cli: CLI,
-        config: CrossbowConfiguration,
-        runtime: number,
-        errors: TaskReport[]
-    }
+export interface SummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[]
 }
-export interface WatcherSummaryReport extends IncomingReport {
-    data: {
-        sequence: SequenceItem[],
-        cli: CLI,
-        config: CrossbowConfiguration,
-        runtime: number,
-        errors: TaskReport[],
-        watchEvent: WatchEvent
-        watcher: Watcher
-    }
+export interface BeforeTasksSummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[]
 }
-export interface TaskListReport extends IncomingReport {
-    data: {sequence: SequenceItem[],cli: CLI,titlePrefix: string,config: CrossbowConfiguration}
+export interface WatcherSummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[],
+    watchEvent: WatchEvent
+    watcher: Watcher
 }
-export interface SimpleTaskListReport extends IncomingReport {
-    data: TaskCommandSetup
+export interface TaskListReport {
+    sequence: SequenceItem[]
+    cli: CLI
+    titlePrefix: string
+    config: CrossbowConfiguration
 }
-export interface InvalidReporterReport extends IncomingReport {
-    data: {reporters: Reporters}
+export interface SimpleTaskListReport {
+    setup: TaskCommandSetup
 }
-export interface DuplicateConfigFile extends IncomingReport {
-    data: {error: InitConfigFileExistsError}
+export interface InvalidReporterReport {
+    reporters: Reporters
 }
-export interface ConfigFileCreatedReport extends IncomingReport {
-    data: {parsed: ParsedPath}
+export interface DuplicateConfigFile {
+    error: InitConfigFileExistsError
 }
-export interface InitInputFileTypeNotSupportedReport extends IncomingReport {
-    data: {error: InitConfigFileTypeNotSupported}
+export interface ConfigFileCreatedReport {
+    parsed: ParsedPath
 }
-export interface TaskTreeReport extends IncomingReport {
-    data: {tasks: Task[], config: CrossbowConfiguration, title: string}
+export interface InitInputFileTypeNotSupportedReport {
+    error: InitConfigFileTypeNotSupported
 }
-export interface TaskErrorsReport extends IncomingReport {
-    data: {tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration}
+export interface TaskTreeReport {
+    tasks: Task[], config: CrossbowConfiguration, title: string
 }
-export interface WatchersReport extends IncomingReport {
-    data: {watchTasks: WatchTask[]}
+export interface TaskErrorsReport {
+    tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration
 }
-export interface BeforeWatchTaskErrorsReport extends IncomingReport {
-    data: {watchTasks: WatchTasks, trigger: CommandTrigger}
+export interface WatchersReport {
+    watchTasks: WatchTask[]
 }
-export interface BeforeTaskListReport extends IncomingReport {
-    data: {sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration}
+export interface BeforeWatchTaskErrorsReport {
+    watchTasks: WatchTasks, trigger: CommandTrigger
 }
-export interface BeforeTasksDidNotCompleteReport extends IncomingReport {
-    data: {error: Error}
+export interface BeforeTaskListReport {
+    sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration
 }
-export interface WatchTaskTasksErrorsReport extends IncomingReport {
-    data: {tasks: Task[], runner: Watcher, config: CrossbowConfiguration}
+export interface BeforeTasksDidNotCompleteReport {
+    error: Error
 }
-export interface WatchTaskErrorsReport extends IncomingReport {
-    data: {watchTasks: WatchTask[]}
+export interface WatchTaskTasksErrorsReport {
+    tasks: Task[], runner: Watcher, config: CrossbowConfiguration
 }
-export interface WatchTaskReportReport extends IncomingReport {
-    data: {report: TaskReport, trigger: CommandTrigger}
+export interface WatchTaskErrorsReport {
+    watchTasks: WatchTask[]
 }
-export interface WatcherTriggeredTasksReport extends IncomingReport {
-    data: {index: number, taskCollection: TaskCollection}
+export interface WatchTaskReportReport {
+    report: TaskReport, trigger: CommandTrigger
 }
-export interface WatcherTriggeredTasksCompletedReport extends IncomingReport {
-    data: {index: number, taskCollection: TaskCollection, time: number}
+export interface WatcherTriggeredTasksReport {
+    index: number, taskCollection: TaskCollection
 }
-export interface WatcherNamesReport extends IncomingReport {
-    data: WatchersCommandOutput
+export interface WatcherTriggeredTasksCompletedReport {
+    index: number, taskCollection: TaskCollection, time: number
 }
-export interface NoFilesMatchedReport extends IncomingReport {
-    data: {watcher: Watcher}
+export interface WatcherNamesReport {
+    setup: WatchersCommandOutput
 }
-export interface DocsInputFileNotFoundReport extends IncomingReport {
-    data: {error: DocsInputFileNotFoundError}
+export interface NoFilesMatchedReport {
+    watcher: Watcher
 }
-export interface DocsAddedToFileReport extends IncomingReport {
-    data: {file: ExternalFileContent}
+export interface DocsInputFileNotFoundReport {
+    error: DocsInputFileNotFoundError
 }
-export interface DocsOutputFileExistsReport extends IncomingReport {
-    data: {error: DocsOutputFileExistsError}
+export interface DocsAddedToFileReport {
+    file: ExternalFileContent
+}
+export interface DocsOutputFileExistsReport {
+    error: DocsOutputFileExistsError
 }
 export interface HashError extends Error {
     type: HashDirErrorTypes
 }
-export interface HashDirErrorReport extends IncomingReport {
-    data: {error: HashError, cwd: string}
+export interface HashDirErrorReport {
+    error: HashError,
+    cwd: string
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {

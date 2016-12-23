@@ -66,8 +66,8 @@ export default function executeRunCommand(trigger: CommandTrigger): RunActions {
                 taskCollection: cli.input.slice(1),
                 input,
                 config
-            }
-        } as TaskErrorsReport);
+            } as TaskErrorsReport
+        });
 
         return {
             setup: {
