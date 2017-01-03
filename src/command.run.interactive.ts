@@ -10,6 +10,7 @@ import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
 import {ReportTypes} from "./reporter.resolve";
+import {getLabel, getCleanLabel} from "./reporters/defaultReporter";
 
 export interface Answers {
     tasks: string[]
@@ -71,11 +72,7 @@ export function getTaskList(tasks: Task[]) {
         return {
             name: compile(`${tuple[0]} ${tuple[1]}`),
             value: (function () {
-                const task = topLevelTasks[i];
-                if (task.type === TaskTypes.ParentGroup) {
-                    return `${task.baseTaskName}:${task.subTasks[0]}`;
-                }
-                return topLevelTasks[i].baseTaskName;
+                return getCleanLabel(topLevelTasks[i]);
             })()
         }
     });

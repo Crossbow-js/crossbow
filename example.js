@@ -2,6 +2,10 @@ const Right = (x) => ({
     chain: f => f(x),
     map: f => Right(f(x)),
     fold: (f, g) => g(x),
+    do: f => {
+        f();
+        return Right(x)
+    },
     inspect: () => `Right(${x})`
 });
 
@@ -21,6 +25,7 @@ const tryCatch = f => {
 };
 
 const fs   = require('fs');
+const parse   = require('path').parse;
 const yaml = require('js-yaml');
 
 const parseYaml = string =>
@@ -36,14 +41,18 @@ const readFromDisk = path =>
 const createResults = obj =>
     ({errors: [], inputs: [obj]});
 
-const errors = error =>
-    ({errors: [error], inputs: []});
+const errors = (error, path) =>
+    ({errors: [error], inputs: [], userInput: path});
+
+const parsePath = (path) => Right(parse(path));
 
 const readYaml = path =>
-    readFromDisk(path)
+    parsePath(path)
+        .do(x => console.log(x))
+        .map(parsed => readFromDisk(parsed))
         .chain(x => parseYaml(x))
         .map(x => createResults(x))
-        .fold(e => errors(e), x => x);
+        .fold(e => errors(e, path), x => x);
 
 console.log(readYaml('crosssbow.yaml'));
 console.log(readYaml('crossbow.yaml'));

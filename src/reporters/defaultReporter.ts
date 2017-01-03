@@ -13,6 +13,7 @@ import {collectRunnableTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e, getLongestTaskName} from "../task.utils";
 import {duration, _taskReport, getSimpleTaskList} from "./task.list";
 import * as reports from "../reporter.resolve";
+import {clean} from "../logger";
 
 const baseUrl = 'http://crossbow-cli.io/docs/errors';
 const archy = require('archy');
@@ -851,6 +852,9 @@ function npmScriptLabel(task: Task) {
     return `{magenta:[npm script]} ${task.command}`;
 }
 
+export function getCleanLabel (task: Task): string {
+    return clean(getLabel(task));
+}
 export function getLabel(task: Task) {
 
     if (task.type === TaskTypes.ParentGroup) {
