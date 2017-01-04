@@ -201,10 +201,8 @@ describe("Running tasks in series", function () {
         const reporters = require('../../../dist/reporters/defaultReporter').reporterFunctions;
         const fn        = reporters[types];
         const out       = reports.map(x => fn({
-            data: {
-                report: x,
-                progress: true
-            }
+            report: x,
+            progress: true
         }));
 
         assert.include(out[0], `{yellow:>} [Function: _inline_fn_`);
