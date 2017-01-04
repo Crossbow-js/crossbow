@@ -158,7 +158,6 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        console.log(report);
         if (report.progress) {
             return _taskReport(report.report);
         }
