@@ -8,7 +8,7 @@ import * as watchErrors from "../watch.errors";
 import {parse, dirname, join, relative} from "path";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
-import {TaskStats} from "../task.runner";
+import {TaskStats, TaskReportType} from "../task.runner";
 import {collectRunnableTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e, getLongestTaskName} from "../task.utils";
 import {duration, _taskReport, getSimpleTaskList} from "./task.list";
@@ -158,7 +158,12 @@ Or to see multiple tasks running, with some in parallel, try:
         return lines;
     },
     [reports.ReportTypes.TaskReport]: function (report: reports.TaskReportReport): string {
-        if (report.progress) {
+        const config = report.config;
+
+        if (config.progress || config.dryRun) {
+            if (config.dryRun && report.report.type === TaskReportType.end) {
+                return '';
+            }
             return _taskReport(report.report);
         }
         return '';

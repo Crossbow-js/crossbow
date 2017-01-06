@@ -112,7 +112,7 @@ export interface InputErrorReport {
 }
 export interface TaskReportReport {
     report: TaskReport
-    progress: boolean
+    config: CrossbowConfiguration
 }
 export interface SignalReceivedReport {
     code: number

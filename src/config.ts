@@ -95,7 +95,7 @@ const defaults = <CrossbowConfiguration>{
     dump: false,
     debug: false,
     dryRun: false,
-    dryRunDuration: 1000,
+    dryRunDuration: 500,
     force: false,
     /**
      * How much task information should be output

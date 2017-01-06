@@ -144,7 +144,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     type: ReportTypes.TaskReport,
                     data: {
                         report,
-                        progress: prepared.config.progress
+                        config: prepared.config
                     } as TaskReportReport
                 });
             })
