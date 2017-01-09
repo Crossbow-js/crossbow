@@ -1,100 +1,39 @@
 watch:
-
-#  default:
-#    "*.json": ['@npm echo "hello"']
-
-  block:
-    options:
-      block: true
-    watchers:
-      - patterns: 'test/fixtures/scss/main.scss'
-        tasks: ['@sh sleep 1', "@npm sleep 1", "@npm sleep 1"]
-  js:
-    before: 'watchify'
-    watchers:
-      - patterns: ['test/fixtures/scss', 'test/fixtures/css']
-        tasks: ['@sh echo "sass file edited"']
-
+  options:
+    block: true
+  default:
+    '*.json': '@npm sleep 1'
+  others:
+    '*.js': '@npm sleep 1'
+    '.gitignore': '@npm sleep 1'
+  git:
+    '.git': '@sh ls .git/objects'
 tasks:
-
-  watchify: >
-    @bg watchify test/fixtures/js/app.js -o test/fixtures/js/app.watchify.js -v -d
-
-  test:
-    - compile
-    - ci
-
-  ci@p:
-    - lint
-    - unit
-
-  compile: >
-    @npm tsc
-    src/**/*.ts
-    --module commonjs
-    --outDir dist
-
-  lint:   '@npm eslint lib'
-  unit:   '@npm mocha test'
-
-  sleep@p:
-    - sleep1
-    - sleep2
-    - sleep3
-    - desc
-    - sleep4
-    - slow-stream
-
-  sleep1@p:
-    ifChanged: ['package.json']
-    tasks:
-      - '@npm sleep 1'
-      - '@npm sleep 1'
-
-  sleep2: '@npm sleep 1'
-  sleep3: '@npm sleep 1'
-  sleep4: '@npm sleep 1'
-
-  slow-stream: 'test/fixtures/tasks/slow-stream.js'
-  stream: 'test/fixtures/tasks/stream.js --name=shane'
-
-  docker:
-    - '@sh printenv'
-    - adaptor: 'sh'
-      command: 'docker rm -f shane || true'
-    - input: "@sh docker run --name shane -d -p $JS_OPTIONS_DOCKER_PORT:80 nginx"
-      env:
-        DOCKER_PORT: 8000
-
-  desc:
-    description: 'Alias for multiline & shell tasks'
-    tasks: ['multiline', 'shell']
-    runMode: 'parallel'
-
-  build-js:
-    description: 'Produce production-ready JS assets'
-    tasks: ['multiline', 'shell']
-
-  multiline:
-    ifChanged: ['examples']
-    tasks:
-     - |
-       @sh sleep 1
-       echo 'hey'
-
-  shell: test/fixtures/files/run.sh
-  jsfile: '@sh node test/fixtures/files/one.js'
-
-  print-name: '@sh echo "Before: $(node dist/index.js run get-name -q) After:"'
-  get-name: '@sh echo $SHANE'
-
-options:
-  docker:
-    port: '8000'
-
-config:
-  envPrefix: 'JS'
-#  reporters:
-#    - test/fixtures/reporters/custom.js
-env:
-  SHANE: 'hello'
+  js:
+    - '@npm sleep 1'
+    - '@npm ls'
+  build-css:
+    - '@npm sleep 1'
+    - '@npm ls'
+  build-all:
+    - '@npm sleep 1'
+    - '@npm ls'
+  commit:
+    - '@npm sleep 1'
+    - '@npm ls'
+  file:
+    - 'test/fixtures/tasks/simple.js'
+  (sh):
+    ls:
+      - '@sh sleep 2'
+    sleep:
+      - '@sh sleep 1'
+      - '@cb delay 2000'
+      - 'js'
+  (copy):
+    js0stuff:
+      description: 'Copy tasks'
+      tasks: js
+    otherstuff:
+      description: 'Copy other tasks'
+      tasks: build-css

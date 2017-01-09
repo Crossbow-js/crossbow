@@ -3,8 +3,9 @@ import {existsSync, lstatSync} from 'fs';
 import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
-import {ParsedPath} from "path";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
+import {Task, TaskTypes, TaskRunModes} from "./task.resolve";
+import {CrossbowInput} from "./index";
 const _ = require('../lodash.custom');
 const debug = require('debug')('cb:task-utils');
 
@@ -15,7 +16,8 @@ export enum InputErrorTypes {
     FileNotFound        = <any>"FileNotFound",
     NotAFile            = <any>"NotAFile",
     InvalidYaml         = <any>"InvalidYaml",
-    InvalidInput        = <any>"InvalidInput"
+    InvalidInput        = <any>"InvalidInput",
+    InvalidJson         = <any>"InvalidJson"
 }
 
 export interface InputFileNotFoundError extends InputError {}
@@ -34,10 +36,10 @@ export interface InputFiles {
 export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalFile[] {
 
     const tasksByName = locateExternalTask(config, taskName);
-
+    
     /**
      * Exit early if this file exists
-     * TODO - allow this lookup to be cached to prevent future calls
+     * TODO - allow this lookup to be cached to prevent future file IO
      * TODO - skip file/node look-ups when key matches top-level task definition
      */
     if (tasksByName.length) return tasksByName;
@@ -47,6 +49,10 @@ export function locateModule(config: CrossbowConfiguration, taskName: string): E
     if (tasksByRequire.length) return tasksByRequire;
 
     return [];
+}
+
+export function getChildTaskNames (task: Task): string[] {
+    return task.tasks.map(x => `${task.baseTaskName}:${x.baseTaskName}`);
 }
 
 function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalFile[] {
@@ -76,9 +82,9 @@ function locateExternalTask (config: CrossbowConfiguration, name: string): Exter
         });
 }
 
-function locateNodeModule (config:CrossbowConfiguration, name:string): ExternalFile[] {
+function locateNodeModule (config: CrossbowConfiguration, name: string): ExternalFile[] {
     try {
-        const maybe   = join(config.cwd, 'node_modules', name);
+        const maybe   = join(config.cwd, ...config.nodeModulesPaths, name);
         const required = require.resolve(maybe);
         return [{
             rawInput: name,
@@ -132,7 +138,12 @@ const traverse = require('traverse');
  *    CB_OPTIONS_DOCKER_PORT=8000
  */
 export function envifyObject(object:any, prefix:string, objectKeyName: string) {
-    return traverse(object).reduce(function (acc, x) {
+    const subject = _.cloneDeep(object);
+    return traverse(subject).reduce(function (acc, x) {
+        if (this.level > 4) {
+            this.remove();
+            return acc;
+        }
         if (this.circular) {
             this.remove();
             return acc;
@@ -145,6 +156,14 @@ export function envifyObject(object:any, prefix:string, objectKeyName: string) {
 }
 
 const merge = require('../lodash.custom').merge;
+
+export function excludeKeys(input: any, blacklist: string[]): any {
+    return Object.keys(input).filter(x => blacklist.indexOf(x) === -1).reduce(function(acc, key) {
+        acc[key] = input[key];
+        return acc;
+    }, {});
+}
+
 /**
  * Currently we add the following from the toplevel of inputs
  * 1. options
@@ -152,6 +171,8 @@ const merge = require('../lodash.custom').merge;
  * 3. CLI trailing args + command
  * 4. env
  */
+const configBlacklist = ['outputObserver','fileChangeObserver','signalObserver','scheduler'];
+
 export function getCBEnv (trigger: CommandTrigger): {} {
     const prefix = trigger.config.envPrefix;
 
@@ -159,7 +180,7 @@ export function getCBEnv (trigger: CommandTrigger): {} {
     const cbOptionsEnv = envifyObject(trigger.input.options, prefix, 'options');
 
     // 2. Crossbow config (from config key or CLI flags)
-    const cbConfigEnv  = envifyObject(trigger.config, prefix, 'config');
+    const cbConfigEnv  = envifyObject(excludeKeys(trigger.config, configBlacklist), prefix, 'config');
 
     // 3. command + trailing cli args
     const {trailing, command} = trigger.cli;
@@ -250,6 +271,40 @@ export function isPublicTask (taskName: string): boolean {
     return taskName[0] !== '_';
 }
 
+export function isParentGroupName (name: string): RegExpMatchArray {
+    return name.match(/^\((.+?)\)$/);
+}
+
+export function isParentRef (name: string, names: string[]): boolean {
+    if (names.indexOf(name) > -1)        return true;
+    if (names.indexOf(`(${name})`) > -1) return true;
+    return false;
+}
+
+export function getChildItems (name:string, input) {
+    if (isParentGroupName(name)) {
+        return _.get(input, [name], {});
+    }
+    return _.get(input, [`(${name})`], {});
+}
+
+export function getPossibleTaskNames (input: CrossbowInput) {
+    const allNames          = Object.keys(input.tasks);
+    const possibleParents   = allNames.filter(x => isParentGroupName(x));
+    const possibleDefaults  = allNames.filter(x => !isParentGroupName(x));
+    const parents           = possibleParents.reduce((acc, key) => {
+        const childKeys   = Object.keys(getChildItems(key, input.tasks));
+        const plainName   = key.slice(1, -1);
+        return acc.concat(childKeys.map(childKey => `${plainName}:${childKey}`));
+    }, []);
+    return [...possibleDefaults, ...parents];
+}
+
+export function getChildName (name) {
+    if (isParentGroupName(name)) return name;
+    return `(${name})`;
+}
+
 export function isInternal (incoming: string): boolean {
     return /_internal_fn_\d{0,10}$/.test(incoming);
 }
@@ -274,6 +329,21 @@ export function __e(x) {
 
 export function longestString (col: string[]): number {
     return col.reduce((val, item) => item.length > val ? item.length : val, 0);
+}
+
+export function getLongestTaskName (tasks: Task[]): number {
+    const taskNames = tasks.reduce((acc, task) => {
+        if (task.type === TaskTypes.ParentGroup) {
+            return acc.concat(`${task.baseTaskName}:${task.subTasks[0]}`);
+        }
+
+        if (task.runMode === TaskRunModes.parallel) {
+            return acc.concat(task.baseTaskName + ' <p>');
+        }
+
+        return acc.concat(task.baseTaskName);
+    }, []);
+    return longestString(taskNames);
 }
 
 export function padLine(incoming, max?) {

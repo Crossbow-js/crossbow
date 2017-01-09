@@ -1,11 +1,34 @@
 /// <reference path="../node_modules/immutable/dist/immutable.d.ts" />
 import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
+import {OutgoingReport} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
-import {join} from "path";
-
+import {WatchEvent} from "./watch.file-watcher";
+import {ExternalFile} from "./file.utils";
+import Rx = require('rx');
 const _ = require('../lodash.custom');
+
+export enum SignalTypes {
+    Exit = <any>'Exit',
+    FileWrite = <any>'FileWrite'
+}
+
+export interface CBSignal<T> {
+    type: SignalTypes
+    data?: T
+}
+
+export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>
+
+export interface ExitSignal {
+    code: number
+}
+
+export interface FileWriteSignal {
+    file: ExternalFile
+    content: string
+}
 
 export interface CrossbowConfiguration {
     cwd: string
@@ -16,7 +39,7 @@ export interface CrossbowConfiguration {
     force: boolean
     reporter: string
     handoff: boolean
-    config: string[]
+    input: string[]
     interactive: boolean
     outputOnly: boolean
     suppressOutput: boolean
@@ -31,12 +54,22 @@ export interface CrossbowConfiguration {
     reporters: Array<string|Function>
     skip: string[]
     tasksDir: string[]
+    nodeModulesPaths: string[]
+    block?: boolean
+    debounce?: boolean
+    throttle?: boolean
+    fromJson?: string
 
     // docs command
     file?: string
     output?: string
     dryRun?: boolean
     dryRunDuration?: number
+
+    outputObserver?:     Rx.Observable<OutgoingReport>
+    fileChangeObserver?: Rx.Observable<WatchEvent>
+    signalObserver?:     OutgoingSignals
+    scheduler?:          Rx.IScheduler
 }
 
 /**
@@ -55,14 +88,14 @@ const defaults = <CrossbowConfiguration>{
     runMode: TaskRunModes.series,
     resumeOnError: false,
     parallel: false,
-    config: [],
+    input: [],
     /**
      * Dump json to disk for debugging
      */
     dump: false,
     debug: false,
     dryRun: false,
-    dryRunDuration: 1000,
+    dryRunDuration: 500,
     force: false,
     /**
      * How much task information should be output
@@ -97,6 +130,10 @@ const defaults = <CrossbowConfiguration>{
     interactive: false,
     /**
      *
+     */
+    nodeModulesPaths: ['node_modules'],
+    /**
+     *
      * CI mode - will exit if any shell/npm scripts
      * return a non-zero exit code
      *
@@ -125,6 +162,7 @@ const defaults = <CrossbowConfiguration>{
      * Tasks that should be run before any watchers begin
      */
     before: [],
+
     /**
      * Any tasks that should be skipped
      */
@@ -175,9 +213,9 @@ const flagTransforms = {
     	opts.cwd = resolve(opts.cwd);
         return opts;
     },
-    config: (opts) => {
-        if (opts.config && !Array.isArray(opts.config)) {
-            opts.config = [opts.config];
+    input: (opts) => {
+        if (opts.input && !Array.isArray(opts.input)) {
+            opts.input = [opts.input];
         }
         return opts;
     }

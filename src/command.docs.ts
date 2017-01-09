@@ -1,14 +1,17 @@
-/// <reference path="../typings/main.d.ts" />
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks} from './task.resolve';
+import {resolveTasks, Tasks, TaskTypes} from './task.resolve';
 import Immutable = require('immutable');
-import {ReportNames} from "./reporter.resolve";
+import Rx = require('rx');
+import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
-import {removeNewlines, InputErrorTypes, isPublicTask} from "./task.utils";
+import {removeNewlines, InputErrorTypes, isPublicTask, getPossibleTaskNames, isInternal} from "./task.utils";
 import {readdirSync} from "fs";
 import * as file from "./file.utils";
+import {DocsAddedToFileReport} from "./reporter.resolve";
+import {getLabel} from "./reporters/defaultReporter";
+import {clean} from './logger';
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {type: DocsErrorTypes}
@@ -30,12 +33,15 @@ export interface DocsFileOutput {
 }
 export interface DocsCommandOutput {
     tasks: Tasks,
-    errors?: DocsError[],
+    errors: DocsError[],
     markdown?: string,
     output?: DocsFileOutput[]
 }
 
-function execute(trigger: CommandTrigger): DocsCommandOutput {
+
+export type DocsCommandComplete = Rx.Observable<{setup:DocsCommandOutput}>;
+
+function execute(trigger: CommandTrigger): DocsCommandComplete {
 
     const {input, config, reporter} = trigger;
 
@@ -44,16 +50,22 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * that will used in the docs
      * @type {Tasks}
      */
-    const tasks = resolveTasks(Object.keys(input.tasks).filter(isPublicTask), trigger);
+    const toResolve = getPossibleTaskNames(input);
+    const tasks     = resolveTasks(toResolve
+        .filter(isPublicTask)
+        .filter(x => !isInternal(x)), trigger);
 
     /**
      * If there were 0 tasks, exit with error
      */
     if (tasks.all.length === 0) {
-        reporter(ReportNames.NoTasksAvailable);
-        return {
-            tasks
-        };
+        reporter({type: ReportTypes.NoTasksAvailable});
+        return Rx.Observable.just({
+            setup: {
+                tasks,
+                errors: []
+            }
+        });
     }
 
     debug(`Amount of tasks to consider ${tasks.all.length}`);
@@ -64,8 +76,13 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      */
     if (tasks.invalid.length) {
         debug(`Tasks were invalid, so skipping doc generation completely`);
-        reporter(ReportNames.InvalidTasksSimple);
-        return {tasks};
+        reporter({type: ReportTypes.DocsInvalidTasksSimple});
+        return Rx.Observable.just({
+            setup: {
+                tasks,
+                errors: []
+            }
+        });
     }
 
     const markdown = getMarkdown(tasks.valid);
@@ -76,14 +93,14 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
      * append them
      */
     if (config.file) {
-        return handleFileFlag(tasks, markdown, trigger);
+        return Rx.Observable.just({setup: handleFileFlag(tasks, markdown, trigger)});
     }
 
     /**
      * If a user provides the 'output' flag, it means they want a new file creating
      */
     if (config.output) {
-        return handleOutputFlag(tasks, markdown, trigger);
+        return Rx.Observable.just({setup:handleOutputFlag(tasks, markdown, trigger)});
     }
 
     /**
@@ -98,14 +115,16 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
     if (existingReadmeFiles.length) {
         const output = existingReadmeFiles.map(x => getFileOutput(x, markdown));
 
-        addDocsToFile(output, trigger);
+        reportAddToDocs(output, trigger);
 
-        return {
-            errors: [],
-            tasks,
-            markdown,
-            output
-        }
+        return Rx.Observable.just({
+            setup: {
+                errors: [],
+                tasks,
+                markdown,
+                output
+            }
+        })
     }
 
     /**
@@ -121,14 +140,16 @@ function execute(trigger: CommandTrigger): DocsCommandOutput {
         content: markdown
     }];
 
-    addDocsToFile(output, trigger);
+    reportAddToDocs(output, trigger);
 
-    return {
-        errors: [],
-        tasks,
-        markdown,
-        output
-    };
+    return Rx.Observable.just({
+        setup: {
+            errors: [],
+            tasks,
+            markdown,
+            output
+        }
+    });
 }
 
 /**
@@ -186,7 +207,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         const error = <DocsOutputFileExistsError>{type: DocsErrorTypes.DocsOutputFileExists, file: maybe[0]};
 
         if (!config.handoff) {
-            reporter(ReportNames.DocsOutputFileExists, error);
+            reporter({type: ReportTypes.DocsOutputFileExists, data: {error}});
         }
 
         return {
@@ -202,8 +223,8 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         content: markdown
     }];
 
-    // Now we can write to disk
-    addDocsToFile(output, trigger);
+    // Now we can report about writing to disk
+    reportAddToDocs(output, trigger);
 
     return {
         errors: [],
@@ -246,7 +267,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
          * If we're not handing off, report the error
          */
         if (!config.handoff) {
-            reporter(ReportNames.DocsInputFileNotFound, withErrors[0]);
+            reporter({type: ReportTypes.DocsInputFileNotFound, data: {error:withErrors[0]}});
         }
 
         return {
@@ -268,7 +289,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
     /**
      * Now write to file
      */
-    addDocsToFile(output, trigger);
+    reportAddToDocs(output, trigger);
 
     /**
      * Always return everything gathered
@@ -301,14 +322,31 @@ $ crossbow run <taskname>
      * Create the body for the table with taskname + description
      * @type {string[]}
      */
-    const body     = tasks.map((x: Task) => {
-        const name = `|<pre>\`${x.baseTaskName}\`</pre>`;
+    const body     = tasks.map((task: Task) => {
+        const isParent = task.type === TaskTypes.ParentGroup;
+        const name = (function () {
+            if (isParent) {
+                return `|<pre>\`${task.baseTaskName}:${task.subTasks[0]}\`</pre>`;
+            }
+            return `|<pre>\`${task.baseTaskName}\`</pre>`;
+        })();
         const desc = (function () {
-                if (x.description) return removeNewlines(x.description);
-                if (x.tasks.length) {
-                    return ['**Alias for:**'].concat(x.tasks.map(x => `- \`${removeNewlines(x.baseTaskName)}\``)).join('<br>');
+            if (task.description) return removeNewlines(task.description);
+            if (isParent) {
+                if (task.tasks[0].description) {
+                    return removeNewlines(task.tasks[0].description);
                 }
-            })() + '|';
+            }
+            if (task.tasks.length) {
+                const subject = isParent ? task.tasks[0].tasks : task.tasks;
+                return ['**Alias for:**']
+                    .concat(subject
+                        .map(x => `- \`${getLabel(x)}\``)
+                        .map(x => clean(x))
+                    )
+                    .join('<br>');
+            }
+        })() + '|';
         return [name, desc].join('|');
     }).join('\n');
 
@@ -319,15 +357,18 @@ $ crossbow run <taskname>
     return [docStartComment, tasksHeader, tableHeader, body, docEndComment].join('\n');
 }
 
-function addDocsToFile(output: DocsFileOutput[], trigger: CommandTrigger) {
+function reportAddToDocs(output: DocsFileOutput[], trigger: CommandTrigger) {
+
     const {config} = trigger;
-    /**
-     * If not handing off, we actually write to disk here
-     */
+
     if (!config.handoff) {
         output.forEach(x => {
-            trigger.reporter(ReportNames.DocsAddedToFile, x.file, x.content);
-            file.writeFileToDisk(x.file, x.content);
+            trigger.reporter({
+                type: ReportTypes.DocsAddedToFile,
+                data: {
+                    file: x.file
+                } as DocsAddedToFileReport
+            });
         });
     }
 }

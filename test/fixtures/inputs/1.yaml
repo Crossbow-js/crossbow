@@ -1,4 +1,4 @@
 config:
   progress: true
 env:
-  SLEEP: '.1'
+  SLEEP: '1'

@@ -1,6 +1,6 @@
 var _prefix = '{magenta.bold:»  }';
 var logger = require('eazy-logger').Logger({
-    prefix: _prefix,
+    // prefix: _prefix,
     useLevelPrefixes: false,
     logLevel: 'info',
     levels: {
@@ -19,6 +19,8 @@ var logger = require('eazy-logger').Logger({
 export default logger;
 export const compile = require('eazy-logger').compile;
 export const prefix = _prefix;
+export const createAst  = require('tfunk').createAst;
+export const clean  = require('tfunk').clean;
 //export var compile = require('eazy-logger').compile;
 //module.exports.compile    = require('eazy-logger').compile;
 //module.exports.infoPrefix = prefix + '{cyan:[info]} ';

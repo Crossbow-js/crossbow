@@ -1,17 +1,16 @@
-/// <reference path="../typings/main.d.ts" />
-import {isInternal} from "./task.utils";
+import {isInternal, getLongestTaskName, getPossibleTaskNames} from "./task.utils";
 const debug = require('debug')('cb:command.run');
 import Rx = require('rx');
 import Immutable = require('immutable');
 import {compile} from './logger';
 import {CLI, CrossbowInput, CrossbowReporter} from './index';
 import {CrossbowConfiguration} from './config';
-import {resolveTasks} from "./task.resolve";
+import {resolveTasks, TaskTypes} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve";
 import {twoCol} from "./reporters/task.list";
-import {reportTaskTree} from "./reporters/defaultReporter";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
+import {getLabel, getCleanLabel} from "./reporters/defaultReporter";
 
 export interface Answers {
     tasks: string[]
@@ -19,8 +18,22 @@ export interface Answers {
 
 export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
-    const inquirer = require('inquirer');
-    const resolved = resolveTasks(Object.keys(input.tasks), {
+    const possibleSelection  = cli.input.slice(1);
+    const inquirer           = require('inquirer');
+    const allTaskNames       = getPossibleTaskNames(input);
+
+    const filtered           = possibleSelection.reduce((acc, name) => {
+        return acc.concat(allTaskNames
+            .filter(x => x.indexOf(`${name}:`) === 0)
+        );
+    }, []);
+
+    const taskNamesToShow = (function () {
+        if (filtered.length) return filtered;
+        return allTaskNames;
+    })();
+
+    const resolved = resolveTasks(taskNamesToShow, {
         shared: new Rx.BehaviorSubject(Immutable.Map({})),
         cli,
         input,
@@ -31,7 +44,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
     if (resolved.invalid.length) {
 
-        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
+        reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
         return Rx.Observable.empty<Answers>();
 
     } else {
@@ -53,11 +66,14 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
 export function getTaskList(tasks: Task[]) {
     const topLevelTasks = tasks.filter(x => !isInternal(x.baseTaskName));
-    const col = twoCol(topLevelTasks);
+    const longest       = getLongestTaskName(topLevelTasks);
+    const col           = twoCol(topLevelTasks, longest);
     return col.map((tuple, i) => {
         return {
             name: compile(`${tuple[0]} ${tuple[1]}`),
-            value: topLevelTasks[i].baseTaskName
+            value: (function () {
+                return getCleanLabel(topLevelTasks[i]);
+            })()
         }
     });
 }

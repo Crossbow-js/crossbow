@@ -112,5 +112,19 @@ watch:
 	'/src/*.hbs': ['handlebars', 'htmlmin', 'manifest']
 ```
 
-<!--crossbow-docs-start--><!--crossbow-docs-end-->
+<!--crossbow-docs-start-->
+## Crossbow tasks
+
+The following tasks have been defined by this project's Crossbow configuration.
+Run any of them in the following way
+ 
+```shell
+$ crossbow run <taskname>
+```
+|Task name|Description|
+|---|---|
+|<pre>`build`</pre>|**Alias for:**<br>- `css`<br>- `js`|
+|<pre>`css`</pre>|undefined|
+|<pre>`js`</pre>|undefined|
+<!--crossbow-docs-end-->
 

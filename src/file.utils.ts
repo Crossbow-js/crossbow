@@ -19,7 +19,8 @@ const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);
 const lstatAsObservable    = Rx.Observable.fromNodeCallback(lstat);
 
 const _ = require('../lodash.custom');
-// todo windows support
+
+// todo windows support for .bat files etc
 const supportedTaskFileExtensions = ['.js', '.sh'];
 
 export interface ExternalFile {
@@ -306,14 +307,7 @@ export interface HashDirError extends Error {
     syscall: string
 }
 
-export function hashItems(dirs: string[], cwd:string): any {
-
-    const existingFile = readOrCreateJsonFile(join('.crossbow', 'history.json'), cwd);
-
-    if (!existingFile.data.hashes) {
-        existingFile.data.hashes = [];
-    }
-
+export function hashItems(dirs: string[], cwd: string, existingHashes: IHashItem[]): Rx.Observable<IHashResults> {
     return Rx.Observable
         .from(dirs)
         .map((x): IHashInput => {
@@ -326,11 +320,7 @@ export function hashItems(dirs: string[], cwd:string): any {
         .flatMap(hashFileOrDir)
         .toArray()
         .map((x: IHashItem[]) => {
-            return markHashes(x, existingFile.data.hashes);
-        })
-        // Write the hashes to disk
-        .do(function (hashResults: IHashResults) {
-            writeFileToDisk(existingFile, JSON.stringify({hashes: hashResults.output}, null, 2));
+            return markHashes(x, existingHashes);
         });
 }
 

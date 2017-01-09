@@ -1,11 +1,16 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {stripBlacklisted} from "./watch.utils";
+import Rx = require('rx');
 const debug = require('debug')('cb:command.run');
 
 import {CLI, CrossbowInput} from './index';
 import {CrossbowConfiguration} from './config';
 
-export default function promptForWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration) {
+export interface WatchAnswers {
+    watch: string[]
+}
+
+export default function promptForWatchCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration): Rx.Observable<WatchAnswers> {
 
     const inquirer = require('inquirer');
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
@@ -24,5 +29,5 @@ export default function promptForWatchCommand(cli: CLI, input: CrossbowInput, co
         }
     };
 
-    return inquirer.prompt(taskSelect);
+    return Rx.Observable.fromPromise<WatchAnswers>(inquirer.prompt(taskSelect));
 }

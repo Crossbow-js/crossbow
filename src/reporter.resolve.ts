@@ -1,6 +1,20 @@
-import {CrossbowConfiguration} from "./config";
-import {CrossbowInput} from "./index";
-import {readFilesFromDisk, ExternalFile} from "./file.utils";
+import {CrossbowConfiguration, ExitSignal, CBSignal, OutgoingSignals, FileWriteSignal} from "./config";
+import {CrossbowInput, CLI} from "./index";
+import {readFilesFromDisk, ExternalFile, ExternalFileInput, ExternalFileContent, HashDirErrorTypes} from "./file.utils";
+import {TaskReport} from "./task.runner";
+import {CommandTrigger} from "./command.run";
+import {SequenceItem} from "./task.sequence.factories";
+import {InitConfigFileExistsError, InitConfigFileTypeNotSupported} from "./command.init";
+import {ParsedPath} from "path";
+import {Task, TaskCollection} from "./task.resolve";
+import {WatchTask, Watcher, WatchTasks} from "./watch.resolve";
+import {WatchRunners} from "./watch.runner";
+import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.docs";
+import Rx = require('rx');
+import logger from './logger';
+import {WatchEvent} from "./watch.file-watcher";
+import {TasksCommandCompletionReport, TaskCommandSetup} from "./command.tasks";
+import {WatchersCommandOutput} from "./command.watchers";
 
 export interface Reporter {
     errors: {}[]
@@ -16,6 +30,7 @@ export enum ReporterErrorTypes {
 export interface ReporterError {type: ReporterErrorTypes, file?: ExternalFile}
 export interface ReporterFileNotFoundError extends ReporterError {}
 export interface ReporterTypeNotSupportedError extends ReporterError {}
+
 export enum ReporterTypes {
     InlineFunction   = <any>"InlineFunction",
     ExternalFile     = <any>"ExternalFile",
@@ -29,21 +44,20 @@ export interface Reporters {
     invalid: Reporter[]
 }
 
-export enum ReportNames {
-    DuplicateConfigFile            = <any>"DuplicateConfigFile",
-    ConfigFileCreated              = <any>"ConfigFileCreated",
-    InitConfigTypeNotSupported     = <any>"InitConfigTypeNotSupported",
-    InputError                     = <any>"InputFileNotFound",
+export enum ReportTypes {
+    DuplicateInputFile             = <any>"DuplicateInputFile",
+    InputFileCreated               = <any>"InputFileCreated",
+    InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
+    InputError                     = <any>"InputError",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
-    UsingConfigFile                = <any>"UsingConfigFile",
+    UsingInputFile                 = <any>"UsingInputFile",
 
     TaskList                       = <any>"TaskList",
     TaskTree                       = <any>"TaskTree",
     TaskErrors                     = <any>"TaskErrors",
     TaskReport                     = <any>"TaskReport",
 
-    InvalidTasksSimple             = <any>"InvalidTasksSimple",
     NoTasksAvailable               = <any>"NoTasksAvailable",
     NoTasksProvided                = <any>"NoTasksProvided",
 
@@ -51,6 +65,7 @@ export enum ReportNames {
     BeforeWatchTaskErrors          = <any>"BeforeWatchTaskErrors",
     BeforeTaskList                 = <any>"BeforeTaskList",
     BeforeTasksDidNotComplete      = <any>"BeforeTasksDidNotComplete",
+    BeforeTasksSummary             = <any>"BeforeTasksSummary",
     WatchTaskTasksErrors           = <any>"WatchTaskTasksErrors",
     WatchTaskErrors                = <any>"WatchTaskErrors",
     WatchTaskReport                = <any>"WatchTaskReport",
@@ -61,14 +76,145 @@ export enum ReportNames {
     WatcherNames                   = <any>"WatcherNames",
     WatcherTriggeredTasksCompleted = <any>"WatcherTriggeredTasksCompleted",
     WatcherTriggeredTasks          = <any>"WatcherTriggeredTasks",
+    WatcherSummary                 = <any>"WatcherSummary",
 
     DocsAddedToFile                = <any>"DocsAddedToFile",
     DocsGenerated                  = <any>"DocsMarkdownGenerated",
     DocsInputFileNotFound          = <any>"DocsInputFileNotFound",
     DocsOutputFileExists           = <any>"DocsOutputFileExists",
+    DocsInvalidTasksSimple         = <any>"DocsInvalidTasksSimple",
 
-    Summary                        = <any>"Summary",
     HashDirError                   = <any>"HashDirError",
+    Summary                        = <any>"Summary",
+    SignalReceived                 = <any>"SignalReceived",
+    CLIParserOutput                = <any>"CLIParserOutput",
+}
+
+export interface IncomingReport {
+    type: ReportTypes
+    data?: any
+}
+
+export interface OutgoingReport {
+    origin: ReportTypes
+    data: string[]
+}
+
+export interface UsingConfigFileReport {
+    sources: ExternalFileInput[]
+}
+export interface InputFileNotFoundReport {
+    sources: ExternalFileInput[]
+}
+export interface InputErrorReport {
+    errors: any[]
+    sources: ExternalFileInput[]
+}
+export interface TaskReportReport {
+    report: TaskReport
+    config: CrossbowConfiguration
+}
+export interface SignalReceivedReport {
+    code: number
+}
+export interface SummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[]
+}
+export interface BeforeTasksSummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[]
+}
+export interface WatcherSummaryReport {
+    sequence: SequenceItem[],
+    cli: CLI,
+    config: CrossbowConfiguration,
+    runtime: number,
+    errors: TaskReport[],
+    watchEvent: WatchEvent
+    watcher: Watcher
+}
+export interface TaskListReport {
+    sequence: SequenceItem[]
+    cli: CLI
+    titlePrefix: string
+    config: CrossbowConfiguration
+}
+export interface SimpleTaskListReport {
+    setup: TaskCommandSetup
+}
+export interface InvalidReporterReport {
+    reporters: Reporters
+}
+export interface DuplicateConfigFile {
+    error: InitConfigFileExistsError
+}
+export interface ConfigFileCreatedReport {
+    parsed: ParsedPath
+}
+export interface InitInputFileTypeNotSupportedReport {
+    error: InitConfigFileTypeNotSupported
+}
+export interface TaskTreeReport {
+    tasks: Task[], config: CrossbowConfiguration, title: string
+}
+export interface TaskErrorsReport {
+    tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration
+}
+export interface WatchersReport {
+    watchTasks: WatchTask[]
+}
+export interface BeforeWatchTaskErrorsReport {
+    watchTasks: WatchTasks, trigger: CommandTrigger
+}
+export interface BeforeTaskListReport {
+    sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration
+}
+export interface BeforeTasksDidNotCompleteReport {
+    error: Error
+}
+export interface WatchTaskTasksErrorsReport {
+    tasks: Task[], runner: Watcher, config: CrossbowConfiguration
+}
+export interface WatchTaskErrorsReport {
+    watchTasks: WatchTask[]
+}
+export interface WatchTaskReportReport {
+    report: TaskReport, trigger: CommandTrigger
+}
+export interface WatcherTriggeredTasksReport {
+    index: number, taskCollection: TaskCollection
+}
+export interface WatcherTriggeredTasksCompletedReport {
+    index: number, taskCollection: TaskCollection, time: number
+}
+export interface WatcherNamesReport {
+    setup: WatchersCommandOutput
+}
+export interface NoFilesMatchedReport {
+    watcher: Watcher
+}
+export interface DocsInputFileNotFoundReport {
+    error: DocsInputFileNotFoundError
+}
+export interface DocsAddedToFileReport {
+    file: ExternalFileContent
+}
+export interface DocsOutputFileExistsReport {
+    error: DocsOutputFileExistsError
+}
+export interface HashError extends Error {
+    type: HashDirErrorTypes
+}
+export interface HashDirErrorReport {
+    error: HashError,
+    cwd: string
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {
@@ -178,6 +324,64 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
             sources: files
         }
     }
+}
+export type OutgoingReporter = Rx.Subject<OutgoingReport>;
+export function getOutputObserver(mergedConfig: CrossbowConfiguration, outputObserver: OutgoingReporter) {
+
+    /**
+     * If an outputObserver was passed in with configuration (flags)
+     */
+    if (mergedConfig.outputObserver) {
+        return mergedConfig.outputObserver;
+    }
+
+    /**
+     * If an output observer was passed in via initial setup (cli fallback)
+     */
+    if (outputObserver) {
+        return outputObserver;
+    }
+
+    /**
+     * Default is to log each report to the console
+     */
+    const defaultOutputObserver = new Rx.Subject<OutgoingReport>();
+
+    defaultOutputObserver.subscribe(xs => {
+        xs.data.forEach(function (x) {
+            logger.info(x);
+        });
+    });
+
+    return defaultOutputObserver;
+}
+
+export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObserver?: OutgoingSignals): OutgoingSignals {
+
+    /**
+     * If an outputObserver was passed in with configuration (flags)
+     */
+    if (mergedConfig.signalObserver) {
+        return mergedConfig.signalObserver;
+    }
+
+    /**
+     * If an output observer was passed in via initial setup (cli fallback)
+     */
+    if (signalObserver) {
+        return signalObserver;
+    }
+
+    /**
+     * Default is to log each report to the console
+     */
+    const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>();
+
+    defaultSignalObserver.subscribe(signal => {
+        // default signals are no-ops
+    });
+
+    return defaultSignalObserver;
 }
 
 export function getDefaultReporter () {

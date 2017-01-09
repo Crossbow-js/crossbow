@@ -3,19 +3,14 @@
     "module": "commonjs",
     "target": "es5",
     "noImplicitAny": false,
+    "preserveConstEnums": true,
     "sourceMap": true,
     "outDir": "dist",
     "declaration": true
   },
-  "exclude": [
-    "node_modules",
-    "lib",
-    "typings",
-    "test",
-    "cli.js",
-    "dist",
-    "opts",
-    "templates",
-    "examples"
+  "include": [
+    "typings/index.d.ts",
+    "src/**/*.ts",
+    "vendor/index.d.ts"
   ]
 }

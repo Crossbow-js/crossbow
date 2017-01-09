@@ -1,19 +1,44 @@
-/// <reference path="../typings/main.d.ts" />
+
 import {CommandTrigger, TriggerTypes} from './command.run';
 import {CrossbowConfiguration} from './config';
-import {LogLevel} from './reporters/defaultReporter';
 import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks} from './task.resolve';
-import {getSimpleTaskList} from "./reporters/task.list";
+import {resolveTasks, Tasks, Task} from './task.resolve';
 
 import Immutable = require('immutable');
 import Rx = require('rx');
-import {ReportNames} from "./reporter.resolve";
 import {getPossibleTasksFromDirectories} from "./file.utils";
+import {
+    isParentGroupName, isParentRef, getChildItems, getChildName
+} from "./task.utils";
 
-function execute(trigger: CommandTrigger): any {
+export interface TaskGroup {
+    title: string
+    tasks: Tasks
+}
 
-    const {input, config, reporter} = trigger;
+export interface TaskCommandSetup {
+    groups: TaskGroup[]
+    tasks: Task[]
+    errors: Error[]
+}
+
+export interface TasksCommandCompletionReport {
+    setup: TaskCommandSetup
+}
+
+export type TasksCommandComplete = Rx.Observable<TasksCommandCompletionReport>;
+
+function execute(trigger: CommandTrigger): TasksCommandComplete {
+
+    const {input, config}   = trigger;
+
+    const allNames          = Object.keys(trigger.input.tasks);
+    const possibleParents   = allNames.filter(x => isParentGroupName(x));
+    const possibleDefaults  = allNames.filter(x => !isParentGroupName(x));
+
+    const cliInput          = trigger.cli.input.slice(1);
+    const defaultInputNames = cliInput.filter(x => !isParentRef(x, possibleParents));
+    const parentInputNames  = cliInput.filter(x => isParentRef(x, possibleParents));
 
     /**
      * Either resolve ALL tasks, or a subset if given
@@ -23,64 +48,83 @@ function execute(trigger: CommandTrigger): any {
      *      crossbow ls -> all tasks
      *      crossbow ls build-all -> only build all tasks
      */
-    const toResolve = (function () {
-
-        /**
-         * First look if there's trailing task names in cli input
-         * @type {string[]}
-         */
-        const cliTasks = trigger.cli.input.slice(1);
-        if (cliTasks.length) {
-            return cliTasks;
+    const defaultsToResolve = (function () {
+        if (defaultInputNames.length) {
+            return defaultInputNames;
         }
-
-        /**
-         * Now build up available tasks using input + tasks directories
-         */
-        const taskNamesToResolve    = Object.keys(input.tasks);
+        if (parentInputNames.length) {
+            return [];
+        }
         const taskNamesFromTasksDir = getPossibleTasksFromDirectories(config.tasksDir, config.cwd);
-        return [...taskNamesToResolve, ...taskNamesFromTasksDir];
+        return [...possibleDefaults, ...taskNamesFromTasksDir];
+    })();
+
+    const parentsToResolve = (function () {
+        if (parentInputNames.length) {
+            return parentInputNames;
+        }
+        if (defaultInputNames.length) {
+            return [];
+        }
+        return possibleParents;
     })();
 
     /**
      * Resolve the subset
      * @type {Tasks}
      */
-    const resolved = resolveTasks(toResolve, trigger);
+    const resolvedDefault = resolveTasks(defaultsToResolve, trigger);
+    const resolvedParents = parentsToResolve
+        .map(getChildName)
+        .reduce(function (acc, key) {
+            const childKeys   = Object.keys(getChildItems(key, input.tasks));
+            const plainName   = key.slice(1, -1);
+            if (!acc[plainName]) {
+                acc[plainName] = childKeys;
+            } else {
+                acc[plainName].push.apply(acc[plainName], childKeys);
+            }
+            return acc;
+        }, {});
 
-    /**
-     * handoff if requested
-     */
-    if (trigger.config.handoff) {
-        return {tasks: resolved};
+    function getParents (resolvedParents, trigger) {
+        return Object.keys(resolvedParents).map(function (key): TaskGroup {
+            const parent = resolvedParents[key];
+            const items  = parent.map(x => `${key}:${x}`);
+            const resolved = resolveTasks(items, trigger);
+            return {title: key, tasks: resolved};
+        });
     }
 
-    /**
-     * If no tasks were matched, give the usual error
-     */
-    if (resolved.all.length === 0) {
-        reporter(ReportNames.NoTasksAvailable);
-        return {tasks: resolved};
-    }
+    const groups: Array<TaskGroup> = (function() {
+        if (resolvedDefault.all.length) {
+            return [
+                {title: 'Default Tasks', tasks: resolvedDefault},
+                ...getParents(resolvedParents, trigger)
+            ];
+        }
+        return getParents(resolvedParents, trigger);
+    })();
 
-    /**
-     * If any were invalid or if the user gave the verbose
-     * flag, show the full tree
-     */
-    if (resolved.invalid.length || config.verbose === LogLevel.Verbose) {
-        reporter(ReportNames.TaskTree, resolved.all, config, 'Available tasks:');
-    } else {
-        /**
-         * Otherwise just print a simple two-col list
-         */
-        reporter(ReportNames.SimpleTaskList, getSimpleTaskList(resolved.valid), resolved.valid);
-    }
+    const tasks = groups.reduce((acc, group): Task[] => {
+        return acc.concat(group.tasks.all);
+    }, []);
 
-    return {tasks: resolved};
+    return Rx.Observable.just({
+        setup: {
+            groups,
+            tasks,
+            errors: []
+        }
+    });
 }
 
-export default function handleIncomingTasksCommand(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter) {
-    execute({
+export default function handleIncomingTasksCommand(
+    cli: CLI,
+    input: CrossbowInput,
+    config: CrossbowConfiguration,
+    reporter: CrossbowReporter): TasksCommandComplete {
+    return execute({
         cli,
         input,
         config,

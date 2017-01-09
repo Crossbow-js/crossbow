@@ -1,69 +1,82 @@
 import {CommandTrigger, getRunCommandSetup} from "./command.run";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes} from "./reporter.resolve";
 import {Tasks, TaskRunModes} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {Runner, RunContext, TaskErrorStats} from "./task.runner";
-import {TaskReport, TaskReportType} from "./task.runner";
-import {writeFileSync} from "fs";
-import {join} from "path";
+import {Runner, RunContext} from "./task.runner";
+import {TaskReport} from "./task.runner";
 import Rx = require('rx');
-import * as seq from "./task.sequence";
 import getContext from "./command.run.context";
+import {TaskErrorsReport} from "./reporter.resolve";
+import {CrossbowConfiguration} from "./config";
+import {CLI} from "./index";
 
 const debug = require('debug')('cb:command.run.execute');
 
 export enum RunCommandReportTypes {
-    InvalidTasks = <any>"InvalidTasks",
-    Complete = <any>"Complete"
+    NoTasks      = <any>"NoTasks",
+    Setup        = <any>"Setup",
+    Complete     = <any>"Complete",
+    TaskReport   = <any>"TaskReport"
+}
+export interface RunCommandSetupErrors {
+    type: RunCommandReportTypes
 }
 
-export interface RunCommandErrorReport {
-    type: RunCommandReportTypes
+export type RunComplete = Rx.Observable<RunActions>
+
+export interface RunActions {
+    setup: RunCommandSetup
+    update$: Rx.Observable<TaskReport>
+}
+
+export interface RunCommandSetup {
+    tasks?: Tasks,
+    sequence?: SequenceItem[]
+    errors: RunCommandSetupErrors[]
+}
+
+export interface RunCommandCompletionReport {
     tasks: Tasks,
     sequence: SequenceItem[]
     runner: Runner
+    config: CrossbowConfiguration
+    reports?: TaskReport[]
+    decoratedSequence?: SequenceItem[]
+    runtime?: number
+    errors: RunCommandSetupErrors[]
+    taskErrors: TaskReport[]
+    cli: CLI
 }
 
-export interface RunCommandCompletionReport extends RunCommandErrorReport {
-    type: RunCommandReportTypes
-    reports: TaskReport[]
-    decoratedSequence: SequenceItem[]
-    runtime: number
-}
-
-export interface CompletionReport {
-    timestamp: number
-    value: TaskReport[]
-}
-
-export type RunCommandErrorStream = RunCommandErrorReport|Error;
-
-export default function executeRunCommand(trigger: CommandTrigger): Rx.Observable<RunCommandErrorStream|RunCommandCompletionReport> {
+export default function executeRunCommand(trigger: CommandTrigger): RunActions {
 
     const {cli, input, config, reporter} = trigger;
     const {tasks, sequence, runner}      = getRunCommandSetup(trigger);
-
-    if (trigger.config.dump) {
-        writeFileSync(join(trigger.config.cwd, `_tasks.json`), JSON.stringify(tasks, null, 2));
-        writeFileSync(join(trigger.config.cwd, `_sequence.json`), JSON.stringify(sequence, null, 2));
-        writeFileSync(join(trigger.config.cwd, `_config.json`), JSON.stringify(trigger.config, null, 2));
-    }
 
     /**
      * Never continue if any tasks were flagged as invalid and we've not handed
      * off
      */
     if (tasks.invalid.length) {
-        reporter(ReportNames.TaskErrors, tasks.all, cli.input.slice(1), input, config);
-        return Rx.Observable.concat<RunCommandErrorStream>(
-            Rx.Observable.just(<RunCommandErrorReport>{
-                type: RunCommandReportTypes.InvalidTasks,
-                tasks,
+
+        reporter({
+            type: ReportTypes.TaskErrors,
+            data: {
+                tasks: tasks.all,
+                taskCollection: cli.input.slice(1),
+                input,
+                config
+            } as TaskErrorsReport
+        });
+
+        return {
+            setup: {
                 sequence,
-                runner
-            }),
-            Rx.Observable.throw(new Error(`RunCommandErrorTypes.InvalidTasks`))
-        );
+                tasks,
+                errors: []
+            },
+            update$: <any>Rx.Observable.empty()
+        }
     }
 
     debug(`~ run mode from config in mode: '${config.runMode}'`);
@@ -71,7 +84,7 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
     /**
      * Report task list that's about to run
      */
-    reporter(ReportNames.TaskList, sequence, cli, '', config);
+    reporter({type: ReportTypes.TaskList, data: {sequence, cli, titlePrefix: '', config}});
 
     /**
      * Get a run context for this execution.
@@ -79,100 +92,18 @@ export default function executeRunCommand(trigger: CommandTrigger): Rx.Observabl
      * to hash directories etc. A run context is just a key=>value
      * map of read-only values.
      */
-    const outgoing = getContext(tasks.all, trigger)
-        .timestamp()
-        .flatMap((x: {value: RunContext, timestamp: number}) => run(x.value, x.timestamp))
-        .share();
-
-    /**
-     * Start the process
-     */
-    outgoing.subscribe();
-
-    /**
-     * Return the stream so a consumer can receive the RunCompletionReport
-     */
-    return outgoing;
-
-    /**
-     * Now actually execute the tasks.
-     */
-    function run(runContext: RunContext, startTime: number): Rx.Observable<RunCommandCompletionReport> {
-
-        /**
-         * series/parallel running have VERY different characteristics
-         * @type {Rx.Observable<TaskReport>|Rx.Observable<TaskReport>}
-         */
-        const mode = (function () {
-            if (trigger.config.runMode === TaskRunModes.parallel) {
-                return runner.parallel(runContext);
-            }
-            return runner.series(runContext);
-        })();
-
-        /**
-         * Now add side effects
-         */
-        return mode
-            .do(report => trigger.tracker.onNext(report)) // propagate reports into tracker
-            .do((report: TaskReport) => {
-                reporter(ReportNames.TaskReport, report, trigger);
-            })
-            .toArray()
-            .timestamp()
-            .flatMap((completion: CompletionReport) => handleCompletion(completion.value, completion.timestamp - startTime));
-    }
-
-    /**
-     * Because errors are handled by reports, task executions ALWAYS complete
-     * and we handle that here.
-     */
-    function handleCompletion (reports: TaskReport[], runtime: number): Rx.Observable<RunCommandCompletionReport> {
-
-        /**
-         * Merge sequence tree with Task Reports
-         */
-        const decoratedSequence = seq.decorateSequenceWithReports(sequence, reports);
-
-        /**
-         * Did any errors occur in this run?
-         * @type {TaskReport[]}
-         */
-        const errors            = reports.filter(x => x.type === TaskReportType.error);
-
-        /**
-         * Main summary report
-         */
-        reporter(ReportNames.Summary, decoratedSequence, cli, 'Total: ', config, runtime);
-
-        /**
-         * If an error occurred, we need to exit the process
-         * with any error codes if given
-         */
-        if (errors.length > 0 && config.fail) {
-
-            const lastError = errors[errors.length-1];
-            const stats: TaskErrorStats = lastError.stats;
-
-            if (stats.cbExitCode !== undefined) {
-                process.exit(stats.cbExitCode);
-            }
-
-            process.exit(1);
-        }
-
-        /**
-         * Push a 'Completion report' onto the $complete Observable.
-         * This means consumers will get everything when they call
-         */
-        return Rx.Observable.just({
-            type: RunCommandReportTypes.Complete,
-            reports,
-            tasks,
+    return {
+        setup: {
             sequence,
-            runner,
-            decoratedSequence,
-            runtime: runtime
-        });
-    }
+            tasks,
+            errors: []
+        },
+        update$: getContext(tasks.all, trigger)
+            .flatMap((runContext: RunContext) => {
+                if (trigger.config.runMode === TaskRunModes.parallel) {
+                    return runner.parallel(runContext);
+                }
+                return runner.series(runContext);
+            }).share()
+    };
 }

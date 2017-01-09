@@ -1,13 +1,12 @@
 import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
 import {CrossbowConfiguration} from "../config";
-import {getRawOutputStream} from "../watch.file-watcher";
-import {defaultWatchOptions} from "../watch.resolve";
-import watchCommand from '../command.watch';
+// todo why are these imports needed here?
+import watchCommand, {WatchCommandOutput, WatchReport} from '../command.watch';
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
+import IDisposable = Rx.IDisposable;
 const merge = require('../../lodash.custom').merge;
-import {WatchEvent} from '../watch.file-watcher';
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
@@ -97,39 +96,45 @@ export const api = {
             }
         }
     },
+    group: function (groupName: string, tasks: {}) {
+        input.tasks[`(${groupName})`] = tasks;
+    },
     options: function (incoming: {}) {
         const res = incomingOptions.apply(null, arguments);
         input.options = merge(input.options, res);
     },
-    watch: function (patterns: string[], tasks: string[], options?: CBWatchOptions) {
-        const identifer = `_inline_watcher_${inlineWatcherCount++}`;
-        patterns = [].concat(patterns);
-        tasks = [].concat(tasks);
-        input.watch[identifer] = {
-            options: options,
-            watchers: [
-                {
-                    patterns: patterns,
-                    tasks: tasks
-                }
-            ]
-        };
-        const cliInput = ['watch', identifer];
-        const output   = watchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
-        return output;
+    watch: function (patterns: string[], tasks: string[], options?: CBWatchOptions): IDisposable {
+        const watcher = getWatcher(patterns, tasks, options);
+        const sub = watcher.flatMap(function (watchCommand: WatchCommandOutput) {
+            return watchCommand.update$;
+        });
+        return sub.subscribe();
     },
-    watcher: function (patterns: string[], options: CBWatchOptions) {
-        const num = inlineWatcherCount++;
-        const identifer = `_inline_watcher_${num}`;
-        const watcher = {
-            patterns: patterns,
-            tasks: [],
-            name: identifer,
-            options: merge({}, defaultWatchOptions, options),
-            watcherUID: num
-        };
-        return getRawOutputStream(watcher, input.reporter);
+    watcher: function (patterns: string[], tasks: string[], options?: CBWatchOptions): Rx.Observable<WatchReport> {
+        const watcher = getWatcher(patterns, tasks, options);
+        return watcher.flatMap((watchCommand: WatchCommandOutput) => {
+            return watchCommand.update$;
+        });
     }
 };
+
+function getWatcher (patterns: string[], tasks: string[], options?: CBWatchOptions) {
+    const identifer = `_inline_watcher_${inlineWatcherCount++}`;
+    patterns = [].concat(patterns);
+    tasks    = [].concat(tasks);
+
+    input.watch[identifer] = {
+        options: options,
+        watchers: [
+            {
+                patterns: patterns,
+                tasks: tasks
+            }
+        ]
+    };
+
+    const cliInput = ['watch', identifer];
+    return watchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
+}
 
 export default input;

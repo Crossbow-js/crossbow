@@ -15,7 +15,9 @@ var sh = 'sh';
 var shFlag = '-c';
 
 if (process.platform === 'win32') {
-    sh = process.env.comspec || 'cmd';
+    // todo test in windows env to ensure this hasn't broken anything
+    // sh = process.env.comspec || 'cmd';
+    sh = 'cmd';
     shFlag = '/d /s /c';
 }
 
@@ -99,7 +101,7 @@ function getArgs(command: string): CommandArgs {
     };
 }
 
-export function teardown (emitter) {
+export function teardown (emitter, task: Task) {
     if ((typeof emitter.raw.exitCode) !== 'number') {
         debug('tearing down a child_process because exitCode is missing');
         emitter.removeAllListeners('close');
@@ -114,7 +116,7 @@ export function teardown (emitter) {
 }
 
 export function getStdio (trigger: CommandTrigger) {
-    // todo - prefixed logging
+    // todo - prefixed logging for child processes
     if (trigger.config.suppressOutput) {
         return ['pipe', 'pipe', 'pipe'];
     }
@@ -167,7 +169,6 @@ export default function (task: Task, trigger: CommandTrigger) {
         const stdio = getStdio(trigger);
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
-        // todo close all child tasks following the exit of the main process
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,
@@ -178,7 +179,7 @@ export default function (task: Task, trigger: CommandTrigger) {
         handleExit(emitter, done);
 
         return function tearDownNpmAdaptor () {
-            teardown(emitter);
+            teardown(emitter, task);
         };
     };
 };

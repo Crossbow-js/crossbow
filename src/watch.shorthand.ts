@@ -1,6 +1,7 @@
 import {CommandTrigger} from "./command.run";
 
 const merge = require('../lodash.custom').merge;
+const assign = require('../lodash.custom').assign;
 
 export interface UnwrappedTask {
     patterns: string[]
@@ -34,23 +35,17 @@ export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger
         return acc;
     }, {});
 
-    /**
-     * Now merge the fake watch options with original
-     * @type {CommandTrigger}
-     */
-    const moddedCtx = <CommandTrigger>merge({}, trigger, {
-        input: {
-            watch: fakeWatchConfig
-        }
+    trigger.input = merge({}, trigger.input, {
+        watch: fakeWatchConfig
     });
 
     /**
      * Override the CLI input to include the newly split names
      * @type {*[]}
      */
-    moddedCtx.cli.input = unwrapped.map(x => x.name);
+    trigger.cli.input = unwrapped.map(x => x.name);
 
-    return moddedCtx;
+    return trigger;
 }
 
 /**

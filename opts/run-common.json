@@ -2,7 +2,7 @@
   "interactive": {
     "desc": "Run interactive mode",
     "type": "boolean",
-    "alias": ["i"]
+    "alias": ["I"]
   },
   "progress": {
     "desc": "Show start/end progress reports for every task",

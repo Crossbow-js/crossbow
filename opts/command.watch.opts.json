@@ -4,5 +4,17 @@
     "type": "array",
     "alias": ["b"],
     "default": []
+  },
+  "block": {
+    "desc": "Ignore subsequent file-changes until tasks complete",
+    "type": "boolean"
+  },
+  "throttle": {
+    "desc": "Take only the first change that occurs in a specified duration.",
+    "type": "number"
+  },
+  "debounce": {
+    "desc": "Take only the last change following the specified window of event silence",
+    "type": "number"
   }
 }

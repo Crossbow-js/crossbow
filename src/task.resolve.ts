@@ -4,10 +4,12 @@ const debug = require('debug')('cb:task.resolve');
 
 import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
-import {locateModule, removeTrailingNewlines, isPlainObject} from "./task.utils";
+import {
+    locateModule, removeTrailingNewlines, isParentGroupName
+} from "./task.utils";
 import * as adaptors from "./adaptors";
 
-import {preprocessTask, handleObjectInput} from "./task.preprocess";
+import {preprocessTask, handleObjectInput, handleArrayInput} from "./task.preprocess";
 import {CrossbowInput} from "./index";
 import {CommandTrigger} from "./command.run";
 import {Task, TasknameWithOrigin, Tasks} from "./task.resolve";
@@ -20,28 +22,30 @@ import {ExternalFile} from "./file.utils";
 export interface CBFunction extends Function {
     name: string
 }
-export type IncomingTaskItem = string|CBFunction;
+export type IncomingTaskItem = string|CBFunction|Task;
 export type IncomingInlineArray = { tasks: Array<IncomingTaskItem>; runMode: TaskRunModes; }
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
-    ExternalTask = <any>"ExternalTask",
-    Adaptor  = <any>"Adaptor",
-    TaskGroup    = <any>"TaskGroup",
+    ExternalTask   = <any>"ExternalTask",
+    Adaptor        = <any>"Adaptor",
+    TaskGroup      = <any>"TaskGroup",
+    ParentGroup    = <any>"ParentGroup",
     InlineFunction = <any>"InlineFunction"
 }
 
 export enum TaskOriginTypes {
-    CrossbowConfig = <any>"CrossbowConfig",
-    NpmScripts     = <any>"NpmScripts",
-    FileSystem     = <any>"FileSystem",
-    Adaptor        = <any>"Adaptor",
-    InlineFunction = <any>"InlineFunction",
-    InlineArray    = <any>"InlineArray",
-    InlineObject   = <any>"InlineObject"
+    CrossbowConfig    = <any>"CrossbowConfig",
+    NpmScripts        = <any>"NpmScripts",
+    FileSystem        = <any>"FileSystem",
+    Adaptor           = <any>"Adaptor",
+    InlineFunction    = <any>"InlineFunction",
+    InlineArray       = <any>"InlineArray",
+    InlineObject      = <any>"InlineObject",
+    InlineChildObject = <any>"InlineChildObject"
 }
 
 export enum TaskRunModes {
-    series = <any>"series",
+    series   = <any>"series",
     parallel = <any>"parallel",
 }
 
@@ -67,6 +71,39 @@ const defaultTask = <Task>{
     options:         {}
 };
 
+function mergeOptions (incoming) {
+    return function (task: Task): Task {
+        return _.merge(task, {
+            env:     incoming.env,
+            options: _.merge({},
+                _.get(incoming.options, '_default', {}),
+                _.get(incoming.options, [...incoming.subTasks], {})
+            ),
+            flags:   incoming.flags,
+            query:   incoming.query
+        });
+    }
+}
+
+function fromInlineItems(incoming, current, name, parents, trigger) {
+    if (parents.indexOf(name) > -1) {
+        return createCircularReferenceTask(incoming, parents);
+    }
+    if (Array.isArray(current)) {
+        const thisParents = parents.concat(incoming.baseTaskName);
+        const task = createTask({
+            runMode: TaskRunModes.parallel,
+            tasks: current.map(x => createFlattenedTask(x, thisParents, trigger)),
+            parents: thisParents,
+            valid: true,
+            type: TaskTypes.TaskGroup
+        });
+        return task;
+    }
+    return createFlattenedTask(current, parents.concat(name), trigger)
+}
+
+let count = 0;
 /**
  * Entry point for resolving the task tree from any given point
  */
@@ -98,75 +135,58 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         return incoming;
     }
 
-    /**
-     * A 'toplevelValue' is when the current baseTaskName matches a key
-     * in the given task definitions. This is classed an alias and we
-     * may want to handle sub-task resolution differently depending
-     * on when that value is.
-     *
-     * eg: If the user ran
-     *   $ crossbow run js
-     *
-     * and there's task config like:
-     *   js: ['task1', 'task2']
-     *
-     * -> Then the value is an array (2 items) that need resolving
-     * themselves and setting as children.
-     * @type {any}
-     */
-    let toplevelValue = getTopLevelValue(incoming, trigger);
+    if (incoming.type === TaskTypes.ParentGroup) {
+        const subtask       = incoming.subTasks[0];
+        const topLevelValue = _.get(trigger.input.tasks, [`(${incoming.baseTaskName})`], {});
+        const toResolve     = (subtask === '*') ? Object.keys(topLevelValue) : [subtask];
 
-    /**
-     * There's a special case where the toplevel property of a task
-     * maybe a group definition, like
-     *
-     * js:
-     *  - tasks: ['one', 'two']
-     *    description: 'Some description'
-     *    runMode: 'parallel'
-     *
-     * In this case, we want to resolve 'one' and 'two' as children,
-     * and not the object literal itself. A common use-case is when
-     * you want to be able to provide a description for group-level tasks
-     * but normally this is only possible on a per-task basis
-     * @type {Task|Task}
-     */
-    incoming = (function () {
-        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
-            return createTask(_.merge(incoming, toplevelValue));
+        if (incoming.tasks.length) {
+            const combinedName = `${incoming.baseTaskName}:${incoming.subTasks[0]}`;
+            incoming.tasks = [].concat(incoming.tasks)
+                .map(x => fromInlineItems(incoming, x, combinedName, parents, trigger))
+                .map(mergeOptions(incoming))
+        } else {
+            incoming.tasks = toResolve.reduce((acc,x) => {
+                const match = _.get(topLevelValue, [x]);
+                if (match) {
+                    const combinedName = `${incoming.baseTaskName}:${x}`;
+                    return acc.concat(
+                        [].concat(match)
+                            .map(x => fromInlineItems(incoming, x, combinedName, parents, trigger)));
+                }
+                return acc;
+            }, []);
         }
-        return incoming;
-    })();
+    }
 
+    if (incoming.origin === TaskOriginTypes.InlineObject || incoming.origin === TaskOriginTypes.InlineChildObject) {
+        // todo top level object lookup
+        if (incoming.tasks) {
+            const taskItems = <any>incoming.tasks;
+            incoming.tasks = [].concat(taskItems)
+                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
+        }
+    }
 
-    /**
-     * Determine which sub tasks need converting as children.
-     * Based on what was explained above, we may want to pass the
-     * top level Value, or may want to use the tasks value directly
-     * @type {Array}
-     */
-    const toConvert = (function () {
-        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineArray) {
-            return incoming.tasks;
-        }
-        if (incoming.tasks.length && incoming.origin === TaskOriginTypes.InlineObject) {
-            return incoming.tasks;
-        }
-        if (toplevelValue == undefined) return [];
-        if (isPlainObject(toplevelValue) && toplevelValue.tasks) {
-            return [].concat(toplevelValue.tasks);
-        }
-        if (typeof toplevelValue === 'function') {
-            return [];
-        }
-        return [].concat(toplevelValue);
-    })();
+    if (incoming.type !== TaskTypes.ParentGroup && incoming.origin !== TaskOriginTypes.InlineChildObject) {
 
-    /**
-     * Add child tasks
-     * @type {Array}
-     */
-    incoming.tasks = getTasks(toConvert, incoming, trigger, parents);
+        const toplevelValue = getTopLevelValue(incoming.baseTaskName, trigger.input);
+
+        if (toplevelValue) {
+            incoming.tasks = [].concat(toplevelValue)
+                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
+                .map(out => {
+                    if (incoming.runMode === TaskRunModes.parallel) {
+                        if (out.tasks.length > 1 || out.subTasks.length > 1) {
+                            out.runMode = incoming.runMode;
+                        }
+                    }
+                    return out;
+                });
+        } else {
+
+        }
+    }
 
     /**
      * @type {CBFunction[]}
@@ -174,7 +194,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     incoming.inlineFunctions = (function () {
         if (incoming.inlineFunctions.length) return incoming.inlineFunctions;
         if (incoming.tasks.length)           return [];
-        const toplevel = getTopLevelValue(incoming, trigger);
+        const toplevel = getTopLevelValue(incoming.baseTaskName, trigger.input);
         if (typeof toplevel === 'function') {
             return [toplevel];
         }
@@ -197,6 +217,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {TaskTypes}
      */
     incoming.type = (function () {
+        if (typeof incoming.type !== 'undefined') return incoming.type;
         if (incoming.externalTasks.length) {
             return TaskTypes.ExternalTask;
         }
@@ -212,6 +233,11 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {boolean}
      */
     incoming.valid = (function () {
+    	if (incoming.type === TaskTypes.ParentGroup) {
+    	    if (incoming.tasks.length) {
+    	        return true;
+            }
+        }
     	if (incoming.type === TaskTypes.TaskGroup)      return true;
     	if (incoming.type === TaskTypes.InlineFunction) return true;
     	if (incoming.type === TaskTypes.ExternalTask)   return true;
@@ -243,30 +269,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      */
     incoming.parents = parents;
 
-    return incoming
-}
-
-/**
- * Set child tasks
- * @type {Task[]}
- */
-function getTasks(items, incoming, trigger, parents) {
-
-    if (!items.length) {
-        return [];
-    }
-
-    return items.reduce((acc, taskItem) => {
-
-        if (parents.indexOf(taskItem) > -1) {
-            return acc.concat(createCircularReferenceTask(incoming, parents));
-        }
-
-        const flattenedTask = createFlattenedTask(taskItem, parents.concat(incoming.baseTaskName), trigger);
-
-        return acc.concat(flattenedTask);
-
-    }, []);
+    return incoming;
 }
 
 /**
@@ -298,17 +301,27 @@ export function createCircularReferenceTask(incoming: Task, parents: string[]): 
 /**
  * Match a task name with a top-level value from 'tasks'
  */
-function getTopLevelValue(incoming: Task, trigger: CommandTrigger): any {
-    const exactMatch = trigger.input.tasks[incoming.baseTaskName];
+export function getTopLevelValue(baseTaskName: string, input: CrossbowInput): any {
+
+    const exactMatch = input.tasks[baseTaskName];
 
     if (exactMatch !== undefined) {
         return exactMatch;
     }
 
-    const maybes = Object.keys(trigger.input.tasks).filter(taskName => taskName.match(new RegExp(`^${incoming.baseTaskName}($|@(.+?))`)) !== null);
+    const maybeGroup = Object.keys(input.tasks)
+            .filter(x => x.indexOf(`(${baseTaskName})`) > -1);
+
+    if (maybeGroup.length) {
+        return input.tasks[maybeGroup[0]];
+    }
+
+    const maybes = Object.keys(input.tasks)
+        .filter(x => !isParentGroupName(x))
+        .filter(taskName => taskName.match(new RegExp(`^${baseTaskName}($|@(.+?))`)) !== null);
 
     if (maybes.length) {
-        return trigger.input.tasks[maybes[0]];
+        return input.tasks[maybes[0]];
     }
 
     return undefined;

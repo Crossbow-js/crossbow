@@ -35,7 +35,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
              * nested observables for it (a task with children cannot itself
              * be a task that should be run)
              */
-            if (task.type === TaskTypes.TaskGroup) {
+            if (task.type === TaskTypes.TaskGroup || task.type === TaskTypes.ParentGroup) {
 
                 /**
                  * If we're looking at a group of tasks that was run
@@ -48,7 +48,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                      * Build the list of tasks/groups
                      * @type {Array}
                      */
-                    const output = resolveGroupOfTasks(task);
+                    const output = resolveGroupOfTasks(task, trigger.input);
 
                     /**
                      * Wrap as parallel group if this task has a runMode of 'parallel'
@@ -204,13 +204,23 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
         });
     }
 
-    function resolveGroupOfTasks (task: Task) {
+    function resolveGroupOfTasks (task: Task, input) {
+        if (task.type === TaskTypes.ParentGroup) {
+            const opts = _.merge(
+                {},
+                task.options._default,
+                task.query,
+                task.flags
+            );
+            return flatten(task.tasks, [], opts, task.taskName);
+        }
         const lookupKeys = getLookupKeys(task.subTasks, task.options);
         return lookupKeys.reduce(function (acc, subTaskName:string) {
             const opts = _.merge(
                 {},
                 task.options._default,
                 _.get(task.options, subTaskName, {}),
+                _.get(input.options, [task.baseTaskName, subTaskName], {}),
                 task.query,
                 task.flags
             );
@@ -366,7 +376,7 @@ function getFunctionName(fn: TaskFactory, count = 0): string {
  * wrapping the process of running the tasks in a way
  * that allows comprehensive logging/reporting
  *
- * Series & Parallel have different symantics and are
+ * Series & Parallel have different semantics and are
  * therefor handled separately.
  *
  * Note that everything here is completely lazy and
@@ -380,41 +390,21 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], false, ctx);
-            const subject   = new Rx.ReplaySubject(2000);
-
-            Observable.from(flattened)
+            const run       = Observable
+                .from(flattened)
                 .concatAll()
-                .catch(() => {
-                    subject.onCompleted();
-                    return Rx.Observable.empty();
-                })
-                /**
-                 * Push any messages into the subject
-                 */
-                .do(subject)
-                .subscribe();
+                .catch(x => Rx.Observable.empty());
 
-            return subject;
+            return run;
         },
         parallel: (ctx: RunContext) => {
 
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], true, ctx);
-            const subject   = new Rx.ReplaySubject(2000);
+            const run = Observable.from(flattened).mergeAll();
 
-            Observable.from(flattened)
-                .mergeAll()
-                .do(subject)
-                .subscribe(() => {
-                    // values are proxied to subject
-                }, () => {
-                    // errors handled via error reports
-                }, () => {
-                    subject.onCompleted();
-                });
-
-            return subject;
+            return run;
         }
     };
 
@@ -585,6 +575,16 @@ export function collectSkippedTasks (items:SequenceItem[], initial): SequenceIte
         return acc.concat(collectSkippedTasks(item.items, []));
     }, initial);
 }
+
+export function collectRunnableTasks (items:SequenceItem[], initial: SequenceItem[]): SequenceItem[] {
+    return items.reduce(function (acc, item) {
+        if (item.type === SequenceItemTypes.Task) {
+            return acc.concat(item);
+        }
+        return acc.concat(collectRunnableTasks(item.items, []));
+    }, initial);
+}
+
 /**
  * Look at the reports array to find stats linked to a
  * given task
@@ -604,7 +604,8 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
     }
 
     if (start && error) {
-        return _.assign({}, start.stats, error.stats);
+        const duration = error.stats.endTime - start.stats.startTime;
+        return _.assign({}, start.stats, error.stats, {duration});
     }
 
     if (start) {

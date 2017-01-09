@@ -4,109 +4,188 @@ import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
 import {SequenceItem} from "./task.sequence.factories";
-import {ReportNames} from "./reporter.resolve";
+import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
+import {WatchCommandEventTypes} from "./command.watch";
 
 const debug = require('debug')('cb:watch.runner');
+
+export interface WatchEventWithContext {
+    watchEvent: WatchEvent
+    watcher: Watcher
+}
 
 export interface WatchEvent {
     event: string
     path: string
-    runner: Watcher
     watcherUID: string
-    duration?: number
 }
 
-export interface WatchEventCompletion {
-    sequence: SequenceItem[]
+export interface WatchTaskReport {
+    taskReport: TaskReport
     watchEvent: WatchEvent
+    count: number
+}
+
+export interface WatchRunnerComplete {
+    sequence: SequenceItem[]
+    reports: TaskReport[]
+    errors: TaskReport[]
+    watchEvent: WatchEvent
+    runtime: number
 }
 
 /**
  * Create a stream that is the combination of all watchers
  */
-export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger): Rx.Observable<WatchEventCompletion> {
+export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger):
+    Rx.Observable<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}> {
 
-    let paused = [];
-    let {reporter} = trigger;
+    /**
+     * Wrap every chokidar watcher in an observable
+     * @type {Rx.Observable<WatchEvent>[]}
+     */
+    const watchersAsObservables = watchers.map((watcher) => {
+        return createObservableForWatcher(watcher, trigger);
+    });
 
+    const blockable$ = new Rx.BehaviorSubject<string[]>([]);
+
+    /**
+     * Now map file-change events to task running
+     */
     return Rx.Observable
         /**
-         * Take each <Watcher> and create an observable stream for it,
-         * merging them all together
+         * Merge all watchers
          */
-        .merge(watchers.map(x => createObservableForWatcher(x, trigger.reporter)))
+        .merge(...watchersAsObservables)
         /**
-         * Map each file-change event into a stream of Rx.Observable<TaskReport>
-         * todo - allow parallel + series running here
+         * Pair up the watchEvent with it's watcher.
+         * This separation is done to allow us to pass an observable
+         * in to stub the file io stream
          */
-        .filter((x: WatchEvent) => {
-            if (x.runner.options.block && paused.indexOf(x.watcherUID) > -1) {
-                debug('File change blocked');
-                return false;
+        .map<WatchEventWithContext>((watchEvent: WatchEvent) => {
+            const watcher = watchers.filter(x => x.watcherUID === watchEvent.watcherUID)[0];
+            return {watchEvent, watcher};
+        })
+        /**
+         * If the incoming watch had block: true as an option
+         * check if it's watcherUID exists in the blockable$
+         */
+        .filter((x: WatchEventWithContext) => {
+            if (x.watcher.options.block) {
+                const blocked = !~blockable$.getValue().indexOf(x.watchEvent.watcherUID);
+                debug(`BLOCKED - ${x.watchEvent.watcherUID} ${x.watchEvent.path} ${x.watchEvent.event}`);
+                return blocked
             }
             return true;
         })
-        .do(x => {
-            if (x.runner.options.block) {
-                paused.push(x.watcherUID);
+        .do((x: WatchEventWithContext) => {
+            if (x.watcher.options.block) {
+                blockable$.onNext(blockable$.getValue().concat(x.watchEvent.watcherUID));
             }
         })
-        .flatMap((watchEvent: WatchEvent, i) => {
-
-            /** LOG **/
-            reporter(ReportNames.WatcherTriggeredTasks, i, watchEvent.runner.tasks);
-            /** LOG END **/
-
-            const timer = new Date().getTime();
-            const upcoming = watchEvent.runner._runner
-                // todo support parallel running here
-                .series()
-                .do(function (val) {
-                    // Push reports onto tracker
-                    // for cross-watcher reports
-                    trigger.tracker.onNext(val);
-                })
-                .do((x: TaskReport) => {
-                    // todo - simpler/shorter format for task reports on watchers
-                    if (trigger.config.progress) {
-                        reporter(ReportNames.WatchTaskReport, x, trigger); // always log start/end of tasks
-                    }
-                    if (x.type === TaskReportType.error) {
-                        console.log(x.stats.errors[0].stack);
-                    }
-                })
-                .toArray()
-                .flatMap((reports: TaskReport[]) => {
-                    const incoming = seq.decorateSequenceWithReports(watchEvent.runner._sequence, reports);
-                    const errorCount = seq.countSequenceErrors(incoming);
-
-                    /** LOG **/
-                    if (errorCount > 0) {
-                        reporter(ReportNames.Summary, incoming, trigger.cli, watchEvent.runner.tasks.join(', '), trigger.config, new Date().getTime() - timer);
-                    } else {
-                        reporter(ReportNames.WatcherTriggeredTasksCompleted, i, watchEvent.runner.tasks, new Date().getTime() - timer);
-                    }
-                    /** LOG END **/
-
-                    return Rx.Observable.just({sequence: incoming, watchEvent: watchEvent});
-                });
-            return upcoming;
-        })
-        .do((completion: WatchEventCompletion) => {
-            paused = paused.filter(x => x !== completion.watchEvent.watcherUID);
+        .timestamp(trigger.config.scheduler)
+        .flatMap((incoming: {value: WatchEventWithContext, timestamp: number}, i: number) => {
+            return runTasks(incoming, i);
         });
+
+    function runTasks (incoming, i: number) {
+        /**
+         * @type {WatchEvent}
+         */
+        const {watchEvent, watcher} = incoming.value;
+
+        return Rx.Observable.create<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}>(function (obs) {
+
+            /**
+             * Report start of task run
+             */
+            trigger.reporter({
+                type: ReportTypes.WatcherTriggeredTasks,
+                data: {
+                    index: i,
+                    taskCollection: watcher.tasks
+                } as WatcherTriggeredTasksReport
+            });
+
+            /**
+             * todo: Is there a way to handle this without subscribing manually?
+             */
+            watcher._runner.series()
+                .do(taskReport => obs.onNext({
+                    type: WatchCommandEventTypes.WatchTaskReport,
+                    data: {
+                        taskReport,
+                        watchEvent,
+                        count: i
+                    } as WatchTaskReport
+                }))
+                .toArray()
+                .timestamp(trigger.config.scheduler)
+                .subscribe(function (x: {value: TaskReport[], timestamp; number}) {
+
+                    const reports = x.value;
+                    const sequence = seq.decorateSequenceWithReports(watcher._sequence, reports);
+                    const errors   = reports.filter(x => x.type === TaskReportType.error);
+
+                    obs.onNext({
+                        type: WatchCommandEventTypes.WatchRunnerComplete,
+                        data: {
+                            sequence,
+                            reports,
+                            errors,
+                            watchEvent,
+                            runtime: x.timestamp - incoming.timestamp
+                        } as WatchRunnerComplete
+                    });
+
+                    if (errors.length > 0) {
+                        trigger.reporter({
+                            type: ReportTypes.WatcherSummary,
+                            data: {
+                                sequence: sequence,
+                                cli:      trigger.cli,
+                                title:    watcher.tasks.join(', '),
+                                config:   trigger.config,
+                                runtime:  x.timestamp - incoming.timestamp,
+                                watcher,
+                                watchEvent
+                            }
+                        });
+                    } else {
+                        trigger.reporter({
+                            type: ReportTypes.WatcherTriggeredTasksCompleted,
+                            data: {
+                                index: i,
+                                taskCollection: watcher.tasks,
+                                time: x.timestamp - incoming.timestamp
+                            }
+                        });
+                    }
+
+                    const withoutThis = blockable$.getValue().filter(x => x !== watchEvent.watcherUID);
+
+                    blockable$.onNext(withoutThis);
+
+                    obs.onCompleted();
+                });
+        });
+    }
 }
 
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher(watcher: Watcher, reporter): Rx.Observable<WatchEvent> {
+export function createObservableForWatcher(watcher: Watcher, trigger: CommandTrigger): Rx.Observable<WatchEvent> {
+
+    const {reporter}  = trigger;
+    const {scheduler} = trigger.config;
 
     /**
      * First create a stream of file-watcher events for this Watcher
      */
-    const output$ = getRawOutputStream(watcher, reporter);
+    const output$ = trigger.config.fileChangeObserver || getFileChangeStream(watcher, reporter);
 
     /**
      * Specify a mapping from option name -> Rx.Observable operator name
@@ -126,10 +205,10 @@ export function createObservableForWatcher(watcher: Watcher, reporter): Rx.Obser
         }
     ];
 
-    return applyOperators(output$, additionalOperators, watcher.options);
+    return applyOperators(output$, additionalOperators, watcher.options, scheduler);
 }
 
-export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<WatchEvent> {
+export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<WatchEvent> {
 
     /** DEBUG **/
     debug(`[id:${watcher.watcherUID}] options: ${JSON.stringify(watcher.options, null, 2)}`);
@@ -143,13 +222,13 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
         /** DEBUG END **/
 
         const chokidarWatcher = require('chokidar').watch(watcher.patterns, watcher.options)
+
             .on('all', function (event, path) {
+                debug(`└─ CHOKIDAR EVENT ${event} - ${path}`);
                 observer.onNext({
                     event: event,
                     path: path,
-                    runner: watcher,
-                    watcherUID: watcher.watcherUID,
-                    duration: 0
+                    watcherUID: watcher.watcherUID
                 });
             });
 
@@ -160,7 +239,7 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
             /** DEBUG END **/
 
             if (Object.keys(chokidarWatcher.getWatched()).length === 0) {
-                reporter(ReportNames.NoFilesMatched, watcher);
+                reporter({type: ReportTypes.NoFilesMatched, data: {watcher}});
             }
         });
 
@@ -174,11 +253,11 @@ export function getRawOutputStream(watcher: Watcher, reporter: CrossbowReporter)
 /**
  *
  */
-function applyOperators(source: Rx.Observable<any>, items: {option: string, fnName: string}[], options: CBWatchOptions): Rx.Observable<any> {
+function applyOperators(source: Rx.Observable<any>, items: {option: string, fnName: string}[], options: CBWatchOptions, scheduler?): Rx.Observable<any> {
     return items.reduce((stream$, item) => {
         const value = options[item.option];
         if (value !== undefined && value > 0) {
-            return stream$[item.fnName].call(stream$, value);
+            return stream$[item.fnName].call(stream$, value, scheduler);
         }
         return stream$;
     }, source);

@@ -1,4 +1,4 @@
-import {Task} from "./task.resolve";
+import {Task, getTopLevelValue} from "./task.resolve";
 import parse from './cli.parse';
 import {CrossbowInput} from "./index";
 import {
@@ -21,7 +21,7 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
 
     let output = (function () {
         if (typeof taskName === 'function') {
-            return handleFunctionInput(taskName, trigger.input, parents);
+            return handleFunctionInput(<any>taskName, trigger.input, parents);
         }
         if (typeof taskName === 'string') {
             return handleStringInput(taskName, trigger.input, parents);
@@ -66,7 +66,10 @@ export interface TaskLiteral {
 let objectCount = 0;
 export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 
-    if (taskLiteral.tasks && taskLiteral.tasks.length) {
+    /**
+     * Any value on the 'tasks' property
+     */
+    if (taskLiteral.tasks) {
 
         const name = 'AnonObject_' + objectCount++;
 
@@ -105,7 +108,7 @@ export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
     });
 }
 
-function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
+export function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
     const name = 'AnonGroup_' + taskItems.join(',').slice(0, 10) + '...';
     return createTask({
         runMode: TaskRunModes.parallel,
@@ -135,6 +138,7 @@ function stubAdaptor (string, taskLiteral, parents) {
  *  - build (which may be an alias for many other tasks)
  */
 function handleStringInput (taskName:string, input:CrossbowInput, parents:string[]) {
+
     /**
      * Never modify the current task if it begins
      * with a `@` - instead just return early with
@@ -166,21 +170,69 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * @type {string}
      */
     const baseTaskName = splitTask[0];
-    const subTasks = splitTask.slice(1);
+    const subTasks     = splitTask.slice(1);
+    const isParentName = /^\(.+?\)$/.test(baseTaskName);
+    const inputMatchesParentName = (function() {
+        if (input.tasks[`(${splitTask[0]})`]) {
+            return true;
+        }
+        if (splitTask[0].match(/^\(.+?\)$/) && input.tasks[splitTask[0]]) {
+            return true;
+        }
+    })();
+
+    const normalisedTaskName = (function() {
+        if (isParentName) return baseTaskName.slice(1, -1);
+        return baseTaskName;
+    })();
+
+    // Before we create the base task, check if this is an alias
+    // to another top-level task
+    const topLevel = (function(){
+        const base = getTopLevelValue(normalisedTaskName, input);
+        if (inputMatchesParentName && subTasks.length) {
+            return _.get(base, [subTasks], {});
+        }
+        return base;
+    })();
+
+    const topLevelOptions = (function() {
+        if (inputMatchesParentName && subTasks.length) {
+            return _.get(input.options, [normalisedTaskName, ...subTasks], {});
+        }
+        return _.get(input.options, [normalisedTaskName], {});
+    })();
 
     /**
      * Create the base task
-     * @type {IncomingTask}
      */
-    const incomingTask = createTask({
-        cbflags: split.cbflags,
-        query: split.query,
-        flags: split.flags,
-        baseTaskName,
-        subTasks,
-        taskName: baseTaskName,
-        rawInput: <string>taskName
-    });
+    const incomingTask = (function(){
+        const base = createTask({
+            cbflags: split.cbflags,
+            query: split.query,
+            flags: split.flags,
+            baseTaskName: normalisedTaskName,
+            subTasks,
+            taskName: normalisedTaskName,
+            rawInput: <string>taskName,
+            options: topLevelOptions
+        });
+
+        if (isPlainObject(topLevel) && topLevel.tasks) {
+            /**
+             * Create the base task
+             */
+            return _.merge({}, base, topLevel, {
+                origin: TaskOriginTypes.InlineChildObject,
+                type: inputMatchesParentName ? TaskTypes.ParentGroup : TaskTypes.TaskGroup
+            });
+        }
+        return base;
+    })();
+
+    if (inputMatchesParentName) {
+        incomingTask.type = TaskTypes.ParentGroup;
+    }
 
     /**
      * Now pass it off to allow any flags to applied
@@ -191,8 +243,8 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
 /**
  * Function can be given inline so this methods handles that
  */
-function handleFunctionInput (taskName: CBFunction, input: CrossbowInput, parents: string[]): Task {
-    const fnName = taskName.name;
+function handleFunctionInput (taskName: Function, input: CrossbowInput, parents: string[]): Task {
+    const fnName = taskName['name'];
     const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
     return createTask({
         runMode: TaskRunModes.series,
@@ -302,12 +354,14 @@ function getQuery (splitQuery: string[]): {} {
 /**
  * Apply any transformations to options based on
  * CB flags
+ * // todo refactor this
  * @param task
  * @returns {any}
  */
 function processFlags(task: Task): Task {
 
     const runMode = (function () {
+        if (task.runMode === TaskRunModes.parallel) return TaskRunModes.parallel;
         if (task.cbflags.indexOf('p') > -1) {
             return TaskRunModes.parallel;
         }

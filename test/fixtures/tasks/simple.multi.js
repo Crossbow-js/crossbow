@@ -1,13 +1,11 @@
-function simple (opts, ctx, done) {
-    setTimeout(function () {
-        done();
-    }, 10);
+var utils = require('../../utils');
+
+function simple (opts, ctx) {
+    return utils.delay(100, ctx.config.scheduler);
 }
 
-function simple2 (opts, ctx, done) {
-    setTimeout(function () {
-        done();
-    }, 10);
+function simple2 (opts, ctx) {
+    return utils.delay(2000, ctx.config.scheduler);
 }
 
 module.exports.tasks = [simple, simple2];

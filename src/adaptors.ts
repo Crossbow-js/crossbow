@@ -3,6 +3,7 @@ import {Task} from "./task.resolve";
 const shellAdaptor = require('./adaptors/@shell');
 const bgAdaptor    = require('./adaptors/@bg');
 import npmAdaptor from './adaptors/@npm';
+import cbAdaptor from './adaptors/@cb';
 
 const adaptors = {
     'shell': {
@@ -24,6 +25,10 @@ const adaptors = {
     'npm': {
         validate: () => true,
         create: npmAdaptor
+    },
+    'cb': {
+        validate: () => true,
+        create: cbAdaptor
     }
 };
 
