@@ -440,15 +440,12 @@ Or to see multiple tasks running, with some in parallel, try:
             lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
         }
 
-        lines.push(``);
-
         if (errorTasks.length > 0) {
             lines.push(`{red:x} {bold:Summary:}`);
         } else {
             lines.push(`{ok: } {bold:Summary:}`);
         }
 
-        lines.push(``);
         lines.push(`    Total Time: {yellow:${duration(runtime)}}`);
         lines.push(`    Tasks:      {cyan:${runnableTasks.length}}`);
 
@@ -461,7 +458,6 @@ Or to see multiple tasks running, with some in parallel, try:
         }
 
         lines.push(`    Completed:  {green:${completedTasks.length}}`);
-        lines.push('');
 
         return lines;
     },
