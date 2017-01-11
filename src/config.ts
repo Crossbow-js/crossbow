@@ -85,7 +85,7 @@ const defaults = <CrossbowConfiguration>{
      * one completes. You can set this to 'parallel' instead
      * if you wish for your code to run as fast as possible
      */
-    runMode: TaskRunModes.series,
+    runMode: <any>'series',
     resumeOnError: false,
     parallel: false,
     input: [],
