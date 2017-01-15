@@ -65,6 +65,7 @@
     "browserify": "13.0.0",
     "chai": "3.4.1",
     "compression": "^1.6.2",
+    "crossbow-sass": "^4.0.3",
     "eslint": "1.10.3",
     "express": "^4.14.0",
     "gulp": "latest",

@@ -3,11 +3,6 @@ const configMerge = require("../../../dist/config").merge;
 const getInputs = require("../../../dist/input.resolve").getInputs;
 
 describe('Choosing which input strategy to use', function () {
-    it('uses the file in CWD by default', function () {
-        const inputs = getInputs(configMerge({}));
-        assert.equal(inputs.inputs.length, 1); // crossbow.yaml in root
-        assert.equal(inputs.sources[0].parsed.base, 'crossbow.yaml'); // crossbow.yaml in root
-    });
     it('returns multiple types when available', function () {
         const inputs = getInputs(configMerge({cwd: 'examples'}));
         assert.equal(inputs.sources.length, 2);

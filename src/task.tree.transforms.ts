@@ -45,7 +45,7 @@ export const transforms = {
 
             function applyBooleanPropertyToChildren (tasks: Task[], add: boolean, property, value?) {
                 tasks.forEach(function (task) {
-                    if (add) {
+                    if (add && Array.isArray(task[property])) {
                         task[property].unshift.apply(task[property], value);
                     }
                     if (task[property].length) {
