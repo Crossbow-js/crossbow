@@ -136,7 +136,6 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .do(x => setUp$.onNext(x.setup)) // first item is the setup
             .flatMap(x => {
                 if (x.setup.errors.length) {
-                    console.error("Error in setup", x.setup.errors);
                     return Rx.Observable.empty();
                 }
                 return x.update$;
