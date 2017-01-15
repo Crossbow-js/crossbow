@@ -4,9 +4,10 @@
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
-    "test": "npm run types && npm run ts && npm run unit",
+    "postinstall": "npm run types",
+    "test": "npm run lint && npm run ts && npm run unit",
     "unit": "mocha test/specs --recursive",
-    "lint": "eslint lib",
+    "lint": "tslint src/**/*.ts --fix",
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray,cloneDeep exports=node",
     "prepublish": "npm test",
@@ -47,7 +48,8 @@
     "rx": "4.1.0",
     "rx-node": "1.0.2",
     "tfunk": "latest",
-    "traverse": "0.6.6"
+    "traverse": "0.6.6",
+    "tslint": "^4.3.1"
   },
   "bin": {
     "crossbow": "dist/cb.js",

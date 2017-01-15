@@ -7,39 +7,40 @@ import {ParsedPath} from "path";
 import {statSync} from "fs";
 import {join} from "path";
 import {readdirSync} from "fs";
-import Rx = require('rx');
+import Rx = require("rx");
 import {dirname} from "path";
 import {createReadStream} from "fs";
 import {createHash} from "crypto";
 import {lstat, Stats} from "fs";
 
-const hd = require('hash-dir');
-const hashDirAsObservable  = Rx.Observable.fromNodeCallback(hd);
+const hd = require("hash-dir");
+const hashDirAsObservable = Rx.Observable.fromNodeCallback(hd);
 const hashFileAsObservable = Rx.Observable.fromNodeCallback(hashFile);
-const lstatAsObservable    = Rx.Observable.fromNodeCallback(lstat);
+const lstatAsObservable = Rx.Observable.fromNodeCallback(lstat);
 
-const _ = require('../lodash.custom');
+const _ = require("../lodash.custom");
 
 // todo windows support for .bat files etc
-const supportedTaskFileExtensions = ['.js', '.sh'];
+const supportedTaskFileExtensions = [".js", ".sh"];
 
 export interface ExternalFile {
-    rawInput: string
-    resolved: string
-    relative: string
-    errors: InputError[],
-    parsed: ParsedPath
+    rawInput: string;
+    resolved: string;
+    relative: string;
+    errors: InputError[];
+    parsed: ParsedPath;
 }
 
-export interface FileNotFoundError extends InputError {}
+export interface FileNotFoundError extends InputError {
+}
 
 export interface ExternalFileContent extends ExternalFile {
-    content: string
-    data?: any
+    content: string;
+    data?: any;
 }
 
 export interface ExternalFileInput extends ExternalFile {
-    input: CrossbowInput|any,
+    input: CrossbowInput|any;
 }
 
 /**
@@ -47,7 +48,7 @@ export interface ExternalFileInput extends ExternalFile {
  * from the users CWD
  */
 export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultConfigFiles = ['crossbow.yaml', 'crossbow.js', 'crossbow.yml', 'crossbow.json'];
+    const defaultConfigFiles = ["crossbow.yaml", "crossbow.js", "crossbow.yml", "crossbow.json"];
     return readInputFiles(defaultConfigFiles, config.cwd);
 }
 
@@ -58,7 +59,7 @@ export function retrieveDefaultInputFiles(config: CrossbowConfiguration): InputF
  * @returns {InputFiles}
  */
 export function retrieveCBFiles(config: CrossbowConfiguration): InputFiles {
-    const defaultCBFiles = ['cbfile.js', 'crossbowfile.js'];
+    const defaultCBFiles = ["cbfile.js", "crossbowfile.js"];
     const maybes = (function () {
         if (config.cbfile) {
             return [config.cbfile];
@@ -105,10 +106,10 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
          * If the input file was yaml, load it & translate to JS
          */
         if (inputFile.parsed.ext.match(/ya?ml$/i)) {
-            const yml = require('js-yaml');
+            const yml = require("js-yaml");
             try {
                 return _.assign(inputFile, {
-                    input: yml.safeLoad(readFileSync(inputFile.resolved, 'utf8'))
+                    input: yml.safeLoad(readFileSync(inputFile.resolved, "utf8"))
                 });
             } catch (e) {
                 return _.assign(inputFile, {
@@ -145,34 +146,34 @@ export function readFilesFromDiskWithContent(paths: string[], cwd: string): Exte
     return files
         .map((x: ExternalFileContent) => {
             if (x.errors.length) return x;
-            x.content = readFileSync(x.resolved, 'utf8');
+            x.content = readFileSync(x.resolved, "utf8");
             return x;
         });
 }
 
 export function readFileContent(file: ExternalFile): string {
-    return readFileSync(file.resolved, 'utf8');
+    return readFileSync(file.resolved, "utf8");
 }
 
 export function writeFileToDisk(file: ExternalFile, content: string) {
-    const mkdirp = require('mkdirp').sync;
+    const mkdirp = require("mkdirp").sync;
     mkdirp(dirname(file.resolved));
     writeFileSync(file.resolved, content);
 }
 
-export function getStubFileWithContent(path:string, cwd:string): ExternalFileContent {
-    const file : any = getStubFile(path, cwd);
-    file.content = '';
+export function getStubFileWithContent(path: string, cwd: string): ExternalFileContent {
+    const file: any = getStubFile(path, cwd);
+    file.content = "";
     return file;
 }
 
-export function readOrCreateJsonFile (path:string, cwd: string): ExternalFileContent {
+export function readOrCreateJsonFile(path: string, cwd: string): ExternalFileContent {
     const existing = readFilesFromDiskWithContent([path], cwd)[0];
     if (existing.errors.length) {
         if (existing.errors[0].type === InputErrorTypes.FileNotFound) {
             const stub = getStubFileWithContent(path, cwd);
-            stub.content = '{}';
-            stub.data    = JSON.parse(stub.content);
+            stub.content = "{}";
+            stub.data = JSON.parse(stub.content);
             return stub;
         }
     } else {
@@ -185,7 +186,7 @@ export function readOrCreateJsonFile (path:string, cwd: string): ExternalFileCon
     return existing;
 }
 
-export function getStubFile(path:string, cwd:string): ExternalFile {
+export function getStubFile(path: string, cwd: string): ExternalFile {
     const resolved = resolve(cwd, path);
     return {
         errors: [],
@@ -193,7 +194,7 @@ export function getStubFile(path:string, cwd:string): ExternalFile {
         resolved,
         parsed: parse(resolved),
         relative: relative(cwd, resolved)
-    }
+    };
 }
 
 /**
@@ -245,12 +246,12 @@ export function readFilesFromDisk(paths: string[], cwd: string): ExternalFile[] 
  * @returns {InputFiles}
  */
 export function getRequirePaths(config: CrossbowConfiguration): InputFiles {
-    const local = join('node_modules', 'crossbow', 'dist', 'public', 'create.js');
-    const global = join(__dirname, 'public', 'create.js');
+    const local = join("node_modules", "crossbow", "dist", "public", "create.js");
+    const global = join(__dirname, "public", "create.js");
     return readInputFiles([local, global], config.cwd);
 }
 
-export function getExternalFiles (dirpaths: string[], cwd: string): ExternalFile[] {
+export function getExternalFiles(dirpaths: string[], cwd: string): ExternalFile[] {
     return dirpaths
         .map(dirpath => {
             return resolve(cwd, dirpath);
@@ -260,7 +261,7 @@ export function getExternalFiles (dirpaths: string[], cwd: string): ExternalFile
             return acc.concat(readdirSync(dirPath).map(filepath => {
                 const resolved = join(dirPath, filepath);
                 const parsed = parse(resolved);
-                const output : ExternalFile = {
+                const output: ExternalFile = {
                     rawInput: filepath,
                     resolved,
                     relative: relative(cwd, resolved),
@@ -277,23 +278,23 @@ export function getPossibleTasksFromDirectories(dirpaths: string[], cwd: string)
         .filter(x => supportedTaskFileExtensions.indexOf(x.parsed.ext) > -1)
         .map(x => {
             return x.relative;
-        })
+        });
 }
 
 export interface IHashItem {
-    userInput: string
-    resolved: string
-    hash: string
-    changed: boolean
+    userInput: string;
+    resolved: string;
+    hash: string;
+    changed: boolean;
 }
 export interface IHashInput {
-    userInput: string
-    pathObj: ExternalFile
+    userInput: string;
+    pathObj: ExternalFile;
 }
 
 export interface IHashResults {
-    output: IHashItem[]
-    markedHashes: IHashItem[]
+    output: IHashItem[];
+    markedHashes: IHashItem[];
 }
 
 export enum HashDirErrorTypes  {
@@ -302,9 +303,9 @@ export enum HashDirErrorTypes  {
 }
 
 export interface HashDirError extends Error {
-    code: string
-    path: string
-    syscall: string
+    code: string;
+    path: string;
+    syscall: string;
 }
 
 export function hashItems(dirs: string[], cwd: string, existingHashes: IHashItem[]): Rx.Observable<IHashResults> {
@@ -314,7 +315,7 @@ export function hashItems(dirs: string[], cwd: string, existingHashes: IHashItem
             return {
                 userInput: x,
                 pathObj: getStubFile(x, cwd)
-            }
+            };
         })
         .distinct(x => x.pathObj.resolved)
         .flatMap(hashFileOrDir)
@@ -324,27 +325,27 @@ export function hashItems(dirs: string[], cwd: string, existingHashes: IHashItem
         });
 }
 
-function hashFile(filepath:string, fn: Function) {
-    const hash = createHash('sha256');
+function hashFile(filepath: string, fn: Function) {
+    const hash = createHash("sha256");
     createReadStream(filepath)
-        .on('data', function(chunk) {
+        .on("data", function (chunk) {
             hash.update(chunk);
         })
-        .on('end', function() {
-            fn(null, hash.digest('hex'));
+        .on("end", function () {
+            fn(null, hash.digest("hex"));
         })
-        .on('error', fn);
+        .on("error", fn);
 }
 
-function hashFileOrDir (input: IHashInput) {
+function hashFileOrDir(input: IHashInput) {
     return lstatAsObservable(input.pathObj.resolved).flatMap(function (stats: Stats) {
         if (stats.isDirectory()) {
-            return hashDirAsObservable(input.pathObj.resolved).map((tree: {hash:string}) => {
+            return hashDirAsObservable(input.pathObj.resolved).map((tree: {hash: string}) => {
                 return {
                     userInput: input.userInput,
                     resolved: input.pathObj.resolved,
                     hash: tree.hash
-                }
+                };
             });
         }
         if (stats.isFile()) {
@@ -353,7 +354,7 @@ function hashFileOrDir (input: IHashInput) {
                     userInput: input.userInput,
                     resolved: input.pathObj.resolved,
                     hash
-                }
+                };
             });
         }
         return Rx.Observable.empty();
@@ -364,14 +365,14 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
 
     const newHashPaths = newHashes.map(x => x.resolved);
     const markedHashes = newHashes.map(function (newHash) {
-        const match  = existingHashes.filter(x => x.resolved === newHash.resolved);
+        const match = existingHashes.filter(x => x.resolved === newHash.resolved);
         newHash.changed = (function () {
             if (match.length) {
                 return match[0].hash !== newHash.hash;
             }
             return true; // return true by default so that new entries always run
         })();
-        return newHash
+        return newHash;
     });
 
     const otherHashes = existingHashes.filter(function (hash) {
@@ -383,5 +384,5 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
     return {
         output,
         markedHashes
-    }
+    };
 }

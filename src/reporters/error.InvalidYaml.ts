@@ -6,8 +6,8 @@ interface IYamlError {
         position: number
         line: number
         column: number
-    }
-    message: string
+    };
+    message: string;
 }
 
 module.exports = (error: {error: IYamlError}, input: ExternalFileInput) => {

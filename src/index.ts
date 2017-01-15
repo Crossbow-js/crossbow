@@ -1,59 +1,59 @@
 #!/usr/bin/env node
-import runner = require('./command.run');
-import {CrossbowConfiguration, merge, OutgoingSignals} from './config';
-import {getRequirePaths} from './file.utils';
+import runner = require("./command.run");
+import {CrossbowConfiguration, merge, OutgoingSignals} from "./config";
+import {getRequirePaths} from "./file.utils";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
-import Rx = require('rx');
+import Rx = require("rx");
 import {OutgoingReporter} from "./reporter.resolve";
 
-const _ = require('../lodash.custom');
-const debug = require('debug')('cb:init');
+const _ = require("../lodash.custom");
+const debug = require("debug")("cb:init");
 
 export interface CLI {
-    input: string[]
-    flags: any
-    trailing?: string
-    command?: string
+    input: string[];
+    flags: any;
+    trailing?: string;
+    command?: string;
 }
 
 export interface CrossbowInput {
-    tasks: any
-    watch: any
-    options: any
-    env?: any
-    config?: any
+    tasks: any;
+    watch: any;
+    options: any;
+    env?: any;
+    config?: any;
 }
 
 export interface CrossbowReporter {
-    (report: reports.IncomingReport): void
+    (report: reports.IncomingReport): void;
 }
 
 const availableCommands = {
-    run: './command.run',
-    r: './command.run',
-    tasks: './command.tasks',
-    t: './command.tasks',
-    ls: './command.tasks',
-    watch: './command.watch',
-    w: './command.watch',
-    watchers: './command.watchers',
-    init: './command.init',
-    docs: './command.docs',
+    run: "./command.run",
+    r: "./command.run",
+    tasks: "./command.tasks",
+    t: "./command.tasks",
+    ls: "./command.tasks",
+    watch: "./command.watch",
+    w: "./command.watch",
+    watchers: "./command.watchers",
+    init: "./command.init",
+    docs: "./command.docs",
 };
 
 const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
 export interface PreparedInputErrors {
-    type: reports.ReportTypes
+    type: reports.ReportTypes;
 }
 
 export interface PreparedInput {
-    cli: CLI
-    config: CrossbowConfiguration
-    reportFn?: CrossbowReporter
-    userInput: UserInput
-    errors: PreparedInputErrors[]
+    cli: CLI;
+    config: CrossbowConfiguration;
+    reportFn?: CrossbowReporter;
+    userInput: UserInput;
+    errors: PreparedInputErrors[];
 }
 
 /**
@@ -90,7 +90,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             cli,
             config: mergedConfig,
             errors: [{type: reports.ReportTypes.InvalidReporter}]
-        } as PreparedInput
+        } as PreparedInput;
     }
 
     // proxy for calling reporter functions.
@@ -114,7 +114,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             config: mergedConfig,
             reportFn,
             errors: [{type: reports.ReportTypes.InputError}]
-        } as PreparedInput
+        } as PreparedInput;
     }
 
     // at this point, there are no invalid reporters or input files
@@ -147,7 +147,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             reportFn,
             config: mergedConfig,
             errors: [{type: reports.ReportTypes.InvalidReporter}]
-        } as PreparedInput
+        } as PreparedInput;
     }
 
     // Show the user which external inputs are being used
@@ -162,7 +162,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
         reportFn,
         config: mergedConfig,
         errors: []
-    }
+    };
 }
 
 /**
@@ -172,7 +172,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
 export function handleIncoming<ReturnType>(preparedInput: PreparedInput): ReturnType {
 
     const {cli, userInput, config, reportFn} = preparedInput;
-    
+
     // if the user provided a --cbfile flag, the type 'CBFile'
     // must be available, otherwise this is an error state
     if (userInput.type === InputTypes.CBFile) {
@@ -195,9 +195,9 @@ function handleCBfileMode(cli: CLI, config: CrossbowConfiguration, reportFn: Cro
         return require(availableCommands[cli.input[0]]).default.call(null, cli, input.default, input.default.config, reportFn);
     }
 
-    cli.input = ['run'].concat(cli.input);
+    cli.input = ["run"].concat(cli.input);
 
-    return require(availableCommands['run']).default.call(null, cli, input.default, input.default.config, reportFn);
+    return require(availableCommands["run"]).default.call(null, cli, input.default, input.default.config, reportFn);
 }
 
 /**

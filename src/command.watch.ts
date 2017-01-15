@@ -1,13 +1,13 @@
 
-import {CommandTrigger, TriggerTypes} from './command.run';
-import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI, CrossbowReporter} from './index';
+import {CommandTrigger, TriggerTypes} from "./command.run";
+import {CrossbowConfiguration} from "./config";
+import {CrossbowInput, CLI, CrossbowReporter} from "./index";
 import {createWatchRunners, WatchRunners} from "./watch.runner";
-import {resolveWatchTasks, WatchTasks} from './watch.resolve';
+import {resolveWatchTasks, WatchTasks} from "./watch.resolve";
 import {getModifiedWatchContext} from "./watch.shorthand";
 import {getBeforeTaskRunner, BeforeTasks} from "./watch.before";
-import Rx = require('rx');
-import Immutable = require('immutable');
+import Rx = require("rx");
+import Immutable = require("immutable");
 import {createObservablesForWatchers, WatchTaskReport, WatchRunnerComplete} from "./watch.file-watcher";
 import promptForWatchCommand from "./command.watch.interactive";
 import {stripBlacklisted} from "./watch.utils";
@@ -17,41 +17,41 @@ import {TaskReport, TaskReportType} from "./task.runner";
 import * as seq from "./task.sequence";
 import * as reports from "./reporter.resolve";
 
-const debug = require('debug')('cb:command.watch');
-const _ = require('../lodash.custom');
+const debug = require("debug")("cb:command.watch");
+const _ = require("../lodash.custom");
 
 export interface CrossbowError extends Error {
-    _cb: boolean
+    _cb: boolean;
 }
 
 export interface WatchCommandSetupErrors {
-    type: ReportTypes
+    type: ReportTypes;
 }
 
 export interface WatchCommandOutput {
-    setup: WatchCommandSetup
-    update$: Rx.Observable<WatchReport>
+    setup: WatchCommandSetup;
+    update$: Rx.Observable<WatchReport>;
 }
 export interface WatchCommandSetup {
-    beforeTasks?:  BeforeTasks
-    watchTasks?:   WatchTasks
-    watchRunners?: WatchRunners
-    errors:        WatchCommandSetupErrors[]
+    beforeTasks?:  BeforeTasks;
+    watchTasks?:   WatchTasks;
+    watchRunners?: WatchRunners;
+    errors:        WatchCommandSetupErrors[];
 }
 
 export type WatchCommmandComplete = Rx.Observable<WatchCommandOutput>;
 
 export interface WatchReport {
-    type: WatchCommandEventTypes,
-    data: WatchTaskReport|WatchRunnerComplete
+    type: WatchCommandEventTypes;
+    data: WatchTaskReport|WatchRunnerComplete;
 }
 
 export enum WatchCommandEventTypes {
-    SetupError           = <any>'SetupError',
-    FileEvent            = <any>'FileEvent',
-    WatchTaskReport      = <any>'WatchTaskReport',
-    WatchRunnerComplete  = <any>'WatchRunnerComplete',
-    BeforeTasksComplete  = <any>'BeforeTasksComplete'
+    SetupError           = <any>"SetupError",
+    FileEvent            = <any>"FileEvent",
+    WatchTaskReport      = <any>"WatchTaskReport",
+    WatchRunnerComplete  = <any>"WatchRunnerComplete",
+    BeforeTasksComplete  = <any>"BeforeTasksComplete"
 }
 
 function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
@@ -201,7 +201,7 @@ function executeWatchCommand(trigger: CommandTrigger): WatchCommmandComplete {
             return Rx.Observable.concat<any>(
                 Rx.Observable.just(beforeReport),
                 createObservablesForWatchers(watchRunners.valid, trigger)
-            )
+            );
         });
 
     return Rx.Observable.just({
@@ -219,7 +219,7 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
 
     const topLevelWatchers = stripBlacklisted(Object.keys(input.watch));
 
-    debug('top level watchers available', topLevelWatchers);
+    debug("top level watchers available", topLevelWatchers);
 
     const sharedMap = new Rx.BehaviorSubject(Immutable.Map({}));
 
@@ -237,7 +237,7 @@ export default function handleIncomingWatchCommand(cli: CLI, input: CrossbowInpu
     if (cli.input.length === 1) {
         if (input.watch.default !== undefined) {
             const moddedCliInput = cli.input.slice();
-            cli.input = moddedCliInput.concat('default');
+            cli.input = moddedCliInput.concat("default");
             return executeWatchCommand(getModifiedWatchContext({
                 shared: sharedMap,
                 cli,

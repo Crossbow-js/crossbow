@@ -8,5 +8,5 @@ module.exports = (error: DocsOutputFileExistsError) => {
   exists in this directory. 
   
   Perhaps you wanted the {yellow:--file} flag instead?
-`
+`;
 };

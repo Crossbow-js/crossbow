@@ -1,13 +1,13 @@
-import {relative, resolve, join, parse} from 'path';
-import {existsSync, lstatSync} from 'fs';
+import {relative, resolve, join, parse} from "path";
+import {existsSync, lstatSync} from "fs";
 import {CrossbowConfiguration} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
 import {Task, TaskTypes, TaskRunModes} from "./task.resolve";
 import {CrossbowInput} from "./index";
-const _ = require('../lodash.custom');
-const debug = require('debug')('cb:task-utils');
+const _ = require("../lodash.custom");
+const debug = require("debug")("cb:task-utils");
 
 export enum InputErrorTypes {
     InputFileNotFound   = <any>"InputFileNotFound",
@@ -24,19 +24,19 @@ export interface InputFileNotFoundError extends InputError {}
 export interface NoTasksAvailableError extends InputError {}
 export interface NoWatchersAvailableError extends InputError {}
 export interface InputError {
-    type: InputErrorTypes
+    type: InputErrorTypes;
 }
 
 export interface InputFiles {
-    all: ExternalFileInput[]
-    valid: ExternalFileInput[]
-    invalid: ExternalFileInput[]
+    all: ExternalFileInput[];
+    valid: ExternalFileInput[];
+    invalid: ExternalFileInput[];
 }
 
 export function locateModule(config: CrossbowConfiguration, taskName: string): ExternalFile[] {
 
     const tasksByName = locateExternalTask(config, taskName);
-    
+
     /**
      * Exit early if this file exists
      * TODO - allow this lookup to be cached to prevent future file IO
@@ -58,12 +58,12 @@ export function getChildTaskNames (task: Task): string[] {
 function locateExternalTask (config: CrossbowConfiguration, name: string): ExternalFile[] {
 
     const dirLookups = config.tasksDir.reduce((acc, dir) => {
-        return acc.concat([[dir, name + '.js'], [dir, name]]);
+        return acc.concat([[dir, name + ".js"], [dir, name]]);
     }, []);
 
     const lookups = [
         ...dirLookups,
-        [name + '.js'],
+        [name + ".js"],
         [name]
     ];
 
@@ -78,7 +78,7 @@ function locateExternalTask (config: CrossbowConfiguration, name: string): Exter
                 resolved: resolvedFilePath,
                 relative: relative(config.cwd, resolvedFilePath),
                 errors: []
-            }
+            };
         });
 }
 
@@ -94,7 +94,7 @@ function locateNodeModule (config: CrossbowConfiguration, name: string): Externa
             errors: []
         }];
     } catch (e) {
-        if (e.code !== 'MODULE_NOT_FOUND') {
+        if (e.code !== "MODULE_NOT_FOUND") {
             throw e;
         }
         debug(`lookup for ${name} failed`, e.message);
@@ -121,7 +121,7 @@ function locateNodeModule (config: CrossbowConfiguration, name: string): Externa
 //     });
 // }
 
-const traverse = require('traverse');
+const traverse = require("traverse");
 /**
  * Convert a JS object into ENV vars
  * eg:
@@ -137,7 +137,7 @@ const traverse = require('traverse');
  * ->
  *    CB_OPTIONS_DOCKER_PORT=8000
  */
-export function envifyObject(object:any, prefix:string, objectKeyName: string) {
+export function envifyObject(object: any, prefix: string, objectKeyName: string) {
     const subject = _.cloneDeep(object);
     return traverse(subject).reduce(function (acc, x) {
         if (this.level > 4) {
@@ -149,13 +149,13 @@ export function envifyObject(object:any, prefix:string, objectKeyName: string) {
             return acc;
         }
         if (this.isLeaf) {
-            acc[[prefix, objectKeyName, ...this.path].join('_').toUpperCase()] = String(this.node);
+            acc[[prefix, objectKeyName, ...this.path].join("_").toUpperCase()] = String(this.node);
         }
         return acc;
     }, {});
 }
 
-const merge = require('../lodash.custom').merge;
+const merge = require("../lodash.custom").merge;
 
 export function excludeKeys(input: any, blacklist: string[]): any {
     return Object.keys(input).filter(x => blacklist.indexOf(x) === -1).reduce(function(acc, key) {
@@ -171,20 +171,20 @@ export function excludeKeys(input: any, blacklist: string[]): any {
  * 3. CLI trailing args + command
  * 4. env
  */
-const configBlacklist = ['outputObserver','fileChangeObserver','signalObserver','scheduler'];
+const configBlacklist = ["outputObserver", "fileChangeObserver", "signalObserver", "scheduler"];
 
 export function getCBEnv (trigger: CommandTrigger): {} {
     const prefix = trigger.config.envPrefix;
 
     // 1. Crossbow options (from cbfile etc)
-    const cbOptionsEnv = envifyObject(trigger.input.options, prefix, 'options');
+    const cbOptionsEnv = envifyObject(trigger.input.options, prefix, "options");
 
     // 2. Crossbow config (from config key or CLI flags)
-    const cbConfigEnv  = envifyObject(excludeKeys(trigger.config, configBlacklist), prefix, 'config');
+    const cbConfigEnv  = envifyObject(excludeKeys(trigger.config, configBlacklist), prefix, "config");
 
     // 3. command + trailing cli args
     const {trailing, command} = trigger.cli;
-    const cbCliEnv     = envifyObject({trailing, command}, prefix, 'cli');
+    const cbCliEnv     = envifyObject({trailing, command}, prefix, "cli");
 
                                                       // 4. env key from input file
     return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, trigger.input.env);
@@ -197,8 +197,8 @@ export function getCBEnv (trigger: CommandTrigger): {} {
  */
 function replaceOne(item, root) {
     return item.replace(/\{\{(.+?)\}\}/g, function () {
-        const match = _.get(root, arguments[1].split('.'));
-        if (typeof match === 'string') {
+        const match = _.get(root, arguments[1].split("."));
+        if (typeof match === "string") {
             return replaceOne(match, root);
         }
         return match;
@@ -206,38 +206,38 @@ function replaceOne(item, root) {
 }
 
 export function getFunctionName (fn) {
-    if (fn.name !== '') {
+    if (fn.name !== "") {
         return `[Function: ${fn.name}]`;
     }
-    return '[Function]';
+    return "[Function]";
 }
-export const removeNewlines = (x: string) => x.replace(/\n|\r/g, ' ').trim();
-export const escapeNewLines = (x: string) => x.replace(/\n|\r/g, '\\n').trim();
-export const removeTrailingNewlines = (x: string) => x.replace(/(\n|\r)$/, ' ').trim();
+export const removeNewlines = (x: string) => x.replace(/\n|\r/g, " ").trim();
+export const escapeNewLines = (x: string) => x.replace(/\n|\r/g, "\\n").trim();
+export const removeTrailingNewlines = (x: string) => x.replace(/(\n|\r)$/, " ").trim();
 export function stringifyObj (incoming: any, max = 100): string {
     const asString = (function () {
-        if (typeof incoming !== 'string') {
+        if (typeof incoming !== "string") {
             return JSON.stringify(incoming);
         }
         return incoming;
-    })()
+    })();
     if (asString.length > max || asString) {
         return asString.slice(0, (max - 3)) + (function () {
-            if (asString.length - max > -3) return '...';
-            return '';
+            if (asString.length - max > -3) return "...";
+            return "";
         })();
     }
     if (asString.length > process.stdout.columns) {
-        return asString.slice(0, process.stdout.columns - 3) + '...';
+        return asString.slice(0, process.stdout.columns - 3) + "...";
     }
     return asString;
 }
 
 const toStringTypes = {
-    'obj': '[object Object]',
-    'string': '[object String]',
-    'array': '[object Array]',
-    'function': '[object Function]'
+    "obj": "[object Object]",
+    "string": "[object String]",
+    "array": "[object Array]",
+    "function": "[object Function]"
 };
 
 function testType(com: string, val: any): boolean {
@@ -245,30 +245,30 @@ function testType(com: string, val: any): boolean {
 }
 
 export function isPlainObject(val: any): boolean {
-    return testType(toStringTypes['obj'], val);
+    return testType(toStringTypes["obj"], val);
 }
 
 export function isString(val: any): boolean {
-    return testType(toStringTypes['string'], val);
+    return testType(toStringTypes["string"], val);
 }
 
-export function isFunction (val:any): boolean {
-    return testType(toStringTypes['function'], val);
+export function isFunction (val: any): boolean {
+    return testType(toStringTypes["function"], val);
 }
 
 export function isReport(report: any) {
     return report && isString(report.type) &&
         report.type === TaskReportType.start ||
         report.type === TaskReportType.end ||
-        report.type === TaskReportType.error
+        report.type === TaskReportType.error;
 }
 
 export function isPrivateTask (taskName: string): boolean {
-    return taskName[0] === '_';
+    return taskName[0] === "_";
 }
 
 export function isPublicTask (taskName: string): boolean {
-    return taskName[0] !== '_';
+    return taskName[0] !== "_";
 }
 
 export function isParentGroupName (name: string): RegExpMatchArray {
@@ -281,7 +281,7 @@ export function isParentRef (name: string, names: string[]): boolean {
     return false;
 }
 
-export function getChildItems (name:string, input) {
+export function getChildItems (name: string, input) {
     if (isParentGroupName(name)) {
         return _.get(input, [name], {});
     }
@@ -309,22 +309,22 @@ export function isInternal (incoming: string): boolean {
     return /_internal_fn_\d{0,10}$/.test(incoming);
 }
 
-const supportedFileExtensions = ['.js'];
+const supportedFileExtensions = [".js"];
 export function isSupportedFileType (incoming): boolean {
     return supportedFileExtensions.indexOf(incoming.toLowerCase()) > -1;
 }
 
 export function _e(x) {
     return x
-        .replace(/\n|\r/g, '')
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
+        .replace(/\n|\r/g, "")
+        .replace(/\{/g, "\\\{")
+        .replace(/}/g, "\\\}");
 }
 
 export function __e(x) {
     return x
-        .replace(/\{/g, '\\\{')
-        .replace(/}/g, '\\\}');
+        .replace(/\{/g, "\\\{")
+        .replace(/}/g, "\\\}");
 }
 
 export function longestString (col: string[]): number {
@@ -338,7 +338,7 @@ export function getLongestTaskName (tasks: Task[]): number {
         }
 
         if (task.runMode === TaskRunModes.parallel) {
-            return acc.concat(task.baseTaskName + ' <p>');
+            return acc.concat(task.baseTaskName + " <p>");
         }
 
         return acc.concat(task.baseTaskName);
@@ -348,7 +348,7 @@ export function getLongestTaskName (tasks: Task[]): number {
 
 export function padLine(incoming, max?) {
     if (incoming.length <= max) {
-        return incoming + new Array(max-incoming.length+1).join(' ');
+        return incoming + new Array(max - incoming.length + 1).join(" ");
     }
     return incoming;
 }

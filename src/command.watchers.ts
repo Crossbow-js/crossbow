@@ -1,23 +1,23 @@
 
-import {CommandTrigger, TriggerTypes} from './command.run';
-import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import Immutable = require('immutable');
-import Rx = require('rx');
+import {CommandTrigger, TriggerTypes} from "./command.run";
+import {CrossbowConfiguration} from "./config";
+import {CrossbowInput, CLI, CrossbowReporter} from "./index";
+import Immutable = require("immutable");
+import Rx = require("rx");
 import {stripBlacklisted} from "./watch.utils";
 import {resolveWatchTasks, WatchTasks} from "./watch.resolve";
 import {createWatchRunners, WatchRunners} from "./watch.runner";
 import {ReportTypes} from "./reporter.resolve";
 
 export interface WatchersCommandError {
-    type: ReportTypes
+    type: ReportTypes;
 }
 export interface WatchersCommandOutput {
-    watchTasks?: WatchTasks
-    runners?: WatchRunners
-    errors: WatchersCommandError[]
+    watchTasks?: WatchTasks;
+    runners?: WatchRunners;
+    errors: WatchersCommandError[];
 }
-export type WatchersCommandComplete = Rx.Observable<{setup:WatchersCommandOutput}>
+export type WatchersCommandComplete = Rx.Observable<{setup: WatchersCommandOutput}>;
 
 function execute(trigger: CommandTrigger): WatchersCommandComplete {
     const {input, config, reporter} = trigger;

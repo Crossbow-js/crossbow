@@ -4,11 +4,11 @@ import {CrossbowConfiguration} from "./config";
 import * as utils from "./task.utils";
 import * as file from "./file.utils";
 import {InputErrorTypes} from "./task.utils";
-import Rx = require('rx');
+import Rx = require("rx");
 import {isPlainObject} from "./task.utils";
 
-const debug = require('debug')('cb:input');
-const _ = require('../lodash.custom');
+const debug = require("debug")("cb:input");
+const _ = require("../lodash.custom");
 
 export enum InputTypes {
     DefaultExternalFile = <any>"DefaultExternalFile",
@@ -19,10 +19,10 @@ export enum InputTypes {
 }
 
 export interface UserInput {
-    errors: any[],
-    sources: file.ExternalFileInput[],
-    type: InputTypes,
-    inputs: CrossbowInput[]
+    errors: any[];
+    sources: file.ExternalFileInput[];
+    type: InputTypes;
+    inputs: CrossbowInput[];
 }
 
 export function getInputs (config: CrossbowConfiguration, inlineInput?: any): UserInput {
@@ -34,7 +34,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
     if (config.input.length) {
         debug(`config flag provided ${config.input}`);
 
-        const stringInputs     = config.input.filter(x => typeof x === 'string');
+        const stringInputs     = config.input.filter(x => typeof x === "string");
         const inlineInputs     = config.input.filter(x => isPlainObject(x));
 
         const fileInputs       = file.readInputFiles(stringInputs, config.cwd);
@@ -47,7 +47,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
                 errors: fileInputs.invalid.map(x => x.errors[0]),
                 sources: fileInputs.invalid,
                 inputs: [],
-            }
+            };
         }
 
         return {
@@ -62,7 +62,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
                  */
                 mergedInputs
             ],
-        }
+        };
     }
 
     if (config.fromJson) {
@@ -73,14 +73,14 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
                 sources: [],
                 type: InputTypes.InlineJSON,
                 inputs: [generateBaseInput(parsed)]
-            }
+            };
         } catch (e) {
             return {
                 errors: [{type: InputErrorTypes.InvalidJson, json: config.fromJson, error: e}],
                 sources: [],
                 type: InputTypes.InlineJSON,
                 inputs: []
-            }
+            };
         }
     }
 
@@ -104,7 +104,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             errors: [],
             sources: cbfiles.valid,
             inputs: [],
-        }
+        };
     }
 
     /**
@@ -118,7 +118,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             errors: [],
             sources: [],
             inputs: [generateBaseInput(inlineInput)]
-        }
+        };
     }
 
     /**
@@ -153,7 +153,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             type: InputTypes.CBFile,
             sources: defaultCbFiles.valid,
             inputs: []
-        }
+        };
     }
 
     /**
@@ -171,7 +171,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             type: InputTypes.DefaultExternalFile,
             sources: notMissingFileErrors,
             inputs: []
-        }
+        };
     }
 
     if (defaultInputputFiles.valid.length) {
@@ -181,7 +181,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             type: InputTypes.DefaultExternalFile,
             sources: defaultInputputFiles.valid,
             inputs: [generateBaseInput(defaultInputputFiles.valid[0].input)]
-        }
+        };
     }
 
     /**
@@ -198,7 +198,7 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
         sources: [],
         type: InputTypes.InlineObject,
         inputs: [generateBaseInput({})]
-    }
+    };
 }
 
 /**

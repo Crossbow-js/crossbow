@@ -1,10 +1,10 @@
 import {isInternal, getLongestTaskName, getPossibleTaskNames} from "./task.utils";
-const debug = require('debug')('cb:command.run');
-import Rx = require('rx');
-import Immutable = require('immutable');
-import {compile} from './logger';
-import {CLI, CrossbowInput, CrossbowReporter} from './index';
-import {CrossbowConfiguration} from './config';
+const debug = require("debug")("cb:command.run");
+import Rx = require("rx");
+import Immutable = require("immutable");
+import {compile} from "./logger";
+import {CLI, CrossbowInput, CrossbowReporter} from "./index";
+import {CrossbowConfiguration} from "./config";
 import {resolveTasks, TaskTypes} from "./task.resolve";
 import {TriggerTypes} from "./command.run";
 import {Task} from "./task.resolve";
@@ -13,13 +13,13 @@ import {ReportTypes} from "./reporter.resolve";
 import {getLabel, getCleanLabel} from "./reporters/defaultReporter";
 
 export interface Answers {
-    tasks: string[]
+    tasks: string[];
 }
 
 export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowConfiguration, reporter: CrossbowReporter): Rx.Observable<Answers> {
 
     const possibleSelection  = cli.input.slice(1);
-    const inquirer           = require('inquirer');
+    const inquirer           = require("inquirer");
     const allTaskNames       = getPossibleTaskNames(input);
 
     const filtered           = possibleSelection.reduce((acc, name) => {
@@ -44,7 +44,7 @@ export default function prompt(cli: CLI, input: CrossbowInput, config: CrossbowC
 
     if (resolved.invalid.length) {
 
-        reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: 'Available tasks:'}});
+        reporter({type: ReportTypes.TaskTree, data: {tasks: resolved.all, config, title: "Available tasks:"}});
         return Rx.Observable.empty<Answers>();
 
     } else {
@@ -74,6 +74,6 @@ export function getTaskList(tasks: Task[]) {
             value: (function () {
                 return getCleanLabel(topLevelTasks[i]);
             })()
-        }
+        };
     });
 }

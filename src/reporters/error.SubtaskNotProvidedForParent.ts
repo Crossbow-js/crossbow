@@ -8,6 +8,6 @@ module.exports = (error: SubtaskNotProvidedForParentError, task: Task) => {
   Crossbow expects the next bit to have a key name that matches
   a child task. So, in your case, the following would be valid:
 
-${error.available.map(x => `  {gray:$ crossbow} {yellow.bold:${error.name}:${x}`).join('\n')}
-`
+${error.available.map(x => `  {gray:$ crossbow} {yellow.bold:${error.name}:${x}`).join("\n")}
+`;
 };

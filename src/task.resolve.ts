@@ -1,6 +1,6 @@
 import {applyTransforms} from "./task.transforms";
-const _ = require('../lodash.custom');
-const debug = require('debug')('cb:task.resolve');
+const _ = require("../lodash.custom");
+const debug = require("debug")("cb:task.resolve");
 
 import {AdaptorNotFoundError, CircularReferenceError, TaskError} from "./task.errors";
 import {TaskErrorTypes, gatherTaskErrors} from "./task.errors";
@@ -20,69 +20,72 @@ import {ExternalFile} from "./file.utils";
  * Function.name is es6 & >
  */
 export interface CBFunction extends Function {
-    name: string
+    name: string;
 }
 export type IncomingTaskItem = string|CBFunction|Task;
-export type IncomingInlineArray = { tasks: Array<IncomingTaskItem>; runMode: TaskRunModes; }
+export type IncomingInlineArray = {
+    tasks: Array<IncomingTaskItem>;
+    runMode: TaskRunModes
+};
 export type TaskCollection = Array<IncomingTaskItem>;
 export enum TaskTypes {
-    ExternalTask   = <any>"ExternalTask",
-    Adaptor        = <any>"Adaptor",
-    TaskGroup      = <any>"TaskGroup",
-    ParentGroup    = <any>"ParentGroup",
+    ExternalTask = <any>"ExternalTask",
+    Adaptor = <any>"Adaptor",
+    TaskGroup = <any>"TaskGroup",
+    ParentGroup = <any>"ParentGroup",
     InlineFunction = <any>"InlineFunction"
 }
 
 export enum TaskOriginTypes {
-    CrossbowConfig    = <any>"CrossbowConfig",
-    NpmScripts        = <any>"NpmScripts",
-    FileSystem        = <any>"FileSystem",
-    Adaptor           = <any>"Adaptor",
-    InlineFunction    = <any>"InlineFunction",
-    InlineArray       = <any>"InlineArray",
-    InlineObject      = <any>"InlineObject",
+    CrossbowConfig = <any>"CrossbowConfig",
+    NpmScripts = <any>"NpmScripts",
+    FileSystem = <any>"FileSystem",
+    Adaptor = <any>"Adaptor",
+    InlineFunction = <any>"InlineFunction",
+    InlineArray = <any>"InlineArray",
+    InlineObject = <any>"InlineObject",
     InlineChildObject = <any>"InlineChildObject"
 }
 
 export enum TaskRunModes {
-    series   = <any>"series",
+    series = <any>"series",
     parallel = <any>"parallel",
 }
 
 const defaultTask = <Task>{
-    baseTaskName:    '',
-    valid:           false,
-    query:           {},
-    flags:           {},
-    subTasks:        [],
+    baseTaskName: "",
+    valid: false,
+    query: {},
+    flags: {},
+    subTasks: [],
     inlineFunctions: [],
-    externalTasks:   [],
-    tasks:           [],
-    parents:         [],
-    errors:          [],
-    cbflags:         [],
-    description:     '',
-    rawInput:        '',
-    env:             {},
-    taskName:        undefined,
-    runMode:         TaskRunModes.series,
-    skipped:         false,
-    ifChanged:       [],
-    options:         {}
+    externalTasks: [],
+    tasks: [],
+    parents: [],
+    errors: [],
+    cbflags: [],
+    description: "",
+    rawInput: "",
+    env: {},
+    taskName: undefined,
+    runMode: TaskRunModes.series,
+    skipped: false,
+    ifChanged: [],
+    options: {}
 };
 
-function mergeOptions (incoming) {
+function mergeOptions(incoming) {
     return function (task: Task): Task {
         return _.merge(task, {
-            env:     incoming.env,
+            env: incoming.env,
             options: _.merge({},
-                _.get(incoming.options, '_default', {}),
+                _.get(incoming.options, "_default", {}),
                 _.get(incoming.options, [...incoming.subTasks], {})
             ),
-            flags:   incoming.flags,
-            query:   incoming.query
+            flags: incoming.flags,
+            query: incoming.query
         });
-    }
+    };
 }
 
 function fromInlineItems(incoming, current, name, parents, trigger) {
@@ -100,7 +103,7 @@ function fromInlineItems(incoming, current, name, parents, trigger) {
         });
         return task;
     }
-    return createFlattenedTask(current, parents.concat(name), trigger)
+    return createFlattenedTask(current, parents.concat(name), trigger);
 }
 
 let count = 0;
@@ -136,17 +139,17 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
     }
 
     if (incoming.type === TaskTypes.ParentGroup) {
-        const subtask       = incoming.subTasks[0];
+        const subtask = incoming.subTasks[0];
         const topLevelValue = _.get(trigger.input.tasks, [`(${incoming.baseTaskName})`], {});
-        const toResolve     = (subtask === '*') ? Object.keys(topLevelValue) : [subtask];
+        const toResolve = (subtask === "*") ? Object.keys(topLevelValue) : [subtask];
 
         if (incoming.tasks.length) {
             const combinedName = `${incoming.baseTaskName}:${incoming.subTasks[0]}`;
             incoming.tasks = [].concat(incoming.tasks)
                 .map(x => fromInlineItems(incoming, x, combinedName, parents, trigger))
-                .map(mergeOptions(incoming))
+                .map(mergeOptions(incoming));
         } else {
-            incoming.tasks = toResolve.reduce((acc,x) => {
+            incoming.tasks = toResolve.reduce((acc, x) => {
                 const match = _.get(topLevelValue, [x]);
                 if (match) {
                     const combinedName = `${incoming.baseTaskName}:${x}`;
@@ -164,7 +167,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         if (incoming.tasks) {
             const taskItems = <any>incoming.tasks;
             incoming.tasks = [].concat(taskItems)
-                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
+                .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger));
         }
     }
 
@@ -195,7 +198,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
         if (incoming.inlineFunctions.length) return incoming.inlineFunctions;
         if (incoming.tasks.length)           return [];
         const toplevel = getTopLevelValue(incoming.baseTaskName, trigger.input);
-        if (typeof toplevel === 'function') {
+        if (typeof toplevel === "function") {
             return [toplevel];
         }
         return [];
@@ -217,7 +220,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {TaskTypes}
      */
     incoming.type = (function () {
-        if (typeof incoming.type !== 'undefined') return incoming.type;
+        if (typeof incoming.type !== "undefined") return incoming.type;
         if (incoming.externalTasks.length) {
             return TaskTypes.ExternalTask;
         }
@@ -233,14 +236,14 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
      * @type {boolean}
      */
     incoming.valid = (function () {
-    	if (incoming.type === TaskTypes.ParentGroup) {
-    	    if (incoming.tasks.length) {
-    	        return true;
+        if (incoming.type === TaskTypes.ParentGroup) {
+            if (incoming.tasks.length) {
+                return true;
             }
         }
-    	if (incoming.type === TaskTypes.TaskGroup)      return true;
-    	if (incoming.type === TaskTypes.InlineFunction) return true;
-    	if (incoming.type === TaskTypes.ExternalTask)   return true;
+        if (incoming.type === TaskTypes.TaskGroup)      return true;
+        if (incoming.type === TaskTypes.InlineFunction) return true;
+        if (incoming.type === TaskTypes.ExternalTask)   return true;
         return false;
     })();
 
@@ -310,7 +313,7 @@ export function getTopLevelValue(baseTaskName: string, input: CrossbowInput): an
     }
 
     const maybeGroup = Object.keys(input.tasks)
-            .filter(x => x.indexOf(`(${baseTaskName})`) > -1);
+        .filter(x => x.indexOf(`(${baseTaskName})`) > -1);
 
     if (maybeGroup.length) {
         return input.tasks[maybeGroup[0]];
@@ -344,7 +347,7 @@ export function createAdaptorTask(taskName, parents): Task {
      *   ->  eslint
      * @type {string}
      */
-    const commandInput = taskName.replace(/^@(.+?) /, '');
+    const commandInput = taskName.replace(/^@(.+?) /, "");
 
     /**
      * Get a valid adaptors adaptor name
@@ -364,7 +367,7 @@ export function createAdaptorTask(taskName, parents): Task {
             taskName: taskName,
             type: TaskTypes.Adaptor,
             origin: TaskOriginTypes.Adaptor,
-            adaptor: taskName.split(' ')[0],
+            adaptor: taskName.split(" ")[0],
             errors: [<AdaptorNotFoundError>{
                 type: TaskErrorTypes.AdaptorNotFound,
                 taskName: taskName
@@ -374,15 +377,15 @@ export function createAdaptorTask(taskName, parents): Task {
 
     return createTask({
         baseTaskName: taskName,
-        valid:    true,
-        adaptor:  validAdaptorName,
+        valid: true,
+        adaptor: validAdaptorName,
         taskName: taskName,
         rawInput: taskName,
-        parents:  parents,
-        command:  commandInput,
-        runMode:  TaskRunModes.series,
-        origin:   TaskOriginTypes.Adaptor,
-        type:     TaskTypes.Adaptor,
+        parents: parents,
+        command: commandInput,
+        runMode: TaskRunModes.series,
+        origin: TaskOriginTypes.Adaptor,
+        type: TaskTypes.Adaptor,
     });
 }
 
@@ -394,7 +397,7 @@ export function createAdaptorTask(taskName, parents): Task {
  *
  * -> matches:   'shane' & 'shane@p'
  */
-export function maybeTaskNames(tasks:{}, taskName:string): string[] {
+export function maybeTaskNames(tasks: {}, taskName: string): string[] {
 
     return Object.keys(tasks).reduce(function (all, key) {
 
@@ -414,7 +417,7 @@ export function maybeTaskNames(tasks:{}, taskName:string): string[] {
 function pullTaskFromInput(taskName: string, input: CrossbowInput): TasknameWithOrigin {
 
     if (input.tasks[taskName] !== undefined) {
-        return {items: [].concat(input.tasks[taskName]), origin: TaskOriginTypes.CrossbowConfig}
+        return {items: [].concat(input.tasks[taskName]), origin: TaskOriginTypes.CrossbowConfig};
     }
 
     /**
@@ -466,7 +469,7 @@ function validateTask(task: Task, trigger: CommandTrigger): boolean {
      *  eg: lint: '@npm eslint'
      *   -> true
      */
-    if (typeof task.adaptor === 'string') {
+    if (typeof task.adaptor === "string") {
 
         /**
          * task.adaptor is a string, but does it match any adaptors?
@@ -511,9 +514,8 @@ export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTri
      */
     let taskList = taskCollection
         .map(task => {
-            return createFlattenedTask(task, [], trigger)
+            return createFlattenedTask(task, [], trigger);
         });
-
 
     /**
      * Now apply any last-minute tree transformations
@@ -535,41 +537,41 @@ export function resolveTasks(taskCollection: TaskCollection, trigger: CommandTri
 }
 
 export interface Task {
-    adaptor?: string
-    command?: string
-    valid: boolean
-    taskName: string
-    baseTaskName: string
-    subTasks: string[]
-    externalTasks: ExternalFile[]
-    tasks: Task[]
-    rawInput: string
-    parents: string[]
-    errors: TaskError[]
-    runMode: TaskRunModes
-    startTime?: number
-    endTime?: number
-    duration?: number
-    query: any
-    flags: any
-    options: any
-    cbflags: string[]
-    origin: TaskOriginTypes
-    type: TaskTypes
-    inlineFunctions: Array<CBFunction>
-    env: any
-    description: string
-    skipped: boolean
-    ifChanged: string[]
+    adaptor?: string;
+    command?: string;
+    valid: boolean;
+    taskName: string;
+    baseTaskName: string;
+    subTasks: string[];
+    externalTasks: ExternalFile[];
+    tasks: Task[];
+    rawInput: string;
+    parents: string[];
+    errors: TaskError[];
+    runMode: TaskRunModes;
+    startTime?: number;
+    endTime?: number;
+    duration?: number;
+    query: any;
+    flags: any;
+    options: any;
+    cbflags: string[];
+    origin: TaskOriginTypes;
+    type: TaskTypes;
+    inlineFunctions: Array<CBFunction>;
+    env: any;
+    description: string;
+    skipped: boolean;
+    ifChanged: string[];
 }
 
 export interface TasknameWithOrigin {
-    items: string[]
-    origin: TaskOriginTypes
+    items: string[];
+    origin: TaskOriginTypes;
 }
 
 export interface Tasks {
-    valid: Task[]
-    invalid: Task[],
-    all: Task[]
+    valid: Task[];
+    invalid: Task[];
+    all: Task[];
 }

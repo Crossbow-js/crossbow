@@ -2,25 +2,25 @@ import {CommandTrigger} from "../command.run";
 import {CBWatchOptions} from "../watch.resolve";
 import {CrossbowConfiguration} from "../config";
 // todo why are these imports needed here?
-import watchCommand, {WatchCommandOutput, WatchReport} from '../command.watch';
+import watchCommand, {WatchCommandOutput, WatchReport} from "../command.watch";
 import {CLI} from "../index";
 import {isPlainObject} from "../task.utils";
 import IDisposable = Rx.IDisposable;
-const merge = require('../../lodash.custom').merge;
+const merge = require("../../lodash.custom").merge;
 
 type returnFn = (opts: {}, trigger: CommandTrigger) => any;
 
-let fncount            = 0;
+let fncount = 0;
 let inlineWatcherCount = 0;
 
-function incomingTask (taskname: string, inlineLiteral: {}): {}
-function incomingTask (taskname: string, inlineLiteral: {}, fn?: returnFn): {}
-function incomingTask (taskname: string, fn: returnFn): {}
-function incomingTask (taskname: string, deps: string[], fn?: returnFn): {}
-function incomingTask (taskname: string, deps: any, fn?:any): any {
+function incomingTask(taskname: string, inlineLiteral: {}): {};
+function incomingTask(taskname: string, inlineLiteral: {}, fn?: returnFn): {};
+function incomingTask(taskname: string, fn: returnFn): {};
+function incomingTask(taskname: string, deps: string[], fn?: returnFn): {};
+function incomingTask(taskname: string, deps: any, fn?: any): any {
 
     // only 2 params given (function last);
-    if (typeof deps === 'function') {
+    if (typeof deps === "function") {
         fn = deps;
         deps = [];
     }
@@ -31,7 +31,7 @@ function incomingTask (taskname: string, deps: any, fn?:any): any {
         if (deps.tasks) {
             outgoing[taskname] = deps;
         } else {
-            throw new Error('Object literal must contain at least a "tasks" key');
+            throw new Error("Object literal must contain at least a \"tasks\" key");
         }
         if (fn) {
             const fnname = `${taskname}_internal_fn_${fncount++}`;
@@ -59,19 +59,20 @@ function incomingTask (taskname: string, deps: any, fn?:any): any {
     return outgoing;
 }
 
-var input = {
+let input = {
     tasks: {},
     watch: {},
     options: {},
     env: {},
     config: <CrossbowConfiguration>{}, // to be set by lib
     cli: <CLI>{}, // to be set by lib
-    reporter: ()=>{} // to be set by lib
+    reporter: () => {
+    } // to be set by lib
 };
 
-function incomingOptions (taskname: string, hash?:any): {} {
+function incomingOptions(taskname: string, hash?: any): {} {
     const outgoing = {};
-    if (typeof taskname === 'string') {
+    if (typeof taskname === "string") {
         outgoing[taskname] = hash;
         return outgoing;
     }
@@ -94,7 +95,7 @@ export const api = {
                 const res = incomingOptions(taskname, hash);
                 input.options = merge(input.options, res);
             }
-        }
+        };
     },
     group: function (groupName: string, tasks: {}) {
         input.tasks[`(${groupName})`] = tasks;
@@ -118,10 +119,10 @@ export const api = {
     }
 };
 
-function getWatcher (patterns: string[], tasks: string[], options?: CBWatchOptions) {
+function getWatcher(patterns: string[], tasks: string[], options?: CBWatchOptions) {
     const identifer = `_inline_watcher_${inlineWatcherCount++}`;
     patterns = [].concat(patterns);
-    tasks    = [].concat(tasks);
+    tasks = [].concat(tasks);
 
     input.watch[identifer] = {
         options: options,
@@ -133,8 +134,8 @@ function getWatcher (patterns: string[], tasks: string[], options?: CBWatchOptio
         ]
     };
 
-    const cliInput = ['watch', identifer];
-    return watchCommand({input: cliInput, flags:{}}, input, input.config, input.reporter);
+    const cliInput = ["watch", identifer];
+    return watchCommand({input: cliInput, flags: {}}, input, input.config, input.reporter);
 }
 
 export default input;

@@ -1,53 +1,52 @@
 import {TaskTypes} from "./task.resolve";
 import {Tasks} from "./task.resolve";
 import {SequenceItem} from "./task.sequence.factories";
-import {CommandTrigger} from './command.run';
+import {CommandTrigger} from "./command.run";
 import handleReturnType from "./task.return.values";
 import {CrossbowError} from "./reporters/defaultReporter";
 
-import Rx        = require('rx');
-import Immutable = require('immutable');
+import Rx        = require("rx");
+import Immutable = require("immutable");
 
-const debug = require('debug')('cb:task.runner');
-const _ = require('../lodash.custom');
-const once = require('once');
-const domain = require('domain');
+const debug = require("debug")("cb:task.runner");
+const _ = require("../lodash.custom");
+const once = require("once");
+const domain = require("domain");
 
 export interface Runner {
-    series:   (ctx?: RunContext) => Rx.Observable<TaskReport>
-    parallel: (ctx?: RunContext) => Rx.Observable<TaskReport>,
-    sequence: SequenceItem[]
+    series: (ctx?: RunContext) => Rx.Observable<TaskReport>;
+    parallel: (ctx?: RunContext) => Rx.Observable<TaskReport>;
+    sequence: SequenceItem[];
 }
 
 export interface TaskRunner {
-    tasks: Tasks
-    sequence: SequenceItem[]
-    runner: Runner
+    tasks: Tasks;
+    sequence: SequenceItem[];
+    runner: Runner;
 }
 
-
 export interface TaskStats {
-    startTime: number
-    endTime: number
-    duration: number
-    started: boolean
-    completed: boolean
-    errors: Error[]
-    skipped?: boolean
-    skippedReadon?: TaskSkipReasons
+    startTime: number;
+    endTime: number;
+    duration: number;
+    started: boolean;
+    completed: boolean;
+    errors: Error[];
+    skipped?: boolean;
+    skippedReadon?: TaskSkipReasons;
 }
 
 export interface TaskErrorStats {
-    endTime: number
-    completed: boolean
-    errors: Error[]
-    cbError?: boolean
-    cbExitCode?: number
+    endTime: number;
+    completed: boolean;
+    errors: Error[];
+    cbError?: boolean;
+    cbExitCode?: number;
 }
 
 export interface Report {
-    item: SequenceItem
-    type: TaskReportType
+    item: SequenceItem;
+    type: TaskReportType;
 }
 
 export enum TaskReportType {
@@ -62,11 +61,11 @@ export enum TaskSkipReasons {
 }
 
 export interface TaskReport extends Report {
-    stats: TaskStats
+    stats: TaskStats;
 }
 
 export interface TaskErrorReport extends Report {
-    stats: TaskErrorStats
+    stats: TaskErrorStats;
 }
 
 export type RunContext = Immutable.Map<string, any>;
@@ -75,7 +74,7 @@ export type RunContext = Immutable.Map<string, any>;
  * This creates a wrapper around the actual function that will be run.
  * This done to allow the before/after reporting to work as expected for consumers
  */
-export function time (scheduler?) {
+export function time(scheduler?) {
     return scheduler ? scheduler.now() : new Date().getTime();
 }
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
@@ -104,13 +103,13 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Complete immediately if this item was marked
          * with an 'ifChanged' predicate
          */
-        if (!trigger.config.force && item.task.ifChanged.length && ctx.hasIn(['ifChanged'])) {
+        if (!trigger.config.force && item.task.ifChanged.length && ctx.hasIn(["ifChanged"])) {
             const hasChanges = ctx
-                .get('ifChanged')
+                .get("ifChanged")
                 .filter(x => {
-                    return item.task.ifChanged.indexOf(x.get('userInput')) !== -1;
+                    return item.task.ifChanged.indexOf(x.get("userInput")) !== -1;
                 })
-                .some(x => x.get('changed'));
+                .some(x => x.get("changed"));
 
             if (!hasChanges) {
                 const additionalStats = {
@@ -124,7 +123,6 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 return;
             }
         }
-
 
         /**
          * Timestamp when this task starts
@@ -143,7 +141,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          */
         if (trigger.config.dryRun) {
             return Rx.Observable
-                .just('dryRun')
+                .just("dryRun")
                 .delay(trigger.config.dryRunDuration, trigger.config.scheduler)
                 .do(_ => {
                     observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
@@ -152,8 +150,8 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         }
 
         if (item.task.type === TaskTypes.InlineFunction
-        || item.task.type  === TaskTypes.ExternalTask
-        || item.task.type  === TaskTypes.Adaptor) {
+            || item.task.type === TaskTypes.ExternalTask
+            || item.task.type === TaskTypes.Adaptor) {
 
             const argCount = item.factory.length;
             const cb = once(function (err) {
@@ -165,25 +163,25 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                 observer.onCompleted();
             });
 
-            var d = domain.create();
-            d.once('error', function (err) {
+            let d = domain.create();
+            d.once("error", function (err) {
                 cb(err);
             });
-            var domainBoundFn = d.bind(item.factory.bind(null, item.options, trigger));
+            let domainBoundFn = d.bind(item.factory.bind(null, item.options, trigger));
 
-            var done = function (err?: Error) {
-                d.removeListener('error', function (err) {
+            let done = function (err?: Error) {
+                d.removeListener("error", function (err) {
                     cb(err);
                 });
                 d.exit();
                 return cb.apply(null, arguments);
             };
 
-            var result  = domainBoundFn(done);
+            let result = domainBoundFn(done);
 
             if (result) {
 
-                var returns = handleReturnType(result, done);
+                let returns = handleReturnType(result, done);
 
                 /**
                  * If the return value does not need to be consumed,
@@ -191,11 +189,11 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                  * for this task - which also means it MUST signify completion
                  * via the callback
                  */
-                if (!returns && typeof result === 'function') {
+                if (!returns && typeof result === "function") {
                     if (argCount >= 3) {
                         return result;
                     } else {
-                        done(new Error('You returned tear-down logic, but you never asked for the completion callback'));
+                        done(new Error("You returned tear-down logic, but you never asked for the completion callback"));
                         return;
                     }
                 }
@@ -236,7 +234,7 @@ function getTaskReport(type: TaskReportType, item: SequenceItem, stats: TaskStat
 /**
  * Create a new stats object with startTime
  */
-export function getStartStats(startTime: number, additional?:{[index: string]: any}): TaskStats {
+export function getStartStats(startTime: number, additional?: {[index: string]: any}): TaskStats {
     return _.assign(
         {},
         additional,
@@ -254,14 +252,14 @@ export function getStartStats(startTime: number, additional?:{[index: string]: a
 /**
  * Create a new stats object with completed/duration flags etc
  */
-function getEndStats(stats: TaskStats, endTime: number, additional?:{[index: string]: any}) {
+function getEndStats(stats: TaskStats, endTime: number, additional?: {[index: string]: any}) {
     return _.assign(
         {},
         stats,
         additional,
         {
-            endTime:   endTime,
-            duration:  endTime - stats.startTime,
+            endTime: endTime,
+            duration: endTime - stats.startTime,
             completed: true
         }
     );
@@ -286,12 +284,12 @@ function getErrorStats(error: CrossbowError, endTime: number): TaskErrorStats {
             errors: [error],
             cbError: true,
             cbExitCode: error._cbExitCode
-        }
+        };
     }
 
     return {
         endTime,
         completed: false,
         errors: [error]
-    }
+    };
 }

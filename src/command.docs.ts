@@ -1,9 +1,9 @@
-import {CommandTrigger, TriggerTypes} from './command.run';
-import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks, TaskTypes} from './task.resolve';
-import Immutable = require('immutable');
-import Rx = require('rx');
+import {CommandTrigger, TriggerTypes} from "./command.run";
+import {CrossbowConfiguration} from "./config";
+import {CrossbowInput, CLI, CrossbowReporter} from "./index";
+import {resolveTasks, Tasks, TaskTypes} from "./task.resolve";
+import Immutable = require("immutable");
+import Rx = require("rx");
 import {ReportTypes} from "./reporter.resolve";
 import {Task} from "./task.resolve";
 import {removeNewlines, InputErrorTypes, isPublicTask, getPossibleTaskNames, isInternal} from "./task.utils";
@@ -11,35 +11,39 @@ import {readdirSync} from "fs";
 import * as file from "./file.utils";
 import {DocsAddedToFileReport} from "./reporter.resolve";
 import {getLabel} from "./reporters/defaultReporter";
-import {clean} from './logger';
+import {clean} from "./logger";
 
 const debug = require("debug")("cb:command:docs");
-export interface DocsError {type: DocsErrorTypes}
-export interface DocsInputFileNotFoundError extends DocsError {file: file.ExternalFile}
-export interface DocsOutputFileExistsError extends DocsInputFileNotFoundError {};
+export interface DocsError {
+    type: DocsErrorTypes;
+}
+export interface DocsInputFileNotFoundError extends DocsError {
+    file: file.ExternalFile;
+}
+export interface DocsOutputFileExistsError extends DocsInputFileNotFoundError {
+}
 export enum DocsErrorTypes {
     DocsInputFileNotFound = <any>"DocsInputFileNotFound",
     DocsOutputFileExists = <any>"DocsOutputFileExists"
 }
-export const docStartComment = '<!--crossbow-docs-start-->';
-export const docEndComment   = '<!--crossbow-docs-end-->';
-export const hasRegExp       = /<!--crossbow-docs-start-->([\s\S]+?)?<!--crossbow-docs-end-->/g;
-export const hasExistingComments = (string) => hasRegExp.test(string);
-export const readmeRegExp        = /readme\.(md|markdown)$/i;
+export const docStartComment = "<!--crossbow-docs-start-->";
+export const docEndComment = "<!--crossbow-docs-end-->";
+export const hasRegExp = /<!--crossbow-docs-start-->([\s\S]+?)?<!--crossbow-docs-end-->/g;
+export const hasExistingComments = (inputString) => hasRegExp.test(inputString);
+export const readmeRegExp = /readme\.(md|markdown)$/i;
 
 export interface DocsFileOutput {
-    file: file.ExternalFile,
-    content: string,
+    file: file.ExternalFile;
+    content: string;
 }
 export interface DocsCommandOutput {
-    tasks: Tasks,
-    errors: DocsError[],
-    markdown?: string,
-    output?: DocsFileOutput[]
+    tasks: Tasks;
+    errors: DocsError[];
+    markdown?: string;
+    output?: DocsFileOutput[];
 }
 
-
-export type DocsCommandComplete = Rx.Observable<{setup:DocsCommandOutput}>;
+export type DocsCommandComplete = Rx.Observable<{setup: DocsCommandOutput}>;
 
 function execute(trigger: CommandTrigger): DocsCommandComplete {
 
@@ -51,7 +55,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * @type {Tasks}
      */
     const toResolve = getPossibleTaskNames(input);
-    const tasks     = resolveTasks(toResolve
+    const tasks = resolveTasks(toResolve
         .filter(isPublicTask)
         .filter(x => !isInternal(x)), trigger);
 
@@ -100,7 +104,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * If a user provides the 'output' flag, it means they want a new file creating
      */
     if (config.output) {
-        return Rx.Observable.just({setup:handleOutputFlag(tasks, markdown, trigger)});
+        return Rx.Observable.just({setup: handleOutputFlag(tasks, markdown, trigger)});
     }
 
     /**
@@ -124,7 +128,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
                 markdown,
                 output
             }
-        })
+        });
     }
 
     /**
@@ -136,7 +140,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
      * so, create a new one :)
      */
     const output = [{
-        file: file.getStubFile('readme.md', config.cwd),
+        file: file.getStubFile("readme.md", config.cwd),
         content: markdown
     }];
 
@@ -184,7 +188,7 @@ function getFileOutput(file: file.ExternalFileContent, markdown): DocsFileOutput
 
     return {
         file,
-        content: file.content + '\n' + markdown
+        content: file.content + "\n" + markdown
     };
 }
 
@@ -195,7 +199,7 @@ function getFileOutput(file: file.ExternalFileContent, markdown): DocsFileOutput
  *
  *      $ crossbow docs --output newfile.md
  */
-function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigger): DocsCommandOutput {
+function handleOutputFlag(tasks: Tasks, markdown: string, trigger: CommandTrigger): DocsCommandOutput {
     const {config, reporter} = trigger;
     const maybe = file.readFilesFromDiskWithContent([config.output], config.cwd);
     const available = maybe
@@ -215,7 +219,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
             tasks,
             markdown,
             output: []
-        }
+        };
     }
 
     const output = [{
@@ -231,7 +235,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
         tasks,
         markdown,
         output
-    }
+    };
 }
 
 /**
@@ -241,7 +245,7 @@ function handleOutputFlag (tasks: Tasks, markdown: string, trigger: CommandTrigg
  *
  *      $ crossbow docs --file readme.md
  */
-function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger): DocsCommandOutput {
+function handleFileFlag(tasks: Tasks, markdown: string, trigger: CommandTrigger): DocsCommandOutput {
     const {config, reporter} = trigger;
     /**
      * Try to read the file from disk with content appended
@@ -254,7 +258,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
             return {
                 type: DocsErrorTypes.DocsInputFileNotFound,
                 file: x
-            }
+            };
         });
 
     /**
@@ -267,7 +271,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
          * If we're not handing off, report the error
          */
         if (!config.handoff) {
-            reporter({type: ReportTypes.DocsInputFileNotFound, data: {error:withErrors[0]}});
+            reporter({type: ReportTypes.DocsInputFileNotFound, data: {error: withErrors[0]}});
         }
 
         return {
@@ -275,7 +279,7 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
             tasks,
             markdown,
             output: []
-        }
+        };
     }
 
     /**
@@ -299,15 +303,15 @@ function handleFileFlag (tasks: Tasks, markdown:string, trigger: CommandTrigger)
         tasks,
         markdown,
         output
-    }
+    };
 }
 
-function getMarkdown(tasks: Task[]):string {
+function getMarkdown(tasks: Task[]): string {
     /**
      * Create the header for the markdown table
      * @type {string|string[]}
      */
-    const tasksHeader         = [`## Crossbow tasks
+    const tasksHeader = [`## Crossbow tasks
 
 The following tasks have been defined by this project's Crossbow configuration.
 Run any of them in the following way
@@ -316,13 +320,13 @@ Run any of them in the following way
 $ crossbow run <taskname>
 \`\`\``];
 
-    const tableHeader = '|Task name|Description|\n|---|---|';
+    const tableHeader = "|Task name|Description|\n|---|---|";
 
     /**
      * Create the body for the table with taskname + description
      * @type {string[]}
      */
-    const body     = tasks.map((task: Task) => {
+    const body = tasks.map((task: Task) => {
         const isParent = task.type === TaskTypes.ParentGroup;
         const name = (function () {
             if (isParent) {
@@ -331,30 +335,30 @@ $ crossbow run <taskname>
             return `|<pre>\`${task.baseTaskName}\`</pre>`;
         })();
         const desc = (function () {
-            if (task.description) return removeNewlines(task.description);
-            if (isParent) {
-                if (task.tasks[0].description) {
-                    return removeNewlines(task.tasks[0].description);
+                if (task.description) return removeNewlines(task.description);
+                if (isParent) {
+                    if (task.tasks[0].description) {
+                        return removeNewlines(task.tasks[0].description);
+                    }
                 }
-            }
-            if (task.tasks.length) {
-                const subject = isParent ? task.tasks[0].tasks : task.tasks;
-                return ['**Alias for:**']
-                    .concat(subject
-                        .map(x => `- \`${getLabel(x)}\``)
-                        .map(x => clean(x))
-                    )
-                    .join('<br>');
-            }
-        })() + '|';
-        return [name, desc].join('|');
-    }).join('\n');
+                if (task.tasks.length) {
+                    const subject = isParent ? task.tasks[0].tasks : task.tasks;
+                    return ["**Alias for:**"]
+                        .concat(subject
+                            .map(x => `- \`${getLabel(x)}\``)
+                            .map(x => clean(x))
+                        )
+                        .join("<br>");
+                }
+            })() + "|";
+        return [name, desc].join("|");
+    }).join("\n");
 
     /**
      * Join the lines with a \n for correct formatting in markdown
      * @type {string}
      */
-    return [docStartComment, tasksHeader, tableHeader, body, docEndComment].join('\n');
+    return [docStartComment, tasksHeader, tableHeader, body, docEndComment].join("\n");
 }
 
 function reportAddToDocs(output: DocsFileOutput[], trigger: CommandTrigger) {

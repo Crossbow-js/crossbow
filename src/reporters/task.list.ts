@@ -6,7 +6,7 @@ import {TaskReport, TaskReportType} from "../task.runner";
 import {getLabel} from "./defaultReporter";
 
 export interface WriteableStream {
-    columns: number
+    columns: number;
 }
 
 function taskPreviews(item: Task) {
@@ -16,34 +16,34 @@ function taskPreviews(item: Task) {
             if (item.inlineFunctions[0].name) {
                 return `[ Function: ${item.inlineFunctions[0].name} ]`;
             }
-            return '[ Function ]';
+            return "[ Function ]";
         }
     }
 
-    const names = item.tasks.map((x:Task) => {
+    const names = item.tasks.map((x: Task) => {
         return escapeNewLines(getLabel(x));
     });
 
-    return `[ ${names.join(', ')} ]`;
+    return `[ ${names.join(", ")} ]`;
 }
 
-function limit (string, linelength) {
-    const rem = string.length - linelength;
+function limit(inputString, linelength) {
+    const rem = inputString.length - linelength;
     if (rem > 0) {
-        return string.slice(0, linelength - 3) + '...';
+        return inputString.slice(0, linelength - 3) + "...";
     }
-    return string;
+    return inputString;
 }
 
 export function getSimpleTaskList(tasks: Task[], longest: number) {
     const filtered = tasks
         .filter(x => !isInternal(x.taskName))
-        .filter(x => x.baseTaskName[0] !== '_');
+        .filter(x => x.baseTaskName[0] !== "_");
 
-    return twoCol(filtered, longest).map(x => `${x[0]}  ${x[1]}`)
+    return twoCol(filtered, longest).map(x => `${x[0]}  ${x[1]}`);
 }
 
-export function twoCol (tasks: Task[], longest: number): Array<string[]> {
+export function twoCol(tasks: Task[], longest: number): Array<string[]> {
 
     const cols = process.stdout.columns;
 
@@ -54,7 +54,7 @@ export function twoCol (tasks: Task[], longest: number): Array<string[]> {
                 return `${task.baseTaskName}:${task.subTasks[0]}`;
             }
             if (task.runMode === TaskRunModes.parallel) {
-                return task.baseTaskName + ' <p>';
+                return task.baseTaskName + " <p>";
             }
             return task.baseTaskName;
         })();
@@ -93,7 +93,7 @@ export function twoCol (tasks: Task[], longest: number): Array<string[]> {
         return [`{yellow:${name}}`, desc];
     });
 }
-export function twoColWatchers (runners: WatchRunners): Array<string[]> {
+export function twoColWatchers(runners: WatchRunners): Array<string[]> {
     const longest = longestString(runners.valid.map(x => x.parent));
     const cols = process.stdout.columns;
 
@@ -110,9 +110,9 @@ export function twoColWatchers (runners: WatchRunners): Array<string[]> {
 
 export function _taskReport(report: TaskReport): string {
 
-    const skipped     = report.item.task.skipped || report.stats.skipped;
-    const item        = report.item;
-    const task        = item.task;
+    const skipped = report.item.task.skipped || report.stats.skipped;
+    const item = report.item;
+    const task = item.task;
     const labelPrefix = getLabel(task);
 
     const label = escapeNewLines((function () {
@@ -120,8 +120,8 @@ export function _taskReport(report: TaskReport): string {
             return `${item.task.taskName}:{bold:${item.subTaskName}}`;
         }
         if (item.viaName) {
-            if (item.viaName.indexOf(':') > -1) {
-                const split = item.viaName.split(':');
+            if (item.viaName.indexOf(":") > -1) {
+                const split = item.viaName.split(":");
                 return `${split[0]}:{bold:${split[1]}}`;
             }
             return item.viaName;
@@ -131,7 +131,7 @@ export function _taskReport(report: TaskReport): string {
 
     const withFlags = (function (label) {
         if (Object.keys(task.flags).length) {
-            return `${label}${task.rawInput.replace(label, '')}`;
+            return `${label}${task.rawInput.replace(label, "")}`;
         }
         return label;
     })(label);
@@ -145,7 +145,7 @@ export function _taskReport(report: TaskReport): string {
         }
         if (report.type === TaskReportType.end) {
             if (skipped) {
-                return '';
+                return "";
             }
             return `{green:✔} ${label} {yellow:(${duration(report.stats.duration)})}`;
         }
@@ -156,5 +156,5 @@ export function _taskReport(report: TaskReport): string {
 }
 
 export function duration(ms) {
-    return String((Number(ms) / 1000).toFixed(2)) + 's';
+    return String((Number(ms) / 1000).toFixed(2)) + "s";
 }

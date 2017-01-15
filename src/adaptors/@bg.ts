@@ -1,9 +1,9 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown, getEnv, getStdio} from './@npm';
+import {getArgs, runCommand, teardown, getEnv, getStdio} from "./@npm";
 import {Task} from "../task.resolve";
 import {getCBEnv} from "../task.utils";
-const debug = require('debug')('cb:@bg');
-const merge = require('../../lodash.custom').merge;
+const debug = require("debug")("cb:@bg");
+const merge = require("../../lodash.custom").merge;
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 
@@ -33,9 +33,9 @@ module.exports = function (task: Task, trigger: CommandTrigger) {
             stdio: stdio
         });
 
-        emitter.on('close', function (code) {
+        emitter.on("close", function (code) {
             teardown(emitter, task);
-        }).on('error', function (err) {
+        }).on("error", function (err) {
             done(err);
         });
 

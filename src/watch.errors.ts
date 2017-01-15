@@ -6,9 +6,9 @@ export enum WatchTaskErrorTypes {
 }
 
 export interface WatchTaskError {
-    type: WatchTaskErrorTypes
+    type: WatchTaskErrorTypes;
 }
-export interface WatchTaskNameNotFoundError extends WatchTaskError { taskName: string
+export interface WatchTaskNameNotFoundError extends WatchTaskError { taskName: string;
 }
 
 export function gatherWatchTaskErrors(outgoing: OutgoingWatchTask, input: CrossbowInput): WatchTaskError[] {

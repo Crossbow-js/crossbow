@@ -1,5 +1,5 @@
-var RxNode = require('rx-node');
-var Rx = require('rx');
+let RxNode = require("rx-node");
+let Rx = require("rx");
 
 const types = {
     observable: {
@@ -10,37 +10,37 @@ const types = {
     },
     promise: {
         predicate (input) {
-            return typeof input.then === 'function';
+            return typeof input.then === "function";
         },
         handle: handlePromise
     },
     nodeStream: {
         predicate (input) {
-            return typeof input.on === 'function';
+            return typeof input.on === "function";
         },
         handle: handleNodeStream
     }
 };
 
 interface Observer {
-    onNext: () => void
-    onCompleted: () => void
-    onError: () => void
+    onNext: () => void;
+    onCompleted: () => void;
+    onError: () => void;
 }
 
-export default function handleReturnType(output, cb: ()=>void) {
+export default function handleReturnType(output, cb: () => void) {
 
-    var match = Object.keys(types).filter(x => {
+    let match = Object.keys(types).filter(x => {
         return types[x].predicate.call(null, output);
     })[0];
 
-    if (match && typeof types[match].handle === 'function') {
+    if (match && typeof types[match].handle === "function") {
         return types[match].handle.apply(null, [output, cb]);
     }
 };
 
 function handleNodeStream(output, done) {
-    return RxNode.fromStream(output, 'end')
+    return RxNode.fromStream(output, "end")
         .subscribe(function (val) {
         }, function (err) {
             done(err);

@@ -9,10 +9,10 @@ import Rx = require("rx");
 import {CommandTrigger} from "./command.run";
 
 export interface BeforeTasks {
-    runner: any
-    beforeTasksAsCliInput: string[]
-    tasks: Tasks
-    sequence: SequenceItem[]
+    runner: any;
+    beforeTasksAsCliInput: string[];
+    tasks: Tasks;
+    sequence: SequenceItem[];
 }
 
 export function getBeforeTaskRunner(trigger: CommandTrigger, watchTasks: WatchTasks): BeforeTasks {

@@ -1,29 +1,29 @@
 
-import {CommandTrigger, TriggerTypes} from './command.run';
-import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import {resolveTasks, Tasks, Task} from './task.resolve';
+import {CommandTrigger, TriggerTypes} from "./command.run";
+import {CrossbowConfiguration} from "./config";
+import {CrossbowInput, CLI, CrossbowReporter} from "./index";
+import {resolveTasks, Tasks, Task} from "./task.resolve";
 
-import Immutable = require('immutable');
-import Rx = require('rx');
+import Immutable = require("immutable");
+import Rx = require("rx");
 import {getPossibleTasksFromDirectories} from "./file.utils";
 import {
     isParentGroupName, isParentRef, getChildItems, getChildName
 } from "./task.utils";
 
 export interface TaskGroup {
-    title: string
-    tasks: Tasks
+    title: string;
+    tasks: Tasks;
 }
 
 export interface TaskCommandSetup {
-    groups: TaskGroup[]
-    tasks: Task[]
-    errors: Error[]
+    groups: TaskGroup[];
+    tasks: Task[];
+    errors: Error[];
 }
 
 export interface TasksCommandCompletionReport {
-    setup: TaskCommandSetup
+    setup: TaskCommandSetup;
 }
 
 export type TasksCommandComplete = Rx.Observable<TasksCommandCompletionReport>;
@@ -99,7 +99,7 @@ function execute(trigger: CommandTrigger): TasksCommandComplete {
     const groups: Array<TaskGroup> = (function() {
         if (resolvedDefault.all.length) {
             return [
-                {title: 'Default Tasks', tasks: resolvedDefault},
+                {title: "Default Tasks", tasks: resolvedDefault},
                 ...getParents(resolvedParents, trigger)
             ];
         }

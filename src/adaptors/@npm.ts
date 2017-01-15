@@ -2,71 +2,71 @@ import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {Task} from "../task.resolve";
 
-import {EventEmitter} from 'events';
-import {spawn} from 'child_process';
-const debug = require('debug')('cb:adaptors.npm');
-const _ = require('../../lodash.custom');
+import {EventEmitter} from "events";
+import {spawn} from "child_process";
+const debug = require("debug")("cb:adaptors.npm");
+const _ = require("../../lodash.custom");
 
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
 import {getCBEnv} from "../task.utils";
 
-var sh = 'sh';
-var shFlag = '-c';
+let sh = "sh";
+let shFlag = "-c";
 
-if (process.platform === 'win32') {
+if (process.platform === "win32") {
     // todo test in windows env to ensure this hasn't broken anything
     // sh = process.env.comspec || 'cmd';
-    sh = 'cmd';
-    shFlag = '/d /s /c';
+    sh = "cmd";
+    shFlag = "/d /s /c";
 }
 
 export interface CommandOptions {
-    cwd: string,
-    env: any,
-    stdio: any
+    cwd: string;
+    env: any;
+    stdio: any;
 }
 
 export interface CrossbowSpawnError extends Error {
-    code: string
-    errno: string
-    syscall: string
-    file: string
+    code: string;
+    errno: string;
+    syscall: string;
+    file: string;
 }
 
 export interface CBEmitter extends EventEmitter {
-    stdin: any
-    stdout: any
-    stderr: any
-    raw: any
-    kill: any
+    stdin: any;
+    stdout: any;
+    stderr: any;
+    raw: any;
+    kill: any;
 }
 
 function runCommand(args: string[], options: CommandOptions) {
     const raw = spawn(sh, args, options);
     const cooked = <CBEmitter>new EventEmitter();
 
-    raw.on('error', function (er) {
-        er.file = [sh, args].join(' ');
-        cooked.emit('error', er);
-    }).on('close', function (code, signal) {
+    raw.on("error", function (er) {
+        er.file = [sh, args].join(" ");
+        cooked.emit("error", er);
+    }).on("close", function (code, signal) {
         if (code === 127) {
-            var er = <CrossbowSpawnError>new Error('spawn ENOENT');
-            er.code = 'ENOENT';
-            er.errno = 'ENOENT';
-            er.syscall = 'spawn';
-            er.file = [sh, args].join(' ');
-            cooked.emit('error', er);
+            let er = <CrossbowSpawnError>new Error("spawn ENOENT");
+            er.code = "ENOENT";
+            er.errno = "ENOENT";
+            er.syscall = "spawn";
+            er.file = [sh, args].join(" ");
+            cooked.emit("error", er);
         } else {
-            cooked.emit('close', code, signal);
+            cooked.emit("close", code, signal);
         }
     });
 
-    cooked.stdin  = raw.stdin;
+    cooked.stdin = raw.stdin;
     cooked.stdout = raw.stdout;
     cooked.stderr = raw.stderr;
-    cooked.raw    = raw;
-    cooked.kill   =  function (sig) {
+    cooked.raw = raw;
+    cooked.kill = function (sig) {
         return raw.kill(sig);
     };
 
@@ -82,15 +82,15 @@ function runCommand(args: string[], options: CommandOptions) {
  */
 function getEnv(process: any, config: CrossbowConfiguration) {
     const localEnv = <any>{};
-    const envpath = join(config.cwd, 'node_modules', '.bin');
-    localEnv.PATH = [envpath].concat(process.env.PATH).join(':');
+    const envpath = join(config.cwd, "node_modules", ".bin");
+    localEnv.PATH = [envpath].concat(process.env.PATH).join(":");
     return localEnv;
 }
 
 export interface CommandArgs {
-    stringInput?: string
-    cmd?: string[]
-    errors: Error[]
+    stringInput?: string;
+    cmd?: string[];
+    errors: Error[];
 }
 
 function getArgs(command: string): CommandArgs {
@@ -101,55 +101,55 @@ function getArgs(command: string): CommandArgs {
     };
 }
 
-export function teardown (emitter, task: Task) {
-    if ((typeof emitter.raw.exitCode) !== 'number') {
-        debug('tearing down a child_process because exitCode is missing');
-        emitter.removeAllListeners('close');
-        emitter.kill('SIGINT');
-        emitter.on('close', function () {
-            debug('close method on child encountered');
+export function teardown(emitter, task: Task) {
+    if ((typeof emitter.raw.exitCode) !== "number") {
+        debug("tearing down a child_process because exitCode is missing");
+        emitter.removeAllListeners("close");
+        emitter.kill("SIGINT");
+        emitter.on("close", function () {
+            debug("close method on child encountered");
             // todo - async teardown for sequential
         });
     } else {
-        debug('child process already completed, not disposing');
+        debug("child process already completed, not disposing");
     }
 }
 
-export function getStdio (trigger: CommandTrigger) {
+export function getStdio(trigger: CommandTrigger) {
     // todo - prefixed logging for child processes
     if (trigger.config.suppressOutput) {
-        return ['pipe', 'pipe', 'pipe'];
+        return ["pipe", "pipe", "pipe"];
     }
 
     // process.stdin, process.stdout, process.stderr
-    return [process.stdin, process.stdout, 'pipe'];
+    return [process.stdin, process.stdout, "pipe"];
 }
 
-export function handleExit (emitter, done) {
+export function handleExit(emitter, done) {
     const stderr = [];
 
-    emitter.stderr.on('data', function (data) {
+    emitter.stderr.on("data", function (data) {
         stderr.push(data);
     });
 
-    emitter.on('close', function (code) {
+    emitter.on("close", function (code) {
 
         // todo: Make pretty errors that originate from child processes
         if (code !== 0) {
             const err: CrossbowError = new Error(`Previous command failed with exit code ${code}`);
             if (stderr.length) {
-                err.stack = stderr.map(String).join('');
+                err.stack = stderr.map(String).join("");
             } else {
-                err.stack = `Previous command failed with exit code ${code}`
+                err.stack = `Previous command failed with exit code ${code}`;
             }
-            
-            err._cbError    = true;
+
+            err._cbError = true;
             err._cbExitCode = code;
-            
+
             return done(err);
         }
         done();
-    }).on('error', function (err) {
+    }).on("error", function (err) {
         done(err);
     });
 }
@@ -168,7 +168,7 @@ export default function (task: Task, trigger: CommandTrigger) {
         const env = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
         const stdio = getStdio(trigger);
 
-        debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(' '));
+        debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(" "));
 
         const emitter = runCommand(commandArgs.cmd, {
             cwd: trigger.config.cwd,
@@ -178,7 +178,7 @@ export default function (task: Task, trigger: CommandTrigger) {
 
         handleExit(emitter, done);
 
-        return function tearDownNpmAdaptor () {
+        return function tearDownNpmAdaptor() {
             teardown(emitter, task);
         };
     };

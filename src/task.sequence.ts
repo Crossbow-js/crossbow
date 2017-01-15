@@ -1,6 +1,6 @@
 import {TaskTypes, TaskRunModes} from "./task.resolve";
-const _ = require('../lodash.custom');
-const Rx = require('rx');
+const _ = require("../lodash.custom");
+const Rx = require("rx");
 const Observable = Rx.Observable;
 
 import * as adaptors from "./adaptors";
@@ -20,7 +20,6 @@ import {
 import {createObservableFromSequenceItem, TaskReportType} from "./task.runner";
 import {TaskReport} from "./task.runner";
 import {isInternal} from "./task.utils";
-
 
 export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger): SequenceItem[] {
 
@@ -138,7 +137,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
      * @param continueFn
      * @returns {any}
      */
-    function resolveGroup (task: Task, groupCreatorFn: Function): SequenceItem[] {
+    function resolveGroup(task: Task, groupCreatorFn: Function): SequenceItem[] {
         /**
          * If the group contains no subtasks
          */
@@ -179,7 +178,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
         /**
          * Now for each sub-task create a separate task item
          */
-        return lookupKeys.map((subTaskName: string) : SequenceItem => {
+        return lookupKeys.map((subTaskName: string): SequenceItem => {
 
             /**
              * When things like options, flags or query strings
@@ -197,14 +196,14 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
 
             return groupCreatorFn({
                 taskName: task.taskName,
-                items: flatten(task.tasks, [], taskOptions, task.taskName + ':' + subTaskName),
+                items: flatten(task.tasks, [], taskOptions, task.taskName + ":" + subTaskName),
                 skipped: task.skipped,
                 subTaskName: subTaskName
             });
         });
     }
 
-    function resolveGroupOfTasks (task: Task, input) {
+    function resolveGroupOfTasks(task: Task, input) {
         if (task.type === TaskTypes.ParentGroup) {
             const opts = _.merge(
                 {},
@@ -215,7 +214,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
             return flatten(task.tasks, [], opts, task.taskName);
         }
         const lookupKeys = getLookupKeys(task.subTasks, task.options);
-        return lookupKeys.reduce(function (acc, subTaskName:string) {
+        return lookupKeys.reduce(function (acc, subTaskName: string) {
             const opts = _.merge(
                 {},
                 task.options._default,
@@ -224,7 +223,7 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
                 task.query,
                 task.flags
             );
-            return acc.concat(flatten(task.tasks, [], opts, task.taskName + ':' + subTaskName));
+            return acc.concat(flatten(task.tasks, [], opts, task.taskName + ":" + subTaskName));
         }, []);
     }
 }
@@ -234,11 +233,11 @@ export function createFlattenedSequence(tasks: Task[], trigger: CommandTrigger):
  * module to be run,
  */
 export interface ITaskOptions {
-    _default?: any
-    [index: string]: any
+    _default?: any;
+    [index: string]: any;
 }
 
-function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTrigger, localOptions:ITaskOptions, viaName?: string): SequenceItem[] {
+function resolveFromFunction(task: Task, callable: () => any, trigger: CommandTrigger, localOptions: ITaskOptions, viaName?: string): SequenceItem[] {
     /**
      * If the current item has no sub-tasks, we can return early
      * with a simple task creation using the global options
@@ -274,10 +273,10 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
          * */
         const currentOptionObject = _.merge({}, localOptions._default, _.get(localOptions, optionKey));
         const sequenceItems = getSequenceItemWithOptions(task, trigger, callable, currentOptionObject, optionKey)
-                .map(seqItem => {
-                    seqItem.subTaskName = optionKey;
-                    return seqItem;
-                });
+            .map(seqItem => {
+                seqItem.subTaskName = optionKey;
+                return seqItem;
+            });
 
         return acc.concat(sequenceItems);
     }, []);
@@ -310,7 +309,7 @@ function resolveFromFunction (task: Task, callable: ()=>any, trigger: CommandTri
     }
 }
 
-function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options, viaName?:string): SequenceItem[] {
+function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, imported: TaskFactory, options, viaName?: string): SequenceItem[] {
 
     /**
      * Merge incoming options with query + flags
@@ -336,7 +335,7 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
                 task: task,
                 options: mergedOptionsWithQuery,
                 viaName
-            })
+            });
         });
     }
 
@@ -346,14 +345,14 @@ function getSequenceItemWithOptions(task: Task, trigger: CommandTrigger, importe
      * eg:
      *  module.exports = function runSass() {}
      */
-    if (typeof imported === 'function') {
+    if (typeof imported === "function") {
         return [createSequenceTaskItem({
             fnName: getFunctionName(imported, 0),
             factory: imported,
             task: task,
             options: mergedOptionsWithQuery,
             viaName
-        })]
+        })];
     }
 }
 
@@ -390,7 +389,7 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
             if (!ctx) ctx = Immutable.Map({});
 
             const flattened = createObservableTree(items, [], false, ctx);
-            const run       = Observable
+            const run = Observable
                 .from(flattened)
                 .concatAll()
                 .catch(x => Rx.Observable.empty());
@@ -423,19 +422,19 @@ export function createRunner(items: SequenceItem[], trigger: CommandTrigger): Ru
      * what this function produces:
      *
      * const out = [
-         Observable.concat(
-             task1(),
-             task2()
-         ),
-         Observable.concat(
-             task3(),
-             task4(),
-             Observable.concat(
-                 task5(),
-                 task6(),
-                 task7()
-             )
-         )
+     Observable.concat(
+     task1(),
+     task2()
+     ),
+     Observable.concat(
+     task3(),
+     task4(),
+     Observable.concat(
+     task5(),
+     task6(),
+     task7()
+     )
+     )
      ];
      *
      */
@@ -512,7 +511,7 @@ function loadTopLevelOptions(task: Task, trigger: CommandTrigger): {} {
     }
 
     if (isInternal(task.rawInput)) {
-        const lookup = task.taskName.replace(/(.+?)_internal_fn_\d{0,10}/, '');
+        const lookup = task.taskName.replace(/(.+?)_internal_fn_\d{0,10}/, "");
         const fromInternal = _.get(trigger.input.options, [lookup]);
         if (fromInternal !== undefined) {
             return fromInternal;
@@ -554,7 +553,7 @@ export function decorateSequenceWithReports(sequence: SequenceItem[], reports: T
 export function countSequenceErrors(items: SequenceItem[]): number {
     return items.reduce((acc, item) => {
         if (item.type === SequenceItemTypes.Task) {
-            const errors = _.get(item, 'stats.errors', []);
+            const errors = _.get(item, "stats.errors", []);
             if (errors.length) {
                 return acc + errors.length;
             }
@@ -564,7 +563,7 @@ export function countSequenceErrors(items: SequenceItem[]): number {
     }, 0);
 }
 
-export function collectSkippedTasks (items:SequenceItem[], initial): SequenceItem[] {
+export function collectSkippedTasks(items: SequenceItem[], initial): SequenceItem[] {
     return items.reduce(function (acc, item) {
         if (item.type === SequenceItemTypes.Task) {
             if (item.stats.skipped) {
@@ -576,7 +575,7 @@ export function collectSkippedTasks (items:SequenceItem[], initial): SequenceIte
     }, initial);
 }
 
-export function collectRunnableTasks (items:SequenceItem[], initial: SequenceItem[]): SequenceItem[] {
+export function collectRunnableTasks(items: SequenceItem[], initial: SequenceItem[]): SequenceItem[] {
     return items.reduce(function (acc, item) {
         if (item.type === SequenceItemTypes.Task) {
             return acc.concat(item);
@@ -597,7 +596,7 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
 
     const start = match.filter(x => x.type === TaskReportType.start)[0];
     const error = match.filter(x => x.type === TaskReportType.error)[0];
-    const end   = match.filter(x => x.type === TaskReportType.end)[0];
+    const end = match.filter(x => x.type === TaskReportType.end)[0];
 
     if (start && end) {
         return _.assign({}, start.stats, end.stats);
@@ -632,9 +631,9 @@ function getMergedStats(item: SequenceItem, reports: TaskReport[]): {} {
  *
  * lookupKeys = ['site', 'debug']
  */
-const blacklistedSubTaskNames = ['_default'];
+const blacklistedSubTaskNames = ["_default"];
 function getLookupKeys(subTasks: string[], topLevelObject: {}): string[] {
-    if (subTasks[0] === '*') {
+    if (subTasks[0] === "*") {
         return Object.keys(topLevelObject)
             .filter(x => blacklistedSubTaskNames.indexOf(x) === -1);
     }

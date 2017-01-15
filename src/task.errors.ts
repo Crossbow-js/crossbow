@@ -3,21 +3,21 @@ import {TaskTypes} from "./task.resolve";
 import {isSupportedFileType, isParentGroupName, getChildItems} from "./task.utils";
 import {CommandTrigger} from "./command.run";
 import {ExternalFile} from "./file.utils";
-const _ = require('../lodash.custom');
+const _ = require("../lodash.custom");
 
 export enum TaskErrorTypes {
-    TaskNotFound                = <any>"TaskNotFound",
-    SubtasksNotInConfig         = <any>"SubtasksNotInConfig",
-    SubtaskNotProvided          = <any>"SubtaskNotProvided",
+    TaskNotFound = <any>"TaskNotFound",
+    SubtasksNotInConfig = <any>"SubtasksNotInConfig",
+    SubtaskNotProvided = <any>"SubtaskNotProvided",
     SubtaskNotProvidedForParent = <any>"SubtaskNotProvidedForParent",
-    SubtaskNotFound             = <any>"SubtaskNotFound",
+    SubtaskNotFound = <any>"SubtaskNotFound",
     SubtaskWildcardNotAvailable = <any>"SubtaskWildcardNotAvailable",
-    AdaptorNotFound             = <any>"AdaptorNotFound",
-    FlagNotFound                = <any>"FlagNotFound",
-    CBFlagNotProvided           = <any>"CBFlagNotProvided",
-    InvalidTaskInput            = <any>"InvalidTaskInput",
-    CircularReference           = <any>"CircularReference",
-    FileTypeNotSupported        = <any>"FileTypeNotSupported"
+    AdaptorNotFound = <any>"AdaptorNotFound",
+    FlagNotFound = <any>"FlagNotFound",
+    CBFlagNotProvided = <any>"CBFlagNotProvided",
+    InvalidTaskInput = <any>"InvalidTaskInput",
+    CircularReference = <any>"CircularReference",
+    FileTypeNotSupported = <any>"FileTypeNotSupported"
 }
 
 export function gatherTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
@@ -45,7 +45,7 @@ function getModuleErrors(task: Task, trigger: CommandTrigger): TaskError[] {
             type: TaskErrorTypes.TaskNotFound,
             taskName: task.taskName,
             cwd: trigger.config.cwd
-        }]
+        }];
     }
 
     return [];
@@ -62,7 +62,11 @@ function getFileTypeErrors(task: Task, trigger: CommandTrigger): TaskError[] {
 
     if (supported) return [];
 
-    return [<FileTypeNotSupportedError>{type: TaskErrorTypes.FileTypeNotSupported, taskName: task.taskName, externalFile: task.externalTasks[0]}];
+    return [<FileTypeNotSupportedError>{
+        type: TaskErrorTypes.FileTypeNotSupported,
+        taskName: task.taskName,
+        externalFile: task.externalTasks[0]
+    }];
 }
 
 function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
@@ -77,7 +81,7 @@ function getCBFlagErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          *   $ crossbow run build-css@p
          *
          */
-        if (flag === '') {
+        if (flag === "") {
             return all.concat(<CBFlagNotProvidedError>{
                 type: TaskErrorTypes.CBFlagNotProvided,
                 taskName: task.taskName
@@ -108,7 +112,7 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
             if (taskOptions.length) {
                 return taskOptions;
             }
-            return Object.keys(_.get(trigger.input, ['options'].concat(task.baseTaskName), {}));
+            return Object.keys(_.get(trigger.input, ["options"].concat(task.baseTaskName), {}));
         })();
 
         /**
@@ -121,7 +125,7 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          *   $ crossbow run sass:site:dev
          *
          */
-        if (subTaskName === '') {
+        if (subTaskName === "") {
             return all.concat(<SubtaskNotProvidedError>{
                 type: TaskErrorTypes.SubtaskNotProvided,
                 name: subTaskName
@@ -133,7 +137,7 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          * then this item must have configuration
          * as we'll want to run once with each key
          */
-        if (subTaskName === '*') {
+        if (subTaskName === "*") {
             return all.concat(handleWildcardSubtask(configKeys, subTaskName));
         }
 
@@ -156,8 +160,8 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
          * Finally check if there's configuration that Matches this
          * key.
          */
-        const match = _.get(trigger.input, ['options'].concat(task.baseTaskName, subTaskName));
-        const match2 = _.get(task, ['options'].concat(subTaskName));
+        const match = _.get(trigger.input, ["options"].concat(task.baseTaskName, subTaskName));
+        const match2 = _.get(task, ["options"].concat(subTaskName));
         if (match === undefined && match2 === undefined) {
             return all.concat(<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,
@@ -170,7 +174,7 @@ function getSubTaskErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     }, []);
 }
 
-function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[] {
+function getParentGroupErrors(task: Task, trigger: CommandTrigger): TaskError[] {
     /**
      * This only applies to ParentGroups
      */
@@ -179,7 +183,7 @@ function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[]
     /**
      * If the type is a ParentGroup, it requires that a sub-task is provided also
      */
-    if (task.subTasks[0] === '*') {
+    if (task.subTasks[0] === "*") {
         const children = getChildItems(task.baseTaskName, trigger.input.tasks);
         if (Object.keys(children).length) {
             return [];
@@ -189,9 +193,9 @@ function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[]
         const available = (function () {
             const match = isParentGroupName(task.baseTaskName);
             if (match) {
-                return Object.keys(_.get(trigger.input.tasks, [task.baseTaskName], {}))
+                return Object.keys(_.get(trigger.input.tasks, [task.baseTaskName], {}));
             }
-            return Object.keys(_.get(trigger.input.tasks, ['('+ task.baseTaskName+ ')'], {}));
+            return Object.keys(_.get(trigger.input.tasks, ["(" + task.baseTaskName + ")"], {}));
         })();
         return [<SubtaskNotProvidedForParentError>{
             type: TaskErrorTypes.SubtaskNotProvidedForParent,
@@ -200,11 +204,11 @@ function getParentGroupErrors (task: Task, trigger: CommandTrigger): TaskError[]
         }];
     }
 
-    function match (name) {
+    function match(name) {
         return _.get(trigger.input.tasks, [`(${task.baseTaskName})`, name]);
     }
 
-    return task.subTasks.reduce(function(acc, subTask) {
+    return task.subTasks.reduce(function (acc, subTask) {
         if (!match(subTask)) {
             return acc.concat([<SubtaskNotFoundError>{
                 type: TaskErrorTypes.SubtaskNotFound,
@@ -228,49 +232,49 @@ function handleWildcardSubtask(configKeys: string[], name: string): SubtaskWildc
 }
 
 export interface TaskError {
-    type: TaskErrorTypes
+    type: TaskErrorTypes;
 }
 export interface TaskNotFoundError extends TaskError {
-    taskName: string
-    cwd: string
+    taskName: string;
+    cwd: string;
 }
 export interface SubtasksNotInConfigError extends TaskError {
-    name: string
+    name: string;
 }
 export interface SubtaskNotProvidedError extends TaskError {
-    name: string
+    name: string;
 }
 export interface SubtaskNotProvidedForParentError extends TaskError {
-    name: string
-    available: string[]
+    name: string;
+    available: string[];
 }
 export interface SubtaskWildcardNotAvailableError extends TaskError {
-    name: string
+    name: string;
 }
 export interface SubtaskNotFoundError extends TaskError {
-    name: string
+    name: string;
 }
 export interface AdaptorNotFoundError extends TaskError {
-    taskName: string
+    taskName: string;
 }
 export interface InvalidTaskInputError extends TaskError {
-    input: any
+    input: any;
 }
 
 export interface CBFlagNotFoundError extends TaskError {
-    taskName: string
+    taskName: string;
 }
 
 export interface CBFlagNotProvidedError extends TaskError {
-    taskName: string
+    taskName: string;
 }
 
 export interface CircularReferenceError extends TaskError {
-    incoming: Task
-    parents: string[]
+    incoming: Task;
+    parents: string[];
 }
 
 export interface FileTypeNotSupportedError extends TaskError {
-    taskName: string,
-    externalFile: ExternalFile
+    taskName: string;
+    externalFile: ExternalFile;
 }

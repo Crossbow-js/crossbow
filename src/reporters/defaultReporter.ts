@@ -15,10 +15,10 @@ import {duration, _taskReport, getSimpleTaskList} from "./task.list";
 import * as reports from "../reporter.resolve";
 import {clean} from "../logger";
 
-const baseUrl = 'http://crossbow-cli.io/docs/errors';
-const archy = require('archy');
+const baseUrl = "http://crossbow-cli.io/docs/errors";
+const archy = require("archy");
 const parsed = parse(__dirname);
-const depsDir = join(dirname(parsed.dir), 'node_modules');
+const depsDir = join(dirname(parsed.dir), "node_modules");
 
 export const enum LogLevel {
     Short = 0,
@@ -26,16 +26,16 @@ export const enum LogLevel {
 }
 
 export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
-    if (typeof reporterFunctions[report.type] === 'function') {
+    if (typeof reporterFunctions[report.type] === "function") {
         const outputFn = reporterFunctions[report.type];
         const output = outputFn.call(null, report.data);
-        if (typeof output === 'string') {
-            if (output === '') return;
+        if (typeof output === "string") {
+            if (output === "") return;
             observer.onNext({origin: report.type, data: [output]});
         } else if (Array.isArray(output) && output.length) {
             observer.onNext({origin: report.type, data: output});
         } else {
-            console.log('STRING or ARRAY not returned for', report.type);
+            console.log("STRING or ARRAY not returned for", report.type);
         }
     }
 }
@@ -44,7 +44,7 @@ export const reporterFunctions = {
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;
-        }).join('\n');
+        }).join("\n");
     },
     [reports.ReportTypes.InputError]: function (report: reports.InputErrorReport): string[] {
         const lines = [`Sorry, there were errors resolving your input files`];
@@ -56,14 +56,14 @@ export const reporterFunctions = {
         if (sources.length) {
             sources.forEach(function (item) {
                 lines.push(`{red.bold:x ${item.rawInput}}`);
-                lines.push.apply(lines, getExternalError(item.errors[0].type, item.errors[0], item).split('\n'));
+                lines.push.apply(lines, getExternalError(item.errors[0].type, item.errors[0], item).split("\n"));
             });
         } else {
             /**
              * Otherwise it was some other input error
              */
             errors.forEach(function (error) {
-                lines.push.apply(lines, getExternalError(error.type, error).split('\n'));
+                lines.push.apply(lines, getExternalError(error.type, error).split("\n"));
             });
         }
 
@@ -80,8 +80,8 @@ export const reporterFunctions = {
                     lines.push(`{red.bold:x ${err.file.resolved}`);
                 }
 
-                lines.push.apply(lines, getExternalError(err.type, err).split('\n'));
-            })
+                lines.push.apply(lines, getExternalError(err.type, err).split("\n"));
+            });
         });
 
         return lines;
@@ -92,7 +92,7 @@ export const reporterFunctions = {
             `Sorry, this would cause an existing file to be overwritten`,
             `{red.bold:x ${error.file.rawInput}}`
         ];
-        return lines.concat(getExternalError(error.type, error, error.file).split('\n'));
+        return lines.concat(getExternalError(error.type, error, error.file).split("\n"));
     },
     [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string[] {
         return `{green:✔} Created file: {cyan.bold:${report.parsed.base}}
@@ -103,14 +103,14 @@ Now, try the \`{yellow:hello-world}\` example in that file by running:
  
 Or to see multiple tasks running, with some in parallel, try: 
 
-  {gray:$} crossbow run {bold:all}`.split('\n');
+  {gray:$} crossbow run {bold:all}`.split("\n");
     },
     [reports.ReportTypes.InitInputFileTypeNotSupported]: function (report: reports.InitInputFileTypeNotSupportedReport): string[] {
         const error = report.error;
         return [
             `Sorry, the type {cyan.bold:${error.providedType}} is not currently supported`,
             `{red.bold:x '${error.providedType}'}`,
-            ...getExternalError(error.type, error).split('\n')
+            ...getExternalError(error.type, error).split("\n")
         ];
     },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
@@ -119,7 +119,7 @@ Or to see multiple tasks running, with some in parallel, try:
         const longestName     = getLongestTaskName(tasks);
 
         groups.forEach(function(group) {
-            lines.push('');
+            lines.push("");
             lines.push(`{green.underline:${group.title}`);
             lines.push.apply(lines, getSimpleTaskList(group.tasks.valid, longestName));
         });
@@ -134,10 +134,10 @@ Or to see multiple tasks running, with some in parallel, try:
         const {config, sequence, titlePrefix, cli} = report;
 
         if (config.verbose === LogLevel.Verbose) {
-            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(" ");
             return reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`);
         } else {
-            return `{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(', ')}`;
+            return `{yellow:+}${titlePrefix} {bold:${cli.input.slice(1).join(", ")}`;
         }
     },
     [reports.ReportTypes.TaskErrors]: function (report: reports.TaskErrorsReport): string[] {
@@ -145,10 +145,10 @@ Or to see multiple tasks running, with some in parallel, try:
         const {taskCollection, tasks, config} = report;
 
         const lines = [
-            '{gray.bold:------------------------------------------------}',
-            '{err: } Sorry, there were errors resolving your tasks,',
-            '  So none of them were run.',
-            '{gray.bold:------------------------------------------------}',
+            "{gray.bold:------------------------------------------------}",
+            "{err: } Sorry, there were errors resolving your tasks,",
+            "  So none of them were run.",
+            "{gray.bold:------------------------------------------------}",
         ];
 
         taskCollection.forEach(function (n, i) {
@@ -162,23 +162,23 @@ Or to see multiple tasks running, with some in parallel, try:
 
         if (config.progress || config.dryRun) {
             if (config.dryRun && report.report.type === TaskReportType.end) {
-                return '';
+                return "";
             }
             return _taskReport(report.report);
         }
-        return '';
+        return "";
     },
     [reports.ReportTypes.DocsInvalidTasksSimple]: function (): string[] {
         return [
-            '{red.bold:x Invalid tasks',
-            'Sorry, we cannot generate documentation for you right now',
-            'as you have invalid tasks. Please run {bold:$ crossbow tasks} to see',
-            'details about these errors',
+            "{red.bold:x Invalid tasks",
+            "Sorry, we cannot generate documentation for you right now",
+            "as you have invalid tasks. Please run {bold:$ crossbow tasks} to see",
+            "details about these errors",
         ];
     },
     [reports.ReportTypes.NoTasksAvailable]: function (): string[] {
         return [
-            'Sorry, there were no tasks available.',
+            "Sorry, there were no tasks available.",
             `{red.bold:x Input: ''}`,
             ...getExternalErrorLines(InputErrorTypes.NoTasksAvailable, {})
         ];
@@ -189,8 +189,8 @@ Or to see multiple tasks running, with some in parallel, try:
     [reports.ReportTypes.BeforeWatchTaskErrors]: function (report: reports.BeforeWatchTaskErrorsReport): string[] {
 
         const lines = [
-            '{err: } Sorry, there were errors resolving your {red:`before`} tasks',
-            '  So none of them were run, and no watchers have begun either.',
+            "{err: } Sorry, there were errors resolving your {red:`before`} tasks",
+            "  So none of them were run, and no watchers have begun either.",
         ];
 
         const {watchTasks, trigger} = report;
@@ -219,11 +219,11 @@ Or to see multiple tasks running, with some in parallel, try:
 
         const {config, cli, sequence} = report;
         const lines = [
-            `{yellow:+} Before tasks for watcher: {bold:${cli.input.join(', ')}}`,
+            `{yellow:+} Before tasks for watcher: {bold:${cli.input.join(", ")}}`,
         ];
 
         if (config.verbose === LogLevel.Verbose) {
-            const cliInput = cli.input.map(x => `'${x}'`).join(' ');
+            const cliInput = cli.input.map(x => `'${x}'`).join(" ");
             lines.push(reportSequenceTree(sequence, config, `+ Task Tree for ${cliInput}`));
         }
 
@@ -232,7 +232,7 @@ Or to see multiple tasks running, with some in parallel, try:
     [reports.ReportTypes.BeforeTasksDidNotComplete]: function (report: reports.BeforeTasksDidNotCompleteReport): string[] {
         return [
             `{red:x} ${report.error.message}`,
-            '  so none of the watchers started',
+            "  so none of the watchers started",
         ];
     },
     [reports.ReportTypes.WatchTaskTasksErrors]: function (report: reports.WatchTaskTasksErrorsReport): string[] {
@@ -241,7 +241,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         if (runner._tasks.invalid.length) {
             return [
-                '{gray.bold:---------------------------------------------------}',
+                "{gray.bold:---------------------------------------------------}",
                 `{err: } Sorry, there were errors when resolving the tasks`,
                 `  that will be used in the following watcher`,
                 ...logWatcher(runner),
@@ -250,7 +250,7 @@ Or to see multiple tasks running, with some in parallel, try:
         }
 
         const lines = [
-            '{gray.bold:---------------------------------------------------}',
+            "{gray.bold:---------------------------------------------------}",
             `{ok: } No errors from`,
             ...logWatcher(runner),
         ];
@@ -274,7 +274,7 @@ Or to see multiple tasks running, with some in parallel, try:
         watchTasks.forEach(function (task: WatchTask) {
             if (task.errors.length) {
                 lines.push(`{red.bold:x '${task.name}'}`);
-                lines.push.apply(lines, getWatchError(task.errors[0], task).split('\n'));
+                lines.push.apply(lines, getWatchError(task.errors[0], task).split("\n"));
             } else {
                 lines.push(`{ok: } '${task.name}'}`);
             }
@@ -289,9 +289,9 @@ Or to see multiple tasks running, with some in parallel, try:
     },
     [reports.ReportTypes.NoWatchersAvailable]: function (): string[] {
         return [
-            'Sorry, there were no watchers available to run',
+            "Sorry, there were no watchers available to run",
             `{red.bold:x No watchers available}`,
-            ...getExternalError(InputErrorTypes.NoWatchersAvailable, {}).split('\n')
+            ...getExternalError(InputErrorTypes.NoWatchersAvailable, {}).split("\n")
         ];
     },
     [reports.ReportTypes.NoWatchTasksProvided]: function (): string {
@@ -302,12 +302,12 @@ Or to see multiple tasks running, with some in parallel, try:
         lines.push(``);
         report.watchTasks.forEach(function (watchTask) {
             watchTask.watchers.forEach(function (watcher) {
-                lines.push(`{bold:'${watcher.patterns.map(x => _e(x)).join(', ')}}'`);
-                lines.push(` {yellow:->} ${watcher.tasks.join(', ')}`)
+                lines.push(`{bold:'${watcher.patterns.map(x => _e(x)).join(", ")}}'`);
+                lines.push(` {yellow:->} ${watcher.tasks.join(", ")}`);
             });
             lines.push(``);
         });
-        lines.push('Watching for changes...');
+        lines.push("Watching for changes...");
 
         return lines;
     },
@@ -315,17 +315,17 @@ Or to see multiple tasks running, with some in parallel, try:
 
         const {watchTasks} = report.setup;
 
-        const lines = ['', '{yellow:Available Watchers:}'];
+        const lines = ["", "{yellow:Available Watchers:}"];
 
         watchTasks.valid.forEach(function (watchTask) {
-            lines.push('');
+            lines.push("");
             lines.push(`    {bold:Name}:     {green.underline:${watchTask.name}}`);
             watchTask.watchers.forEach(function (watcher, i) {
                 if (i > 0) {
-                    lines.push('    {gray:-----}');
+                    lines.push("    {gray:-----}");
                 }
-                lines.push(`    Patterns: {cyan:${watcher.patterns.map(_e).join(', ')}}`);
-                lines.push(`    Tasks:    {yellow:${watcher.tasks.join(', ')}}`);
+                lines.push(`    Patterns: {cyan:${watcher.patterns.map(_e).join(", ")}}`);
+                lines.push(`    Tasks:    {yellow:${watcher.tasks.join(", ")}}`);
             });
         });
 
@@ -338,26 +338,26 @@ Or to see multiple tasks running, with some in parallel, try:
         });
 
         if (watchTasks.valid.length > 1) {
-            lines.push('');
-            lines.push('Or run multiple watchers at once, such as:');
+            lines.push("");
+            lines.push("Or run multiple watchers at once, such as:");
             lines.push(``);
-            lines.push('    {gray:$} crossbow watch ' + watchTasks.valid.slice(0, 2).map(x => `{bold:${x.name}}`).join(' '));
-            lines.push('');
+            lines.push("    {gray:$} crossbow watch " + watchTasks.valid.slice(0, 2).map(x => `{bold:${x.name}}`).join(" "));
+            lines.push("");
         }
         return lines;
     },
     [reports.ReportTypes.NoFilesMatched]: function (report: reports.NoFilesMatchedReport): string {
         const {watcher} = report;
-        return `{red:x warning} {cyan:${watcher.patterns.join(' ')}} did not match any files`
+        return `{red:x warning} {cyan:${watcher.patterns.join(" ")}} did not match any files`;
     },
 
     [reports.ReportTypes.WatcherTriggeredTasks]: function (report: reports.WatcherTriggeredTasksReport): string {
         const {index, taskCollection} = report;
-        return `{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(', ')}`;
+        return `{yellow:+} [${index}] ${getTaskCollectionList(taskCollection).join(", ")}`;
     },
     [reports.ReportTypes.WatcherTriggeredTasksCompleted]: function (report: reports.WatcherTriggeredTasksCompletedReport): string {
         const {index, taskCollection, time} = report;
-        return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(', ')} {yellow:(${duration(time)})}`;
+        return `{green:✔} [${index}] ${getTaskCollectionList(taskCollection).join(", ")} {yellow:(${duration(time)})}`;
     },
     [reports.ReportTypes.DocsGenerated]: function () {
         /** noop **/
@@ -367,7 +367,7 @@ Or to see multiple tasks running, with some in parallel, try:
         return [
             `Sorry, there were errors resolving your input files`,
             `{red.bold:x '${error.file.resolved}'}`,
-            ...getExternalError(error.type, error).split('\n')
+            ...getExternalError(error.type, error).split("\n")
         ];
     },
     [reports.ReportTypes.DocsAddedToFile]: function (report: reports.DocsAddedToFileReport): string {
@@ -378,8 +378,8 @@ Or to see multiple tasks running, with some in parallel, try:
         const {error} = report;
         return [
             `{red.bold:x '${error.file.resolved}'}`,
-            ...getExternalError(error.type, error).split('\n')
-        ]
+            ...getExternalError(error.type, error).split("\n")
+        ];
     },
     [reports.ReportTypes.SignalReceived]: function reportSummary(report: reports.SignalReceivedReport): string[] {
         return [``, `{yellow:~~~} Exit Signal Received {cyan:(code: ${report.code})} {yellow:~~~}`];
@@ -436,7 +436,7 @@ Or to see multiple tasks running, with some in parallel, try:
 
         // todo - show a reduced tree showing only errors
         if (config.verbose === LogLevel.Verbose || errorTasks.length > 0) {
-            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(' ');
+            const cliInput = cli.input.slice(1).map(x => `'${x}'`).join(" ");
             lines.push(reportSequenceTree(sequence, config, `+ Results from ${cliInput}`, true));
         }
 
@@ -465,8 +465,8 @@ Or to see multiple tasks running, with some in parallel, try:
         const {error, cwd} = report;
         return [
             `{red.bold:x CB-History hash failed} (tasks will still run)`,
-            ...getExternalError(error.type, error, cwd).split('\n')
-        ]
+            ...getExternalError(error.type, error, cwd).split("\n")
+        ];
     }
 };
 
@@ -477,7 +477,7 @@ Or to see multiple tasks running, with some in parallel, try:
  */
 export function multiLineTree(tree: string): string {
     const lines = [];
-    const split = tree.split('\n');
+    const split = tree.split("\n");
 
     lines.push(split[0]);
 
@@ -485,7 +485,7 @@ export function multiLineTree(tree: string): string {
         lines.push(`${line}`);
     });
 
-    return lines.join('\n');
+    return lines.join("\n");
 }
 
 function getTaskCollectionList(taskCollection: TaskCollection): string[] {
@@ -493,39 +493,39 @@ function getTaskCollectionList(taskCollection: TaskCollection): string[] {
 }
 
 function incomingTaskItemAsString(x: IncomingTaskItem): string {
-    if (typeof x === 'string') {
+    if (typeof x === "string") {
         return _e(x);
     }
-    if (typeof x === 'function') {
+    if (typeof x === "function") {
         const fn: any = x;
         if (fn.name) {
             return `[Function: ${fn.name}]`;
         }
-        return '[Function]';
+        return "[Function]";
     }
 }
 
 function getWatcherNode(watcher: Watcher) {
     const tasksString = (function () {
-        return watcher.tasks.map(incomingTaskItemAsString).join(', ');
+        return watcher.tasks.map(incomingTaskItemAsString).join(", ");
     })();
     return [
-        `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(', ')}}`,
+        `{bold:Patterns:} {cyan:${watcher.patterns.map(x => _e(x)).join(", ")}}`,
         `{bold:Tasks:} {cyan:${tasksString}}`,
-    ].join('\n');
+    ].join("\n");
 }
 
 function logWatcher(runner) {
     return [
         `  {bold:Watcher name:} {cyan:${runner.parent}}`,
-        `      {bold:Patterns:} {cyan:${runner.patterns.join(', ')}}`,
-        `         {bold:Tasks:} {cyan:${runner.tasks.join(', ')}}`,
-    ]
+        `      {bold:Patterns:} {cyan:${runner.patterns.join(", ")}}`,
+        `         {bold:Tasks:} {cyan:${runner.tasks.join(", ")}}`,
+    ];
 }
 
 function errorSummary(errorCount: number): string {
     if (errorCount) {
-        const plural = errorCount === 1 ? 'error' : 'errors';
+        const plural = errorCount === 1 ? "error" : "errors";
         return `{red:x} ${errorCount} ${plural} found (see above)`;
     } else {
         return `{ok: } 0 errors found`;
@@ -533,8 +533,8 @@ function errorSummary(errorCount: number): string {
 }
 
 export interface CrossbowError extends Error {
-    _cbError?: boolean
-    _cbExitCode?: number
+    _cbError?: boolean;
+    _cbExitCode?: number;
 }
 
 function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowError, config: CrossbowConfiguration): string {
@@ -551,7 +551,7 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
         return [
             `{red.bold:x} {red:${sequenceLabel}} {yellow:(${duration(stats.duration)})}`,
             __e(err.stack)
-        ].join('\n');
+        ].join("\n");
     }
 
     /**
@@ -561,16 +561,16 @@ function getErrorText(sequenceLabel: string, stats: TaskStats, err: CrossbowErro
      */
     const head = [
         `{red.bold:x} ${sequenceLabel} {yellow:(${duration(stats.duration)})}`,
-        `{red.bold:${err.stack.split('\n').slice(0, 1)}}`
+        `{red.bold:${err.stack.split("\n").slice(0, 1)}}`
     ];
 
-    const body = err.stack.split('\n').slice(1);
+    const body = err.stack.split("\n").slice(1);
     const stack = getStack(body, config);
     const tail = `- Please see above for any output that may of occurred`;
     if (!stack) {
-        return [...head, tail].join('\n');
+        return [...head, tail].join("\n");
     }
-    return [...head, ...stack, tail].join('\n');
+    return [...head, ...stack, tail].join("\n");
 }
 
 export function getStack(stack: string[], config: CrossbowConfiguration): string[] {
@@ -587,15 +587,15 @@ export function getStack(stack: string[], config: CrossbowConfiguration): string
         return [
             parsed.dir,
             depsDir,
-            'at bound (domain.js',
-            'at runBound (domain.js'
+            "at bound (domain.js",
+            "at runBound (domain.js"
         ];
     })();
 
     return stack
         .filter(line => {
-            return stringMatches.every(string => {
-                return line.indexOf(string) === -1;
+            return stringMatches.every(inputString => {
+                return line.indexOf(inputString) === -1;
             });
         });
 }
@@ -726,20 +726,20 @@ function getSequenceLabel(item: SequenceItem, config: CrossbowConfiguration) {
 
         const typeLabel = (() => {
             if (item.type === SequenceItemTypes.ParallelGroup) {
-                return '<parallel>';
+                return "<parallel>";
             }
-            return '<series>';
+            return "<series>";
         })();
 
         return `{bold:${item.taskName}} ${typeLabel}`;
     })();
 
     if (item.skipped) {
-        baseName += ' {yellow:(skipped)}'
+        baseName += " {yellow:(skipped)}";
     }
 
     if (item.stats && item.stats.skipped) {
-        baseName += ' {yellow:(skipped)}'
+        baseName += " {yellow:(skipped)}";
     }
 
     return baseName;
@@ -749,12 +749,12 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
 
     let errorCount = 0;
     const toLog = getTasks(tasks, [], 0);
-    const archy = require('archy');
+    const archy = require("archy");
     const output = archy({label: `{green.underline:${title} }`, nodes: toLog});
 
     return [
-        '',
-        ...multiLineTree(output).split('\n'),
+        "",
+        ...multiLineTree(output).split("\n"),
         errorSummary(errorCount)
     ];
 
@@ -778,7 +778,7 @@ export function reportTaskTree(tasks: Task[], config: CrossbowConfiguration, tit
             }
 
             let nodes = getTasks(task.tasks, [], depth++);
-            let label = [getLabel(task), ...errors].join('\n');
+            let label = [getLabel(task), ...errors].join("\n");
 
             if (config.verbose === LogLevel.Verbose) {
                 return acc.concat({
@@ -828,15 +828,15 @@ function getWatchError(error, task) {
 function getExternalError<A, B>(type, error: A, val2?: B) {
     return [
         `{red:-} {bold:Error Type:}  ${type}`,
-        ...require('./error.' + type).apply(null, [error, val2]),
+        ...require("./error." + type).apply(null, [error, val2]),
         `{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`,
-    ].join('\n');
+    ].join("\n");
 }
 
 function getExternalErrorLines(type, error, val2?): string[] {
     return [
         `{red:-} {bold:Error Type:}  ${type}`,
-        ...require('./error.' + type).apply(null, [error, val2]),
+        ...require("./error." + type).apply(null, [error, val2]),
         `{red:-} {bold:Documentation}: {underline:${baseUrl}/{bold.underline:${type}}}`,
     ];
 }
@@ -864,7 +864,7 @@ export function getLabel(task: Task) {
 
     if (task.type === TaskTypes.InlineFunction) {
         const fnName = (function () {
-            if (task.inlineFunctions[0].name !== '') {
+            if (task.inlineFunctions[0].name !== "") {
                 return `[Function: ${task.inlineFunctions[0].name}]`;
             }
             return `[Function: ${task.taskName}]`;

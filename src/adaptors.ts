@@ -1,32 +1,32 @@
 import {CommandTrigger} from "./command.run";
 import {Task} from "./task.resolve";
-const shellAdaptor = require('./adaptors/@shell');
-const bgAdaptor    = require('./adaptors/@bg');
-import npmAdaptor from './adaptors/@npm';
-import cbAdaptor from './adaptors/@cb';
+const shellAdaptor = require("./adaptors/@shell");
+const bgAdaptor    = require("./adaptors/@bg");
+import npmAdaptor from "./adaptors/@npm";
+import cbAdaptor from "./adaptors/@cb";
 
 const adaptors = {
-    'shell': {
+    "shell": {
         validate: () => true,
         create: shellAdaptor
     },
-    'sh': {
+    "sh": {
         validate: () => true,
         create: shellAdaptor
     },
-    'bg': {
+    "bg": {
         validate: () => true,
         create: bgAdaptor
     },
-    'bgnpm': {
+    "bgnpm": {
         validate: () => true,
         create: bgAdaptor
     },
-    'npm': {
+    "npm": {
         validate: () => true,
         create: npmAdaptor
     },
-    'cb': {
+    "cb": {
         validate: () => true,
         create: cbAdaptor
     }

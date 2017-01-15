@@ -1,13 +1,13 @@
 import {CommandTrigger} from "./command.run";
 
-const merge = require('../lodash.custom').merge;
-const assign = require('../lodash.custom').assign;
+const merge = require("../lodash.custom").merge;
+const assign = require("../lodash.custom").assign;
 
 export interface UnwrappedTask {
-    patterns: string[]
-    tasks: string[]
-    i: number
-    name: string
+    patterns: string[];
+    tasks: string[];
+    i: number;
+    name: string;
 }
 
 export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger {
@@ -57,12 +57,12 @@ export function getModifiedWatchContext(trigger: CommandTrigger): CommandTrigger
  *  tasks: ["lint", "unit"]
  */
 export function unwrapShorthand(incoming: string, i: number): UnwrappedTask {
-    var patterns = [];
-    var tasks = [];
+    let patterns = [];
+    let tasks = [];
 
-    if (incoming.indexOf(' -> ') > -1) {
-        const split = incoming.split(' -> ').map(x => x.trim());
-        patterns = split[0].split(':');
+    if (incoming.indexOf(" -> ") > -1) {
+        const split = incoming.split(" -> ").map(x => x.trim());
+        patterns = split[0].split(":");
         if (split[1]) {
             const _tasks = split[1].match(/\(.+?\)/g);
             if (_tasks) {
@@ -71,7 +71,7 @@ export function unwrapShorthand(incoming: string, i: number): UnwrappedTask {
                 tasks = [split[1]];
             }
         }
-        return {patterns, tasks, i, name: `_shorthand_${i}`}
+        return {patterns, tasks, i, name: `_shorthand_${i}`};
     }
-    return {patterns, tasks, i, name: incoming}
+    return {patterns, tasks, i, name: incoming};
 }

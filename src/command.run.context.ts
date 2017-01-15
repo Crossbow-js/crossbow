@@ -1,11 +1,11 @@
 import {Task} from "./task.resolve";
-import Immutable = require('immutable');
+import Immutable = require("immutable");
 import {CommandTrigger} from "./command.run";
 const {fromJS, Map} = Immutable;
 
-import Rx = require('rx');
+import Rx = require("rx");
 
-type PreExecutionTask = (tasks: Task[], trigger:CommandTrigger) => Rx.Observable<any>
+type PreExecutionTask = (tasks: Task[], trigger: CommandTrigger) => Rx.Observable<any>;
 
 /**
  * A task context is just an Immutable Map of key=>value pairs
@@ -15,15 +15,15 @@ type PreExecutionTask = (tasks: Task[], trigger:CommandTrigger) => Rx.Observable
  * would be hashing files/directories to determine if a task/group of tasks should
  * run.
  */
-export default function getContext (tasks: Task[], trigger: CommandTrigger): Rx.Observable<Immutable.Map<string, any>> {
+export default function getContext(tasks: Task[], trigger: CommandTrigger): Rx.Observable<Immutable.Map<string, any>> {
 
     /**
      * Define a list of async actions
      * that must complete before any tasks are executed
      * @type {Array}
      */
-    const preExecutionTasks : Array<PreExecutionTask> = [
-        require('./command.run.pre-execution').createHashes
+    const preExecutionTasks: Array<PreExecutionTask> = [
+        require("./command.run.pre-execution").createHashes
     ];
 
     /**

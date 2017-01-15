@@ -1,5 +1,5 @@
 
-import {isPlainObject} from './task.utils';
+import {isPlainObject} from "./task.utils";
 import {WatchOptions} from "chokidar";
 import {preprocessWatchTask} from "./watch.preprocess";
 import {WatchTaskError, gatherWatchTaskErrors} from "./watch.errors";
@@ -10,8 +10,8 @@ import {Runner} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {TaskCollection} from "./task.resolve";
 
-const blacklist = ['options', 'bs-config', 'before', 'id'];
-const _         = require('../lodash.custom');
+const blacklist = ["options", "bs-config", "before", "id"];
+const _         = require("../lodash.custom");
 
 export const defaultWatchOptions = <CBWatchOptions>{
     ignoreInitial: true,
@@ -22,37 +22,37 @@ export const defaultWatchOptions = <CBWatchOptions>{
 };
 
 export interface CBWatchOptions extends WatchOptions {
-    throttle: number
-    debounce: number
-    delay: number
-    block: boolean
+    throttle: number;
+    debounce: number;
+    delay: number;
+    block: boolean;
 }
 
 export interface WatchTask {
-    before: string[]
-    options: CBWatchOptions
-    watchers: Watcher[]
-    name: string
-    errors: WatchTaskError[]
-    patterns?: string[]
-    tasks?: string[]
+    before: string[];
+    options: CBWatchOptions;
+    watchers: Watcher[];
+    name: string;
+    errors: WatchTaskError[];
+    patterns?: string[];
+    tasks?: string[];
 }
 
 export interface Watcher {
-    patterns: string[]
-    tasks: TaskCollection
-    options: any
-    watcherUID: string
-    _tasks?: Tasks
-    _sequence?: SequenceItem[]
-    _runner?: Runner
-    parent?: string
+    patterns: string[];
+    tasks: TaskCollection;
+    options: any;
+    watcherUID: string;
+    _tasks?: Tasks;
+    _sequence?: SequenceItem[];
+    _runner?: Runner;
+    parent?: string;
 }
 
 export interface WatchTasks {
-    valid: WatchTask[]
-    invalid: WatchTask[],
-    all: WatchTask[]
+    valid: WatchTask[];
+    invalid: WatchTask[];
+    all: WatchTask[];
 }
 
 /**
@@ -61,11 +61,11 @@ export interface WatchTasks {
  *  - tasks
  *  - options
  */
-function createOne(name: string, index:number, item, itemOptions, globalOptions): Watcher {
+function createOne(name: string, index: number, item, itemOptions, globalOptions): Watcher {
     if (isPlainObject(item)) {
         if (item.patterns && item.tasks) {
             return {
-                patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(':')), []),
+                patterns:   [].concat(item.patterns).reduce((a, x) => a.concat(x.split(":")), []),
                 tasks:      [].concat(item.tasks),
                 options:    _.merge({}, defaultWatchOptions, globalOptions, itemOptions),
                 watcherUID: `${name}-${index}`
@@ -125,7 +125,7 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
              *     - patterns: ['*.css']
              *       tasks:    '3'
              */
-            if (item === 'watchers') {
+            if (item === "watchers") {
 
                 /**
                  * If the `watcher` property is an Array, it must
@@ -160,7 +160,7 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
                  */
                 if (isPlainObject(watchTaskParent.watchers)) {
                     return Object.keys(watchTaskParent.watchers)
-                        .map((key, i)=> createOne(name, i, {
+                        .map((key, i) => createOne(name, i, {
                             patterns: key,
                             tasks: watchTaskParent.watchers[key]
                         }, watchTaskParent.options, globalOptions));
@@ -181,9 +181,9 @@ function getFormattedTask(name: string, watchTaskParent: WatchTask, globalOption
 
 function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): WatchTask {
 
-    const fromCli = ['block', 'throttle', 'debounce'].reduce(function(acc, key) {
+    const fromCli = ["block", "throttle", "debounce"].reduce(function(acc, key) {
         // console.log(typeof trigger.config[key]);
-        if (typeof trigger.config[key] !== 'undefined') {
+        if (typeof trigger.config[key] !== "undefined") {
             acc[key] = trigger.config[key];
         }
         return acc;
@@ -206,7 +206,7 @@ function createFlattenedWatchTask(taskName: string, trigger: CommandTrigger): Wa
         options: selection.options || {},
         watchers: watchers,
         errors: errors
-    }
+    };
 }
 
 function validateTask(task: WatchTask, trigger: CommandTrigger): boolean {

@@ -1,8 +1,8 @@
 export interface OutgoingWatchTask {
-    rawInput: string,
-    taskName: string,
-    patterns: string[],
-    tasks: string[]
+    rawInput: string;
+    taskName: string;
+    patterns: string[];
+    tasks: string[];
 }
 
 export function preprocessWatchTask(taskName: string): OutgoingWatchTask {
@@ -12,5 +12,5 @@ export function preprocessWatchTask(taskName: string): OutgoingWatchTask {
         rawInput: taskName,
         patterns: [],
         tasks: []
-    }
+    };
 }

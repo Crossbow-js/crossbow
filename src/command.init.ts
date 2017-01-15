@@ -1,9 +1,8 @@
-
-import {CommandTrigger, TriggerTypes} from './command.run';
-import {CrossbowConfiguration} from './config';
-import {CrossbowInput, CLI, CrossbowReporter} from './index';
-import Immutable = require('immutable');
-import Rx = require('rx');
+import {CommandTrigger, TriggerTypes} from "./command.run";
+import {CrossbowConfiguration} from "./config";
+import {CrossbowInput, CLI, CrossbowReporter} from "./index";
+import Immutable = require("immutable");
+import Rx = require("rx");
 import * as file from "./file.utils";
 import * as fs from "fs";
 import {join, parse} from "path";
@@ -13,46 +12,50 @@ import {
     InitInputFileTypeNotSupportedReport
 } from "./reporter.resolve";
 import {ExternalFile} from "./file.utils";
-const _ = require('../lodash.custom');
+const _ = require("../lodash.custom");
 
 export enum InitConfigFileErrorTypes {
     InitInputFileExists = <any>"InitInputFileExists",
     InitInputFileTypeNotSupported = <any>"InitInputFileTypeNotSupported"
 }
-export interface InitConfigError {type: InitConfigFileErrorTypes}
-export interface InitConfigFileExistsError extends InitConfigError {file: file.ExternalFile}
+export interface InitConfigError {
+    type: InitConfigFileErrorTypes;
+}
+export interface InitConfigFileExistsError extends InitConfigError {
+    file: file.ExternalFile;
+}
 export interface InitConfigFileTypeNotSupported extends InitConfigError {
-    providedType: InitConfigFileTypes,
-    supportedTypes: {}
+    providedType: InitConfigFileTypes;
+    supportedTypes: {};
 }
 
 export interface InitCommandOutput {
-    existingFilesInCwd: ExternalFile[]
-    matchingFiles: ExternalFile[]
-    errors: InitConfigError[]
-    outputFilePath?: string
-    outputFileName?: string
-    templateFilePath?: string
+    existingFilesInCwd: ExternalFile[];
+    matchingFiles: ExternalFile[];
+    errors: InitConfigError[];
+    outputFilePath?: string;
+    outputFileName?: string;
+    templateFilePath?: string;
 }
-export type InitCommandComplete = Rx.Observable<{setup:InitCommandOutput}>;
+export type InitCommandComplete = Rx.Observable<{setup: InitCommandOutput}>;
 
 export enum InitConfigFileTypes {
-    yaml   = <any>"yaml",
-    js     = <any>"js",
-    json   = <any>"json",
+    yaml = <any>"yaml",
+    js = <any>"js",
+    json = <any>"json",
     cbfile = <any>"cbfile"
 }
 
 function execute(trigger: CommandTrigger): InitCommandComplete {
     const {config, reporter} = trigger;
 
-    const templateDir = join(__dirname, '..', 'templates');
+    const templateDir = join(__dirname, "..", "templates");
 
     const maybeExistingFileInputs = {
-        [InitConfigFileTypes.yaml]: 'crossbow.yaml',
-        [InitConfigFileTypes.js]: 'crossbow.js',
-        [InitConfigFileTypes.json]: 'crossbow.json',
-        [InitConfigFileTypes.cbfile]: 'cbfile.js'
+        [InitConfigFileTypes.yaml]: "crossbow.yaml",
+        [InitConfigFileTypes.js]: "crossbow.js",
+        [InitConfigFileTypes.json]: "crossbow.json",
+        [InitConfigFileTypes.cbfile]: "cbfile.js"
     };
 
     const outputFileName = maybeExistingFileInputs[config.type];
@@ -120,8 +123,6 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
     //     return Rx.Ob{existingFilesInCwd, matchingFiles, errors};
     // }
 
-
-
     if (errors.length) {
         reporter({
             type: ReportTypes.DuplicateInputFile,
@@ -140,7 +141,7 @@ function execute(trigger: CommandTrigger): InitCommandComplete {
     }
 
     const templateFilePath = join(templateDir, outputFileName);
-    const outputFilePath   = join(config.cwd, outputFileName);
+    const outputFilePath = join(config.cwd, outputFileName);
 
     const output = {
         existingFilesInCwd,

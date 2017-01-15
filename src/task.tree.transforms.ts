@@ -1,10 +1,10 @@
 import {Task, TaskTypes} from "./task.resolve";
-const _ = require('../lodash.custom');
-const debug = require('debug')('cb:task.tree.transform');
+const _ = require("../lodash.custom");
+const debug = require("debug")("cb:task.tree.transform");
 
 export interface TaskTreeTransform {
-    predicate: (incoming:Task[]) => boolean
-    fn: (incoming:Task[]) => Task[]
+    predicate: (incoming: Task[]) => boolean;
+    fn: (incoming: Task[]) => Task[];
 }
 
 function applyBooleanPropertyToChildren (tasks: Task[], skipped: boolean) {
@@ -26,7 +26,7 @@ function applyBooleanPropertyToChildren (tasks: Task[], skipped: boolean) {
 
 export const transforms = {
 
-    'Add skipped property to children' : {
+    "Add skipped property to children" : {
         predicate (tasks: Task[]): boolean {
             return true;
         },
@@ -35,13 +35,13 @@ export const transforms = {
             return tasks;
         }
     },
-    'Add if property to children' : {
+    "Add if property to children" : {
         predicate (tasks: Task[]): boolean {
             return true;
         },
         fn (tasks: Task[]): Task[] {
 
-            applyBooleanPropertyToChildren(tasks, false, 'ifChanged', '');
+            applyBooleanPropertyToChildren(tasks, false, "ifChanged", "");
 
             function applyBooleanPropertyToChildren (tasks: Task[], add: boolean, property, value?) {
                 tasks.forEach(function (task) {
@@ -62,7 +62,7 @@ export const transforms = {
             return tasks;
         }
     },
-    'Pass options/flags/query from Groups -> Tasks': {
+    "Pass options/flags/query from Groups -> Tasks": {
         predicate () {
             return true;
         },

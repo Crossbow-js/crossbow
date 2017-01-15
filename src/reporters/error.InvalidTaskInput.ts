@@ -12,5 +12,5 @@ module.exports = (error: InvalidTaskInputError) => {
   
   {bold:adaptor}: {yellow:'npm'},
   {bold:command}: {yellow:'webpack -w'}
-  `
+  `;
 };

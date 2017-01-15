@@ -4,7 +4,7 @@ import * as file from "./file.utils";
 import * as utils from "./task.utils";
 import {HashDirErrorTypes} from "./file.utils";
 import {ReportTypes, HashDirErrorReport} from "./reporter.resolve";
-import Rx = require('rx');
+import Rx = require("rx");
 import {join} from "path";
 import {SignalTypes} from "./config";
 
@@ -14,7 +14,7 @@ export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observa
 
     if (!ifLookups.length) return Rx.Observable.empty();
 
-    const existingFile = file.readOrCreateJsonFile(join('.crossbow', 'history.json'), trigger.config.cwd);
+    const existingFile = file.readOrCreateJsonFile(join(".crossbow", "history.json"), trigger.config.cwd);
 
     if (!existingFile.data.hashes) {
         existingFile.data.hashes = [];
@@ -41,8 +41,8 @@ export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observa
         .take(1)
         .catch(function (e) {
 
-            if (e.code === 'ENOTDIR') e.type = HashDirErrorTypes.HashNotADirectory;
-            if (e.code === 'ENOENT')  e.type = HashDirErrorTypes.HashPathNotFound;
+            if (e.code === "ENOTDIR") e.type = HashDirErrorTypes.HashNotADirectory;
+            if (e.code === "ENOENT")  e.type = HashDirErrorTypes.HashPathNotFound;
 
             trigger.reporter({
                 type: ReportTypes.HashDirError,

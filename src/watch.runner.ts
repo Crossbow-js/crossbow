@@ -4,19 +4,19 @@ import {CommandTrigger} from "./command.run";
 import {resolveTasks} from "./task.resolve";
 import * as seq from "./task.sequence";
 import {BeforeTasks} from "./watch.before";
-const debug = require('debug')('cb:watch.runner');
-const _ = require('../lodash.custom');
+const debug = require("debug")("cb:watch.runner");
+const _ = require("../lodash.custom");
 
 export interface WatchRunners {
-    all: Watcher[]
-    valid: Watcher[]
-    invalid: Watcher[]
+    all: Watcher[];
+    valid: Watcher[];
+    invalid: Watcher[];
 }
 
 export interface WatchTaskRunner {
-    tasks: WatchTasks
-    runners: WatchRunners
-    before: BeforeTasks
+    tasks: WatchTasks;
+    runners: WatchRunners;
+    before: BeforeTasks;
 }
 
 export function createWatchRunners(watchTasks: WatchTasks, ctx: CommandTrigger): WatchRunners {
@@ -47,7 +47,7 @@ export function createWatchRunners(watchTasks: WatchTasks, ctx: CommandTrigger):
         all: runners,
         valid: runners.filter(x => validateRunner(x)),
         invalid: runners.filter(x => !validateRunner(x)),
-    }
+    };
 }
 
 function validateRunner(x) {

@@ -1,5 +1,5 @@
 import {Task, getTopLevelValue} from "./task.resolve";
-import parse from './cli.parse';
+import parse from "./cli.parse";
 import {CrossbowInput} from "./index";
 import {
     TaskRunModes, createTask, createAdaptorTask, TaskOriginTypes, TaskTypes, CBFunction,
@@ -11,8 +11,8 @@ import {TaskErrorTypes} from "./task.errors";
 import {Flags} from "./cli.parse";
 import {CommandTrigger} from "./command.run";
 
-const _ = require('../lodash.custom');
-const qs = require('qs');
+const _ = require("../lodash.custom");
+const qs = require("qs");
 const flagRegex = /(.+?)@(.+)?$/;
 
 let inlineFnCount = 0;
@@ -20,10 +20,10 @@ let inlineFnCount = 0;
 export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigger, parents: string[]): Task {
 
     let output = (function () {
-        if (typeof taskName === 'function') {
+        if (typeof taskName === "function") {
             return handleFunctionInput(<any>taskName, trigger.input, parents);
         }
-        if (typeof taskName === 'string') {
+        if (typeof taskName === "string") {
             return handleStringInput(taskName, trigger.input, parents);
         }
         if (isPlainObject(taskName)) {
@@ -55,12 +55,12 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
 }
 
 export interface TaskLiteral {
-    tasks?:       IncomingTaskItem[]
-    runMode?:     TaskRunModes
-    input?:       string
-    adaptor?:     string
-    command?:     string
-    description?: string
+    tasks?: IncomingTaskItem[];
+    runMode?: TaskRunModes;
+    input?: string;
+    adaptor?: string;
+    command?: string;
+    description?: string;
 }
 
 let objectCount = 0;
@@ -71,7 +71,7 @@ export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
      */
     if (taskLiteral.tasks) {
 
-        const name = 'AnonObject_' + objectCount++;
+        const name = "AnonObject_" + objectCount++;
 
         const out = createTask(_.assign({
             baseTaskName: name,
@@ -86,21 +86,21 @@ export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
         return out;
     }
 
-    if (typeof taskLiteral.input === 'string') {
+    if (typeof taskLiteral.input === "string") {
         return stubAdaptor(taskLiteral.input, taskLiteral, parents);
     }
 
-    if (typeof taskLiteral.adaptor === 'string' && typeof taskLiteral.command === 'string') {
-        taskLiteral.adaptor = taskLiteral.adaptor.replace(/^@/, '');
+    if (typeof taskLiteral.adaptor === "string" && typeof taskLiteral.command === "string") {
+        taskLiteral.adaptor = taskLiteral.adaptor.replace(/^@/, "");
         return stubAdaptor(`@${taskLiteral.adaptor} ${taskLiteral.command}`, taskLiteral, parents);
     }
 
     return createTask({
         rawInput: stringifyObj(taskLiteral),
-        taskName: '',
+        taskName: "",
         type: TaskTypes.Adaptor,
         origin: TaskOriginTypes.Adaptor,
-        adaptor: '',
+        adaptor: "",
         errors: [<InvalidTaskInputError>{
             type: TaskErrorTypes.InvalidTaskInput,
             input: taskLiteral
@@ -109,7 +109,7 @@ export function handleObjectInput(taskLiteral: TaskLiteral, input, parents) {
 }
 
 export function handleArrayInput(taskItems: any[], input: CrossbowInput, parents: string[]) {
-    const name = 'AnonGroup_' + taskItems.join(',').slice(0, 10) + '...';
+    const name = "AnonGroup_" + taskItems.join(",").slice(0, 10) + "...";
     return createTask({
         runMode: TaskRunModes.parallel,
         baseTaskName: name,
@@ -123,8 +123,8 @@ export function handleArrayInput(taskItems: any[], input: CrossbowInput, parents
     });
 }
 
-function stubAdaptor (string, taskLiteral, parents) {
-    const taskLiteralAdaptor = createAdaptorTask(string, parents);
+function stubAdaptor(inputString, taskLiteral, parents) {
+    const taskLiteralAdaptor = createAdaptorTask(inputString, parents);
     return _.assign({}, taskLiteralAdaptor, taskLiteral);
 }
 
@@ -137,7 +137,7 @@ function stubAdaptor (string, taskLiteral, parents) {
  *  - @npm webpack --config webpack.dev.js
  *  - build (which may be an alias for many other tasks)
  */
-function handleStringInput (taskName:string, input:CrossbowInput, parents:string[]) {
+function handleStringInput(taskName: string, input: CrossbowInput, parents: string[]) {
 
     /**
      * Never modify the current task if it begins
@@ -153,7 +153,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * Split any end cbflags from the main task name
      * @type {SplitTaskAndFlags}
      */
-    var split = getSplitFlags(<string>taskName, input);
+    let split = getSplitFlags(<string>taskName, input);
 
     /**
      * Split the incoming taskname on colons
@@ -161,7 +161,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      *  ->  ['sass', 'site', 'dev']
      * @type {Array}
      */
-    const splitTask = split.taskName.split(':');
+    const splitTask = split.taskName.split(":");
 
     /**
      * Take the first (or the only) item as the base task name
@@ -170,9 +170,9 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
      * @type {string}
      */
     const baseTaskName = splitTask[0];
-    const subTasks     = splitTask.slice(1);
+    const subTasks = splitTask.slice(1);
     const isParentName = /^\(.+?\)$/.test(baseTaskName);
-    const inputMatchesParentName = (function() {
+    const inputMatchesParentName = (function () {
         if (input.tasks[`(${splitTask[0]})`]) {
             return true;
         }
@@ -181,14 +181,14 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         }
     })();
 
-    const normalisedTaskName = (function() {
+    const normalisedTaskName = (function () {
         if (isParentName) return baseTaskName.slice(1, -1);
         return baseTaskName;
     })();
 
     // Before we create the base task, check if this is an alias
     // to another top-level task
-    const topLevel = (function(){
+    const topLevel = (function () {
         const base = getTopLevelValue(normalisedTaskName, input);
         if (inputMatchesParentName && subTasks.length) {
             return _.get(base, [subTasks], {});
@@ -196,7 +196,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
         return base;
     })();
 
-    const topLevelOptions = (function() {
+    const topLevelOptions = (function () {
         if (inputMatchesParentName && subTasks.length) {
             return _.get(input.options, [normalisedTaskName, ...subTasks], {});
         }
@@ -206,7 +206,7 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
     /**
      * Create the base task
      */
-    const incomingTask = (function(){
+    const incomingTask = (function () {
         const base = createTask({
             cbflags: split.cbflags,
             query: split.query,
@@ -243,8 +243,8 @@ function handleStringInput (taskName:string, input:CrossbowInput, parents:string
 /**
  * Function can be given inline so this methods handles that
  */
-function handleFunctionInput (taskName: Function, input: CrossbowInput, parents: string[]): Task {
-    const fnName = taskName['name'];
+function handleFunctionInput(taskName: Function, input: CrossbowInput, parents: string[]): Task {
+    const fnName = taskName["name"];
     const identifier = `_inline_fn_${inlineFnCount++}_` + fnName;
     return createTask({
         runMode: TaskRunModes.series,
@@ -260,10 +260,10 @@ function handleFunctionInput (taskName: Function, input: CrossbowInput, parents:
 }
 
 export interface SplitTaskAndFlags {
-    taskName: string
-    cbflags: string[]
-    flags: {}
-    query: any
+    taskName: string;
+    cbflags: string[];
+    flags: {};
+    query: any;
 }
 
 /**
@@ -291,7 +291,7 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
      * an empty array and the full task name
      */
     if (!splitCBFlags) {
-        const splitQuery = baseNameAndFlags.baseName.split('?');
+        const splitQuery = baseNameAndFlags.baseName.split("?");
         const query = getQuery(splitQuery);
 
         /**
@@ -301,7 +301,7 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
         const cbflags = Object.keys(input.tasks).reduce(function (all, key) {
             const match = key.match(new RegExp(`^${taskName}@(.+)`));
             if (match) {
-                return all.concat(match[1].split(''));
+                return all.concat(match[1].split(""));
             }
             return all;
         }, []);
@@ -314,7 +314,7 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
      * @type {string}
      */
     const base = splitCBFlags[1];
-    const splitQuery = base.split('?');
+    const splitQuery = base.split("?");
     const query = getQuery(splitQuery);
 
     const cbflags = (function () {
@@ -326,14 +326,14 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
          * @type {string[]}
          */
         if (splitCBFlags[2] === undefined) {
-            return [''];
+            return [""];
         }
         /**
          * Default case is where there are chars after the @, so we split them up
          *   eg: crossbow run '@npm run webpack@pas'
          *   ->  flags: ['p', 'a', 's']
          */
-        return splitCBFlags[2].split('')
+        return splitCBFlags[2].split("");
     })();
 
     return {
@@ -344,11 +344,11 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
     };
 }
 
-function getQuery (splitQuery: string[]): {} {
+function getQuery(splitQuery: string[]): {} {
     if (splitQuery.length > 1) {
         return qs.parse(splitQuery[1]);
     }
-    return {}
+    return {};
 }
 
 /**
@@ -362,7 +362,7 @@ function processFlags(task: Task): Task {
 
     const runMode = (function () {
         if (task.runMode === TaskRunModes.parallel) return TaskRunModes.parallel;
-        if (task.cbflags.indexOf('p') > -1) {
+        if (task.cbflags.indexOf("p") > -1) {
             return TaskRunModes.parallel;
         }
         return TaskRunModes.series;
@@ -399,7 +399,7 @@ function getBaseNameAndFlags(taskName: string): {baseName: string, flags: Flags}
      */
     const flags = (function () {
         if (splitFlags.length === 3) {
-            return parse(splitFlags[1] +  ' ' + splitFlags[2]).flags;
+            return parse(splitFlags[1] + " " + splitFlags[2]).flags;
         }
         return <Flags>{};
     })();

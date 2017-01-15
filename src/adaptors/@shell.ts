@@ -1,10 +1,10 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown, getStdio, handleExit, CommandArgs} from './@npm';
+import {getArgs, runCommand, teardown, getStdio, handleExit, CommandArgs} from "./@npm";
 import {Task, TaskOriginTypes} from "../task.resolve";
 import {getCBEnv} from "../task.utils";
 import * as file from "../file.utils";
-const merge = require('../../lodash.custom').merge;
-const debug = require('debug')('cb:@shell');
+const merge = require("../../lodash.custom").merge;
+const debug = require("debug")("cb:@shell");
 
 module.exports = function (task: Task, trigger: CommandTrigger) {
 

@@ -3,7 +3,7 @@ import cli from "./cli";
 import {readFileSync, writeFileSync} from "fs";
 import {handleIncoming} from "./index";
 import logger from "./logger";
-import Rx = require('rx');
+import Rx = require("rx");
 import * as reports from "./reporter.resolve";
 import {PostCLIParse} from "./cli";
 import {prepareInput} from "./index";
@@ -25,7 +25,7 @@ import {WatchTaskReport} from "./watch.file-watcher";
 import {SimpleTaskListReport} from "./reporter.resolve";
 import {TaskTreeReport} from "./reporter.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
-const debug = require('debug')('cb:cli');
+const debug = require("debug")("cb:cli");
 
 const parsed = cli(process.argv.slice(2));
 
@@ -54,9 +54,9 @@ if (parsed.execute) {
 }
 
 export interface CLIResults {
-    setup: RunCommandSetup,
-    reports: TaskReport[],
-    timestamp: number
+    setup: RunCommandSetup;
+    reports: TaskReport[];
+    timestamp: number;
 }
 
 function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
@@ -87,15 +87,18 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         return process.exit(1);
     }
 
-    if (parsed.cli.command === 'run') {
+    if (parsed.cli.command === "run") {
 
-        const setUp$     = new Rx.BehaviorSubject({});
-        const progress$  = new Rx.BehaviorSubject([]);
+        const setUp$ = new Rx.BehaviorSubject({});
+        const progress$ = new Rx.BehaviorSubject([]);
         let summaryGiven = false; // todo remove the need for this as it breaks the encapsulation
 
         const exitSignal$ = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
-            .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({type: ReportTypes.SignalReceived, data: cbSignal.data}))
+            .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({
+                type: ReportTypes.SignalReceived,
+                data: cbSignal.data
+            }))
             .withLatestFrom(setUp$, progress$, (signal, setup, reports) => {
                 return {reports, setup, signal};
             });
@@ -103,17 +106,17 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         const exits$ = Rx.Observable.zip(
             Rx.Observable.just(true).timestamp(prepared.config.scheduler),
             exitSignal$.timestamp(prepared.config.scheduler),
-            (begin: {value:boolean,timestamp:number}, signal:{value: {reports:TaskReport[], setup:RunCommandSetup, signal: CBSignal<ExitSignal>}, timestamp: number}) => {
+            (begin: {value: boolean, timestamp: number}, signal: {value: {reports: TaskReport[], setup: RunCommandSetup, signal: CBSignal<ExitSignal>}, timestamp: number}) => {
                 return {begin, signal};
             }
         ).do((incoming) => {
 
             const {signal, begin} = incoming;
-            const setup:    RunCommandSetup      = signal.value.setup;
-            const reports:  TaskReport[]         = signal.value.reports;
+            const setup: RunCommandSetup = signal.value.setup;
+            const reports: TaskReport[] = signal.value.reports;
 
             const startTime = begin.timestamp;
-            const endTime   = signal.timestamp;
+            const endTime = signal.timestamp;
 
             /**
              * Main summary report, although here it could be partial
@@ -125,7 +128,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     handleCompletion(reports, setup, endTime - startTime);
                 }
             } else {
-                console.log('Exit signal, but summary given from main handler');
+                console.log("Exit signal, but summary given from main handler");
             }
         });
 
@@ -133,7 +136,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .do(x => setUp$.onNext(x.setup)) // first item is the setup
             .flatMap(x => {
                 if (x.setup.errors.length) {
-                    console.error('Error in setup', x.setup.errors);
+                    console.error("Error in setup", x.setup.errors);
                     return Rx.Observable.empty();
                 }
                 return x.update$;
@@ -152,7 +155,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .toArray()
             .filter(reports => reports.length > 0)
             .timestamp(prepared.config.scheduler)
-            .withLatestFrom(setUp$, (incoming: {value: TaskReport[], timestamp:number}, setup: RunCommandSetup) => {
+            .withLatestFrom(setUp$, (incoming: {value: TaskReport[], timestamp: number}, setup: RunCommandSetup) => {
                 return {
                     setup,
                     reports: incoming.value,
@@ -182,7 +185,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
      * Because errors are handled by reports, task executions ALWAYS complete
      * and we handle that here.
      */
-    function handleCompletion (reports: TaskReport[], setup: RunCommandSetup, runtime: number): void {
+    function handleCompletion(reports: TaskReport[], setup: RunCommandSetup, runtime: number): void {
 
         /**
          * Merge sequence tree with Task Reports
@@ -199,9 +202,9 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             errors,
             runtime,
             taskErrors: errors,
-            sequence:   decoratedSequence,
-            cli:        prepared.cli,
-            config:     prepared.config
+            sequence: decoratedSequence,
+            cli: prepared.cli,
+            config: prepared.config
         };
 
         /**
@@ -212,10 +215,10 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             data: completeData
         });
 
-        require('./command.run.post-execution').postCliExecution(completeData);
+        require("./command.run.post-execution").postCliExecution(completeData);
     }
 
-    if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
+    if (parsed.cli.command === "tasks" || parsed.cli.command === "ls") {
         handleIncoming<TasksCommandComplete>(prepared)
             .subscribe(x => {
                 const {groups, tasks} = x.setup;
@@ -227,7 +230,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                         data: {
                             tasks,
                             config: prepared.config,
-                            title: invalid.length ? 'Errors found:' : 'Available Tasks:'
+                            title: invalid.length ? "Errors found:" : "Available Tasks:"
                         } as TaskTreeReport
                     });
                 }
@@ -243,9 +246,9 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             });
     }
 
-    if (parsed.cli.command === 'docs') {
+    if (parsed.cli.command === "docs") {
         handleIncoming<DocsCommandComplete>(prepared)
-            .pluck('setup')
+            .pluck("setup")
             .subscribe((setup: DocsCommandOutput) => {
                 if (setup.errors.length || setup.tasks.invalid.length) {
                     return process.exit(1);
@@ -253,12 +256,12 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                 setup.output.forEach(function (outputItem: DocsFileOutput) {
                     file.writeFileToDisk(outputItem.file, outputItem.content);
                 });
-            })
+            });
     }
 
-    if (parsed.cli.command === 'init') {
+    if (parsed.cli.command === "init") {
         handleIncoming<InitCommandComplete>(prepared)
-            .pluck('setup')
+            .pluck("setup")
             .subscribe((setup: InitCommandOutput) => {
                 if (setup.errors.length) {
                     return process.exit(1);
@@ -267,9 +270,9 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             });
     }
 
-    if (parsed.cli.command === 'watchers') {
+    if (parsed.cli.command === "watchers") {
         handleIncoming<WatchersCommandComplete>(prepared)
-            .pluck('setup')
+            .pluck("setup")
             .subscribe((setup: WatchersCommandOutput) => {
                 if (setup.errors.length) {
                     return process.exit(1);
@@ -281,9 +284,9 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             });
     }
 
-    if (parsed.cli.command === 'watch') {
+    if (parsed.cli.command === "watch") {
         handleIncoming<WatchCommmandComplete>(prepared)
-            .flatMap((x: {setup:WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
+            .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
                 if (x.setup.errors.length) {
                     process.exit(1);
                     return Rx.Observable.empty();

@@ -10,24 +10,27 @@ import {Task, TaskCollection} from "./task.resolve";
 import {WatchTask, Watcher, WatchTasks} from "./watch.resolve";
 import {WatchRunners} from "./watch.runner";
 import {DocsInputFileNotFoundError, DocsOutputFileExistsError} from "./command.docs";
-import Rx = require('rx');
-import logger from './logger';
+import Rx = require("rx");
+import logger from "./logger";
 import {WatchEvent} from "./watch.file-watcher";
 import {TasksCommandCompletionReport, TaskCommandSetup} from "./command.tasks";
 import {WatchersCommandOutput} from "./command.watchers";
 
 export interface Reporter {
-    errors: {}[]
-    type: ReporterTypes
-    callable?: Function
-    sources: ExternalFile[]
+    errors: {}[];
+    type: ReporterTypes;
+    callable?: Function;
+    sources: ExternalFile[];
 }
 
 export enum ReporterErrorTypes {
     ReporterFileNotFound = <any>"ReporterFileNotfound",
     ReporterTypeNotSupported = <any>"ReporterTypeNotSupported"
 }
-export interface ReporterError {type: ReporterErrorTypes, file?: ExternalFile}
+export interface ReporterError {
+    type: ReporterErrorTypes;
+    file?: ExternalFile;
+}
 export interface ReporterFileNotFoundError extends ReporterError {}
 export interface ReporterTypeNotSupportedError extends ReporterError {}
 
@@ -39,9 +42,9 @@ export enum ReporterTypes {
 }
 
 export interface Reporters {
-    all: Reporter[]
-    valid: Reporter[]
-    invalid: Reporter[]
+    all: Reporter[];
+    valid: Reporter[];
+    invalid: Reporter[];
 }
 
 export enum ReportTypes {
@@ -91,130 +94,130 @@ export enum ReportTypes {
 }
 
 export interface IncomingReport {
-    type: ReportTypes
-    data?: any
+    type: ReportTypes;
+    data?: any;
 }
 
 export interface OutgoingReport {
-    origin: ReportTypes
-    data: string[]
+    origin: ReportTypes;
+    data: string[];
 }
 
 export interface UsingConfigFileReport {
-    sources: ExternalFileInput[]
+    sources: ExternalFileInput[];
 }
 export interface InputFileNotFoundReport {
-    sources: ExternalFileInput[]
+    sources: ExternalFileInput[];
 }
 export interface InputErrorReport {
-    errors: any[]
-    sources: ExternalFileInput[]
+    errors: any[];
+    sources: ExternalFileInput[];
 }
 export interface TaskReportReport {
-    report: TaskReport
-    config: CrossbowConfiguration
+    report: TaskReport;
+    config: CrossbowConfiguration;
 }
 export interface SignalReceivedReport {
-    code: number
+    code: number;
 }
 export interface SummaryReport {
-    sequence: SequenceItem[],
-    cli: CLI,
-    config: CrossbowConfiguration,
-    runtime: number,
-    errors: TaskReport[]
+    sequence: SequenceItem[];
+    cli: CLI;
+    config: CrossbowConfiguration;
+    runtime: number;
+    errors: TaskReport[];
 }
 export interface BeforeTasksSummaryReport {
-    sequence: SequenceItem[],
-    cli: CLI,
-    config: CrossbowConfiguration,
-    runtime: number,
-    errors: TaskReport[]
+    sequence: SequenceItem[];
+    cli: CLI;
+    config: CrossbowConfiguration;
+    runtime: number;
+    errors: TaskReport[];
 }
 export interface WatcherSummaryReport {
-    sequence: SequenceItem[],
-    cli: CLI,
-    config: CrossbowConfiguration,
-    runtime: number,
-    errors: TaskReport[],
-    watchEvent: WatchEvent
-    watcher: Watcher
+    sequence: SequenceItem[];
+    cli: CLI;
+    config: CrossbowConfiguration;
+    runtime: number;
+    errors: TaskReport[];
+    watchEvent: WatchEvent;
+    watcher: Watcher;
 }
 export interface TaskListReport {
-    sequence: SequenceItem[]
-    cli: CLI
-    titlePrefix: string
-    config: CrossbowConfiguration
+    sequence: SequenceItem[];
+    cli: CLI;
+    titlePrefix: string;
+    config: CrossbowConfiguration;
 }
 export interface SimpleTaskListReport {
-    setup: TaskCommandSetup
+    setup: TaskCommandSetup;
 }
 export interface InvalidReporterReport {
-    reporters: Reporters
+    reporters: Reporters;
 }
 export interface DuplicateConfigFile {
-    error: InitConfigFileExistsError
+    error: InitConfigFileExistsError;
 }
 export interface ConfigFileCreatedReport {
-    parsed: ParsedPath
+    parsed: ParsedPath;
 }
 export interface InitInputFileTypeNotSupportedReport {
-    error: InitConfigFileTypeNotSupported
+    error: InitConfigFileTypeNotSupported;
 }
 export interface TaskTreeReport {
-    tasks: Task[], config: CrossbowConfiguration, title: string
+    tasks: Task[]; config: CrossbowConfiguration; title: string;
 }
 export interface TaskErrorsReport {
-    tasks: Task[], taskCollection: TaskCollection, input: CrossbowInput, config: CrossbowConfiguration
+    tasks: Task[]; taskCollection: TaskCollection; input: CrossbowInput; config: CrossbowConfiguration;
 }
 export interface WatchersReport {
-    watchTasks: WatchTask[]
+    watchTasks: WatchTask[];
 }
 export interface BeforeWatchTaskErrorsReport {
-    watchTasks: WatchTasks, trigger: CommandTrigger
+    watchTasks: WatchTasks; trigger: CommandTrigger;
 }
 export interface BeforeTaskListReport {
-    sequence: SequenceItem[], cli: CLI, config: CrossbowConfiguration
+    sequence: SequenceItem[]; cli: CLI; config: CrossbowConfiguration;
 }
 export interface BeforeTasksDidNotCompleteReport {
-    error: Error
+    error: Error;
 }
 export interface WatchTaskTasksErrorsReport {
-    tasks: Task[], runner: Watcher, config: CrossbowConfiguration
+    tasks: Task[]; runner: Watcher; config: CrossbowConfiguration;
 }
 export interface WatchTaskErrorsReport {
-    watchTasks: WatchTask[]
+    watchTasks: WatchTask[];
 }
 export interface WatchTaskReportReport {
-    report: TaskReport, trigger: CommandTrigger
+    report: TaskReport; trigger: CommandTrigger;
 }
 export interface WatcherTriggeredTasksReport {
-    index: number, taskCollection: TaskCollection
+    index: number; taskCollection: TaskCollection;
 }
 export interface WatcherTriggeredTasksCompletedReport {
-    index: number, taskCollection: TaskCollection, time: number
+    index: number; taskCollection: TaskCollection; time: number;
 }
 export interface WatcherNamesReport {
-    setup: WatchersCommandOutput
+    setup: WatchersCommandOutput;
 }
 export interface NoFilesMatchedReport {
-    watcher: Watcher
+    watcher: Watcher;
 }
 export interface DocsInputFileNotFoundReport {
-    error: DocsInputFileNotFoundError
+    error: DocsInputFileNotFoundError;
 }
 export interface DocsAddedToFileReport {
-    file: ExternalFileContent
+    file: ExternalFileContent;
 }
 export interface DocsOutputFileExistsReport {
-    error: DocsOutputFileExistsError
+    error: DocsOutputFileExistsError;
 }
 export interface HashError extends Error {
-    type: HashDirErrorTypes
+    type: HashDirErrorTypes;
 }
 export interface HashDirErrorReport {
-    error: HashError,
-    cwd: string
+    error: HashError;
+    cwd: string;
 }
 
 export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {
@@ -233,7 +236,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
                 callable: () => { /* no op */ },
                 errors: [],
                 sources: []
-            }]
+            }];
         }
         /**
          * At this point, a user may of provided a string (as a path to lookup)
@@ -254,24 +257,24 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
          * If a function was given as a reported (eg: inline)
          * then it's ALWAYS a valid reporter
          */
-        if (typeof reporter === 'function') {
+        if (typeof reporter === "function") {
             return {
                 type: ReporterTypes.InlineFunction,
                 callable: reporter,
                 errors: [],
                 sources: []
-            }
+            };
         }
         /**
          * If the reporter was not a string or function
          * it's definitely an unsupported type
          */
-        if (typeof reporter !== 'string') {
+        if (typeof reporter !== "string") {
             return {
                 type: ReporterTypes.UnsupportedValue,
                 errors: [{type: ReporterErrorTypes.ReporterTypeNotSupported}],
                 sources: [reporter]
-            }
+            };
         }
 
         const files = readFilesFromDisk([reporter], config.cwd);
@@ -284,7 +287,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
                     return acc.concat({
                         type: ReporterErrorTypes.ReporterFileNotFound,
                         file: item
-                    })
+                    });
                 }
                 return acc;
             }, []);
@@ -297,7 +300,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
                 type: ReporterTypes.ExternalFile,
                 errors: errors,
                 sources: files
-            }
+            };
         }
 
         /**
@@ -310,7 +313,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
                 type: ReporterTypes.UnsupportedValue,
                 errors: [{type: ReporterErrorTypes.ReporterTypeNotSupported}],
                 sources: [files[0]]
-            }
+            };
         }
 
         /**
@@ -322,7 +325,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
             callable: callable,
             errors: [],
             sources: files
-        }
+        };
     }
 }
 export type OutgoingReporter = Rx.Subject<OutgoingReport>;
@@ -385,5 +388,5 @@ export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObs
 }
 
 export function getDefaultReporter () {
-    return require('./reporters/defaultReporter').default;
+    return require("./reporters/defaultReporter").default;
 }

@@ -1,5 +1,5 @@
 import {Watcher, CBWatchOptions} from "./watch.resolve";
-import * as seq from './task.sequence';
+import * as seq from "./task.sequence";
 import {CommandTrigger} from "./command.run";
 import {TaskReport, TaskReportType} from "./task.runner";
 import Rx = require("rx");
@@ -8,38 +8,38 @@ import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
 import {WatchCommandEventTypes} from "./command.watch";
 
-const debug = require('debug')('cb:watch.runner');
+const debug = require("debug")("cb:watch.runner");
 
 export interface WatchEventWithContext {
-    watchEvent: WatchEvent
-    watcher: Watcher
+    watchEvent: WatchEvent;
+    watcher: Watcher;
 }
 
 export interface WatchEvent {
-    event: string
-    path: string
-    watcherUID: string
+    event: string;
+    path: string;
+    watcherUID: string;
 }
 
 export interface WatchTaskReport {
-    taskReport: TaskReport
-    watchEvent: WatchEvent
-    count: number
+    taskReport: TaskReport;
+    watchEvent: WatchEvent;
+    count: number;
 }
 
 export interface WatchRunnerComplete {
-    sequence: SequenceItem[]
-    reports: TaskReport[]
-    errors: TaskReport[]
-    watchEvent: WatchEvent
-    runtime: number
+    sequence: SequenceItem[];
+    reports: TaskReport[];
+    errors: TaskReport[];
+    watchEvent: WatchEvent;
+    runtime: number;
 }
 
 /**
  * Create a stream that is the combination of all watchers
  */
 export function createObservablesForWatchers(watchers: Watcher[], trigger: CommandTrigger):
-    Rx.Observable<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}> {
+    Rx.Observable<{type: WatchCommandEventTypes, data: WatchTaskReport|WatchRunnerComplete}> {
 
     /**
      * Wrap every chokidar watcher in an observable
@@ -76,7 +76,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             if (x.watcher.options.block) {
                 const blocked = !~blockable$.getValue().indexOf(x.watchEvent.watcherUID);
                 debug(`BLOCKED - ${x.watchEvent.watcherUID} ${x.watchEvent.path} ${x.watchEvent.event}`);
-                return blocked
+                return blocked;
             }
             return true;
         })
@@ -96,7 +96,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
          */
         const {watchEvent, watcher} = incoming.value;
 
-        return Rx.Observable.create<{type:WatchCommandEventTypes,data:WatchTaskReport|WatchRunnerComplete}>(function (obs) {
+        return Rx.Observable.create<{type: WatchCommandEventTypes, data: WatchTaskReport|WatchRunnerComplete}>(function (obs) {
 
             /**
              * Report start of task run
@@ -146,7 +146,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                             data: {
                                 sequence: sequence,
                                 cli:      trigger.cli,
-                                title:    watcher.tasks.join(', '),
+                                title:    watcher.tasks.join(", "),
                                 config:   trigger.config,
                                 runtime:  x.timestamp - incoming.timestamp,
                                 watcher,
@@ -192,16 +192,16 @@ export function createObservableForWatcher(watcher: Watcher, trigger: CommandTri
      */
     const additionalOperators = [
         {
-            option: 'debounce',
-            fnName: 'debounce'
+            option: "debounce",
+            fnName: "debounce"
         },
         {
-            option: 'throttle',
-            fnName: 'throttle'
+            option: "throttle",
+            fnName: "throttle"
         },
         {
-            option: 'delay',
-            fnName: 'delay'
+            option: "delay",
+            fnName: "delay"
         }
     ];
 
@@ -221,9 +221,9 @@ export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter
         debug(`└─ ${watcher.tasks.length} tasks (${watcher.tasks})`);
         /** DEBUG END **/
 
-        const chokidarWatcher = require('chokidar').watch(watcher.patterns, watcher.options)
+        const chokidarWatcher = require("chokidar").watch(watcher.patterns, watcher.options)
 
-            .on('all', function (event, path) {
+            .on("all", function (event, path) {
                 debug(`└─ CHOKIDAR EVENT ${event} - ${path}`);
                 observer.onNext({
                     event: event,
@@ -232,7 +232,7 @@ export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter
                 });
             });
 
-        chokidarWatcher.on('ready', () => {
+        chokidarWatcher.on("ready", () => {
 
             /** DEBUG **/
             debug(`√ [id:${watcher.watcherUID}] watcher ready (${watcher.patterns})`);
@@ -246,7 +246,7 @@ export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter
         return () => {
             debug(`- for ${watcher.patterns}`);
             chokidarWatcher.close();
-        }
+        };
     });
 }
 

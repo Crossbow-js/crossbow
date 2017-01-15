@@ -11,7 +11,7 @@ export function postCliExecution(complete: RunCommandCompletionReport) {
      */
     if (taskErrors.length > 0 && config.fail) {
 
-        const lastError = taskErrors[taskErrors.length-1];
+        const lastError = taskErrors[taskErrors.length - 1];
 
         const stats: TaskErrorStats = lastError.stats;
 

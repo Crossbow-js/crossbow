@@ -6,71 +6,71 @@ import {InitConfigFileTypes} from "./command.init";
 import {WatchEvent} from "./watch.file-watcher";
 import {ExternalFile} from "./file.utils";
 
-import Rx = require('rx');
+import Rx = require("rx");
 
-const _ = require('../lodash.custom');
+const _ = require("../lodash.custom");
 
 export enum SignalTypes {
-    Exit = <any>'Exit',
-    FileWrite = <any>'FileWrite'
+    Exit = <any>"Exit",
+    FileWrite = <any>"FileWrite"
 }
 
 export interface CBSignal<T> {
-    type: SignalTypes
-    data?: T
+    type: SignalTypes;
+    data?: T;
 }
 
-export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>
+export type OutgoingSignals = Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>;
 
 export interface ExitSignal {
-    code: number
+    code: number;
 }
 
 export interface FileWriteSignal {
-    file: ExternalFile
-    content: string
+    file: ExternalFile;
+    content: string;
 }
 
 export interface CrossbowConfiguration {
-    cwd: string
-    runMode: TaskRunModes
-    verbose: LogLevel
-    parallel: boolean
-    fail: boolean
-    force: boolean
-    reporter: string
-    handoff: boolean
-    input: string[]
-    interactive: boolean
-    outputOnly: boolean
-    suppressOutput: boolean
-    progress: boolean
-    cbfile?: string
-    dump: boolean
-    envPrefix: string
-    env: any
-    before: string[]
-    type?: InitConfigFileTypes
-    debug: boolean
-    reporters: Array<string|Function>
-    skip: string[]
-    tasksDir: string[]
-    nodeModulesPaths: string[]
-    block?: boolean
-    debounce?: boolean
-    throttle?: boolean
-    fromJson?: string
+    cwd: string;
+    runMode: TaskRunModes;
+    verbose: LogLevel;
+    parallel: boolean;
+    fail: boolean;
+    force: boolean;
+    reporter: string;
+    handoff: boolean;
+    input: string[];
+    interactive: boolean;
+    outputOnly: boolean;
+    suppressOutput: boolean;
+    progress: boolean;
+    cbfile?: string;
+    dump: boolean;
+    envPrefix: string;
+    env: any;
+    before: string[];
+    type?: InitConfigFileTypes;
+    debug: boolean;
+    reporters: Array<string|Function>;
+    skip: string[];
+    tasksDir: string[];
+    nodeModulesPaths: string[];
+    block?: boolean;
+    debounce?: boolean;
+    throttle?: boolean;
+    fromJson?: string;
 
     // docs command
-    file?: string
-    output?: string
-    dryRun?: boolean
-    dryRunDuration?: number
+    file?: string;
+    output?: string;
+    dryRun?: boolean;
+    dryRunDuration?: number;
 
-    outputObserver?:     Rx.Observable<OutgoingReport>
-    fileChangeObserver?: Rx.Observable<WatchEvent>
-    signalObserver?:     OutgoingSignals
-    scheduler?:          Rx.IScheduler
+    outputObserver?: Rx.Observable<OutgoingReport>;
+    fileChangeObserver?: Rx.Observable<WatchEvent>;
+    signalObserver?: OutgoingSignals;
+    scheduler?: Rx.IScheduler;
 }
 
 /**
@@ -86,7 +86,7 @@ const defaults = <CrossbowConfiguration>{
      * one completes. You can set this to 'parallel' instead
      * if you wish for your code to run as fast as possible
      */
-    runMode: <any>'series',
+    runMode: <any>"series",
     resumeOnError: false,
     parallel: false,
     input: [],
@@ -106,7 +106,7 @@ const defaults = <CrossbowConfiguration>{
     /**
      * How should task summaries be output
      */
-    reporter: 'default',
+    reporter: "default",
     /**
      * Will eliminate any crossbow output.
      *
@@ -132,7 +132,7 @@ const defaults = <CrossbowConfiguration>{
     /**
      *
      */
-    nodeModulesPaths: ['node_modules'],
+    nodeModulesPaths: ["node_modules"],
     /**
      *
      * CI mode - will exit if any shell/npm scripts
@@ -154,7 +154,7 @@ const defaults = <CrossbowConfiguration>{
      *  ->
      *      CB_DOCKER_PORT=8000
      */
-    envPrefix: 'cb',
+    envPrefix: "cb",
     /**
      * Global ENV vars
      */
@@ -173,7 +173,7 @@ const defaults = <CrossbowConfiguration>{
      */
     type: InitConfigFileTypes.yaml,
     reporters: [],
-    tasksDir: ['tasks']
+    tasksDir: ["tasks"]
 };
 
 /**
@@ -190,8 +190,8 @@ const flagTransforms = {
      * eg: crossbow run task.js -e PET=kittie
      */
     e: function (opts) {
-        opts.e.forEach(string => {
-            const split = string.split('=').map(x => x.trim()).filter(Boolean);
+        opts.e.forEach(inputString => {
+            const split = inputString.split("=").map(x => x.trim()).filter(Boolean);
             if (split.length === 2) {
                 opts.env[split[0]] = split[1];
             }
@@ -203,7 +203,7 @@ const flagTransforms = {
      * corresponding runMode options too
      */
     parallel: function (opts: any): any {
-    	if (opts.parallel === true) {
+        if (opts.parallel === true) {
             opts.runMode = TaskRunModes.parallel;
             return opts;
         }
@@ -211,7 +211,7 @@ const flagTransforms = {
         return opts;
     },
     cwd: function (opts) {
-    	opts.cwd = resolve(opts.cwd);
+        opts.cwd = resolve(opts.cwd);
         return opts;
     },
     input: (opts) => {

@@ -1,6 +1,6 @@
-declare module NodeJS {
+declare namespace NodeJS {
     export interface WritableStream {
-        columns?: number
+        columns?: number;
     }
 }
 

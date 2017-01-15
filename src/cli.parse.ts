@@ -1,17 +1,17 @@
 import {CLI} from "./index";
-const _ = require('../lodash.custom');
+const _ = require("../lodash.custom");
 
 export interface FlagOption {
-    alias?: string
-    type?: CliFlagTypes
-    help?: string
+    alias?: string;
+    type?: CliFlagTypes;
+    help?: string;
 }
 
 export interface FlagWithValues {
-    name?: string
-    type?: CliFlagTypes
-    values?: any[]
-    help?: string
+    name?: string;
+    type?: CliFlagTypes;
+    values?: any[];
+    help?: string;
 }
 
 /**
@@ -20,39 +20,39 @@ export interface FlagWithValues {
  * { verbose: {alias: 'v', count: true } }
  */
 export interface FlagOptions {
-    [flagname: string]: FlagOption
+    [flagname: string]: FlagOption;
 }
 
 export interface Flags {
-    [flagname: string]: FlagWithValues
-    help?: boolean
-    version?: boolean
+    [flagname: string]: FlagWithValues;
+    help?: boolean;
+    version?: boolean;
 }
 
 export interface FlagsWithValues extends FlagOption {
-    values: string[]
+    values: string[];
 }
 
 export enum CliFlagTypes {
-    Array   = <any>"array",
-    String  = <any>"string",
+    Array = <any>"array",
+    String = <any>"string",
     Boolean = <any>"boolean",
-    Number  = <any>"number",
-    Count   = <any>"count"
+    Number = <any>"number",
+    Count = <any>"count"
 }
 
 export interface CliInputAndFlags {
-    input: string[]
-    flags: Array<string[]>
+    input: string[];
+    flags: Array<string[]>;
 }
 
 export interface FlagsOutput extends CLI {
-    command:    string
-    input:      string[]
-    rawFlags:   Array<string[]>,
-    flagValues: FlagWithValues,
-    flags:      Flags,
-    trailing:   string
+    command: string;
+    input: string[];
+    rawFlags: Array<string[]>;
+    flagValues: FlagWithValues;
+    flags: Flags;
+    trailing: string;
 }
 
 /**
@@ -62,35 +62,35 @@ export default function parse(input: string|string[], opts?: FlagOptions): Flags
     opts = opts || <FlagOptions>{};
 
     if (Array.isArray(input)) {
-        return parseArray(input, opts)
+        return parseArray(input, opts);
     }
 
     // string given
-    return parseArray(tokenize(input), opts)
+    return parseArray(tokenize(input), opts);
 }
 
-function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
+function parseArray(incoming: string[], opts: FlagOptions): FlagsOutput {
 
     const command = incoming[0];
-    const args    = (function () {
+    const args = (function () {
         const _incoming = incoming.slice(1);
-        const _terminator = _incoming.indexOf('--');
+        const _terminator = _incoming.indexOf("--");
         if (_terminator > -1) {
             return {
                 args: _incoming.slice(0, _terminator),
-                trailing: _incoming.slice(_terminator+1).join(' ')
+                trailing: _incoming.slice(_terminator + 1).join(" ")
             };
         }
         return {
             args: _incoming,
-            trailing: ''
+            trailing: ""
         };
     })();
 
     const split: CliInputAndFlags = splitInputFromFlags(args.args);
 
     const flagValues = resolveValues(split.flags, opts);
-    const flattened  = flattenValues(flagValues.flags);
+    const flattened = flattenValues(flagValues.flags);
 
     return {
         command,
@@ -99,13 +99,13 @@ function parseArray (incoming: string[], opts: FlagOptions): FlagsOutput {
         flagValues: flagValues.flags,
         flags: flattened,
         trailing: args.trailing
-    }
+    };
 }
 
 function splitInputFromFlags(args: string[]): CliInputAndFlags {
 
     const firstFlag = firstFlagPos(args);
-    const trailing   = [];
+    const trailing = [];
 
     /**
      * Input is args directly after the command, or at the end
@@ -264,19 +264,19 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
             if (item.length === 1) {
 
                 // Double flag
-                if (item[0].slice(0, 2) === '--') {
+                if (item[0].slice(0, 2) === "--") {
                     return acc.concat([item]);
                 }
 
-                //Single flag
+                // Single flag
                 const current = item[0].slice(1);
-                return acc.concat(current.split('').map(x => [`-${x}`]));
+                return acc.concat(current.split("").map(x => [`-${x}`]));
             }
 
             /**
              * If -- encountered at the end, push items onto input
              */
-            if (item[0] === '--') {
+            if (item[0] === "--") {
                 trailing.push.apply(trailing, item.slice(1));
                 return acc;
             }
@@ -288,7 +288,6 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
         .map(function createObject(x) {
             return [propName(x[0]), ...x.slice(1)];
         });
-
 
     return {input, flags};
 }
@@ -309,7 +308,7 @@ function splitInputFromFlags(args: string[]): CliInputAndFlags {
  * @returns {{}}
  */
 const negatedBool = /^no-(.*)/;
-function flattenValues (flagValues) {
+function flattenValues(flagValues) {
     return Object.keys(flagValues).reduce(function (obj, key) {
 
         /**
@@ -362,7 +361,7 @@ function flattenValues (flagValues) {
             /**
              * If type === 'count'
              */
-        	if (current.type === CliFlagTypes.Count) {
+            if (current.type === CliFlagTypes.Count) {
                 return outgoing.length;
             }
 
@@ -409,11 +408,10 @@ function flattenValues (flagValues) {
     }, <Flags>{});
 }
 
-
 /**
  * Either add a value to an existing values[] or create a new one.
  */
-function addValuesToKey(key:string, values: any[], target: FlagsWithValues) {
+function addValuesToKey(key: string, values: any[], target: FlagsWithValues) {
     const current = target[key];
 
     // add 'true' where there's no value
@@ -431,7 +429,7 @@ function addValuesToKey(key:string, values: any[], target: FlagsWithValues) {
     current.values.push.apply(current.values, valuesToAdd);
 }
 
-function resolveValues(flags:Array<string[]>, opts: FlagOptions): {flags: FlagsWithValues, input: string[]} {
+function resolveValues(flags: Array<string[]>, opts: FlagOptions): {flags: FlagsWithValues, input: string[]} {
 
     const keys = Object.keys(opts);
 
@@ -456,14 +454,14 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): {flags: FlagsW
     flags.forEach(function (flag) {
 
         const key = flag[0];
-        
+
         // key === p
         const aliasMatch = keys.filter(x => {
             return [].concat(opts[x].alias).indexOf(key) > -1;
         });
 
         const keyToAdd = (function () {
-        	if (aliasMatch.length) return aliasMatch[0];
+            if (aliasMatch.length) return aliasMatch[0];
             return key;
         })();
 
@@ -497,26 +495,26 @@ function resolveValues(flags:Array<string[]>, opts: FlagOptions): {flags: FlagsW
     return {flags: outgoing, input: dangling};
 }
 
-function isFlag (incoming: string): boolean {
-    return incoming.slice(0, 2) === '--' || incoming[0] === '-';
+function isFlag(incoming: string): boolean {
+    return incoming.slice(0, 2) === "--" || incoming[0] === "-";
 }
 
 // With thanks to yargs parser
-function tokenize (argString: any): string[] {
+function tokenize(argString: any): string[] {
     if (Array.isArray(argString)) return argString;
 
-    var i = 0;
-    var c = null;
-    var opening = null;
-    var args = [];
+    let i = 0;
+    let c = null;
+    let opening = null;
+    let args = [];
 
-    for (var ii = 0; ii < argString.length; ii++) {
+    for (let ii = 0; ii < argString.length; ii++) {
         c = argString.charAt(ii);
 
         // split on spaces unless we're in quotes.
-        if (c === ' ' && !opening) {
+        if (c === " " && !opening) {
             i++;
-            continue
+            continue;
         }
 
         // don't split the string if we're in matching
@@ -524,19 +522,19 @@ function tokenize (argString: any): string[] {
         if (c === opening) {
             opening = null;
             continue;
-        } else if ((c === "'" || c === '"') && !opening) {
+        } else if ((c === "'" || c === "\"") && !opening) {
             opening = c;
             continue;
         }
 
-        if (!args[i]) args[i] = '';
+        if (!args[i]) args[i] = "";
         args[i] += c;
     }
 
     return args;
 }
 
-function firstFlagPos (items: string[]): number {
+function firstFlagPos(items: string[]): number {
     let i = -1;
     items.some((x, index) => {
         if (isFlag(x)) {
@@ -547,13 +545,13 @@ function firstFlagPos (items: string[]): number {
     return i;
 }
 
-function hasSetter (incoming:string): boolean {
-    let equals = incoming.indexOf('=');
+function hasSetter(incoming: string): boolean {
+    let equals = incoming.indexOf("=");
     if (equals === -1) return false;
     if (incoming.length > equals + 1) return true;
     return false;
 }
 
-function propName (incoming) {
-    return incoming.replace(/^--?/, '');
+function propName(incoming) {
+    return incoming.replace(/^--?/, "");
 }
