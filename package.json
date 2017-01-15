@@ -4,8 +4,7 @@
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
-    "postinstall": "npm run types",
-    "test": "npm run lint && npm run ts && npm run unit",
+    "test": "npm run types && npm run lint && npm run ts && npm run unit",
     "unit": "mocha test/specs --recursive",
     "lint": "tslint src/**/*.ts --fix",
     "ts": "tsc",
