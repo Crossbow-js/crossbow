@@ -319,13 +319,13 @@ Or to see multiple tasks running, with some in parallel, try:
 
         watchTasks.valid.forEach(function (watchTask) {
             lines.push("");
-            lines.push(`    {bold:Name}:     {green.underline:${watchTask.name}}`);
+            lines.push(`{bold:Name}: {green.underline:${watchTask.name}}`);
             watchTask.watchers.forEach(function (watcher, i) {
                 if (i > 0) {
-                    lines.push("    {gray:-----}");
+                    lines.push("  {gray:-----}");
                 }
-                lines.push(`    Patterns: {cyan:${watcher.patterns.map(_e).join(", ")}}`);
-                lines.push(`    Tasks:    {yellow:${watcher.tasks.join(", ")}}`);
+                lines.push(`  Patterns: {cyan:${watcher.patterns.map(_e).join(", ")}}`);
+                lines.push(`  Tasks:    {yellow:${watcher.tasks.join(", ")}}`);
             });
         });
 
