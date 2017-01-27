@@ -14,9 +14,16 @@ describe("Exit codes following error", function () {
             done();
         });
     });
-    it("should exit with without error", function (done) {
+    it("should exit with without error if a task completes", function (done) {
         exec('node dist/cb run "@npm sleep 0.1"', function (err) {
             assert.isNull(err);
+            done();
+        });
+    });
+    it("should exit with error code 1 if task resolution fails", function (done) {
+        exec('node dist/cb run "my-task"', function (err, stdout) {
+            console.log(stdout.toString());
+            assert.deepEqual(err.code, 1);
             done();
         });
     });

@@ -62,6 +62,11 @@ export interface CLIResults {
 function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver): void {
 
     const prepared = prepareInput(parsed.cli, null, cliOutputObserver, cliSignalObserver);
+    const killSwitches$ = new Rx.Subject();
+
+    killSwitches$.subscribe(() => {
+        process.exit(1);
+    });
 
     /**
      * Handle file-writes
@@ -84,13 +89,14 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
      * with a non-zero code
      */
     if (prepared.errors.length) {
-        return process.exit(1);
+        return killSwitches$.onNext(true);
     }
 
     if (parsed.cli.command === "run") {
 
         const setUp$ = new Rx.BehaviorSubject({});
         const progress$ = new Rx.BehaviorSubject([]);
+
         let summaryGiven = false; // todo remove the need for this as it breaks the encapsulation
 
         const exitSignal$ = cliSignalObserver
@@ -136,6 +142,11 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .do(x => setUp$.onNext(x.setup)) // first item is the setup
             .flatMap(x => {
                 if (x.setup.errors.length) {
+                    killSwitches$.onNext(true);
+                    return Rx.Observable.empty();
+                }
+                if (x.setup.tasks.invalid.length) {
+                    killSwitches$.onNext(true);
                     return Rx.Observable.empty();
                 }
                 return x.update$;
@@ -250,7 +261,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .pluck("setup")
             .subscribe((setup: DocsCommandOutput) => {
                 if (setup.errors.length || setup.tasks.invalid.length) {
-                    return process.exit(1);
+                    return killSwitches$.onNext(true);
                 }
                 setup.output.forEach(function (outputItem: DocsFileOutput) {
                     file.writeFileToDisk(outputItem.file, outputItem.content);
@@ -263,7 +274,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .pluck("setup")
             .subscribe((setup: InitCommandOutput) => {
                 if (setup.errors.length) {
-                    return process.exit(1);
+                    return killSwitches$.onNext(true);
                 }
                 writeFileSync(setup.outputFilePath, readFileSync(setup.templateFilePath));
             });
@@ -274,7 +285,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .pluck("setup")
             .subscribe((setup: WatchersCommandOutput) => {
                 if (setup.errors.length) {
-                    return process.exit(1);
+                    return killSwitches$.onNext(true);
                 }
                 prepared.reportFn({
                     type: ReportTypes.WatcherNames,
@@ -287,7 +298,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         handleIncoming<WatchCommmandComplete>(prepared)
             .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
                 if (x.setup.errors.length) {
-                    process.exit(1);
+                    killSwitches$.onNext(true);
                     return Rx.Observable.empty();
                 }
                 return x.update$;
