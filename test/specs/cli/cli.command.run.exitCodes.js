@@ -21,8 +21,7 @@ describe("Exit codes following error", function () {
         });
     });
     it("should exit with error code 1 if task resolution fails", function (done) {
-        exec('node dist/cb run "my-task"', function (err, stdout) {
-            console.log(stdout.toString());
+        exec('node dist/cb run "my-task"', function (err) {
             assert.deepEqual(err.code, 1);
             done();
         });
