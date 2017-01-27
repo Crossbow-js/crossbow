@@ -2,6 +2,7 @@ const assert = require('chai').assert;
 const utils = require("../../utils");
 const DocsErrorTypes = require('../../../dist/command.docs').DocsErrorTypes;
 const docs = require('../../../dist/command.docs');
+const fs = require('fs');
 
 describe('Running docs commands', function () {
     it('creates valid markdown', function () {
@@ -190,14 +191,21 @@ $ crossbow run <taskname>
         });
         assert.include(output.output[0].content, output.markdown);
     });
-    it.skip('works with CBfiles', function () {
+    it('works with parent groups', function () {
         const output = utils.getGenericSetup({
             input: ['docs'],
             flags: {
-                cbfile: 'test/fixtures/cbfile.js'
+                output: 'name.md'
+            }
+        }, {
+            tasks: {
+                '(build)': {
+                    js: ['@sh rm -rf ./app/js', '@npm webpack'],
+                    css: '@npm node-sass app.scss'
+                }
             }
         });
-        console.log(output.output[0].content);
-        // assert.include(output.output[0].content, output.markdown);
+        const expected = fs.readFileSync('test/specs/command.docs/with-parent.md', 'utf8');
+        assert.equal(output.output[0].content, expected);
     });
 });

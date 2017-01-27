@@ -342,7 +342,7 @@ $ crossbow run <taskname>
                     }
                 }
                 if (task.tasks.length) {
-                    const subject = isParent ? task.tasks[0].tasks : task.tasks;
+                    const subject = task.tasks;
                     return ["**Alias for:**"]
                         .concat(subject
                             .map(x => `- \`${getLabel(x)}\``)
