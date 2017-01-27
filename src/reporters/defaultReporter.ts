@@ -872,18 +872,20 @@ export function getLabel(task: Task) {
         return maybeErrorLabel(task, fnName);
     }
 
-    if (task.origin === TaskOriginTypes.NpmScripts) {
-        return npmScriptLabel(task);
-    }
-
     if (task.type === TaskTypes.TaskGroup) {
         if (task.errors.length) {
             return `{red.bold:x ${task.taskName}}`;
+        }
+        if (Object.keys(task.flags).length) {
+            return `{underline:${task.rawInput}}`;
         }
         return `{underline:${task.taskName}}`;
     }
 
     if (task.type === TaskTypes.ExternalTask) {
+        if (Object.keys(task.flags).length) {
+            return maybeErrorLabel(task, task.rawInput);
+        }
         return maybeErrorLabel(task, task.taskName);
     }
 

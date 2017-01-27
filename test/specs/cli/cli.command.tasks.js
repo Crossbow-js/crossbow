@@ -47,4 +47,13 @@ describe("list available tasks", function () {
             done();
         });
     });
+    it.only('Should include flags for tasks & aliases', function (done) {
+        exec('node dist/cb tasks -i test/fixtures/tasks-command/flags.yml', function (err, stdout) {
+            // assert.notInclude(stdout, '_merkle   [ @npm hash-dir ]');
+            // assert.include(stdout, 'build     [ _merkle, deploy ]');
+            // assert.include(stdout, 'deploy    [ @sh rsync some-server ]');
+
+            done();
+        });
+    });
 });

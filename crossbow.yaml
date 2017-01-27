@@ -9,6 +9,8 @@ watch:
   git:
     '.git': '@sh ls .git/objects'
 tasks:
+  other:
+    - js --my-flag aweomse
   js:
     - '@npm sleep 1'
     - '@npm ls'
@@ -22,7 +24,7 @@ tasks:
     - '@npm sleep 1'
     - '@npm ls'
   file:
-    - 'test/fixtures/tasks/simple.js'
+    - 'test/fixtures/tasks/simple.js --name=kittie'
   (sh):
     ls:
       - '@sh sleep 2'
