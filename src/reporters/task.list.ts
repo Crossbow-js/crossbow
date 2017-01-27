@@ -21,7 +21,7 @@ function taskPreviews(item: Task) {
     }
 
     const names = item.tasks.reduce((acc, task: Task) => {
-        if (task.tasks.length && task.baseTaskName === '') {
+        if (task.tasks.length && task.baseTaskName === "") {
             return acc.concat(task.tasks.map(x => getLabel(x)));
         }
         return acc.concat(getLabel(task));
