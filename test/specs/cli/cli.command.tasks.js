@@ -1,5 +1,6 @@
 const assert = require('chai').assert;
 const exec = require('child_process').exec;
+const execSync = require('child_process').execSync;
 
 describe("list available tasks", function () {
     it("lists tasks in simple format", function (done) {
@@ -39,21 +40,89 @@ describe("list available tasks", function () {
             done();
         });
     });
-    it('Should exclude _ prefixed tasks from simple task list', function (done) {
-        exec('node dist/cb tasks -i test/fixtures/tasks-command/hidden.js', function (err, stdout) {
-            assert.notInclude(stdout, '_merkle   [ @npm hash-dir ]');
-            assert.include(stdout, 'build     [ _merkle, deploy ]');
-            assert.include(stdout, 'deploy    [ @sh rsync some-server ]');
-            done();
-        });
-    });
-    it.only('Should include flags for tasks & aliases', function (done) {
-        exec('node dist/cb tasks -i test/fixtures/tasks-command/flags.yml', function (err, stdout) {
-            // assert.notInclude(stdout, '_merkle   [ @npm hash-dir ]');
-            // assert.include(stdout, 'build     [ _merkle, deploy ]');
-            // assert.include(stdout, 'deploy    [ @sh rsync some-server ]');
+    it('Should exclude _ prefixed tasks from simple task list', function () {
+        const output = execSync('node dist/cb tasks -i test/fixtures/tasks-command/hidden.js');
+        // console.log(output.toString());
+        const expected = `Using: test/fixtures/tasks-command/hidden.js
 
-            done();
-        });
+Default Tasks
+build     [ _merkle, deploy ]
+deploy    [ @sh rsync some-server ]
+`;
+        assert.equal(output.toString(), expected);
+    });
+    it('Should include flags for tasks & aliases (short)', function () {
+
+        const output = execSync('node dist/cb tasks -i=test/fixtures/tasks-command/flags.js');
+        const expected = `Using: test/fixtures/tasks-command/flags.js
+
+Default Tasks
+css   [ js --production ]
+js    [ @npm webpack ]
+`;
+
+        assert.equal(output.toString(), expected);
+    });
+    it('Should include flags for tasks & aliases (verbose)', function () {
+        const output = execSync('node dist/cb tasks -v -i=test/fixtures/tasks-command/flags.js');
+        const expected = `Using: test/fixtures/tasks-command/flags.js
+
+Available Tasks: 
+├─┬ css
+│ └─┬ js --production
+│   └── @npm webpack
+└─┬ js
+  └── @npm webpack
+✔ 0 errors found
+`;
+
+        assert.equal(output.toString(), expected);
+    });
+    it('Should render task lists for cbfile', function () {
+        const output = execSync('node dist/cb tasks --cbfile=test/fixtures/tasks-command/cbfile.js');
+        const expected = `Using: test/fixtures/tasks-command/cbfile.js
+
+Default Tasks
+rx-task          [ [Function: myFunction] ]
+array            [ rx-task ]
+inline-object    [ @npm webpack ]
+with-desc        My Awesome Task
+inline-fn        [ [Function: tasks] ]
+parallel-tasks   [ rx-task, ParallelGroup(with-desc,inline-fn... ]
+
+docker
+docker:up        [ @sh docker-compose up -d ]
+`;
+        assert.equal(output.toString(), expected);
+    });
+    it('Should render task lists for cbfile (verbose)', function () {
+        const output = execSync('node dist/cb tasks --cbfile=test/fixtures/tasks-command/cbfile.js -v');
+        const expected = `Using: test/fixtures/tasks-command/cbfile.js
+
+Available Tasks: 
+├─┬ rx-task
+│ └── [Function: myFunction]
+├─┬ array
+│ └─┬ rx-task
+│   └── [Function: myFunction]
+├─┬ inline-object
+│ └── @npm webpack
+├─┬ with-desc
+│ └── @npm webpack
+├─┬ inline-fn
+│ └── [Function: tasks]
+├─┬ parallel-tasks
+│ ├─┬ rx-task
+│ │ └── [Function: myFunction]
+│ └─┬ ParallelGroup(with-desc,inline-fn...
+│   ├─┬ with-desc
+│   │ └── @npm webpack
+│   └─┬ inline-fn
+│     └── [Function: tasks]
+└─┬ docker:up
+  └── @sh docker-compose up -d
+✔ 0 errors found
+`;
+        assert.equal(output.toString(), expected);
     });
 });

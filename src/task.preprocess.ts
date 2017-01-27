@@ -10,6 +10,7 @@ import {InvalidTaskInputError} from "./task.errors";
 import {TaskErrorTypes} from "./task.errors";
 import {Flags} from "./cli.parse";
 import {CommandTrigger} from "./command.run";
+import {type} from "os";
 
 const _ = require("../lodash.custom");
 const qs = require("qs");

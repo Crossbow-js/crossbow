@@ -94,7 +94,10 @@ function fromInlineItems(incoming, current, name, parents, trigger) {
     }
     if (Array.isArray(current)) {
         const thisParents = parents.concat(incoming.baseTaskName);
+        const name = "ParallelGroup(" + current.toString().slice(0, 20) + "...";
         const task = createTask({
+            baseTaskName: name,
+            taskName: name,
             runMode: TaskRunModes.parallel,
             tasks: current.map(x => createFlattenedTask(x, thisParents, trigger)),
             parents: thisParents,
@@ -175,6 +178,10 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
 
         const toplevelValue = getTopLevelValue(incoming.baseTaskName, trigger.input);
 
+        if (incoming.baseTaskName === 'parallel-tasks') {
+            // console.log('ere', incoming.baseTaskName, incoming.tasks, toplevelValue);
+        }
+
         if (toplevelValue) {
             incoming.tasks = [].concat(toplevelValue)
                 .map(x => fromInlineItems(incoming, x, incoming.baseTaskName, parents, trigger))
@@ -187,7 +194,7 @@ function createFlattenedTask(taskItem: IncomingTaskItem, parents: string[], trig
                     return out;
                 });
         } else {
-
+            // console.log('ere', incoming.baseTaskName);
         }
     }
 

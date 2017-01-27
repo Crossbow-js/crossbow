@@ -20,9 +20,13 @@ function taskPreviews(item: Task) {
         }
     }
 
-    const names = item.tasks.map((x: Task) => {
-        return escapeNewLines(getLabel(x));
-    });
+    const names = item.tasks.reduce((acc, task: Task) => {
+        if (task.tasks.length && task.baseTaskName === '') {
+            return acc.concat(task.tasks.map(x => getLabel(x)));
+        }
+        return acc.concat(getLabel(task));
+    }, [])
+        .map(x => escapeNewLines(x));
 
     return `[ ${names.join(", ")} ]`;
 }
