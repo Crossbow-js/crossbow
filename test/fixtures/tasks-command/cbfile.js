@@ -21,7 +21,7 @@ cb.group('docker', {
 });
 
 cb.task('inline-fn', {
-    tasks: () => console.log('Task!')
+    tasks: [function logger() { console.log('Task!') } ]
 });
 
 cb.task('parallel-tasks', ['rx-task', ['with-desc', 'inline-fn']]);

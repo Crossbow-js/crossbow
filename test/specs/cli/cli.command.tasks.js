@@ -87,7 +87,7 @@ rx-task          [ [Function: myFunction] ]
 array            [ rx-task ]
 inline-object    [ @npm webpack ]
 with-desc        My Awesome Task
-inline-fn        [ [Function: tasks] ]
+inline-fn        [ [Function: logger] ]
 parallel-tasks   [ rx-task, ParallelGroup(with-desc,inline-fn... ]
 
 docker
@@ -95,7 +95,7 @@ docker:up        [ @sh docker-compose up -d ]
 `;
         assert.equal(output.toString(), expected);
     });
-    it('Should render task lists for cbfile (verbose)', function () {
+    it.only('Should render task lists for cbfile (verbose)', function () {
         const output = execSync('node dist/cb tasks --cbfile=test/fixtures/tasks-command/cbfile.js -v');
         const expected = `Using: test/fixtures/tasks-command/cbfile.js
 
@@ -110,7 +110,7 @@ Available Tasks:
 ├─┬ with-desc
 │ └── @npm webpack
 ├─┬ inline-fn
-│ └── [Function: tasks]
+│ └── [Function: logger]
 ├─┬ parallel-tasks
 │ ├─┬ rx-task
 │ │ └── [Function: myFunction]
@@ -118,11 +118,12 @@ Available Tasks:
 │   ├─┬ with-desc
 │   │ └── @npm webpack
 │   └─┬ inline-fn
-│     └── [Function: tasks]
+│     └── [Function: logger]
 └─┬ docker:up
   └── @sh docker-compose up -d
 ✔ 0 errors found
 `;
+        console.log(output.toString());
         assert.equal(output.toString(), expected);
     });
 });
