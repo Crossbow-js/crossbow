@@ -123,7 +123,6 @@ Available Tasks:
   └── @sh docker-compose up -d
 ✔ 0 errors found
 `;
-        console.log(output.toString());
         assert.equal(output.toString(), expected);
     });
 });
