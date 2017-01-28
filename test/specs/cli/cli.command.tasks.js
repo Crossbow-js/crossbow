@@ -95,7 +95,7 @@ docker:up        [ @sh docker-compose up -d ]
 `;
         assert.equal(output.toString(), expected);
     });
-    it.only('Should render task lists for cbfile (verbose)', function () {
+    it('Should render task lists for cbfile (verbose)', function () {
         const output = execSync('node dist/cb tasks --cbfile=test/fixtures/tasks-command/cbfile.js -v');
         const expected = `Using: test/fixtures/tasks-command/cbfile.js
 
