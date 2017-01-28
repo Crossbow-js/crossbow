@@ -7,6 +7,7 @@ import {SequenceItem} from "./task.sequence.factories";
 import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
 import {WatchCommandEventTypes} from "./command.watch";
+import {fromJS} from "immutable";
 
 const debug = require("debug")("cb:watch.runner");
 
@@ -112,7 +113,15 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             /**
              * todo: Is there a way to handle this without subscribing manually?
              */
-            watcher._runner.series()
+            watcher._runner.series(fromJS({
+                watchEvent,
+                watcher: {
+                    patterns: watcher.patterns,
+                    tasks: watcher.tasks,
+                    options: watcher.options,
+                    watcherUID: watcher.watcherUID
+                }
+            }))
                 .do(taskReport => obs.onNext({
                     type: WatchCommandEventTypes.WatchTaskReport,
                     data: {

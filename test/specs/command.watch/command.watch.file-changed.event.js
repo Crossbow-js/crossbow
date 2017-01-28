@@ -339,4 +339,47 @@ describe('responding to file change events', function () {
 
         assert.equal(out.subscription.messages[1].value.kind, 'C');
     });
+    it('Passes information about the watcher & watchEvent in the ctx', function () {
+
+        var watchEvent;
+        var watcher;
+
+        const expected = {
+            event: 'change',
+            path: 'style.css',
+            watcherUID: 'default-0'
+        };
+
+        const expectedWatcher = {
+            patterns: ['*.css'],
+            tasks: ['css'],
+            options: {
+                ignoreInitial: true,
+                block: false,
+                throttle: 0,
+                delay: 0,
+                debounce: 0
+            },
+            watcherUID: 'default-0'
+        };
+
+        utils.getFileWatcher(['default'], {
+            watch: {
+                default: {
+                    "*.css": ["css"]
+                }
+            },
+            tasks: {
+                css: function (opts, ctx) {
+                    watchEvent = ctx.watchEvent;
+                    watcher    = ctx.watcher;
+                }
+            }
+        }, [
+            onNext(100, expected)
+        ]);
+
+        assert.deepEqual(watchEvent, expected);
+        assert.deepEqual(watcher, expectedWatcher);
+    });
 });

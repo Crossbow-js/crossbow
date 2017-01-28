@@ -79,15 +79,17 @@ export function time(scheduler?) {
 }
 export function createObservableFromSequenceItem(item: SequenceItem, trigger: CommandTrigger, ctx: RunContext) {
 
+    const taskTrigger = _.assign({}, trigger, ctx.toJS());
+
     return Rx.Observable.create(observer => {
 
-        const startTime = time(trigger.config.scheduler);
+        const startTime = time(taskTrigger.config.scheduler);
 
         /**
          * Complete immediately if this item was marked
          * as 'skipped'
          */
-        if (!trigger.config.force && item.task.skipped) {
+        if (!taskTrigger.config.force && item.task.skipped) {
             const additionalStats = {
                 skipped: true,
                 skippedReason: TaskSkipReasons.SkipFlag
@@ -103,7 +105,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * Complete immediately if this item was marked
          * with an 'ifChanged' predicate
          */
-        if (!trigger.config.force && item.task.ifChanged.length && ctx.hasIn(["ifChanged"])) {
+        if (!taskTrigger.config.force && item.task.ifChanged.length && ctx.hasIn(["ifChanged"])) {
             const hasChanges = ctx
                 .get("ifChanged")
                 .filter(x => {
@@ -139,12 +141,12 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
         /**
          * Exit after 1 second if we're in a 'dry run'
          */
-        if (trigger.config.dryRun) {
+        if (taskTrigger.config.dryRun) {
             return Rx.Observable
                 .just("dryRun")
-                .delay(trigger.config.dryRunDuration, trigger.config.scheduler)
+                .delay(taskTrigger.config.dryRunDuration, taskTrigger.config.scheduler)
                 .do(_ => {
-                    observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
+                    observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(taskTrigger.config.scheduler))));
                     observer.onCompleted();
                 }).subscribe();
         }
@@ -159,7 +161,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
                     observer.onError(err);
                     return;
                 }
-                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(trigger.config.scheduler))));
+                observer.onNext(getTaskReport(TaskReportType.end, item, getEndStats(stats, time(taskTrigger.config.scheduler))));
                 observer.onCompleted();
             });
 
@@ -167,7 +169,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
             d.once("error", function (err) {
                 cb(err);
             });
-            let domainBoundFn = d.bind(item.factory.bind(null, item.options, trigger));
+            let domainBoundFn = d.bind(item.factory.bind(null, item.options, taskTrigger));
 
             let done = function (err?: Error) {
                 d.removeListener("error", function (err) {
@@ -218,7 +220,7 @@ export function createObservableFromSequenceItem(item: SequenceItem, trigger: Co
          * before the sequence ends.
          */
         return Rx.Observable.concat(
-            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error, time(trigger.config.scheduler)))),
+            Rx.Observable.just(getTaskErrorReport(item, getErrorStats(error, time(taskTrigger.config.scheduler)))),
             Rx.Observable.throw(error)
         );
     });
