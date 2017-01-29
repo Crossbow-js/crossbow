@@ -15,7 +15,7 @@ import {duration, _taskReport, getSimpleTaskList} from "./task.list";
 import * as reports from "../reporter.resolve";
 import {clean} from "../logger";
 
-const baseUrl = "http://crossbow-cli.io/docs/errors";
+const baseUrl = "http://crossbow.io/docs/errors";
 const archy = require("archy");
 const parsed = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), "node_modules");
