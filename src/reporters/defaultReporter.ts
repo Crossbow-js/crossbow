@@ -95,16 +95,10 @@ export const reporterFunctions = {
         ];
         return lines.concat(getExternalError(error.type, error, error.file).split("\n"));
     },
-    [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string[] {
+    [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string {
         return `{green:✔} Created file: {cyan.bold:${report.parsed.base}}
- 
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
- 
-  {gray:$} crossbow run {bold:hello-world} 
- 
-Or to see multiple tasks running, with some in parallel, try: 
-
-  {gray:$} crossbow run {bold:all}`.split("\n");
+{gray:$} crossbow run {bold:hello-world}`;
     },
     [reports.ReportTypes.InitInputFileTypeNotSupported]: function (report: reports.InitInputFileTypeNotSupportedReport): string[] {
         const error = report.error;
