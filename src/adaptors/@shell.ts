@@ -6,7 +6,7 @@ import * as file from "../file.utils";
 const merge = require("../../lodash.custom").merge;
 const debug = require("debug")("cb:@shell");
 
-module.exports = function (task: Task, trigger: CommandTrigger) {
+export default function (task: Task, trigger: CommandTrigger) {
 
     return function (opts, ctx, done) {
 

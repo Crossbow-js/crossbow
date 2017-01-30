@@ -1,7 +1,8 @@
 import {CommandTrigger} from "./command.run";
 import {Task} from "./task.resolve";
-const shellAdaptor = require("./adaptors/@shell");
-const bgAdaptor    = require("./adaptors/@bg");
+
+import shellAdaptor from "./adaptors/@shell";
+import bgAdaptor    from "./adaptors/@bg";
 import npmAdaptor from "./adaptors/@npm";
 import cbAdaptor from "./adaptors/@cb";
 
