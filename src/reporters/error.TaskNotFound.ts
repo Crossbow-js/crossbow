@@ -7,6 +7,6 @@ module.exports = (error: TaskNotFoundError, task: Task) => {
 {red:-} {bold:Working Dir}: {cyan:'${error.cwd}'}.
 
   Perhaps you meant one of the following instead?
-  {cyan.bold:${error.possible.join(' ')}}
-`
+  {cyan.bold:${error.possible.join(" ")}}
+`;
 };
