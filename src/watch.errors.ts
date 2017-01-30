@@ -13,11 +13,11 @@ export interface WatchTaskNameNotFoundError extends WatchTaskError { taskName: s
 
 export function gatherWatchTaskErrors(outgoing: OutgoingWatchTask, input: CrossbowInput): WatchTaskError[] {
     return [
-        getModuleErrors,
+        getWatchNameErrors,
     ].reduce((all, fn) => all.concat(fn(outgoing, input)), []);
 }
 
-function getModuleErrors(outgoing: OutgoingWatchTask, input: CrossbowInput): WatchTaskError[] {
+function getWatchNameErrors(outgoing: OutgoingWatchTask, input: CrossbowInput): WatchTaskError[] {
     if (!input.watch[outgoing.taskName]) {
         return [<WatchTaskNameNotFoundError>{
             type: WatchTaskErrorTypes.WatchTaskNameNotFound,

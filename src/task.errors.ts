@@ -1,6 +1,6 @@
 import {Task} from "./task.resolve";
 import {TaskTypes} from "./task.resolve";
-import {isSupportedFileType, isParentGroupName, getChildItems} from "./task.utils";
+import {isSupportedFileType, isParentGroupName, getChildItems, getPossibleTaskNames} from "./task.utils";
 import {CommandTrigger} from "./command.run";
 import {ExternalFile} from "./file.utils";
 const _ = require("../lodash.custom");
@@ -44,7 +44,8 @@ function getModuleErrors(task: Task, trigger: CommandTrigger): TaskError[] {
         return [<TaskNotFoundError>{
             type: TaskErrorTypes.TaskNotFound,
             taskName: task.taskName,
-            cwd: trigger.config.cwd
+            cwd: trigger.config.cwd,
+            possible: getPossibleTaskNames(trigger.input)
         }];
     }
 
@@ -237,6 +238,7 @@ export interface TaskError {
 export interface TaskNotFoundError extends TaskError {
     taskName: string;
     cwd: string;
+    possible: string[]
 }
 export interface SubtasksNotInConfigError extends TaskError {
     name: string;
