@@ -1,32 +1,31 @@
 #!/usr/bin/env node
-import cli from "./cli";
-import {readFileSync, writeFileSync} from "fs";
-import {handleIncoming} from "./index";
-import logger from "./logger";
-import Rx = require("rx");
-import * as reports from "./reporter.resolve";
-import {PostCLIParse} from "./cli";
-import {prepareInput} from "./index";
 import {DocsFileOutput, DocsCommandComplete, DocsCommandOutput} from "./command.docs";
-import * as file from "./file.utils";
 import {InitCommandComplete, InitCommandOutput} from "./command.init";
 import {WatchersCommandComplete, WatchersCommandOutput} from "./command.watchers";
-import {WatchCommmandComplete, WatchCommandEventTypes, WatchCommandSetup} from "./command.watch";
+import {WatchCommmandComplete, WatchCommandSetup} from "./command.watch";
 import {ExitSignal, CBSignal, SignalTypes, FileWriteSignal} from "./config";
-import {ReportTypes} from "./reporter.resolve";
 import {TasksCommandComplete} from "./command.tasks";
 import {RunComplete} from "./command.run.execute";
 import {TaskReport, TaskReportType} from "./task.runner";
 import {RunCommandSetup} from "./command.run";
-import * as seq from "./task.sequence";
-import {SummaryReport} from "./reporter.resolve";
-import {TaskReportReport} from "./reporter.resolve";
 import {WatchTaskReport} from "./watch.file-watcher";
-import {SimpleTaskListReport} from "./reporter.resolve";
-import {TaskTreeReport} from "./reporter.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
-const debug = require("debug")("cb:cli");
 
+import cli from "./cli";
+import {readFileSync, writeFileSync} from "fs";
+import {handleIncoming} from "./index";
+import logger from "./logger";
+import {PostCLIParse} from "./cli";
+import {prepareInput} from "./index";
+
+import * as reports from "./reporter.resolve";
+import * as file from "./file.utils";
+import * as seq from "./task.sequence";
+
+import Rx = require("rx");
+
+
+const debug = require("debug")("cb:cli");
 const parsed = cli(process.argv.slice(2));
 
 const cliOutputObserver = new Rx.Subject<reports.OutgoingReport>();
@@ -46,7 +45,7 @@ if (parsed.execute) {
     } else {
         if (parsed.output.length) {
             cliOutputObserver.onNext({
-                origin: ReportTypes.CLIParserOutput,
+                origin: reports.ReportTypes.CLIParserOutput,
                 data: parsed.output
             });
         }
@@ -102,7 +101,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
         const exitSignal$ = cliSignalObserver
             .filter(x => x.type === SignalTypes.Exit)
             .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({
-                type: ReportTypes.SignalReceived,
+                type: reports.ReportTypes.SignalReceived,
                 data: cbSignal.data
             }))
             .withLatestFrom(setUp$, progress$, (signal, setup, reports) => {
@@ -154,11 +153,11 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
             .do(x => progress$.onNext(progress$.getValue().concat(x)))
             .do((report: TaskReport) => {
                 prepared.reportFn({
-                    type: ReportTypes.TaskReport,
+                    type: reports.ReportTypes.TaskReport,
                     data: {
                         report,
                         config: prepared.config
-                    } as TaskReportReport
+                    } as reports.TaskReportReport
                 });
             })
             .takeUntil(exits$)
@@ -195,18 +194,18 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
      * Because errors are handled by reports, task executions ALWAYS complete
      * and we handle that here.
      */
-    function handleCompletion(reports: TaskReport[], setup: RunCommandSetup, runtime: number): void {
+    function handleCompletion(taskReports: TaskReport[], setup: RunCommandSetup, runtime: number): void {
 
         /**
          * Merge sequence tree with Task Reports
          */
-        const decoratedSequence = seq.decorateSequenceWithReports(setup.sequence, reports);
+        const decoratedSequence = seq.decorateSequenceWithReports(setup.sequence, taskReports);
 
         /**
          * Push a 'Completion report' onto the $complete Observable.
          * This means consumers will get everything when they call
          */
-        const errors = reports.filter(x => x.type === TaskReportType.error);
+        const errors = taskReports.filter(x => x.type === TaskReportType.error);
 
         const completeData = {
             errors,
@@ -221,7 +220,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
          * Main summary report
          */
         prepared.reportFn({
-            type: ReportTypes.Summary,
+            type: reports.ReportTypes.Summary,
             data: completeData
         });
 
@@ -236,21 +235,21 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
 
                 if (invalid.length || prepared.config.verbose === LogLevel.Verbose) {
                     return prepared.reportFn({
-                        type: ReportTypes.TaskTree,
+                        type: reports.ReportTypes.TaskTree,
                         data: {
                             tasks,
                             config: prepared.config,
                             title: invalid.length ? "Errors found:" : "Available Tasks:"
-                        } as TaskTreeReport
+                        } as reports.TaskTreeReport
                     });
                 }
 
                 if (!groups.length) {
-                    return prepared.reportFn({type: ReportTypes.NoTasksAvailable});
+                    return prepared.reportFn({type: reports.ReportTypes.NoTasksAvailable});
                 }
 
                 prepared.reportFn({
-                    type: ReportTypes.SimpleTaskList,
+                    type: reports.ReportTypes.SimpleTaskList,
                     data: {setup: x.setup}
                 });
             });
@@ -288,7 +287,7 @@ function runFromCli(parsed: PostCLIParse, cliOutputObserver, cliSignalObserver):
                     return killSwitches$.onNext(true);
                 }
                 prepared.reportFn({
-                    type: ReportTypes.WatcherNames,
+                    type: reports.ReportTypes.WatcherNames,
                     data: {setup}
                 });
             });

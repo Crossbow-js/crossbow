@@ -1,23 +1,24 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
 import {CrossbowConfiguration} from "../config";
-import {TaskOriginTypes, TaskTypes, TaskCollection, IncomingTaskItem, Task} from "../task.resolve";
+import {TaskTypes, TaskCollection, IncomingTaskItem, Task} from "../task.resolve";
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
-import * as taskErrors from "../task.errors";
-import * as watchErrors from "../watch.errors";
+import {TaskStats, TaskReportType} from "../task.runner";
 import {parse, dirname, join, relative} from "path";
 import {resolveBeforeTasks} from "../watch.resolve";
 import {resolveTasks} from "../task.resolve";
-import {TaskStats, TaskReportType} from "../task.runner";
 import {collectRunnableTasks} from "../task.sequence";
 import {InputErrorTypes, _e, isInternal, getFunctionName, __e, getLongestTaskName} from "../task.utils";
 import {duration, _taskReport, getSimpleTaskList} from "./task.list";
+
+import * as taskErrors from "../task.errors";
+import * as watchErrors from "../watch.errors";
 import * as reports from "../reporter.resolve";
 import {clean} from "../logger";
 
 const baseUrl = "https://crossbow.io/docs/errors";
-const archy = require("archy");
-const parsed = parse(__dirname);
+const archy   = require("archy");
+const parsed  = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), "node_modules");
 
 export const enum LogLevel {
@@ -94,16 +95,10 @@ export const reporterFunctions = {
         ];
         return lines.concat(getExternalError(error.type, error, error.file).split("\n"));
     },
-    [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string[] {
+    [reports.ReportTypes.InputFileCreated]: function (report: reports.ConfigFileCreatedReport): string {
         return `{green:✔} Created file: {cyan.bold:${report.parsed.base}}
- 
 Now, try the \`{yellow:hello-world}\` example in that file by running: 
- 
-  {gray:$} crossbow run {bold:hello-world} 
- 
-Or to see multiple tasks running, with some in parallel, try: 
-
-  {gray:$} crossbow run {bold:all}`.split("\n");
+{gray:$} crossbow run {bold:hello-world}`;
     },
     [reports.ReportTypes.InitInputFileTypeNotSupported]: function (report: reports.InitInputFileTypeNotSupportedReport): string[] {
         const error = report.error;

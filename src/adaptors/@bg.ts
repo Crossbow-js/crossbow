@@ -5,7 +5,7 @@ import {getCBEnv} from "../task.utils";
 const debug = require("debug")("cb:@bg");
 const merge = require("../../lodash.custom").merge;
 
-module.exports = function (task: Task, trigger: CommandTrigger) {
+export default function (task: Task, trigger: CommandTrigger) {
 
     // todo teardown multiple background emitters on ExitSignal
     //
