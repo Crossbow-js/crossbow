@@ -41,11 +41,12 @@ function getModuleErrors(task: Task, trigger: CommandTrigger): TaskError[] {
      * this can be classified as a `module not found error`
      */
     if (task.externalTasks.length === 0 && task.tasks.length === 0) {
+        const matchSorter = require('match-sorter');
         return [<TaskNotFoundError>{
             type: TaskErrorTypes.TaskNotFound,
             taskName: task.taskName,
             cwd: trigger.config.cwd,
-            possible: getPossibleTaskNames(trigger.input)
+            possible: matchSorter(getPossibleTaskNames(trigger.input), task.taskName, {threshold: matchSorter.rankings.NO_MATCH})
         }];
     }
 
