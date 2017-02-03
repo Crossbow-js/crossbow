@@ -1,6 +1,6 @@
 import {TaskRunModes} from "./task.resolve";
 import {LogLevel} from "./reporters/defaultReporter";
-import {OutgoingReport} from "./reporter.resolve";
+import {OutgoingReport, BinDirectoryLookup} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
 import {WatchEvent} from "./watch.file-watcher";
@@ -41,6 +41,9 @@ export interface CrossbowConfiguration {
     reporter: string;
     handoff: boolean;
     input: string[];
+    bin: string[];
+    binExecutables: string[];
+    binDirectories: BinDirectoryLookup[];
     interactive: boolean;
     outputOnly: boolean;
     suppressOutput: boolean;
@@ -90,6 +93,9 @@ const defaults = <CrossbowConfiguration>{
     resumeOnError: false,
     parallel: false,
     input: [],
+    bin: [],
+    binExecutables: [],
+    binDirectories: [],
     /**
      * Dump json to disk for debugging
      */

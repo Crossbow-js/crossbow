@@ -31,8 +31,9 @@ export interface ExternalFile {
     parsed: ParsedPath;
 }
 
-export interface FileNotFoundError extends InputError {
-}
+export interface FileNotFoundError extends InputError {}
+
+export interface BinDirectoryNotFoundError extends InputError {}
 
 export interface ExternalFileContent extends ExternalFile {
     content: string;
@@ -385,4 +386,34 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
         output,
         markedHashes
     };
+}
+
+export function getBinLookups (bin, cwd) {
+    const lookups = bin.map(x => {
+        const path = join(cwd, x);
+        if (!existsSync(path)) {
+            return {
+                errors: [{type: InputErrorTypes.BinDirectoryNotFound}],
+                input: x,
+                resolved: path
+            }
+        }
+        if (!statSync(path).isDirectory()) {
+            return {
+                errors: [{type: InputErrorTypes.BinPathNotADirectory}],
+                input: x,
+                resolved: path
+            }
+        }
+        return {
+            errors: [],
+            input: x,
+            resolved: path
+        }
+    });
+    return {
+        valid: lookups.filter(x => x.errors.length === 0),
+        invalid: lookups.filter(x => x.errors.length > 0),
+        all: lookups
+    }
 }

@@ -25,7 +25,7 @@ export function preprocessTask(taskName: IncomingTaskItem, trigger: CommandTrigg
             return handleFunctionInput(<any>taskName, trigger.input, parents);
         }
         if (typeof taskName === "string") {
-            return handleStringInput(taskName, trigger.input, parents);
+            return handleStringInput(taskName, trigger, parents);
         }
         if (isPlainObject(taskName)) {
             return handleObjectInput(taskName, trigger.input, parents);
@@ -138,7 +138,9 @@ function stubAdaptor(inputString, taskLiteral, parents) {
  *  - @npm webpack --config webpack.dev.js
  *  - build (which may be an alias for many other tasks)
  */
-function handleStringInput(taskName: string, input: CrossbowInput, parents: string[]) {
+function handleStringInput(taskName: string, trigger: CommandTrigger, parents: string[]) {
+
+    const {input} = trigger;
 
     /**
      * Never modify the current task if it begins
@@ -208,6 +210,23 @@ function handleStringInput(taskName: string, input: CrossbowInput, parents: stri
      * Create the base task
      */
     const incomingTask = (function () {
+
+        // if it's not an alias
+        if (!topLevel && trigger.config.binExecutables.length) {
+            return createTask({
+                baseTaskName: taskName,
+                valid: true,
+                adaptor: 'sh',
+                taskName: taskName,
+                rawInput: taskName,
+                parents: parents,
+                command: taskName,
+                runMode: TaskRunModes.series,
+                origin: TaskOriginTypes.Adaptor,
+                type: TaskTypes.Adaptor
+            });
+        }
+
         const base = createTask({
             cbflags: split.cbflags,
             query: split.query,

@@ -15,6 +15,7 @@ import logger from "./logger";
 import {WatchEvent} from "./watch.file-watcher";
 import {TasksCommandCompletionReport, TaskCommandSetup} from "./command.tasks";
 import {WatchersCommandOutput} from "./command.watchers";
+import {InputError} from "./task.utils";
 
 export interface Reporter {
     errors: {}[];
@@ -54,6 +55,7 @@ export enum ReportTypes {
     InputError                     = <any>"InputError",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
+    InvalidBinDirectory            = <any>"InvalidBinDirectory",
     UsingInputFile                 = <any>"UsingInputFile",
 
     TaskList                       = <any>"TaskList",
@@ -151,6 +153,18 @@ export interface TaskListReport {
 }
 export interface SimpleTaskListReport {
     setup: TaskCommandSetup;
+}
+export interface BinDirectoryLookup {
+    errors: InputError[]
+    input: string
+    resolved: string
+}
+export interface InvalidBinDirectoryReport {
+    lookups: {
+        all:     BinDirectoryLookup[]
+        valid:   BinDirectoryLookup[]
+        invalid: BinDirectoryLookup[]
+    }
 }
 export interface InvalidReporterReport {
     reporters: Reporters;

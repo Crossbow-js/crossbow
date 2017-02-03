@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 import runner = require("./command.run");
 import {CrossbowConfiguration, merge, OutgoingSignals} from "./config";
-import {getRequirePaths} from "./file.utils";
+import {getRequirePaths, getBinLookups} from "./file.utils";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require("rx");
 import {OutgoingReporter} from "./reporter.resolve";
+import {join} from "path";
+import {statSync} from "fs";
+import {existsSync} from "fs";
+import {InputErrorTypes} from "./task.utils";
+import {BinDirectoryLookup} from "./reporter.resolve";
+import {readdirSync} from "fs";
+import {accessSync} from "fs";
+const fs = require('fs');
 
 const _ = require("../lodash.custom");
 const debug = require("debug")("cb:init");
@@ -46,6 +54,7 @@ const isCommand = (input) => Object.keys(availableCommands).indexOf(input) > -1;
 
 export interface PreparedInputErrors {
     type: reports.ReportTypes;
+    data?: any
 }
 
 export interface PreparedInput {
@@ -148,6 +157,38 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
             config: mergedConfig,
             errors: [{type: reports.ReportTypes.InvalidReporter}]
         } as PreparedInput;
+    }
+
+    if (mergedConfig.bin.length) {
+        const lookups = getBinLookups(mergedConfig.bin, mergedConfig.cwd);
+        if (lookups.invalid.length) {
+            reportFn({
+                type: reports.ReportTypes.InvalidBinDirectory,
+                data: {
+                    lookups
+                } as reports.InvalidBinDirectoryReport
+            });
+            return {
+                userInput,
+                cli,
+                reportFn,
+                config: mergedConfig,
+                errors: [{type: reports.ReportTypes.InvalidBinDirectory, data: {lookups}}]
+            } as PreparedInput;
+
+        } else {
+            mergedConfig.binDirectories = lookups.valid;
+            mergedConfig.binExecutables = lookups.valid.reduce((acc, lookup: BinDirectoryLookup) => {
+                const items = readdirSync(lookup.resolved);
+                return acc.concat(items.filter(dir => {
+                    try {
+                        return statSync(join(lookup.resolved, dir)).isFile()
+                    } catch (e) {
+                        return false;
+                    }
+                }));
+            }, []);
+        }
     }
 
     // Show the user which external inputs are being used

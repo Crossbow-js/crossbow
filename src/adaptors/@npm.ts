@@ -82,8 +82,9 @@ function runCommand(args: string[], options: CommandOptions) {
  */
 function getEnv(process: any, config: CrossbowConfiguration) {
     const localEnv = <any>{};
-    const envpath = join(config.cwd, "node_modules", ".bin");
-    localEnv.PATH = [envpath].concat(process.env.PATH).join(":");
+    const envpath  = join(config.cwd, "node_modules", ".bin");
+    const binDirs  = [envpath, ...config.binDirectories.map(x => x.resolved)];
+    localEnv.PATH  = binDirs.concat(process.env.PATH).join(":");
     return localEnv;
 }
 

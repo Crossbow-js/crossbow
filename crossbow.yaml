@@ -39,3 +39,10 @@ tasks:
     otherstuff:
       description: 'Copy other tasks'
       tasks: build-css
+
+  serve:
+    - mocha test/specs
+
+config:
+  bin:
+    - ./node_modules/.bin

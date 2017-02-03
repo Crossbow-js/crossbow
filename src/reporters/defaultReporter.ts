@@ -108,6 +108,10 @@ Now, try the \`{yellow:hello-world}\` example in that file by running:
             ...getExternalError(error.type, error).split("\n")
         ];
     },
+    [reports.ReportTypes.InvalidBinDirectory]: function (report: reports.InvalidBinDirectoryReport): string {
+        console.log(report);
+        return 'noop';
+    },
     [reports.ReportTypes.SimpleTaskList]: function (report: reports.SimpleTaskListReport): string[] {
         const {groups, tasks} = report.setup;
         const lines           = [];

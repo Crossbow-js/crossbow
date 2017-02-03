@@ -1,5 +1,5 @@
 import {CommandTrigger} from "../command.run";
-import {getArgs, runCommand, teardown, getStdio, handleExit, CommandArgs} from "./@npm";
+import {getArgs, runCommand, teardown, getStdio, handleExit, CommandArgs, getEnv} from "./@npm";
 import {Task, TaskOriginTypes} from "../task.resolve";
 import {getCBEnv} from "../task.utils";
 import * as file from "../file.utils";
@@ -30,9 +30,10 @@ export default function (task: Task, trigger: CommandTrigger) {
             return;
         }
 
-        const stdio = getStdio(trigger);
-        const cbEnv = getCBEnv(trigger);
-        const env    = merge({}, cbEnv, task.env, process.env, trigger.config.env);
+        const stdio   = getStdio(trigger);
+        const cbEnv   = getCBEnv(trigger);
+        const userEnv = getEnv(process, trigger.config);
+        const env     = merge({}, process.env, userEnv, cbEnv, task.env, trigger.config.env);
 
         debug(`running %s`, args.cmd);
 
