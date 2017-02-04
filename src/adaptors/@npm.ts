@@ -1,6 +1,7 @@
 import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {Task} from "../task.resolve";
+import Immutable = require('immutable');
 
 import {EventEmitter} from "events";
 import {spawn} from "child_process";
@@ -78,14 +79,13 @@ function runCommand(args: string[], options: CommandOptions) {
  * of the users PATH - this will allow it to find local scripts
  * @param {process.env} process
  * @param {Immutable.Map} config
+ * @param paths
  * @returns {object}
  */
-function getEnv(process: any, config: CrossbowConfiguration) {
-    const localEnv = <any>{};
-    const envpath  = join(config.cwd, "node_modules", ".bin");
-    const binDirs  = [envpath, ...config.binDirectories.map(x => x.resolved)];
-    localEnv.PATH  = binDirs.concat(process.env.PATH).join(":");
-    return localEnv;
+function getEnv(process: any, config: CrossbowConfiguration, paths?: string[]) {
+    const binDirs  = Immutable.Set([...config.binDirectories.map(x => x.resolved), ...paths]);
+    const PATH     = binDirs.add(process.env.PATH).join(":");
+    return {PATH};
 }
 
 export interface CommandArgs {
@@ -164,10 +164,10 @@ export default function (task: Task, trigger: CommandTrigger) {
     return (opts, ctx, done) => {
 
         const commandArgs = getArgs(task.command);
-        const npmEnv = getEnv(process, trigger.config);
-        const cbEnv = getCBEnv(trigger);
-        const env = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
-        const stdio = getStdio(trigger);
+        const npmEnv      = getEnv(process, trigger.config, [join(trigger.config.cwd, "node_modules", ".bin")]);
+        const cbEnv       = getCBEnv(trigger);
+        const env         = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
+        const stdio       = getStdio(trigger);
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(" "));
 

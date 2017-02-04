@@ -23,5 +23,9 @@
   "envPrefix": {
     "desc": "Prefix to use before any auto-generated ENV vars",
     "type": "string"
+  },
+  "bin": {
+    "desc": "Directories to scan for executables",
+    "type": "array"
   }
 }

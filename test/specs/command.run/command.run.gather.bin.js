@@ -2,10 +2,7 @@ const assert = require('chai').assert;
 const utils = require("../../utils");
 const yaml = require("js-yaml");
 
-const TaskRunModes = require('../../../dist/task.resolve').TaskRunModes;
 const TaskTypes = require('../../../dist/task.resolve').TaskTypes;
-const TaskErrors = require('../../../dist/task.errors').TaskErrorTypes;
-const TaskOriginTypes = require('../../../dist/task.resolve').TaskOriginTypes;
 
 describe('Gathering run tasks from bin directory', function () {
     it('can gather tasks from a bin dir', function () {

@@ -43,6 +43,9 @@ tasks:
   serve:
     - mocha test/specs
 
+  mocha:
+    - '@sh echo "hello"'
+
 config:
   bin:
-    - ./node_modules/.bin
+    ./node_modules/.bin

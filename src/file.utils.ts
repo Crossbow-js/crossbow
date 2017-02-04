@@ -389,7 +389,7 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
 }
 
 export function getBinLookups (bin, cwd) {
-    const lookups = bin.map(x => {
+    const lookups = [].concat(bin).map(x => {
         const path = join(cwd, x);
         if (!existsSync(path)) {
             return {

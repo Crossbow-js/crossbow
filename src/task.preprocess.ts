@@ -213,18 +213,22 @@ function handleStringInput(taskName: string, trigger: CommandTrigger, parents: s
 
         // if it's not an alias
         if (!topLevel && trigger.config.binExecutables.length) {
-            return createTask({
-                baseTaskName: taskName,
-                valid: true,
-                adaptor: 'sh',
-                taskName: taskName,
-                rawInput: taskName,
-                parents: parents,
-                command: taskName,
-                runMode: TaskRunModes.series,
-                origin: TaskOriginTypes.Adaptor,
-                type: TaskTypes.Adaptor
-            });
+
+            // if the normalised task name matches an executable
+            if (trigger.config.binExecutables.indexOf(normalisedTaskName) !== -1) {
+                return createTask({
+                    baseTaskName: taskName,
+                    valid: true,
+                    adaptor: 'sh',
+                    taskName: taskName,
+                    rawInput: taskName,
+                    parents: parents,
+                    command: taskName,
+                    runMode: TaskRunModes.series,
+                    origin: TaskOriginTypes.Adaptor,
+                    type: TaskTypes.Adaptor
+                });
+            }
         }
 
         const base = createTask({
