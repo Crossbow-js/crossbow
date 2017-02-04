@@ -1,7 +1,7 @@
 import {CommandTrigger} from "../command.run";
 import {CrossbowConfiguration} from "../config";
 import {Task} from "../task.resolve";
-import Immutable = require('immutable');
+import Immutable = require("immutable");
 
 import {EventEmitter} from "events";
 import {spawn} from "child_process";
