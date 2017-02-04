@@ -48,6 +48,7 @@ export interface CrossbowConfiguration {
     outputOnly: boolean;
     suppressOutput: boolean;
     progress: boolean;
+    loadDefaultInputs: boolean;
     cbfile?: string;
     dump: boolean;
     envPrefix: string;
@@ -135,6 +136,10 @@ const defaults = <CrossbowConfiguration>{
      * Show the prompt for selecting tasks?
      */
     interactive: false,
+    /**
+     *
+     */
+    loadDefaultInputs: false,
     /**
      *
      */

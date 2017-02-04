@@ -14,6 +14,7 @@ export enum InputTypes {
     DefaultExternalFile = <any>"DefaultExternalFile",
     ExternalFile = <any>"ExternalFile",
     InlineObject = <any>"InlineObject",
+    StubInlineObject = <any>"StubInlineObject",
     CBFile = <any>"CBFile",
     InlineJSON = <any>"InlineJSON",
 }
@@ -118,6 +119,16 @@ export function getInputs (config: CrossbowConfiguration, inlineInput?: any): Us
             errors: [],
             sources: [],
             inputs: [generateBaseInput(inlineInput)]
+        };
+    }
+
+    if (!config.loadDefaultInputs) {
+        debug(`config.loadDefaultInputs = false, not looking for default file types`);
+        return {
+            errors: [],
+            sources: [],
+            type: InputTypes.StubInlineObject,
+            inputs: [generateBaseInput({})]
         };
     }
 

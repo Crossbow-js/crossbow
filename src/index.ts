@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import runner = require("./command.run");
 import {CrossbowConfiguration, merge, OutgoingSignals} from "./config";
-import {getRequirePaths, getBinLookups} from "./file.utils";
+import {getRequirePaths, getBinLookups, Right, Left} from "./file.utils";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require("rx");
@@ -259,17 +259,65 @@ function processConfigs (config, flags) {
  * used as a convenience method.
  * Note: types are lost when using this method.
  */
+const mergeConfigs = (userInput, merged, flags) =>
+    userInput.type !== InputTypes.StubInlineObject
+        ? Right(merge(_.merge({}, userInput.inputs[0].config, flags)))
+        : Right(merged);
+
+const getConfig = (flags, input) =>
+    Right(merge(flags))
+        .chain(merged => getUserInput(merged, input)
+            .chain(userInput => mergeConfigs(userInput, merged, flags)
+                                    .map(config => ({config, userInput})))
+        );
+
+const getUserInput = (merged, input) =>
+    Right(getInputs(merged, input))
+        .chain(userInput => userInput.errors.length
+            ? Left({type: reports.ReportTypes.InputError, userInput})
+            : Right(userInput)
+        );
+
 export default function (cli: CLI, input?: CrossbowInput) {
 
-    const prepared = prepareInput(cli, input);
-
-    if (prepared.errors.length) {
-        return Rx.Observable.just({
-            errors: prepared.errors
+    const config = getConfig(cli.flags, input)
+        .map(x => {
+            console.log('MAP', x);
+        })
+        .fold(err => {
+            console.log(err);
+        }, x => {
+            console.log(x);
         });
-    }
 
-    return handleIncoming<any>(prepared);
+    // return {
+    //     userInput,
+    //     cli,
+    //     config: mergedConfig,
+    //     reportFn,
+    //     errors: [{type: reports.ReportTypes.InputError}]
+    // } as PreparedInput;
+
+    // const firstMerge = merge(cli.flags);
+    // const userInput  = getInputs(firstMerge, input);
+    //
+    // console.log(userInput.inputs[0]);
+    //
+    // console.log(mergedConfig);
+    // console.log(cli);
+
+    // console.log('-->-->---', config);
+
+    // const prepared = prepareInput(cli, input);
+    // console.log(prepared);
+
+    // if (prepared.errors.length) {
+    //     return Rx.Observable.just({
+    //         errors: prepared.errors
+    //     });
+    // }
+    //
+    // return handleIncoming<any>(prepared);
 }
 
 

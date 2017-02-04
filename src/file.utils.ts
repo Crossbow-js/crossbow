@@ -429,21 +429,21 @@ export const getBinLookups = (paths, cwd) =>
             };
         });
 
-const Right = (x) => ({
+export const Right = (x) => ({
     chain: f => f(x),
     map: f => Right(f(x)),
     fold: (f, g) => g(x),
     inspect: () => `Right(${x})`
 });
 
-const Left = (x) => ({
+export const Left = (x) => ({
     chain: f => Left(x),
     map: f => Left(x),
     fold: (f, g) => f(x),
     inspect: () => `Left(${x})`
 });
 
-const tryCatch = f => {
+export const tryCatch = f => {
     try {
         return Right(f())
     } catch(e) {
