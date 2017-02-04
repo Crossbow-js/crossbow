@@ -388,32 +388,65 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
     };
 }
 
-export function getBinLookups (bin, cwd) {
-    const lookups = [].concat(bin).map(x => {
-        const path = join(cwd, x);
-        if (!existsSync(path)) {
+const binDirectoryExists = path =>
+    existsSync(path)
+        ? Right(path)
+        : Left({type: InputErrorTypes.BinDirectoryNotFound});
+
+const isDirectory = path =>
+    statSync(path).isDirectory()
+        ? Right(path)
+        : Left({type: InputErrorTypes.BinPathNotADirectory});
+
+const joinPath = (path, cwd) => Right(join(cwd, path));
+
+export const getBinLookup = (path: string, cwd: string) =>
+    joinPath(path, cwd)
+        .chain(resolved => Right(resolved)
+            .chain(resolved => binDirectoryExists(resolved))
+            .chain(resolved => isDirectory(resolved))
+            .fold(error => {
+                return {
+                    errors: [error],
+                    resolved,
+                    input: path
+                }
+            }, resolved => {
+                return {
+                    errors: [],
+                    resolved,
+                    input: path
+                }
+            }));
+
+export const getBinLookups = (paths, cwd) =>
+    Right([].concat(paths).map(path => getBinLookup(path, cwd)))
+        .chain(xs => {
             return {
-                errors: [{type: InputErrorTypes.BinDirectoryNotFound}],
-                input: x,
-                resolved: path
-            }
-        }
-        if (!statSync(path).isDirectory()) {
-            return {
-                errors: [{type: InputErrorTypes.BinPathNotADirectory}],
-                input: x,
-                resolved: path
-            }
-        }
-        return {
-            errors: [],
-            input: x,
-            resolved: path
-        }
-    });
-    return {
-        valid: lookups.filter(x => x.errors.length === 0),
-        invalid: lookups.filter(x => x.errors.length > 0),
-        all: lookups
+                all: xs,
+                valid: xs.filter(x => x.errors.length === 0),
+                invalid: xs.filter(x => x.errors.length > 0)
+            };
+        });
+
+const Right = (x) => ({
+    chain: f => f(x),
+    map: f => Right(f(x)),
+    fold: (f, g) => g(x),
+    inspect: () => `Right(${x})`
+});
+
+const Left = (x) => ({
+    chain: f => Left(x),
+    map: f => Left(x),
+    fold: (f, g) => f(x),
+    inspect: () => `Left(${x})`
+});
+
+const tryCatch = f => {
+    try {
+        return Right(f())
+    } catch(e) {
+        return Left(e)
     }
-}
+};
