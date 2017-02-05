@@ -25,7 +25,7 @@ export interface Reporter {
 }
 
 export enum ReporterErrorTypes {
-    ReporterFileNotFound = <any>"ReporterFileNotfound",
+    ReporterFileNotFound = <any>"ReporterFileNotFound",
     ReporterTypeNotSupported = <any>"ReporterTypeNotSupported"
 }
 export interface ReporterError {

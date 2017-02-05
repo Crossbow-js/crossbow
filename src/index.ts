@@ -266,14 +266,14 @@ const getConfig = (flags, input) =>
 const getUserInput = (merged, input) =>
     Right(getInputs(merged, input))
         .chain(userInput => userInput.errors.length
-            ? Left({type: reports.ReportTypes.InputError, userInput})
+            ? Left({type: reports.ReportTypes.InputError, data: userInput})
             : Right(userInput)
         );
 
 const getBins = (dir, cwd) =>
     Right(getBinLookups(dir, cwd))
         .chain(x => x.invalid.length
-            ? Left({type: reports.ReportTypes.BinOptionError, bin: x})
+            ? Left({type: reports.ReportTypes.BinOptionError, data: x})
             : Right(x)
         );
 
@@ -292,7 +292,7 @@ const addReporters = (config) =>
     Right(reports.getReporters(config))
         .chain(reporters =>
             reporters.invalid.length
-                ? Left({type: reports.ReportTypes.InvalidReporter, reporters})
+                ? Left({type: reports.ReportTypes.InvalidReporter, data: {reporters}})
                 : Right(reporters.valid)
         );
 

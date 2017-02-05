@@ -24,7 +24,10 @@ tasks:
     - '@npm sleep 1'
     - '@npm ls'
   file:
-    - 'test/fixtures/tasks/simple.js --name=kittie'
+    ifChanged: 'test'
+    tasks:
+      - 'test/fixtures/tasks/simple.js --name=kittie'
+
   (sh):
     ls:
       - '@sh sleep 2'

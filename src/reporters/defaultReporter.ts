@@ -15,8 +15,9 @@ import * as taskErrors from "../task.errors";
 import * as watchErrors from "../watch.errors";
 import * as reports from "../reporter.resolve";
 import {clean} from "../logger";
+import {BinDirectoryLookup} from "../reporter.resolve";
 
-const baseUrl = "https://crossbow.io/docs/errors";
+const baseUrl = "https://www.crossbow.io/docs/errors";
 const archy   = require("archy");
 const parsed  = parse(__dirname);
 const depsDir = join(dirname(parsed.dir), "node_modules");
@@ -39,11 +40,18 @@ export default function (report: reports.IncomingReport) {
             return {origin: report.type, data: []};
         }
     } else {
+        console.error('Report type not handled:', report.type);
         return {origin: report.type, data: []};
     }
 }
 
 export const reporterFunctions = {
+    [reports.ReportTypes.BinOptionError]: function (report): string {
+        return report.invalid.reduce((lines, bin: BinDirectoryLookup) => {
+            const error = bin.errors[0];
+            return lines.concat(getExternalError(error.type, error, bin).split("\n"));
+        }, []);
+    },
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {
         return report.sources.map(function (input) {
             return `Using: {cyan.bold:${input.relative}}`;

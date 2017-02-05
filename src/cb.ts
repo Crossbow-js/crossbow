@@ -23,6 +23,7 @@ import * as file from "./file.utils";
 import * as seq from "./task.sequence";
 
 import Rx = require("rx");
+import {Right} from "./file.utils";
 
 
 const debug = require("debug")("cb:cli");
@@ -39,10 +40,8 @@ const defaultReporterFn = (input) => {
     }
 };
 
-const cliSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
-
 if (parsed.execute) {
-    runFromCli(parsed, defaultReporterFn, cliSignalObserver);
+    runFromCli(parsed, defaultReporterFn);
 } else {
     if (parsed.cli.flags.version) {
         console.log(parsed.output[0]);
@@ -62,12 +61,24 @@ export interface CLIResults {
     timestamp: number;
 }
 
-function runFromCli(parsed: PostCLIParse, report, cliSignalObserver): void {
+function runFromCli(parsed: PostCLIParse, cliDefaultReporter): void {
 
     const addReporterIfMissing = (setup, fn) =>
-        setup.reporters.length === 0
-            ? _.merge({}, setup, {reportFn: fn})
-            : setup;
+        setup.reporters.length > 0
+            ? setup
+            : _.assign({}, setup, {reportFn: fn});
+
+    const addSignalFnIfMissing = (setup, obs) =>
+        setup.config.signalObserver
+            ? setup
+            : _.set(setup, 'config.signalObserver', obs);
+
+    const addLoadDefaultsIfUndefined = (cli) =>
+        typeof cli.flags.loadDefaultInputs === "undefined"
+            ? _.set(cli, 'flags.loadDefaultInputs', true)
+            : cli;
+
+    const cliSignalObserver = new Rx.Subject<CBSignal<ExitSignal>>();
 
     const killSwitches$ = new Rx.Subject();
 
@@ -75,13 +86,16 @@ function runFromCli(parsed: PostCLIParse, report, cliSignalObserver): void {
         process.exit(1);
     });
 
-    getSetup(parsed.cli)
-        .map(x => addReporterIfMissing(x, report))
+    Right(parsed.cli)
+        .map(cli => addLoadDefaultsIfUndefined(cli))
+        .chain(cli => getSetup(cli))
+        .map(x => addReporterIfMissing(x, cliDefaultReporter))
+        .map(x => addSignalFnIfMissing(x, cliSignalObserver))
         .fold(err => {
-            // report(err);
             // killSwitches$.onNext(true);
             // todo log input errors
-            console.log(err);
+            // console.log(err);
+            cliDefaultReporter(err);
             return err;
         }, (setup: PreparedInput) => {
             if (parsed.cli.command === 'run') {
@@ -97,7 +111,7 @@ function runWithSetup(prepared: PreparedInput, killSwitches$) {
 
     let summaryGiven = false; // todo remove the need for this as it breaks the encapsulation
 
-    const exitSignal$ = cliSignalObserver
+    const exitSignal$ = prepared.config.signalObserver
         .filter(x => x.type === SignalTypes.Exit)
         .do((cbSignal: CBSignal<ExitSignal>) => prepared.reportFn({
             type: reports.ReportTypes.SignalReceived,
@@ -187,6 +201,21 @@ function runWithSetup(prepared: PreparedInput, killSwitches$) {
             );
         }
     });
+
+    /**
+     * Handle file-writes
+     * @type {Rx.Observable<CBSignal<FileWriteSignal>>|Rx.Observable<T>}
+     */
+    prepared.config.signalObserver
+        .filter(x => x.type === SignalTypes.FileWrite)
+        .do(function (x: CBSignal<FileWriteSignal>) {
+            if (prepared.config.dryRun) {
+                // should skip / noop here
+            } else {
+                file.writeFileToDisk(x.data.file, x.data.content);
+            }
+        }).subscribe();
+
     /**
      * Because errors are handled by reports, task executions ALWAYS complete
      * and we handle that here.
@@ -226,29 +255,6 @@ function runWithSetup(prepared: PreparedInput, killSwitches$) {
 }
 
 
-    // /**
-    //  * Handle file-writes
-    //  * @type {Rx.Observable<CBSignal<FileWriteSignal>>|Rx.Observable<T>}
-    //  */
-    // cliSignalObserver
-    //     .filter(x => x.type === SignalTypes.FileWrite)
-    //     .do(function (x: CBSignal<FileWriteSignal>) {
-    //         if (prepared.config.dryRun) {
-    //             // should skip / noop here
-    //         } else {
-    //             file.writeFileToDisk(x.data.file, x.data.content);
-    //         }
-    //     }).subscribe();
-    //
-    // /**
-    //  * Any errors found on input preparation
-    //  * will be sent to the output observer and
-    //  * requires no further work other than to exit
-    //  * with a non-zero code
-    //  */
-    // if (prepared.errors.length) {
-    //     return killSwitches$.onNext(true);
-    // }
     //
     //
     // if (parsed.cli.command === "tasks" || parsed.cli.command === "ls") {
