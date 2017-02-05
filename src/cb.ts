@@ -26,6 +26,7 @@ import Rx = require("rx");
 
 
 const debug = require("debug")("cb:cli");
+const _ = require('../lodash.custom');
 const parsed = cli(process.argv.slice(2));
 
 const cliOutputObserver = new Rx.Subject<reports.OutgoingReport>();
@@ -63,18 +64,26 @@ export interface CLIResults {
 
 function runFromCli(parsed: PostCLIParse, report, cliSignalObserver): void {
 
+    const addReporterIfMissing = (setup, fn) =>
+        setup.reporters.length === 0
+            ? _.merge({}, setup, {reportFn: fn})
+            : setup;
+
     const killSwitches$ = new Rx.Subject();
 
     killSwitches$.subscribe(() => {
         process.exit(1);
     });
 
-    const prepared = getSetup(parsed.cli, null, report)
+    getSetup(parsed.cli)
+        .map(x => addReporterIfMissing(x, report))
         .fold(err => {
-            report(err);
-            killSwitches$.onNext(true);
+            // report(err);
+            // killSwitches$.onNext(true);
+            // todo log input errors
+            console.log(err);
             return err;
-        }, setup => {
+        }, (setup: PreparedInput) => {
             if (parsed.cli.command === 'run') {
                 runWithSetup(setup, killSwitches$);
             }

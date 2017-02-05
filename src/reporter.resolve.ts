@@ -235,7 +235,7 @@ export interface HashDirErrorReport {
     cwd: string;
 }
 
-export function getReporters (config: CrossbowConfiguration, reportFn): Reporters {
+export function getReporters (config: CrossbowConfiguration): Reporters {
 
     const reporters = (function () {
         /**
@@ -257,7 +257,7 @@ export function getReporters (config: CrossbowConfiguration, reportFn): Reporter
          * At this point, a user may of provided a string (as a path to lookup)
          * or a function directly, so we use those to resolve the reporters.
          */
-        return [].concat([...config.reporters, reportFn]).filter(Boolean).map(getOneReporter);
+        return [].concat(config.reporters).map(getOneReporter);
     })();
 
     return {

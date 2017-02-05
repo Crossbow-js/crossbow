@@ -13,6 +13,7 @@ import {InputErrorTypes} from "./task.utils";
 import {BinDirectoryLookup} from "./reporter.resolve";
 import {readdirSync} from "fs";
 import {accessSync} from "fs";
+import {Reporters} from "./reporter.resolve";
 const fs = require('fs');
 
 const _ = require("../lodash.custom");
@@ -60,6 +61,7 @@ export interface PreparedInputErrors {
 export interface PreparedInput {
     cli: CLI;
     config: CrossbowConfiguration;
+    reporters?: Reporters
     reportFn?: CrossbowReporter;
     userInput: UserInput;
     errors: PreparedInputErrors[];
@@ -286,8 +288,8 @@ const addBinLookups = config =>
             })
         : Right(config);
 
-const addReporters = (config, reportFn) =>
-    Right(reports.getReporters(config, reportFn))
+const addReporters = (config) =>
+    Right(reports.getReporters(config))
         .chain(reporters =>
             reporters.invalid.length
                 ? Left({type: reports.ReportTypes.InvalidReporter, reporters})
@@ -308,11 +310,11 @@ const getExecutables = (dirs) =>
 
 const getReportFn = reporters => (...args) => reporters.forEach(x => x.callable.apply(null, args));
 
-export function getSetup (cli: CLI, input?: CrossbowInput, reportFn?: Function) {
+export function getSetup (cli: CLI, input?: CrossbowInput) {
     return getConfig(cli.flags, input)
         .chain(setup =>
             addBinLookups(setup.config)
-                .chain(config => addReporters(config, reportFn)
+                .chain(config => addReporters(config)
                     .map(reporters => {
                         return {
                             reporters,

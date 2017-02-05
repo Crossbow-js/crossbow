@@ -32,14 +32,14 @@ export default function (report: reports.IncomingReport) {
         const output = outputFn.call(null, report.data);
         if (typeof output === "string") {
             if (output === "") return {origin: report.type, data: []};
-            return {origin: report.type, data: [output]}
+            return {origin: report.type, data: [output]};
         } else if (Array.isArray(output) && output.length) {
-            return {origin: report.type, data: output}
+            return {origin: report.type, data: output};
         } else {
-            return {origin: report.type, data: []}
+            return {origin: report.type, data: []};
         }
     } else {
-        return {origin: report.type, data: []}
+        return {origin: report.type, data: []};
     }
 }
 
