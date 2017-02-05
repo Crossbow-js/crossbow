@@ -401,7 +401,7 @@ const isDirectory = path =>
 const joinPath = (path, cwd) => Right(join(cwd, path));
 
 export const getBinLookup = (path: string, cwd: string) =>
-    joinPath(path, cwd)
+    joinPath(String(path), cwd)
         .chain(resolved => Right(resolved)
             .chain(resolved => binDirectoryExists(resolved))
             .chain(resolved => isDirectory(resolved))

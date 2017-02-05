@@ -53,6 +53,7 @@ export enum ReportTypes {
     InputFileCreated               = <any>"InputFileCreated",
     InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
     InputError                     = <any>"InputError",
+    BinOptionError                 = <any>"BinOptionError",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
     InvalidBinDirectory            = <any>"InvalidBinDirectory",
@@ -234,7 +235,7 @@ export interface HashDirErrorReport {
     cwd: string;
 }
 
-export function getReporters (config: CrossbowConfiguration, input: CrossbowInput): Reporters {
+export function getReporters (config: CrossbowConfiguration, reportFn): Reporters {
 
     const reporters = (function () {
         /**
@@ -256,7 +257,7 @@ export function getReporters (config: CrossbowConfiguration, input: CrossbowInpu
          * At this point, a user may of provided a string (as a path to lookup)
          * or a function directly, so we use those to resolve the reporters.
          */
-        return [].concat(config.reporters).map(getOneReporter);
+        return [].concat([...config.reporters, reportFn]).filter(Boolean).map(getOneReporter);
     })();
 
     return {

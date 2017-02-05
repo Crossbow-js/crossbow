@@ -76,134 +76,124 @@ export interface PreparedInput {
  */
 export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter, signalObserver?: OutgoingSignals): PreparedInput {
 
-    let mergedConfig         = merge(cli.flags);
-    const userInput          = getInputs(mergedConfig, input);
-    let resolvedReporters    = reports.getReporters(mergedConfig, input);
-    let chosenOutputObserver = reports.getOutputObserver(mergedConfig, outputObserver);
-    let chosenSignalObserver = reports.getSignalReporter(mergedConfig, signalObserver);
-    let hasReporters         = resolvedReporters.valid.length;
-    const defaultReporter    = reports.getDefaultReporter();
+    // let mergedConfig         = merge(cli.flags);
+    // const userInput          = getInputs(mergedConfig, input);
+    // let resolvedReporters    = reports.getReporters(mergedConfig, input);
+    // let chosenOutputObserver = reports.getOutputObserver(mergedConfig, outputObserver);
+    // let chosenSignalObserver = reports.getSignalReporter(mergedConfig, signalObserver);
+    // let hasReporters         = resolvedReporters.valid.length;
+    // const defaultReporter    = reports.getDefaultReporter();
 
-    // Check if any given reporter are invalid
-    // and defer to default
-    if (resolvedReporters.invalid.length) {
-        defaultReporter({
-            type: reports.ReportTypes.InvalidReporter,
-            data: {
-                reporters: resolvedReporters
-            } as reports.InvalidReporterReport
-        }, chosenOutputObserver);
+    // // Check if any given reporter are invalid
+    // // and defer to default
+    // if (resolvedReporters.invalid.length) {
+    //     defaultReporter({
+    //         type: reports.ReportTypes.InvalidReporter,
+    //         data: {
+    //             reporters: resolvedReporters
+    //         } as reports.InvalidReporterReport
+    //     }, chosenOutputObserver);
+    //
+    //     return {
+    //         userInput,
+    //         cli,
+    //         config: mergedConfig,
+    //         errors: [{type: reports.ReportTypes.InvalidReporter}]
+    //     } as PreparedInput;
+    // }
+    //
+    // // proxy for calling reporter functions.
+    // // uses default if none given
+    // const reportFn = function (report: reports.IncomingReport) {
+    //     if (!hasReporters) {
+    //         return defaultReporter(report, chosenOutputObserver);
+    //     }
+    //     resolvedReporters.valid.forEach(function (reporter: reports.Reporter) {
+    //         reporter.callable(report, chosenOutputObserver);
+    //     });
+    // };
 
-        return {
-            userInput,
-            cli,
-            config: mergedConfig,
-            errors: [{type: reports.ReportTypes.InvalidReporter}]
-        } as PreparedInput;
-    }
-
-    // proxy for calling reporter functions.
-    // uses default if none given
-    const reportFn = function (report: reports.IncomingReport) {
-        if (!hasReporters) {
-            return defaultReporter(report, chosenOutputObserver);
-        }
-        resolvedReporters.valid.forEach(function (reporter: reports.Reporter) {
-            reporter.callable(report, chosenOutputObserver);
-        });
-    };
-
-    // Bail early if a user tried to load a specific file
-    // but it didn't exist, or had some other error
-    if (userInput.errors.length) {
-        reportFn({type: reports.ReportTypes.InputError, data: userInput});
-        return {
-            userInput,
-            cli,
-            config: mergedConfig,
-            reportFn,
-            errors: [{type: reports.ReportTypes.InputError}]
-        } as PreparedInput;
-    }
+    // // Bail early if a user tried to load a specific file
+    // // but it didn't exist, or had some other error
+    // if (userInput.errors.length) {
+    //     reportFn({type: reports.ReportTypes.InputError, data: userInput});
+    //     return {
+    //         userInput,
+    //         cli,
+    //         config: mergedConfig,
+    //         reportFn,
+    //         errors: [{type: reports.ReportTypes.InputError}]
+    //     } as PreparedInput;
+    // }
 
     // at this point, there are no invalid reporters or input files
     // so we can reset the reporters to anything that may of come in via config
-    if (userInput.inputs.length) {
-        mergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
-    }
-    resolvedReporters = reports.getReporters(mergedConfig, input);
-    hasReporters      = resolvedReporters.valid.length;
+    // if (userInput.inputs.length) {
+    //     mergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
+    // }
+    // resolvedReporters = reports.getReporters(mergedConfig, input);
+    // hasReporters      = resolvedReporters.valid.length;
 
     /**
      * Set the signal observer
      * todo: Clean up how this is assigned
      * @type {OutgoingSignals}
      */
-    mergedConfig.signalObserver = chosenSignalObserver;
+    // mergedConfig.signalObserver = chosenSignalObserver;
 
     // Check if any given reporter are invalid
     // and defer to default (again)
-    if (resolvedReporters.invalid.length) {
-        reportFn({
-            type: reports.ReportTypes.InvalidReporter,
-            data: {
-                reporters: resolvedReporters
-            } as reports.InvalidReporterReport
-        });
-        return {
-            userInput,
-            cli,
-            reportFn,
-            config: mergedConfig,
-            errors: [{type: reports.ReportTypes.InvalidReporter}]
-        } as PreparedInput;
-    }
+    // if (resolvedReporters.invalid.length) {
+    //     // reportFn({
+    //     //     type: reports.ReportTypes.InvalidReporter,
+    //     //     data: {
+    //     //         reporters: resolvedReporters
+    //     //     } as reports.InvalidReporterReport
+    //     // });
+    //     return {
+    //         userInput,
+    //         cli,
+    //         reportFn,
+    //         config: mergedConfig,
+    //         errors: [{type: reports.ReportTypes.InvalidReporter}]
+    //     } as PreparedInput;
+    // }
 
-    if (mergedConfig.bin.length) {
-        const lookups = getBinLookups(mergedConfig.bin, mergedConfig.cwd);
-        if (lookups.invalid.length) {
-            reportFn({
-                type: reports.ReportTypes.InvalidBinDirectory,
-                data: {
-                    lookups
-                } as reports.InvalidBinDirectoryReport
-            });
-            return {
-                userInput,
-                cli,
-                reportFn,
-                config: mergedConfig,
-                errors: [{type: reports.ReportTypes.InvalidBinDirectory, data: {lookups}}]
-            } as PreparedInput;
-
-        } else {
-            mergedConfig.binDirectories = lookups.valid;
-            mergedConfig.binExecutables = lookups.valid.reduce((acc, lookup: BinDirectoryLookup) => {
-                const items = readdirSync(lookup.resolved);
-                return acc.concat(items.filter(dir => {
-                    try {
-                        return statSync(join(lookup.resolved, dir)).isFile()
-                    } catch (e) {
-                        return false;
-                    }
-                }));
-            }, []);
-        }
-    }
+    // if (mergedConfig.bin.length) {
+    //     const lookups = getBinLookups(mergedConfig.bin, mergedConfig.cwd);
+    //     if (lookups.invalid.length) {
+    //         reportFn({
+    //             type: reports.ReportTypes.InvalidBinDirectory,
+    //             data: {
+    //                 lookups
+    //             } as reports.InvalidBinDirectoryReport
+    //         });
+    //         return {
+    //             userInput,
+    //             cli,
+    //             reportFn,
+    //             config: mergedConfig,
+    //             errors: [{type: reports.ReportTypes.InvalidBinDirectory, data: {lookups}}]
+    //         } as PreparedInput;
+    //
+    //     } else {
+    //         mergedConfig.binDirectories = lookups.valid;
+    //     }
+    // }
 
     // Show the user which external inputs are being used
-    if (userInput.type === InputTypes.ExternalFile ||
-        userInput.type === InputTypes.CBFile ||
-        userInput.type === InputTypes.DefaultExternalFile
-    ) reportFn({type: reports.ReportTypes.UsingInputFile, data: {sources: userInput.sources}});
+    // if (userInput.type === InputTypes.ExternalFile ||
+    //     userInput.type === InputTypes.CBFile ||
+    //     userInput.type === InputTypes.DefaultExternalFile
+    // ) reportFn({type: reports.ReportTypes.UsingInputFile, data: {sources: userInput.sources}});
 
-    return {
-        userInput,
-        cli,
-        reportFn,
-        config: mergedConfig,
-        errors: []
-    };
+    // return {
+    //     userInput,
+    //     cli,
+    //     reportFn,
+    //     config: mergedConfig,
+    //     errors: []
+    // };
 }
 
 /**
@@ -278,46 +268,74 @@ const getUserInput = (merged, input) =>
             : Right(userInput)
         );
 
+const getBins = (dir, cwd) =>
+    Right(getBinLookups(dir, cwd))
+        .chain(x => x.invalid.length
+            ? Left({type: reports.ReportTypes.BinOptionError, bin: x})
+            : Right(x)
+        );
+
+const addBinLookups = config =>
+    config.bin.length
+        ? getBins(config.bin, config.cwd)
+            .map(bindirs => {
+                return _.assign({}, config, {
+                    binDirectories: bindirs.valid,
+                    binExecutables: getExecutables(bindirs.valid)
+                });
+            })
+        : Right(config);
+
+const addReporters = (config, reportFn) =>
+    Right(reports.getReporters(config, reportFn))
+        .chain(reporters =>
+            reporters.invalid.length
+                ? Left({type: reports.ReportTypes.InvalidReporter, reporters})
+                : Right(reporters.valid)
+        );
+
+const getExecutables = (dirs) =>
+    dirs.reduce((acc, lookup: BinDirectoryLookup) => {
+        const items = readdirSync(lookup.resolved);
+        return acc.concat(items.filter(dir => {
+            try {
+                return statSync(join(lookup.resolved, dir)).isFile()
+            } catch (e) {
+                return false;
+            }
+        }));
+    }, []);
+
+const getReportFn = reporters => (...args) => reporters.forEach(x => x.callable.apply(null, args));
+
+export function getSetup (cli: CLI, input?: CrossbowInput, reportFn?: Function) {
+    return getConfig(cli.flags, input)
+        .chain(setup =>
+            addBinLookups(setup.config)
+                .chain(config => addReporters(config, reportFn)
+                    .map(reporters => {
+                        return {
+                            reporters,
+                            config,
+                            userInput: setup.userInput,
+                            cli,
+                            reportFn: getReportFn(reporters)
+                        };
+                    })
+                )
+        )
+}
+
 export default function (cli: CLI, input?: CrossbowInput) {
 
-    const config = getConfig(cli.flags, input)
-        .map(x => {
-            console.log('MAP', x);
-        })
-        .fold(err => {
-            console.log(err);
-        }, x => {
-            console.log(x);
+    return getSetup(cli, input)
+        .fold(e => {
+            return Rx.Observable.just({
+                errors: [e]
+            });
+        }, prepared => {
+            return handleIncoming<any>(prepared);
         });
-
-    // return {
-    //     userInput,
-    //     cli,
-    //     config: mergedConfig,
-    //     reportFn,
-    //     errors: [{type: reports.ReportTypes.InputError}]
-    // } as PreparedInput;
-
-    // const firstMerge = merge(cli.flags);
-    // const userInput  = getInputs(firstMerge, input);
-    //
-    // console.log(userInput.inputs[0]);
-    //
-    // console.log(mergedConfig);
-    // console.log(cli);
-
-    // console.log('-->-->---', config);
-
-    // const prepared = prepareInput(cli, input);
-    // console.log(prepared);
-
-    // if (prepared.errors.length) {
-    //     return Rx.Observable.just({
-    //         errors: prepared.errors
-    //     });
-    // }
-    //
-    // return handleIncoming<any>(prepared);
 }
 
 

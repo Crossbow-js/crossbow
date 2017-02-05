@@ -26,18 +26,20 @@ export const enum LogLevel {
     Verbose
 }
 
-export default function (report: reports.IncomingReport, observer: Rx.Observer<reports.OutgoingReport>) {
+export default function (report: reports.IncomingReport) {
     if (typeof reporterFunctions[report.type] === "function") {
         const outputFn = reporterFunctions[report.type];
         const output = outputFn.call(null, report.data);
         if (typeof output === "string") {
-            if (output === "") return;
-            observer.onNext({origin: report.type, data: [output]});
+            if (output === "") return {origin: report.type, data: []};
+            return {origin: report.type, data: [output]}
         } else if (Array.isArray(output) && output.length) {
-            observer.onNext({origin: report.type, data: output});
+            return {origin: report.type, data: output}
         } else {
-            console.log("STRING or ARRAY not returned for", report.type);
+            return {origin: report.type, data: []}
         }
+    } else {
+        return {origin: report.type, data: []}
     }
 }
 
