@@ -40,7 +40,7 @@ export default function (report: reports.IncomingReport) {
             return {origin: report.type, data: []};
         }
     } else {
-        console.error('Report type not handled:', report.type);
+        console.error("Report type not handled:", report.type);
         return {origin: report.type, data: []};
     }
 }

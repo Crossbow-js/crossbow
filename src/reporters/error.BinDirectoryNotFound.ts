@@ -7,5 +7,5 @@ module.exports = function (error: {type: string}, other: BinDirectoryLookup, sha
   
   {red:Your input:}    {yellow:${other.input}}
   {red:Resolved Path:} {yellow:${other.resolved}}
-`
-}
+`;
+};
