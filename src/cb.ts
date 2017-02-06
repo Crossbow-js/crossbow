@@ -28,8 +28,6 @@ const debug = require("debug")("cb:cli");
 const _ = require('../lodash.custom');
 const parsed = cli(process.argv.slice(2));
 
-const cliOutputObserver = new Rx.Subject<reports.OutgoingReport>();
-
 const defaultReporter = reports.getDefaultReporter();
 const defaultReporterFn = (input) => {
     const output = defaultReporter(input);
@@ -45,9 +43,8 @@ if (parsed.execute) {
         console.log(parsed.output[0]);
     } else {
         if (parsed.output.length) {
-            cliOutputObserver.onNext({
-                origin: reports.ReportTypes.CLIParserOutput,
-                data: parsed.output
+            parsed.output.forEach(function (line) {
+                logger.info(line);
             });
         }
     }
