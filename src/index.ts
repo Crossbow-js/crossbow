@@ -68,137 +68,6 @@ export interface PreparedInput {
 }
 
 /**
- * Handle any type of init. It could be from the CLI, or via the API.
- * eg, any command from the CLI ultimately ends up in the following call
- *    $  crossbow run task1 -c conf/cb.js
- *    -> handleIncoming({
- *          input: ['run', 'task1'],
- *          flags: {c: 'conf/cb.js'}
- *       });
- */
-export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver?: OutgoingReporter, signalObserver?: OutgoingSignals): PreparedInput {
-
-    // let mergedConfig         = merge(cli.flags);
-    // const userInput          = getInputs(mergedConfig, input);
-    // let resolvedReporters    = reports.getReporters(mergedConfig, input);
-    // let chosenOutputObserver = reports.getOutputObserver(mergedConfig, outputObserver);
-    // let chosenSignalObserver = reports.getSignalReporter(mergedConfig, signalObserver);
-    // let hasReporters         = resolvedReporters.valid.length;
-    // const defaultReporter    = reports.getDefaultReporter();
-
-    // // Check if any given reporter are invalid
-    // // and defer to default
-    // if (resolvedReporters.invalid.length) {
-    //     defaultReporter({
-    //         type: reports.ReportTypes.InvalidReporter,
-    //         data: {
-    //             reporters: resolvedReporters
-    //         } as reports.InvalidReporterReport
-    //     }, chosenOutputObserver);
-    //
-    //     return {
-    //         userInput,
-    //         cli,
-    //         config: mergedConfig,
-    //         errors: [{type: reports.ReportTypes.InvalidReporter}]
-    //     } as PreparedInput;
-    // }
-    //
-    // // proxy for calling reporter functions.
-    // // uses default if none given
-    // const reportFn = function (report: reports.IncomingReport) {
-    //     if (!hasReporters) {
-    //         return defaultReporter(report, chosenOutputObserver);
-    //     }
-    //     resolvedReporters.valid.forEach(function (reporter: reports.Reporter) {
-    //         reporter.callable(report, chosenOutputObserver);
-    //     });
-    // };
-
-    // // Bail early if a user tried to load a specific file
-    // // but it didn't exist, or had some other error
-    // if (userInput.errors.length) {
-    //     reportFn({type: reports.ReportTypes.InputError, data: userInput});
-    //     return {
-    //         userInput,
-    //         cli,
-    //         config: mergedConfig,
-    //         reportFn,
-    //         errors: [{type: reports.ReportTypes.InputError}]
-    //     } as PreparedInput;
-    // }
-
-    // at this point, there are no invalid reporters or input files
-    // so we can reset the reporters to anything that may of come in via config
-    // if (userInput.inputs.length) {
-    //     mergedConfig = merge(_.merge({}, userInput.inputs[0].config, cli.flags));
-    // }
-    // resolvedReporters = reports.getReporters(mergedConfig, input);
-    // hasReporters      = resolvedReporters.valid.length;
-
-    /**
-     * Set the signal observer
-     * todo: Clean up how this is assigned
-     * @type {OutgoingSignals}
-     */
-    // mergedConfig.signalObserver = chosenSignalObserver;
-
-    // Check if any given reporter are invalid
-    // and defer to default (again)
-    // if (resolvedReporters.invalid.length) {
-    //     // reportFn({
-    //     //     type: reports.ReportTypes.InvalidReporter,
-    //     //     data: {
-    //     //         reporters: resolvedReporters
-    //     //     } as reports.InvalidReporterReport
-    //     // });
-    //     return {
-    //         userInput,
-    //         cli,
-    //         reportFn,
-    //         config: mergedConfig,
-    //         errors: [{type: reports.ReportTypes.InvalidReporter}]
-    //     } as PreparedInput;
-    // }
-
-    // if (mergedConfig.bin.length) {
-    //     const lookups = getBinLookups(mergedConfig.bin, mergedConfig.cwd);
-    //     if (lookups.invalid.length) {
-    //         reportFn({
-    //             type: reports.ReportTypes.InvalidBinDirectory,
-    //             data: {
-    //                 lookups
-    //             } as reports.InvalidBinDirectoryReport
-    //         });
-    //         return {
-    //             userInput,
-    //             cli,
-    //             reportFn,
-    //             config: mergedConfig,
-    //             errors: [{type: reports.ReportTypes.InvalidBinDirectory, data: {lookups}}]
-    //         } as PreparedInput;
-    //
-    //     } else {
-    //         mergedConfig.binDirectories = lookups.valid;
-    //     }
-    // }
-
-    // Show the user which external inputs are being used
-    // if (userInput.type === InputTypes.ExternalFile ||
-    //     userInput.type === InputTypes.CBFile ||
-    //     userInput.type === InputTypes.DefaultExternalFile
-    // )
-
-    // return {
-    //     userInput,
-    //     cli,
-    //     reportFn,
-    //     config: mergedConfig,
-    //     errors: []
-    // };
-}
-
-/**
  * This the the proxy that allows command/run mode to be handled
  * @param preparedInput
  */
@@ -313,6 +182,15 @@ const getExecutables = (dirs) =>
 
 const getReportFn = reporters => (...args) => reporters.forEach(x => x.callable.apply(null, args));
 
+/**
+ * Handle any type of init. It could be from the CLI, or via the API.
+ * eg, any command from the CLI ultimately ends up in the following call
+ *    $  crossbow run task1 -c conf/cb.js
+ *    -> handleIncoming({
+ *          input: ['run', 'task1'],
+ *          flags: {c: 'conf/cb.js'}
+ *       });
+ */
 export function getSetup (cli: CLI, input?: CrossbowInput) {
     return getConfig(cli.flags, input)
         .chain(setup =>
