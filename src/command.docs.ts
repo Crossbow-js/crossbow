@@ -15,7 +15,7 @@ import {clean} from "./logger";
 
 const debug = require("debug")("cb:command:docs");
 export interface DocsError {
-    type: DocsErrorTypes;
+    type: DocsErrorTypes|ReportTypes;
 }
 export interface DocsInputFileNotFoundError extends DocsError {
     file: file.ExternalFile;
@@ -67,7 +67,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
         return Rx.Observable.just({
             setup: {
                 tasks,
-                errors: []
+                errors: [{type: ReportTypes.NoTasksAvailable}]
             }
         });
     }
@@ -84,7 +84,7 @@ function execute(trigger: CommandTrigger): DocsCommandComplete {
         return Rx.Observable.just({
             setup: {
                 tasks,
-                errors: []
+                errors: [{type: ReportTypes.DocsInvalidTasksSimple}]
             }
         });
     }

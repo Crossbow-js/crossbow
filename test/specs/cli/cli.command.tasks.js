@@ -4,13 +4,13 @@ const execSync = require('child_process').execSync;
 
 describe("list available tasks", function () {
     it("lists tasks in simple format", function (done) {
-        exec(`node dist/cb tasks -i examples/crossbow.js`, function (err, stdout, stderr) {
+        exec(`node dist/cb tasks -i test/fixtures/examples/crossbow.js`, function (err, stdout, stderr) {
             assert.include(stdout, 'webpack        [ @npm sleep 1 ]');
             done();
         });
     });
     it("lists tasks in verbose format", function (done) {
-        exec(`node dist/cb tasks -i examples/crossbow.js -v`, function (err, stdout, stderr) {
+        exec(`node dist/cb tasks -i test/fixtures/examples/crossbow.js -v`, function (err, stdout, stderr) {
             assert.include(stdout, '├─┬ webpack\n');
             done();
         });

@@ -344,63 +344,6 @@ export function getReporters (config: CrossbowConfiguration): Reporters {
     }
 }
 export type OutgoingReporter = Rx.Subject<OutgoingReport>;
-export function getOutputObserver(mergedConfig: CrossbowConfiguration, outputObserver: OutgoingReporter) {
-
-    /**
-     * If an outputObserver was passed in with configuration (flags)
-     */
-    if (mergedConfig.outputObserver) {
-        return mergedConfig.outputObserver;
-    }
-
-    /**
-     * If an output observer was passed in via initial setup (cli fallback)
-     */
-    if (outputObserver) {
-        return outputObserver;
-    }
-
-    /**
-     * Default is to log each report to the console
-     */
-    const defaultOutputObserver = new Rx.Subject<OutgoingReport>();
-
-    defaultOutputObserver.subscribe(xs => {
-        xs.data.forEach(function (x) {
-            logger.info(x);
-        });
-    });
-
-    return defaultOutputObserver;
-}
-
-export function getSignalReporter(mergedConfig: CrossbowConfiguration, signalObserver?: OutgoingSignals): OutgoingSignals {
-
-    /**
-     * If an outputObserver was passed in with configuration (flags)
-     */
-    if (mergedConfig.signalObserver) {
-        return mergedConfig.signalObserver;
-    }
-
-    /**
-     * If an output observer was passed in via initial setup (cli fallback)
-     */
-    if (signalObserver) {
-        return signalObserver;
-    }
-
-    /**
-     * Default is to log each report to the console
-     */
-    const defaultSignalObserver = new Rx.Subject<CBSignal<ExitSignal|FileWriteSignal>>();
-
-    defaultSignalObserver.subscribe(signal => {
-        // default signals are no-ops
-    });
-
-    return defaultSignalObserver;
-}
 
 export function getDefaultReporter () {
     return require("./reporters/defaultReporter").default;

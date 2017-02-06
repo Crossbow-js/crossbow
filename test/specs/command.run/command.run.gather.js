@@ -16,7 +16,7 @@ describe('Gathering run tasks (1)', function () {
     });
     it('can gather from a default yaml file', function () {
         const runner = utils.getSetup(['js'], {}, {
-            input: 'examples/crossbow.yaml'
+            input: 'test/fixtures/examples/crossbow.yaml'
         });
         assert.equal(runner.tasks.valid.length, 1);
     });

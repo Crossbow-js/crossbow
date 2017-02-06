@@ -4,7 +4,7 @@ const getInputs = require("../../../dist/input.resolve").getInputs;
 
 describe('Choosing which input strategy to use', function () {
     it('returns multiple types when available', function () {
-        const inputs = getInputs(configMerge({cwd: 'examples', loadDefaultInputs: true}));
+        const inputs = getInputs(configMerge({cwd: 'test/fixtures/examples', loadDefaultInputs: true}));
         assert.equal(inputs.sources.length, 2);
         assert.equal(inputs.sources[0].parsed.base, 'crossbow.yaml');
         assert.equal(inputs.sources[1].parsed.base, 'crossbow.js');

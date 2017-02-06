@@ -88,7 +88,6 @@ function runFromCli(parsed: PostCLIParse, cliDefaultReporter): void {
         .map(x => addSignalFnIfMissing(x, cliSignalObserver))
         .fold(err => {
             // todo log input errors
-            // console.log(err);
             cliDefaultReporter(err);
             killSwitches$.onNext(true);
             return err;
@@ -273,12 +272,14 @@ function docsWithSetup(prepared: PreparedInput, killSwitches$) {
     handleIncoming<DocsCommandComplete>(prepared)
         .pluck("setup")
         .subscribe((setup: DocsCommandOutput) => {
-            if (setup.errors.length || setup.tasks.invalid.length) {
+            if (setup.errors.length) {
                 return killSwitches$.onNext(true);
             }
-            setup.output.forEach(function (outputItem: DocsFileOutput) {
-                file.writeFileToDisk(outputItem.file, outputItem.content);
-            });
+            if (setup.output) {
+                setup.output.forEach(function (outputItem: DocsFileOutput) {
+                    file.writeFileToDisk(outputItem.file, outputItem.content);
+                });
+            }
         });
 }
 function initWithSetup(prepared: PreparedInput, killSwitches$) {
