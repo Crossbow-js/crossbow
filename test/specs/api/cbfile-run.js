@@ -20,7 +20,6 @@ describe('Using a cbfile', function () {
     });
     it('works with non-array inputs', function () {
     	const runner = utils.getSetup(['build-js'], {}, {
-            outputObserver: utils.nullOutput(),
             cbfile: 'test/fixtures/cbfile.js'
         });
 

@@ -187,7 +187,7 @@ export function prepareInput(cli: CLI, input?: CrossbowInput|any, outputObserver
     // if (userInput.type === InputTypes.ExternalFile ||
     //     userInput.type === InputTypes.CBFile ||
     //     userInput.type === InputTypes.DefaultExternalFile
-    // ) reportFn({type: reports.ReportTypes.UsingInputFile, data: {sources: userInput.sources}});
+    // )
 
     // return {
     //     userInput,
@@ -252,7 +252,7 @@ function processConfigs (config, flags) {
  * Note: types are lost when using this method.
  */
 const mergeConfigs = (userInput, merged, flags) =>
-    userInput.type !== InputTypes.StubInlineObject
+    userInput.type !== InputTypes.StubInlineObject && userInput.type !== InputTypes.CBFile
         ? Right(merge(_.merge({}, userInput.inputs[0].config, flags)))
         : Right(merged);
 
@@ -265,6 +265,9 @@ const getConfig = (flags, input) =>
 
 const getUserInput = (merged, input) =>
     Right(getInputs(merged, input))
+        // .map(x => {
+        //     return x;
+        // })
         .chain(userInput => userInput.errors.length
             ? Left({type: reports.ReportTypes.InputError, data: userInput})
             : Right(userInput)

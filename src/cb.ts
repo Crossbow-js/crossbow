@@ -16,7 +16,6 @@ import {readFileSync, writeFileSync} from "fs";
 import {handleIncoming, getSetup, PreparedInput} from "./index";
 import logger from "./logger";
 import {PostCLIParse} from "./cli";
-import {prepareInput} from "./index";
 
 import * as reports from "./reporter.resolve";
 import * as file from "./file.utils";
@@ -24,7 +23,6 @@ import * as seq from "./task.sequence";
 
 import Rx = require("rx");
 import {Right} from "./file.utils";
-
 
 const debug = require("debug")("cb:cli");
 const _ = require('../lodash.custom');
@@ -92,14 +90,34 @@ function runFromCli(parsed: PostCLIParse, cliDefaultReporter): void {
         .map(x => addReporterIfMissing(x, cliDefaultReporter))
         .map(x => addSignalFnIfMissing(x, cliSignalObserver))
         .fold(err => {
-            // killSwitches$.onNext(true);
             // todo log input errors
             // console.log(err);
             cliDefaultReporter(err);
+            killSwitches$.onNext(true);
             return err;
         }, (setup: PreparedInput) => {
+
+            setup.reportFn({
+                type: reports.ReportTypes.UsingInputFile, data: {sources: setup.userInput.sources}
+            });
+
             if (parsed.cli.command === 'run') {
                 runWithSetup(setup, killSwitches$);
+            }
+            if (parsed.cli.command === 'docs') {
+                docsWithSetup(setup, killSwitches$);
+            }
+            if (parsed.cli.command === 'init') {
+                initWithSetup(setup, killSwitches$);
+            }
+            if (parsed.cli.command === 'tasks' || parsed.cli.command === 'ls') {
+                tasksWithSetup(setup, killSwitches$);
+            }
+            if (parsed.cli.command === 'watch') {
+                watchWithSetup(setup, killSwitches$);
+            }
+            if (parsed.cli.command === 'watchers') {
+                watchersWithSetup(setup, killSwitches$);
             }
         });
 }
@@ -253,85 +271,77 @@ function runWithSetup(prepared: PreparedInput, killSwitches$) {
         require("./command.run.post-execution").postCliExecution(completeData);
     }
 }
+function docsWithSetup(prepared: PreparedInput, killSwitches$) {
 
+    handleIncoming<DocsCommandComplete>(prepared)
+        .pluck("setup")
+        .subscribe((setup: DocsCommandOutput) => {
+            if (setup.errors.length || setup.tasks.invalid.length) {
+                return killSwitches$.onNext(true);
+            }
+            setup.output.forEach(function (outputItem: DocsFileOutput) {
+                file.writeFileToDisk(outputItem.file, outputItem.content);
+            });
+        });
+}
+function initWithSetup(prepared: PreparedInput, killSwitches$) {
+    handleIncoming<InitCommandComplete>(prepared)
+        .pluck("setup")
+        .subscribe((setup: InitCommandOutput) => {
+            if (setup.errors.length) {
+                return killSwitches$.onNext(true);
+            }
+            writeFileSync(setup.outputFilePath, readFileSync(setup.templateFilePath));
+        });
+}
+function tasksWithSetup(prepared: PreparedInput, killSwitches$) {
+    handleIncoming<TasksCommandComplete>(prepared)
+        .subscribe(x => {
+            const {groups, tasks} = x.setup;
+            const invalid = groups.reduce((acc, group) => acc.concat(group.tasks.invalid), []);
 
-    //
-    //
-    // if (parsed.cli.command === "tasks" || parsed.cli.command === "ls") {
-    //     handleIncoming<TasksCommandComplete>(prepared)
-    //         .subscribe(x => {
-    //             const {groups, tasks} = x.setup;
-    //             const invalid = groups.reduce((acc, group) => acc.concat(group.tasks.invalid), []);
-    //
-    //             if (invalid.length || prepared.config.verbose === LogLevel.Verbose) {
-    //                 return prepared.reportFn({
-    //                     type: reports.ReportTypes.TaskTree,
-    //                     data: {
-    //                         tasks,
-    //                         config: prepared.config,
-    //                         title: invalid.length ? "Errors found:" : "Available Tasks:"
-    //                     } as reports.TaskTreeReport
-    //                 });
-    //             }
-    //
-    //             if (!groups.length) {
-    //                 return prepared.reportFn({type: reports.ReportTypes.NoTasksAvailable});
-    //             }
-    //
-    //             prepared.reportFn({
-    //                 type: reports.ReportTypes.SimpleTaskList,
-    //                 data: {setup: x.setup}
-    //             });
-    //         });
-    // }
-    //
-    // if (parsed.cli.command === "docs") {
-    //     handleIncoming<DocsCommandComplete>(prepared)
-    //         .pluck("setup")
-    //         .subscribe((setup: DocsCommandOutput) => {
-    //             if (setup.errors.length || setup.tasks.invalid.length) {
-    //                 return killSwitches$.onNext(true);
-    //             }
-    //             setup.output.forEach(function (outputItem: DocsFileOutput) {
-    //                 file.writeFileToDisk(outputItem.file, outputItem.content);
-    //             });
-    //         });
-    // }
-    //
-    // if (parsed.cli.command === "init") {
-    //     handleIncoming<InitCommandComplete>(prepared)
-    //         .pluck("setup")
-    //         .subscribe((setup: InitCommandOutput) => {
-    //             if (setup.errors.length) {
-    //                 return killSwitches$.onNext(true);
-    //             }
-    //             writeFileSync(setup.outputFilePath, readFileSync(setup.templateFilePath));
-    //         });
-    // }
-    //
-    // if (parsed.cli.command === "watchers") {
-    //     handleIncoming<WatchersCommandComplete>(prepared)
-    //         .pluck("setup")
-    //         .subscribe((setup: WatchersCommandOutput) => {
-    //             if (setup.errors.length) {
-    //                 return killSwitches$.onNext(true);
-    //             }
-    //             prepared.reportFn({
-    //                 type: reports.ReportTypes.WatcherNames,
-    //                 data: {setup}
-    //             });
-    //         });
-    // }
-    //
-    // if (parsed.cli.command === "watch") {
-    //     handleIncoming<WatchCommmandComplete>(prepared)
-    //         .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
-    //             if (x.setup.errors.length) {
-    //                 killSwitches$.onNext(true);
-    //                 return Rx.Observable.empty();
-    //             }
-    //             return x.update$;
-    //         })
-    //         .subscribe();
-    // }
-// }
+            if (invalid.length || prepared.config.verbose === LogLevel.Verbose) {
+                return prepared.reportFn({
+                    type: reports.ReportTypes.TaskTree,
+                    data: {
+                        tasks,
+                        config: prepared.config,
+                        title: invalid.length ? "Errors found:" : "Available Tasks:"
+                    } as reports.TaskTreeReport
+                });
+            }
+
+            if (!groups.length) {
+                return prepared.reportFn({type: reports.ReportTypes.NoTasksAvailable});
+            }
+
+            prepared.reportFn({
+                type: reports.ReportTypes.SimpleTaskList,
+                data: {setup: x.setup}
+            });
+        });
+}
+function watchWithSetup(prepared: PreparedInput, killSwitches$) {
+    handleIncoming<WatchCommmandComplete>(prepared)
+        .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
+            if (x.setup.errors.length) {
+                killSwitches$.onNext(true);
+                return Rx.Observable.empty();
+            }
+            return x.update$; // start the watchers
+        })
+        .subscribe();
+}
+function watchersWithSetup(prepared: PreparedInput, killSwitches$) {
+    handleIncoming<WatchersCommandComplete>(prepared)
+        .pluck("setup")
+        .subscribe((setup: WatchersCommandOutput) => {
+            if (setup.errors.length) {
+                return killSwitches$.onNext(true);
+            }
+            prepared.reportFn({
+                type: reports.ReportTypes.WatcherNames,
+                data: {setup}
+            });
+        });
+}

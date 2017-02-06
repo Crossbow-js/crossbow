@@ -21,16 +21,10 @@ describe('Running tasks from object literals', function () {
         assert.equal(reports[1].type, TaskReportType.end);
         assert.equal(reports[1].stats.duration, 100);
     });
-    it.only('with single task as array', function () {
+    it('with single task as array', function () {
         const runner = utils.run({
             input: ['run', 'js'],
-            flags: {
-                input: ['crossbow.yaml']
-            }
         }, {
-            config: {
-                bin: ['./shane']
-            },
             tasks: {
                 js: [{
                     tasks: utils.task(1000)
@@ -38,7 +32,6 @@ describe('Running tasks from object literals', function () {
             }
         });
         const reports  = utils.getReports(runner);
-        // const complete = utils.getComplete(runner);
         assert.equal(reports.length, 2);
         assert.equal(reports[0].type, TaskReportType.start);
         assert.equal(reports[1].type, TaskReportType.end);

@@ -48,13 +48,13 @@ module.exports.getGenericSetup = (cli, input, config) => {
 };
 
 module.exports.getSetup = (args, input, config) => {
+
     const scheduler  = new Rx.TestScheduler();
     const output     = new Rx.ReplaySubject(100);
 
     const cli                = {};
     cli.input                = ['run'].concat(args);
     cli.flags                = config || {};
-    cli.flags.outputObserver = output;
     cli.flags.scheduler      = scheduler;
 
     const results    = scheduler.startScheduler(() => cb.default(cli, input).map(x => {
@@ -77,8 +77,8 @@ module.exports.getRunner = (args, input, config) => {
     //
     // console.log(results.messages[0].value.value.type);
     // return results.messages;
-    const prepared = cb.prepareInput(cli, input, output);
-    return cb.handleIncoming(prepared).flatMap(x => x.update$);
+    const prepared = cb.default(cli, input);
+    return prepared.flatMap(x => x.update$);
 };
 
 module.exports.getWatcher = (args, input, config) => {
