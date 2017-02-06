@@ -1,7 +1,7 @@
 <p align="center"><a href="https://travis-ci.org/Crossbow-js/crossbow"><img src="https://travis-ci.org/Crossbow-js/crossbow.svg?branch=master" /></a></p>
 <p align="center"><a href="http://www.crossbow.io"><img src="https://crossbow.io/img/logo.svg" width="300" /></a></p>
 <p align="center"><b>BEYOND NPM SCRIPTS</b></p>
-<p align="center">Unifying the use & configuration of plain functions, gulp-style streams, tasks in separate files, shell/NPM scripts plus much more!</p>
+<p align="center">Unifying the use & configuration of plain functions, gulp-style streams, tasks in separate files,<br>shell/NPM scripts plus much more!</p>
 <p align="center"><code>npm install -g crossbow</code></p>
 <p align="center"><a href="https://crossbow.io/docs/installation">Get Started!</a></p>
 
