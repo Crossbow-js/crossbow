@@ -14,4 +14,4 @@ of your **exiting** tools! This is powered by a **powerful task resolution syste
 an **extremely reliable execution technique** and an **advanced recursive queueing system**. At the same time
 we provide **best-in-game error handling**, features that are **not possible in other tools** and an all-round **better developer experience**.
 
-(Get started!)[https://crossbow.io/docs/installation]
+[Get started!](https://crossbow.io/docs/installation)
