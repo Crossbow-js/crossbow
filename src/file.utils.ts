@@ -1,4 +1,4 @@
-import {CrossbowConfiguration} from "./config";
+import {CrossbowConfiguration, EnvFile} from "./config";
 import {InputFiles, InputErrorTypes, InputError} from "./task.utils";
 import {readFileSync, writeFileSync, existsSync} from "fs";
 import {resolve, parse, relative} from "path";
@@ -142,6 +142,15 @@ export function readInputFiles(paths: string[], cwd: string): InputFiles {
     };
 }
 
+export function readFileFromDiskWithContent(path: string, cwd: string): ExternalFileContent {
+    const files = readFilesFromDisk([path], cwd);
+    return files
+        .map((x: ExternalFileContent) => {
+            if (x.errors.length) return x;
+            x.content = readFileSync(x.resolved, "utf8");
+            return x;
+        })[0];
+}
 export function readFilesFromDiskWithContent(paths: string[], cwd: string): ExternalFileContent[] {
     const files = readFilesFromDisk(paths, cwd);
     return files
@@ -388,6 +397,11 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
     };
 }
 
+const envFileExists = path =>
+    existsSync(path)
+        ? Right(path)
+        : Left({type: InputErrorTypes.EnvFileNotFound});
+
 const binDirectoryExists = path =>
     existsSync(path)
         ? Right(path)
@@ -428,6 +442,75 @@ export const getBinLookups = (paths, cwd) =>
                 invalid: xs.filter(x => x.errors.length > 0)
             };
         });
+
+export const getEnvFilesFromDisk = (envFile, cwd) =>
+    Right([].concat(envFile).map(path => getSingleEnvFile(path, cwd)))
+        .chain(xs => {
+            return {
+                all: xs,
+                valid: xs.filter(x => x.errors.length === 0),
+                invalid: xs.filter(x => x.errors.length > 0)
+            };
+        });
+
+function addParsedData(file: ExternalFileContent): ExternalFileContent {
+    return _.assign({}, file, {data: JSON.parse(file.content)});
+}
+
+export const getSingleEnvFile = (envFile: EnvFile, cwd: string) => {
+    if (typeof envFile === 'string') {
+        return Right(readFileFromDiskWithContent(envFile, cwd))
+            .chain(result => {
+                return result.errors.length
+                    ? Left(result)
+                    : Right(addParsedData(result))
+            })
+            .fold(error => {
+                 return {
+                     errors: [error],
+                     input: envFile
+                 }
+             }, result => {
+                 console.log('-->',result);
+             })
+       // return joinPath(String(envFile), cwd)
+       //     .chain(resolved => Right(resolved)
+       //          .chain(resolved => {
+       //              return envFileExists(resolved);
+       //          })
+       //          .map(resolved => {
+       //              return readFileFromDiskWithContent(resolved, cwd);
+       //          })
+       //          .fold(error => {
+       //              return {
+       //                  errors: [error],
+       //                  resolved,
+       //                  input: envFile
+       //              }
+       //          }, result => {
+       //              console.log(result);
+       //          })
+       //     )
+
+    }
+};
+    // joinPath(String(path), cwd)
+    //     .chain(resolved => Right(resolved)
+    //         .chain(resolved => binDirectoryExists(resolved))
+    //         .chain(resolved => isDirectory(resolved))
+    //         .fold(error => {
+    //             return {
+    //                 errors: [error],
+    //                 resolved,
+    //                 input: path
+    //             }
+    //         }, resolved => {
+    //             return {
+    //                 errors: [],
+    //                 resolved,
+    //                 input: path
+    //             }
+    //         }));
 
 export const Right = (x) => ({
     chain: f => f(x),

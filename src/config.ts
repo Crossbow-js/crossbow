@@ -31,6 +31,11 @@ export interface FileWriteSignal {
     content: string;
 }
 
+export interface EnvFile {
+    file: ExternalFile;
+    prefix: string[]
+}
+
 export interface CrossbowConfiguration {
     cwd: string;
     runMode: TaskRunModes;
@@ -52,6 +57,7 @@ export interface CrossbowConfiguration {
     cbfile?: string;
     dump: boolean;
     envPrefix: string;
+    envFile: string[]|EnvFile|EnvFile[];
     env: any;
     before: string[];
     type?: InitConfigFileTypes;
@@ -166,6 +172,10 @@ const defaults = <CrossbowConfiguration>{
      *      CB_DOCKER_PORT=8000
      */
     envPrefix: "cb",
+    /**
+     *
+     */
+    envFile: [],
     /**
      * Global ENV vars
      */

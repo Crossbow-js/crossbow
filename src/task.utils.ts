@@ -19,7 +19,8 @@ export enum InputErrorTypes {
     InvalidInput         = <any>"InvalidInput",
     InvalidJson          = <any>"InvalidJson",
     BinDirectoryNotFound = <any>"BinDirectoryNotFound",
-    BinPathNotADirectory = <any>"BinPathNotADirectory"
+    BinPathNotADirectory = <any>"BinPathNotADirectory",
+    EnvFileNotFound      = <any>"EnvFileNotFound"
 }
 
 export interface InputFileNotFoundError extends InputError {}

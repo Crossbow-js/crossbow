@@ -15,6 +15,10 @@
     "desc": "Global Environment vars (eg: NAME=docker)",
     "type": "array"
   },
+  "envFile": {
+    "desc": "Files to load environment variable from",
+    "type": "array"
+  },
   "verbose": {
     "desc": "Increase Verbosity level of output",
     "alias": ["v"],

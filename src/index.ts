@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import runner = require("./command.run");
 import {CrossbowConfiguration, merge, OutgoingSignals} from "./config";
-import {getRequirePaths, getBinLookups, Right, Left} from "./file.utils";
+import {getRequirePaths, getBinLookups, Right, Left, getEnvFilesFromDisk} from "./file.utils";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require("rx");
@@ -160,6 +160,24 @@ const addBinLookups = config =>
             })
         : Right(config);
 
+const getEnvFiles = (envFile, cwd) =>
+    Right(getEnvFilesFromDisk(envFile, cwd))
+        .chain(x => x.invalid.length
+            ? Left({type: reports.ReportTypes.BinOptionError, data: x})
+            : Right(x)
+        );
+
+const addEnvFiles = config => {
+    return config.envFile.length
+        ? getEnvFiles(config.envFile, config.cwd)
+            .map(envFiles => {
+                return _.assign({}, config, {
+                    envFiles: envFiles.valid
+                });
+            })
+        : Right(config);
+};
+
 const addReporters = (config) =>
     Right(reports.getReporters(config))
         .chain(reporters =>
@@ -195,6 +213,7 @@ export function getSetup (cli: CLI, input?: CrossbowInput) {
     return getConfig(cli.flags, input)
         .chain(setup =>
             addBinLookups(setup.config)
+                .chain(config => addEnvFiles(config)
                 .chain(config => addReporters(config)
                     .map(reporters => {
                         return {
