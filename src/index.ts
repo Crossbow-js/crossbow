@@ -160,23 +160,6 @@ const addBinLookups = config =>
             })
         : Right(config);
 
-const getEnvFiles = (envFile, cwd) =>
-    Right(getEnvFilesFromDisk(envFile, cwd))
-        .chain(x => x.invalid.length
-            ? Left({type: reports.ReportTypes.BinOptionError, data: x})
-            : Right(x)
-        );
-
-const addEnvFiles = config => {
-    return config.envFile.length
-        ? getEnvFiles(config.envFile, config.cwd)
-            .map(envFiles => {
-                return _.assign({}, config, {
-                    envFiles: envFiles.valid
-                });
-            })
-        : Right(config);
-};
 
 const addReporters = (config) =>
     Right(reports.getReporters(config))
@@ -214,7 +197,7 @@ export function getSetup (cli: CLI, input?: CrossbowInput) {
         .chain(setup =>
             addBinLookups(setup.config)
                 .chain(config => addEnvFiles(config)
-                .chain(config => addReporters(config)
+                    .chain(config => addReporters(config)
                     .map(reporters => {
                         return {
                             reporters,
@@ -224,7 +207,7 @@ export function getSetup (cli: CLI, input?: CrossbowInput) {
                             reportFn: getReportFn(reporters)
                         };
                     })
-                )
+                ))
         )
 }
 
