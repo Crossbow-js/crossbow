@@ -151,7 +151,7 @@ export function envifyObject(object: any, prefix: string, objectKeyName: string)
             return acc;
         }
         if (this.isLeaf) {
-            acc[[prefix, objectKeyName, ...this.path].join("_").toUpperCase()] = String(this.node);
+            acc[[prefix, objectKeyName, ...this.path].join("_")] = String(this.node);
         }
         return acc;
     }, {});
@@ -188,8 +188,12 @@ export function getCBEnv (trigger: CommandTrigger): {} {
     const {trailing, command} = trigger.cli;
     const cbCliEnv     = envifyObject({trailing, command}, prefix, "cli");
 
+    const cbCliEnvBackwardsCompat = Object.keys(cbCliEnv).reduce((acc, key) => {
+        acc[key.toUpperCase()] = cbCliEnv[key];
+        return acc;
+    }, {});
                                                       // 4. env key from input file
-    return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, trigger.input.env);
+    return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, cbCliEnvBackwardsCompat, trigger.input.env);
 }
 
 /**

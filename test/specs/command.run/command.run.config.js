@@ -15,7 +15,7 @@ describe('running tasks with config', function () {
                 }
             },
             tasks: {
-                css: '@sh sleep $JJSSJJ_OPTIONS_SOME_NESTED_PROP'
+                css: '@sh sleep $JJSSJJ_options_some_nested_prop'
             }
         });
         runner

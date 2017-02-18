@@ -6,7 +6,7 @@ describe('Adaptor tasks + global option vars', function () {
         const runner = utils.getRunner(['js'], {
             tasks: {
                 js: {
-                    input: '@sh sleep $CB_OPTIONS_MY_NESTED_OBJECT_SLEEP'
+                    input: '@sh sleep $cb_options_my_nested_object_sleep'
                 }
             },
             options: {
@@ -30,7 +30,7 @@ describe('Adaptor tasks + global option vars', function () {
         const runner = utils.getRunner(['js'], {
             tasks: {
                 js: {
-                    input: '@sh sleep $CB_OPTIONS_MY_NESTED_OBJECT_SLEEP'
+                    input: '@sh sleep $cb_options_my_nested_object_sleep'
                 }
             },
             options: {
