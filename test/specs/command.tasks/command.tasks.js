@@ -91,5 +91,18 @@ describe('command.tasks', function () {
         }, {});
         assert.deepEqual(setup, { groups: [], tasks: [], errors: [] })
     });
+    it("resolves when task definition contains wildcards", function () {
+        const setup = utils.getGenericSetup({
+            input: ['tasks'],
+            flags: {
+                bin: ['test/fixtures/.bin']
+            }
+        }, {
+            tasks: {
+                css: 'my-bin-task "**/*.scss" --syntax scss'
+            }
+        });
+        assert.equal(setup.groups[0].tasks.valid.length, 1);
+    });
 });
 

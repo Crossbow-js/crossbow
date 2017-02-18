@@ -295,6 +295,7 @@ export interface SplitTaskAndFlags {
  */
 function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlags {
 
+
     /**
      * Split up the task name from any flags/queries/cbflags etc
      * @type {{baseName: string, flags: {}}}
@@ -323,7 +324,8 @@ function getSplitFlags(taskName: string, input: CrossbowInput): SplitTaskAndFlag
          * is this taskname going to match, and if so, does it contain any flags?
          */
         const cbflags = Object.keys(input.tasks).reduce(function (all, key) {
-            const match = key.match(new RegExp(`^${taskName}@(.+)`));
+            const firstSectionOfTaskName = taskName.split(' ')[0];
+            const match = key.match(new RegExp(`^${firstSectionOfTaskName}@(.+)`));
             if (match) {
                 return all.concat(match[1].split(""));
             }
