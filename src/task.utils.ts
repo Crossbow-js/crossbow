@@ -218,7 +218,7 @@ export function getCBEnv (trigger: CommandTrigger): {} {
     });
 
     // Now add any envFiles
-    const fromEnvFilesMerged = Object.assign.apply(null, [{}].concat(fromEnvFiles));
+    const fromEnvFilesMerged = (<any>Object).assign.apply(null, [{}].concat(fromEnvFiles));
 
     return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, fromEnvFilesMerged, cbCliEnvBackwardsCompat, trigger.input.env);
 }

@@ -83,7 +83,7 @@
     "strip-ansi": "3.0.1",
     "through2": "2.0.0",
     "tslint": "^4.3.1",
-    "typescript": "^2.0.3",
+    "typescript": "latest",
     "typings": "latest",
     "vinyl-fs": "2.4.3",
     "watchify": "3.7.0",

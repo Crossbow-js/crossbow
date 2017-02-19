@@ -1,21 +1,13 @@
 #!/usr/bin/env node
 import runner = require("./command.run");
 import {CrossbowConfiguration, merge, OutgoingSignals} from "./config";
-import {getRequirePaths, getBinLookups, Right, Left, getEnvFilesFromDisk} from "./file.utils";
+import {getRequirePaths, Right, Left} from "./file.utils";
 import {getInputs, InputTypes, UserInput} from "./input.resolve";
 import * as reports from "./reporter.resolve";
 import Rx = require("rx");
-import {OutgoingReporter} from "./reporter.resolve";
-import {join} from "path";
-import {statSync} from "fs";
-import {existsSync} from "fs";
-import {InputErrorTypes} from "./task.utils";
-import {BinDirectoryLookup} from "./reporter.resolve";
-import {readdirSync} from "fs";
-import {accessSync} from "fs";
 import {Reporters} from "./reporter.resolve";
-import {addEnvFiles, addEnvFilesToObject} from "./setup.envFile";
-import {addBinLookups, addBinLookupsToObject} from "./setup.bin";
+import {addEnvFilesToObject} from "./setup.envFile";
+import {addBinLookupsToObject} from "./setup.bin";
 const fs = require('fs');
 
 const _ = require("../lodash.custom");
