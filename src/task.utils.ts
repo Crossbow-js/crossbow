@@ -21,6 +21,7 @@ export enum InputErrorTypes {
     BinDirectoryNotFound = <any>"BinDirectoryNotFound",
     BinPathNotADirectory = <any>"BinPathNotADirectory",
     EnvFileNotFound      = <any>"EnvFileNotFound"
+    EnvFileParseError    = <any>"EnvFileParseError"
 }
 
 export interface InputFileNotFoundError extends InputError {}

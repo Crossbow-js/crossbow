@@ -1,54 +1,67 @@
-import {Left, Right, readFileFromDiskWithContent, ExternalFileContent, parseEnv} from "./file.utils";
+import {Left, Right, readFileFromDiskWithContent, ExternalFileContent, parseEnv, tryCatch} from "./file.utils";
 import * as reports from "./reporter.resolve";
 import {EnvFile} from "./config";
-import {InputErrorTypes, isPlainObject} from "./task.utils";
+import {InputErrorTypes, isPlainObject, InputError} from "./task.utils";
 const _ = require("../lodash.custom");
 
-function addParsedData(file: ExternalFileContent): ExternalFileContent {
+function parseData(file: ExternalFileContent): {} {
     if (file.parsed.ext === '.json') {
-        return _.assign({}, file, {data: JSON.parse(file.content)});
+        return JSON.parse(file.content);
     }
-    return _.assign({}, file, {data: parseEnv(file.content)});
+    return parseEnv(file.content);
 }
 
+const getLookupPath = item =>
+    typeof item === 'string'
+        ? item
+        : item.path;
+
+const getPrefix = (envFile, global) => {
+    if (typeof envFile === 'string') {
+        return global;
+    }
+    if (envFile.prefix) {
+        return [].concat(envFile.prefix);
+    }
+    return global;
+};
+
+const readEnvFile = (lookupPath, cwd) =>
+    Right(readFileFromDiskWithContent(lookupPath, cwd))
+        .chain(result => result.errors.length
+            ? Left(result)
+            : Right(result));
+
 export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: string): EnvFile => {
-    const lookupPath = (function() {
-        if (typeof envFile === 'string') {
-            return envFile;
-        }
-        return envFile.path;
-    })();
 
-    /**
-     * 1. If a string was given, use global prefix
-     * 2. If a prefix was given, use that in place of global
-     * 3. default to using global
-     */
-    const prefix = (function() {
-        if (typeof envFile === 'string') {
-            return globalPrefix;
-        }
-        if (envFile.prefix) {
-            return [].concat(envFile.prefix);
-        }
-        return globalPrefix;
-    })();
-
-    const result = readFileFromDiskWithContent(lookupPath, cwd);
-    if (result.errors.length) {
-        return {
-            input: lookupPath,
-            file: result,
-            prefix: prefix,
-            errors: [{type: InputErrorTypes.EnvFileNotFound}]
-        }
-    }
-    return {
-        input: lookupPath,
-        file: addParsedData(result),
-        prefix: prefix,
-        errors: []
-    }
+    const out = Right(envFile)
+        .chain(envFileItem => Right([getLookupPath(envFileItem), getPrefix(envFileItem, globalPrefix)])
+            .chain(([lookupPath, prefix]) =>
+                readEnvFile(lookupPath, cwd)
+                    .fold(file => {
+                        return Left({
+                            input: lookupPath,
+                            file,
+                            prefix: prefix,
+                            errors: [{type: InputErrorTypes.EnvFileNotFound}]
+                        })
+                    }, r => Right(r))
+                    .chain((file: ExternalFileContent) =>
+                        tryCatch(() => parseData(file))
+                            .fold(error => Left({
+                                    input: lookupPath,
+                                    file,
+                                    prefix: prefix,
+                                    errors: [{type: InputErrorTypes.EnvFileParseError, error}]
+                                }),
+                                  parsedData => Right({
+                                    input: lookupPath,
+                                    file: _.assign({}, file, {data: parsedData}),
+                                    prefix: prefix,
+                                    errors: []
+                                })
+                            ))));
+    return out.fold(e => e, r => r);
 };
 
 export const getEnvFilesFromDisk = (envFile, globalPrefix, cwd) =>

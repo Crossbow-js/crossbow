@@ -43,4 +43,12 @@ describe("adding environment variables at run time from a file", function () {
             done();
         });
     });
+    it("throws with error JSON cannot be parsed", function (done) {
+        exec(`node dist/cb run '@sh echo $version' --envFile test/fixtures/env_file/json-error.json -q`, function (err, stdout) {
+            assert.equal(err.code, 1);
+            assert.include(stdout, 'EnvFileParseError');
+            assert.include(stdout, 'JSON could not be parsed');
+            done();
+        });
+    });
 });
