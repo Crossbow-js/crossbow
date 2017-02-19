@@ -14,6 +14,8 @@ import {BinDirectoryLookup} from "./reporter.resolve";
 import {readdirSync} from "fs";
 import {accessSync} from "fs";
 import {Reporters} from "./reporter.resolve";
+import {addEnvFiles, addEnvFilesToObject} from "./setup.envFile";
+import {addBinLookups, addBinLookupsToObject} from "./setup.bin";
 const fs = require('fs');
 
 const _ = require("../lodash.custom");
@@ -134,32 +136,10 @@ const getConfig = (flags, input) =>
 
 const getUserInput = (merged, input) =>
     Right(getInputs(merged, input))
-        // .map(x => {
-        //     return x;
-        // })
         .chain(userInput => userInput.errors.length
             ? Left({type: reports.ReportTypes.InputError, data: userInput})
             : Right(userInput)
         );
-
-const getBins = (dir, cwd) =>
-    Right(getBinLookups(dir, cwd))
-        .chain(x => x.invalid.length
-            ? Left({type: reports.ReportTypes.BinOptionError, data: x})
-            : Right(x)
-        );
-
-const addBinLookups = config =>
-    config.bin.length
-        ? getBins(config.bin, config.cwd)
-            .map(bindirs => {
-                return _.assign({}, config, {
-                    binDirectories: bindirs.valid,
-                    binExecutables: getExecutables(bindirs.valid)
-                });
-            })
-        : Right(config);
-
 
 const addReporters = (config) =>
     Right(reports.getReporters(config))
@@ -168,18 +148,6 @@ const addReporters = (config) =>
                 ? Left({type: reports.ReportTypes.InvalidReporter, data: {reporters}})
                 : Right(reporters.valid)
         );
-
-const getExecutables = (dirs) =>
-    dirs.reduce((acc, lookup: BinDirectoryLookup) => {
-        const items = readdirSync(lookup.resolved);
-        return acc.concat(items.filter(dir => {
-            try {
-                return statSync(join(lookup.resolved, dir)).isFile()
-            } catch (e) {
-                return false;
-            }
-        }));
-    }, []);
 
 const getReportFn = reporters => (...args) => reporters.forEach(x => x.callable.apply(null, args));
 
@@ -195,9 +163,9 @@ const getReportFn = reporters => (...args) => reporters.forEach(x => x.callable.
 export function getSetup (cli: CLI, input?: CrossbowInput) {
     return getConfig(cli.flags, input)
         .chain(setup =>
-            addBinLookups(setup.config)
-                .chain(config => addEnvFiles(config)
-                    .chain(config => addReporters(config)
+            addBinLookupsToObject(setup.config)
+                .chain(config => addEnvFilesToObject(config))
+                .chain(config => addReporters(config)
                     .map(reporters => {
                         return {
                             reporters,
@@ -206,9 +174,7 @@ export function getSetup (cli: CLI, input?: CrossbowInput) {
                             cli,
                             reportFn: getReportFn(reporters)
                         };
-                    })
-                ))
-        )
+                    })))
 }
 
 export default function (cli: CLI, input?: CrossbowInput) {

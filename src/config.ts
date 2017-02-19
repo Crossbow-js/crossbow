@@ -4,9 +4,10 @@ import {OutgoingReport, BinDirectoryLookup} from "./reporter.resolve";
 import {resolve} from "path";
 import {InitConfigFileTypes} from "./command.init";
 import {WatchEvent} from "./watch.file-watcher";
-import {ExternalFile} from "./file.utils";
+import {ExternalFile, ExternalFileContent} from "./file.utils";
 
 import Rx = require("rx");
+import {InputErrorTypes} from "./task.utils";
 
 const _ = require("../lodash.custom");
 
@@ -32,8 +33,14 @@ export interface FileWriteSignal {
 }
 
 export interface EnvFile {
-    file: ExternalFile;
-    prefix: string[]
+    file?: ExternalFileContent;
+    prefix?: string[]
+    errors: StandardError[]
+    input: EnvFile,
+}
+
+export interface StandardError {
+    type: InputErrorTypes
 }
 
 export interface CrossbowConfiguration {
@@ -58,6 +65,7 @@ export interface CrossbowConfiguration {
     dump: boolean;
     envPrefix: string;
     envFile: string[]|EnvFile|EnvFile[];
+    envFiles: EnvFile[];
     env: any;
     before: string[];
     type?: InitConfigFileTypes;
@@ -176,6 +184,7 @@ const defaults = <CrossbowConfiguration>{
      *
      */
     envFile: [],
+    envFiles: [],
     /**
      * Global ENV vars
      */

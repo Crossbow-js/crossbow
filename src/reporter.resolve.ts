@@ -54,6 +54,7 @@ export enum ReportTypes {
     InitInputFileTypeNotSupported  = <any>"InitInputFileTypeNotSupported",
     InputError                     = <any>"InputError",
     BinOptionError                 = <any>"BinOptionError",
+    EnvFileOptionError             = <any>"EnvFileOptionError",
     InputFileNotFound              = <any>"InputFileNotFound",
     InvalidReporter                = <any>"InvalidReporter",
     InvalidBinDirectory            = <any>"InvalidBinDirectory",

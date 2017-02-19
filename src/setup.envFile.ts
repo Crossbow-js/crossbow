@@ -1,53 +1,39 @@
-import {Left, Right, readFileFromDiskWithContent, ExternalFileContent} from "./file.utils";
+import {Left, Right, readFileFromDiskWithContent, ExternalFileContent, parseEnv} from "./file.utils";
 import * as reports from "./reporter.resolve";
 import {EnvFile} from "./config";
+import {InputErrorTypes} from "./task.utils";
 const _ = require("../lodash.custom");
 
 function addParsedData(file: ExternalFileContent): ExternalFileContent {
-    return _.assign({}, file, {data: JSON.parse(file.content)});
+    if (file.parsed.ext === '.json') {
+        return _.assign({}, file, {data: JSON.parse(file.content)});
+    }
+    return _.assign({}, file, {data: parseEnv(file.content)});
 }
 
-export const getSingleEnvFile = (envFile: EnvFile, cwd: string) => {
+export const getSingleEnvFile = (envFile: EnvFile, cwd: string): EnvFile => {
     if (typeof envFile === 'string') {
-        return Right(readFileFromDiskWithContent(envFile, cwd))
-            .chain(result => {
-                return result.errors.length
-                    ? Left(result)
-                    : Right(addParsedData(result))
-            })
-            .fold(error => {
-                return {
-                    errors: [error],
-                    input: envFile
-                }
-            }, result => {
-                console.log('-->',result);
-            })
-        // return joinPath(String(envFile), cwd)
-        //     .chain(resolved => Right(resolved)
-        //          .chain(resolved => {
-        //              return envFileExists(resolved);
-        //          })
-        //          .map(resolved => {
-        //              return readFileFromDiskWithContent(resolved, cwd);
-        //          })
-        //          .fold(error => {
-        //              return {
-        //                  errors: [error],
-        //                  resolved,
-        //                  input: envFile
-        //              }
-        //          }, result => {
-        //              console.log(result);
-        //          })
-        //     )
-
+        const result  = readFileFromDiskWithContent(envFile, cwd);
+        if (result.errors.length) {
+            return {
+                input: envFile,
+                file: result,
+                prefix: [],
+                errors: [{type: InputErrorTypes.EnvFileNotFound}]
+            }
+        }
+        return {
+            input: envFile,
+            file: addParsedData(result),
+            prefix: [],
+            errors: []
+        }
     }
 };
 
 export const getEnvFilesFromDisk = (envFile, cwd) =>
     Right([].concat(envFile).map(path => getSingleEnvFile(path, cwd)))
-        .chain(xs => {
+        .map(xs => {
             return {
                 all: xs,
                 valid: xs.filter(x => x.errors.length === 0),
@@ -55,14 +41,14 @@ export const getEnvFilesFromDisk = (envFile, cwd) =>
             };
         });
 
-const getEnvFiles = (envFile, cwd) =>
-    Right(getEnvFilesFromDisk(envFile, cwd))
+export const getEnvFiles = (envFile: EnvFile, cwd) =>
+    getEnvFilesFromDisk(envFile, cwd)
         .chain(x => x.invalid.length
-            ? Left({type: reports.ReportTypes.BinOptionError, data: x})
+            ? Left({type: reports.ReportTypes.EnvFileOptionError, data: x})
             : Right(x)
         );
 
-const addEnvFiles = config => {
+export const addEnvFilesToObject = config => {
     return config.envFile.length
         ? getEnvFiles(config.envFile, config.cwd)
             .map(envFiles => {
@@ -72,4 +58,3 @@ const addEnvFiles = config => {
             })
         : Right(config);
 };
-

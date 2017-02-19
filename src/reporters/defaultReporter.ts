@@ -1,5 +1,5 @@
 import {SequenceItemTypes, SequenceItem} from "../task.sequence.factories";
-import {CrossbowConfiguration} from "../config";
+import {CrossbowConfiguration, EnvFile} from "../config";
 import {TaskTypes, TaskCollection, IncomingTaskItem, Task} from "../task.resolve";
 import {Watcher} from "../watch.resolve";
 import {WatchTask} from "../watch.resolve";
@@ -50,6 +50,12 @@ export const reporterFunctions = {
         return report.invalid.reduce((lines, bin: BinDirectoryLookup) => {
             const error = bin.errors[0];
             return lines.concat(getExternalError(error.type, error, bin).split("\n"));
+        }, []);
+    },
+    [reports.ReportTypes.EnvFileOptionError]: function (report): string {
+        return report.invalid.reduce((lines, envFile: EnvFile) => {
+            const error = envFile.errors[0];
+            return lines.concat(getExternalError(error.type, error, envFile).split("\n"));
         }, []);
     },
     [reports.ReportTypes.UsingInputFile]: function (report: reports.UsingConfigFileReport): string {

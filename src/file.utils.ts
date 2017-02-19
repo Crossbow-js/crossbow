@@ -397,51 +397,42 @@ function markHashes(newHashes: IHashItem[], existingHashes: IHashItem[]): IHashR
     };
 }
 
-const envFileExists = path =>
-    existsSync(path)
-        ? Right(path)
-        : Left({type: InputErrorTypes.EnvFileNotFound});
+/**
+ * Thanks to https://github.com/motdotla/dotenv
+ * @param src
+ * @returns {{}}
+ */
+export function parseEnv (src: string): {[index: string]: string} {
+    const obj = {}
 
-const binDirectoryExists = path =>
-    existsSync(path)
-        ? Right(path)
-        : Left({type: InputErrorTypes.BinDirectoryNotFound});
+    // convert Buffers before splitting into lines and processing
+    src.toString().split('\n').forEach(function (line) {
+        // matching "KEY' and 'VAL' in 'KEY=VAL'
+        const keyValueArr = line.match(/^\s*([\w\.\-]+)\s*=\s*(.*)?\s*$/);
+        // matched?
+        if (keyValueArr != null) {
+            const key = keyValueArr[1];
 
-const isDirectory = path =>
-    statSync(path).isDirectory()
-        ? Right(path)
-        : Left({type: InputErrorTypes.BinPathNotADirectory});
+            // default undefined or missing values to empty string
+            let value = keyValueArr[2] ? keyValueArr[2] : '';
 
-const joinPath = (path, cwd) => Right(join(cwd, path));
+            // expand newlines in quoted values
+            let len = value ? value.length : 0;
+            if (len > 0 && value.charAt(0) === '"' && value.charAt(len - 1) === '"') {
+                value = value.replace(/\\n/gm, '\n');
+            }
 
-export const getBinLookup = (path: string, cwd: string) =>
-    joinPath(String(path), cwd)
-        .chain(resolved => Right(resolved)
-            .chain(resolved => binDirectoryExists(resolved))
-            .chain(resolved => isDirectory(resolved))
-            .fold(error => {
-                return {
-                    errors: [error],
-                    resolved,
-                    input: path
-                }
-            }, resolved => {
-                return {
-                    errors: [],
-                    resolved,
-                    input: path
-                }
-            }));
+            // remove any surrounding quotes and extra spaces
+            value = value.replace(/(^['"]|['"]$)/g, '').trim();
 
-export const getBinLookups = (paths, cwd) =>
-    Right([].concat(paths).map(path => getBinLookup(path, cwd)))
-        .chain(xs => {
-            return {
-                all: xs,
-                valid: xs.filter(x => x.errors.length === 0),
-                invalid: xs.filter(x => x.errors.length > 0)
-            };
-        });
+            obj[key] = value;
+        }
+    });
+
+    return obj
+}
+
+
 
 export const Right = (x) => ({
     chain: f => f(x),

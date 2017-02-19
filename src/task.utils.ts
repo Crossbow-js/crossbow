@@ -1,6 +1,6 @@
 import {relative, resolve, join, parse} from "path";
 import {existsSync, lstatSync} from "fs";
-import {CrossbowConfiguration} from "./config";
+import {CrossbowConfiguration, EnvFile} from "./config";
 import {TaskReportType} from "./task.runner";
 import {CommandTrigger} from "./command.run";
 import {ExternalFileInput, ExternalFile} from "./file.utils";
@@ -158,6 +158,24 @@ export function envifyObject(object: any, prefix: string, objectKeyName: string)
     }, {});
 }
 
+export function envifyObjectPlain(object: any, prefixes: string[]) {
+    const subject = _.cloneDeep(object);
+    return traverse(subject).reduce(function (acc, x) {
+        if (this.level > 4) {
+            this.remove();
+            return acc;
+        }
+        if (this.circular) {
+            this.remove();
+            return acc;
+        }
+        if (this.isLeaf) {
+            acc[prefixes.concat(this.path).join('_')] = String(this.node);
+        }
+        return acc;
+    }, {});
+}
+
 const merge = require("../lodash.custom").merge;
 
 export function excludeKeys(input: any, blacklist: string[]): any {
@@ -174,27 +192,35 @@ export function excludeKeys(input: any, blacklist: string[]): any {
  * 3. CLI trailing args + command
  * 4. env
  */
-const configBlacklist = ["outputObserver", "fileChangeObserver", "signalObserver", "scheduler"];
+const configBlacklist = ["outputObserver", "fileChangeObserver", "signalObserver", "scheduler", "envFiles", "binExecutables"];
 
 export function getCBEnv (trigger: CommandTrigger): {} {
     const prefix = trigger.config.envPrefix;
 
     // 1. Crossbow options (from cbfile etc)
-    const cbOptionsEnv = envifyObject(trigger.input.options, prefix, "options");
+    const cbOptionsEnv = envifyObjectPlain(trigger.input.options, [prefix, "options"]);
 
     // 2. Crossbow config (from config key or CLI flags)
-    const cbConfigEnv  = envifyObject(excludeKeys(trigger.config, configBlacklist), prefix, "config");
+    const cbConfigEnv  = envifyObjectPlain(excludeKeys(trigger.config, configBlacklist), [prefix, "config"]);
 
     // 3. command + trailing cli args
     const {trailing, command} = trigger.cli;
-    const cbCliEnv     = envifyObject({trailing, command}, prefix, "cli");
+    const cbCliEnv     = envifyObjectPlain({trailing, command}, [prefix, "cli"]);
 
     const cbCliEnvBackwardsCompat = Object.keys(cbCliEnv).reduce((acc, key) => {
         acc[key.toUpperCase()] = cbCliEnv[key];
         return acc;
     }, {});
-                                                      // 4. env key from input file
-    return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, cbCliEnvBackwardsCompat, trigger.input.env);
+
+    // Now add anything from envFiles
+    const fromEnvFiles = trigger.config.envFiles.map((envFile: EnvFile) => {
+        return envifyObjectPlain(envFile.file.data, envFile.prefix);
+    });
+
+    // Now add any envFiles
+    const fromEnvFilesMerged = Object.assign.apply(null, [{}].concat(fromEnvFiles));
+
+    return merge(cbOptionsEnv, cbConfigEnv, cbCliEnv, fromEnvFilesMerged, cbCliEnvBackwardsCompat, trigger.input.env);
 }
 
 /**
