@@ -1,7 +1,7 @@
 import {Left, Right, readFileFromDiskWithContent, ExternalFileContent, parseEnv} from "./file.utils";
 import * as reports from "./reporter.resolve";
 import {EnvFile} from "./config";
-import {InputErrorTypes} from "./task.utils";
+import {InputErrorTypes, isPlainObject} from "./task.utils";
 const _ = require("../lodash.custom");
 
 function addParsedData(file: ExternalFileContent): ExternalFileContent {
@@ -12,22 +12,37 @@ function addParsedData(file: ExternalFileContent): ExternalFileContent {
 }
 
 export const getSingleEnvFile = (envFile: EnvFile, cwd: string): EnvFile => {
-    if (typeof envFile === 'string') {
-        const result  = readFileFromDiskWithContent(envFile, cwd);
-        if (result.errors.length) {
-            return {
-                input: envFile,
-                file: result,
-                prefix: [],
-                errors: [{type: InputErrorTypes.EnvFileNotFound}]
-            }
+    const lookupPath = (function() {
+        if (typeof envFile === 'string') {
+            return envFile;
         }
+        return envFile.path;
+    })();
+
+    const prefix = (function() {
+        if (typeof envFile === 'string') {
+            return [];
+        }
+        if (envFile.prefix) {
+            return [].concat(envFile.prefix);
+        }
+        return [];
+    })();
+
+    const result = readFileFromDiskWithContent(lookupPath, cwd);
+    if (result.errors.length) {
         return {
-            input: envFile,
-            file: addParsedData(result),
-            prefix: [],
-            errors: []
+            input: lookupPath,
+            file: result,
+            prefix: prefix,
+            errors: [{type: InputErrorTypes.EnvFileNotFound}]
         }
+    }
+    return {
+        input: lookupPath,
+        file: addParsedData(result),
+        prefix: prefix,
+        errors: []
     }
 };
 

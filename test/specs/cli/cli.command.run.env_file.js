@@ -11,6 +11,18 @@ describe("adding environment variables at run time from a file", function () {
             done();
         });
     });
+    it("it accepts envFilePrefix option per item", function (done) {
+        exec(`node dist/cb output -i test/fixtures/env_file/crossbow.yaml -q`, function (err, stdout) {
+            assert.equal(stdout, '4.0.13\n'); // from the package.json file
+            done();
+        });
+    });
+    it.skip("it accepts global --envFilePrefix option", function (done) {
+        exec(`node dist/cb run '@sh echo $version' --envFile ${file2} -q`, function (err, stdout) {
+            assert.equal(stdout, '4.0.13\n'); // from the package.json file
+            done();
+        });
+    });
     it("it accepts plain text file", function (done) {
         exec(`node dist/cb run '@sh echo $NAME--$kittie' --envFile ${file1} -q`, function (err, stdout) {
             assert.equal(stdout, 'shane--cat\n'); // from the package.json file

@@ -1,0 +1,8 @@
+config:
+  progress: true
+  envFile:
+    - path: test/fixtures/env_file/package.json
+      prefix: ["npm", "package"]
+
+tasks:
+  output: '@sh echo $npm_package_version'

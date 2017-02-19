@@ -130,9 +130,9 @@ const mergeConfigs = (userInput, merged, flags) =>
 const getConfig = (flags, input) =>
     Right(merge(flags))
         .chain(merged => getUserInput(merged, input)
-            .chain(userInput => mergeConfigs(userInput, merged, flags)
-                                    .map(config => ({config, userInput})))
-        );
+            .chain(userInput => {
+                return mergeConfigs(userInput, merged, flags).map(config => ({config, userInput}));
+            }));
 
 const getUserInput = (merged, input) =>
     Right(getInputs(merged, input))

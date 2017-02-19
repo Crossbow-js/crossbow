@@ -7,8 +7,10 @@ const pkg = require('./package.json');
 // console.log(utils.envifyObject(pkg, 'npm', 'package'));
 
 const envfiles = utils.getEnvFiles([
-    'test/fixtures/env_file/package.json',
-    'test/fixtures/env_file/.env',
+    {
+        path: 'test/fixtures/env_file/package.json',
+        prefix: ['npm', 'package']
+    }
 ], process.cwd());
 
 envfiles.fold(e => {

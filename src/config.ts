@@ -33,10 +33,11 @@ export interface FileWriteSignal {
 }
 
 export interface EnvFile {
+    path?: string
     file?: ExternalFileContent;
     prefix?: string[]
     errors: StandardError[]
-    input: EnvFile,
+    input: EnvFile|string,
 }
 
 export interface StandardError {
