@@ -19,6 +19,10 @@
     "desc": "Files to load environment variable from",
     "type": "array"
   },
+  "envFilePrefix": {
+    "desc": "Prefixes to apply to envFile imports",
+    "type": "array"
+  },
   "verbose": {
     "desc": "Increase Verbosity level of output",
     "alias": ["v"],

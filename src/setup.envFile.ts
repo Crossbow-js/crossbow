@@ -11,7 +11,7 @@ function addParsedData(file: ExternalFileContent): ExternalFileContent {
     return _.assign({}, file, {data: parseEnv(file.content)});
 }
 
-export const getSingleEnvFile = (envFile: EnvFile, cwd: string): EnvFile => {
+export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: string): EnvFile => {
     const lookupPath = (function() {
         if (typeof envFile === 'string') {
             return envFile;
@@ -19,14 +19,19 @@ export const getSingleEnvFile = (envFile: EnvFile, cwd: string): EnvFile => {
         return envFile.path;
     })();
 
+    /**
+     * 1. If a string was given, use global prefix
+     * 2. If a prefix was given, use that in place of global
+     * 3. default to using global
+     */
     const prefix = (function() {
         if (typeof envFile === 'string') {
-            return [];
+            return globalPrefix;
         }
         if (envFile.prefix) {
             return [].concat(envFile.prefix);
         }
-        return [];
+        return globalPrefix;
     })();
 
     const result = readFileFromDiskWithContent(lookupPath, cwd);
@@ -46,8 +51,8 @@ export const getSingleEnvFile = (envFile: EnvFile, cwd: string): EnvFile => {
     }
 };
 
-export const getEnvFilesFromDisk = (envFile, cwd) =>
-    Right([].concat(envFile).map(path => getSingleEnvFile(path, cwd)))
+export const getEnvFilesFromDisk = (envFile, globalPrefix, cwd) =>
+    Right([].concat(envFile).map(path => getSingleEnvFile(path, globalPrefix, cwd)))
         .map(xs => {
             return {
                 all: xs,
@@ -56,8 +61,8 @@ export const getEnvFilesFromDisk = (envFile, cwd) =>
             };
         });
 
-export const getEnvFiles = (envFile: EnvFile, cwd) =>
-    getEnvFilesFromDisk(envFile, cwd)
+export const getEnvFiles = (envFile: EnvFile, globalPrefix, cwd) =>
+    getEnvFilesFromDisk(envFile, globalPrefix, cwd)
         .chain(x => x.invalid.length
             ? Left({type: reports.ReportTypes.EnvFileOptionError, data: x})
             : Right(x)
@@ -65,7 +70,7 @@ export const getEnvFiles = (envFile: EnvFile, cwd) =>
 
 export const addEnvFilesToObject = config => {
     return config.envFile.length
-        ? getEnvFiles(config.envFile, config.cwd)
+        ? getEnvFiles(config.envFile, config.envFilePrefix, config.cwd)
             .map(envFiles => {
                 return _.assign({}, config, {
                     envFiles: envFiles.valid

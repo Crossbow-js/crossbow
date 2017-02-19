@@ -66,6 +66,7 @@ export interface CrossbowConfiguration {
     dump: boolean;
     envPrefix: string;
     envFile: string[]|EnvFile|EnvFile[];
+    envFilePrefix: string[];
     envFiles: EnvFile[];
     env: any;
     before: string[];
@@ -186,6 +187,7 @@ const defaults = <CrossbowConfiguration>{
      */
     envFile: [],
     envFiles: [],
+    envFilePrefix: [],
     /**
      * Global ENV vars
      */

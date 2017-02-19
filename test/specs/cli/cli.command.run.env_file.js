@@ -17,8 +17,8 @@ describe("adding environment variables at run time from a file", function () {
             done();
         });
     });
-    it.skip("it accepts global --envFilePrefix option", function (done) {
-        exec(`node dist/cb run '@sh echo $version' --envFile ${file2} -q`, function (err, stdout) {
+    it("it accepts global --envFilePrefix option", function (done) {
+        exec(`node dist/cb run '@sh echo $npm_package_version' --envFile ${file2} --envFilePrefix npm_package -q`, function (err, stdout) {
             assert.equal(stdout, '4.0.13\n'); // from the package.json file
             done();
         });
