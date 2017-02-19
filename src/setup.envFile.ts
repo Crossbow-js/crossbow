@@ -34,10 +34,14 @@ const readEnvFile = (lookupPath, cwd) =>
 
 export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: string): EnvFile => {
 
-    const out = Right(envFile)
+    return Right(envFile)
+        // Get an array of 'lookupPath' and 'prefix' in the same scope
         .chain(envFileItem => Right([getLookupPath(envFileItem), getPrefix(envFileItem, globalPrefix)])
+            // destructure previous results
             .chain(([lookupPath, prefix]) =>
+                // Now attempt to read the file from disk
                 readEnvFile(lookupPath, cwd)
+                    // If an error occurs here, delegate to a `EnvFileNotFound` error
                     .fold(file => {
                         return Left({
                             input: lookupPath,
@@ -45,23 +49,25 @@ export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: 
                             prefix: prefix,
                             errors: [{type: InputErrorTypes.EnvFileNotFound}]
                         })
-                    }, r => Right(r))
+                    }, r => Right(r)) // <-- otherwise continue with the result
+                    // Now we have a file successfully read from disk, keep it in scope
                     .chain((file: ExternalFileContent) =>
+                        // Try to parse the data from it. (JSON/env could throw)
                         tryCatch(() => parseData(file))
+                            // If an error occurs in parsing, defer to `EnvFileParseError` error
                             .fold(error => Left({
                                     input: lookupPath,
                                     file,
                                     prefix: prefix,
                                     errors: [{type: InputErrorTypes.EnvFileParseError, error}]
                                 }),
-                                  parsedData => Right({
+                                  // If the content parsed without error, return the final result
+                                parsedData => Right({
                                     input: lookupPath,
                                     file: _.assign({}, file, {data: parsedData}),
-                                    prefix: prefix,
-                                    errors: []
+                                    prefix: prefix, errors: []
                                 })
-                            ))));
-    return out.fold(e => e, r => r);
+                            )))).fold(e => e, r => r); // finally fold as we could've exited early
 };
 
 export const getEnvFilesFromDisk = (envFile, globalPrefix, cwd) =>

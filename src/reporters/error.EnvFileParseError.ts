@@ -1,6 +1,6 @@
 import {EnvFile} from "../config";
 import {__e} from "../task.utils";
-module.exports = function (error: {type: string}, envFile: EnvFile) {
+module.exports = function (error, envFile: EnvFile) {
     return `{red:-} {bold:Description}: JSON could not be parsed!
     
     You tried to use the {yellow:envFile} option with a JSON file, 

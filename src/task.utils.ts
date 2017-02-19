@@ -20,7 +20,7 @@ export enum InputErrorTypes {
     InvalidJson          = <any>"InvalidJson",
     BinDirectoryNotFound = <any>"BinDirectoryNotFound",
     BinPathNotADirectory = <any>"BinPathNotADirectory",
-    EnvFileNotFound      = <any>"EnvFileNotFound"
+    EnvFileNotFound      = <any>"EnvFileNotFound",
     EnvFileParseError    = <any>"EnvFileParseError"
 }
 
