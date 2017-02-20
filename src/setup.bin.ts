@@ -38,7 +38,10 @@ export const getBinLookups = (paths: string[], cwd: string) =>
                 invalid: xs.filter(x => x.errors.length > 0)
             };
         });
-
+/**
+ * Resolve a single path. Allow for errors such as
+ * not found or not a directory
+ */
 export const getBinLookup = (path: string, cwd: string) =>
     joinPath(String(path), cwd)
         .chain(resolved => Right(resolved)
@@ -58,13 +61,20 @@ export const getBinLookup = (path: string, cwd: string) =>
                 }
             }));
 
-export const getBins = (dir, cwd) =>
+/**
+ * Resolve many bin directories, but if any produce an
+ * error, return a Left() indicating that
+ */
+export const getBins = (dir: string[], cwd: string) =>
     Right(getBinLookups(dir, cwd))
         .chain(x => x.invalid.length
             ? Left({type: reports.ReportTypes.BinOptionError, data: x})
             : Right(x)
         );
 
+/**
+ * Scan a directory to retrieve an array of executables
+ */
 export const getExecutables = (dirs) =>
     dirs.reduce((acc, lookup: BinDirectoryLookup) => {
         const items = readdirSync(lookup.resolved);
