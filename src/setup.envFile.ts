@@ -5,59 +5,6 @@ import {InputErrorTypes} from "./task.utils";
 const _ = require("../lodash.custom");
 
 /**
- * Wrapper for reading the env file from disk.
- * The result could have an 'errors' property so we
- * wrap this in the Either type
- */
-const readEnvFile = (lookupPath: string, cwd: string) =>
-    Right(readFileFromDiskWithContent(lookupPath, cwd))
-        .chain(result => result.errors.length
-            ? Left(result)
-            : Right(result));
-
-/**
- * Given a single `envFile` option, try to read & parse
- * a file from disk.
- */
-export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: string): EnvFile => {
-
-    return Right(envFile)
-        // Get an array of 'lookupPath' and 'prefix' in the same scope
-        .chain(envFileItem => Right([getLookupPath(envFileItem), getPrefix(envFileItem, globalPrefix)])
-            // destructure previous results
-            .chain(([lookupPath, prefix]) =>
-                // Now attempt to read the file from disk
-                readEnvFile(lookupPath, cwd)
-                    // If an error occurs here, delegate to a `EnvFileNotFound` error
-                    .fold(file => {
-                        return Left({
-                            input: lookupPath,
-                            file,
-                            prefix: prefix,
-                            errors: [{type: InputErrorTypes.EnvFileNotFound}]
-                        })
-                    }, r => Right(r)) // <-- otherwise continue with the result
-                    // Now we have a file successfully read from disk, keep it in scope
-                    .chain((file: ExternalFileContent) =>
-                        // Try to parse the data from it. (JSON/env could throw)
-                        tryCatch(() => parseData(file))
-                            // If an error occurs in parsing, defer to `EnvFileParseError` error
-                            .fold(error => Left({
-                                    input: lookupPath,
-                                    file,
-                                    prefix: prefix,
-                                    errors: [{type: InputErrorTypes.EnvFileParseError, error}]
-                                }),
-                                  // If the content parsed without error, return the final result
-                                parsedData => Right({
-                                    input: lookupPath,
-                                    file: _.assign({}, file, {data: parsedData}),
-                                    prefix: prefix, errors: []
-                                })
-                            )))).fold(e => e, r => r); // finally fold as we could've exited early todo: could this be removed?
-};
-
-/**
  * If the user has specified any `envFile` options,
  * we need to read each file from disk and parse it's data.
  * Finally we save the results on the incoming config object
@@ -93,6 +40,59 @@ export const getEnvFiles = (envFile: EnvFile, globalPrefix: string[], cwd: strin
         .chain(x => x.invalid.length
             ? Left({type: reports.ReportTypes.EnvFileOptionError, data: x})
             : Right(x.valid));
+
+/**
+ * Given a single `envFile` option, try to read & parse
+ * a file from disk.
+ */
+export const getSingleEnvFile = (envFile: EnvFile, globalPrefix: string[], cwd: string): EnvFile => {
+
+    return Right(envFile)
+    // Get an array of 'lookupPath' and 'prefix' in the same scope
+        .chain(envFileItem => Right([getLookupPath(envFileItem), getPrefix(envFileItem, globalPrefix)])
+        // destructure previous results
+            .chain(([lookupPath, prefix]) =>
+                // Now attempt to read the file from disk
+                readEnvFile(lookupPath, cwd)
+                // If an error occurs here, delegate to a `EnvFileNotFound` error
+                    .fold(file => {
+                        return Left({
+                            input: lookupPath,
+                            file,
+                            prefix: prefix,
+                            errors: [{type: InputErrorTypes.EnvFileNotFound}]
+                        })
+                    }, r => Right(r)) // <-- otherwise continue with the result
+                    // Now we have a file successfully read from disk, keep it in scope
+                    .chain((file: ExternalFileContent) =>
+                        // Try to parse the data from it. (JSON/env could throw)
+                        tryCatch(() => parseData(file))
+                        // If an error occurs in parsing, defer to `EnvFileParseError` error
+                            .fold(error => Left({
+                                    input: lookupPath,
+                                    file,
+                                    prefix: prefix,
+                                    errors: [{type: InputErrorTypes.EnvFileParseError, error}]
+                                }),
+                                // If the content parsed without error, return the final result
+                                parsedData => Right({
+                                    input: lookupPath,
+                                    file: _.assign({}, file, {data: parsedData}),
+                                    prefix: prefix, errors: []
+                                })
+                            )))).fold(e => e, r => r); // finally fold as we could've exited early todo: could this be removed?
+};
+
+/**
+ * Wrapper for reading the env file from disk.
+ * The result could have an 'errors' property so we
+ * wrap this in the Either type
+ */
+const readEnvFile = (lookupPath: string, cwd: string) =>
+    Right(readFileFromDiskWithContent(lookupPath, cwd))
+        .chain(result => result.errors.length
+            ? Left(result)
+            : Right(result));
 
 /**
  * Parse either json or regular .env file
