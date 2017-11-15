@@ -1,7 +1,7 @@
 import {CommandTrigger} from "../command.run";
 import {getArgs, runCommand, teardown, getEnv, getStdio} from "./@npm";
 import {Task} from "../task.resolve";
-import {getCBEnv} from "../task.utils";
+import {getCBEnv, getContextEnv} from "../task.utils";
 const debug = require("debug")("cb:@bg");
 const merge = require("../../lodash.custom").merge;
 
@@ -22,7 +22,8 @@ export default function (task: Task, trigger: CommandTrigger) {
         const args   = getArgs(task.command);
         const npmEnv = getEnv(process, trigger.config);
         const cbEnv  = getCBEnv(trigger);
-        const env    = merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
+        const ctxEnv = getContextEnv(trigger, ctx);
+        const env    = merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env, ctxEnv);
         const stdio  = getStdio(trigger);
 
         debug(`running %s`, args.cmd);

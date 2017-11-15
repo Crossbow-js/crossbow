@@ -374,7 +374,7 @@ describe('responding to file change events', function () {
                     watchEvent = ctx.watchEvent;
                     watcher    = ctx.watcher;
                 }
-            }
+            },
         }, [
             onNext(100, expected)
         ]);

@@ -10,7 +10,7 @@ const _ = require("../../lodash.custom");
 
 import {join} from "path";
 import {CrossbowError} from "../reporters/defaultReporter";
-import {getCBEnv} from "../task.utils";
+import {getCBEnv, getContextEnv} from "../task.utils";
 
 let sh = "sh";
 let shFlag = "-c";
@@ -166,7 +166,8 @@ export default function (task: Task, trigger: CommandTrigger) {
         const commandArgs = getArgs(task.command);
         const npmEnv      = getEnv(process, trigger.config, [join(trigger.config.cwd, "node_modules", ".bin")]);
         const cbEnv       = getCBEnv(trigger);
-        const env         = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env);
+        const ctxEnv      = getContextEnv(trigger, ctx);
+        const env         = _.merge({}, process.env, npmEnv, cbEnv, task.env, trigger.config.env, ctxEnv);
         const stdio       = getStdio(trigger);
 
         debug(`+ running '%s %s'`, sh, commandArgs.cmd.join(" "));

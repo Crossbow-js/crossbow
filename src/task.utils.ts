@@ -195,6 +195,30 @@ export function excludeKeys(input: any, blacklist: string[]): any {
  */
 const configBlacklist = ["outputObserver", "fileChangeObserver", "signalObserver", "scheduler", "envFiles", "binExecutables"];
 
+/**
+ * Make some task context vars available as env vars
+ * eg:
+ *
+ *      $cb_ctx_watcheEvent_path
+ *      $cb_ctx_type
+ *
+ *      etc...
+ *
+ * @param {CommandTrigger} trigger
+ * @param ctx
+ * @returns {any}
+ */
+export function getContextEnv (trigger: CommandTrigger, ctx) {
+    if (ctx.type === 'watcher') {
+        const obj = {
+            type: 'watcher',
+            watchEvent: ctx.watchEvent
+        };
+        return envifyObjectPlain(obj, [trigger.config.envPrefix, "ctx"])
+    }
+    return envifyObjectPlain({type: ctx.type}, [trigger.config.envPrefix, "ctx"])
+}
+
 export function getCBEnv (trigger: CommandTrigger): {} {
     const prefix = trigger.config.envPrefix;
 
