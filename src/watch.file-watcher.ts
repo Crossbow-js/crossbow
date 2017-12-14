@@ -8,11 +8,19 @@ import {ReportTypes, WatcherTriggeredTasksReport} from "./reporter.resolve";
 import {CrossbowReporter} from "./index";
 import {WatchCommandEventTypes} from "./command.watch";
 import {fromJS} from "immutable";
+import {merge} from "./config";
 
 const debug = require("debug")("cb:watch.runner");
 
 export interface WatchEventWithContext {
-    watchEvent: WatchEvent;
+    watchEvents?: WatchEvent[];
+    watchEvent?: WatchEvent;
+    watcher: Watcher;
+}
+
+export interface WatchEventGroupedWithContext {
+    watchEvents?: WatchEvent[];
+    watchEvent?: WatchEvent;
     watcher: Watcher;
 }
 
@@ -25,6 +33,7 @@ export interface WatchEvent {
 export interface WatchTaskReport {
     taskReport: TaskReport;
     watchEvent: WatchEvent;
+    watchEvents: WatchEvent[];
     count: number;
 }
 
@@ -33,6 +42,7 @@ export interface WatchRunnerComplete {
     reports: TaskReport[];
     errors: TaskReport[];
     watchEvent: WatchEvent;
+    watchEvents: WatchEvent[];
     runtime: number;
 }
 
@@ -46,9 +56,16 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
      * Wrap every chokidar watcher in an observable
      * @type {Rx.Observable<WatchEvent>[]}
      */
-    const watchersAsObservables = watchers.map((watcher) => {
-        return createObservableForWatcher(watcher, trigger);
-    });
+    const _nonGrouped = watchers.filter(watcher => watcher.options.group === 0);
+    const _grouped = watchers.filter(watcher => watcher.options.group > 0);
+    const watchersAsObservablesNonGrouped = _nonGrouped
+        .map((watcher) => {
+            return createObservableForWatcher(watcher, trigger);
+        });
+    const watchersAsObservablesGrouped = _grouped
+        .map((watcher) => {
+            return createObservableForWatcher(watcher, trigger);
+        });
 
     const blockable$ = new Rx.BehaviorSubject<string[]>([]);
 
@@ -59,31 +76,29 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
         /**
          * Merge all watchers
          */
-        .merge(...watchersAsObservables)
+        .merge(...watchersAsObservablesNonGrouped, ...watchersAsObservablesGrouped)
         /**
          * Pair up the watchEvent with it's watcher.
          * This separation is done to allow us to pass an observable
          * in to stub the file io stream
          */
-        .map<WatchEventWithContext>((watchEvent: WatchEvent) => {
-            const watcher = watchers.filter(x => x.watcherUID === watchEvent.watcherUID)[0];
-            return {watchEvent, watcher};
-        })
-        /**
-         * If the incoming watch had block: true as an option
-         * check if it's watcherUID exists in the blockable$
-         */
         .filter((x: WatchEventWithContext) => {
             if (x.watcher.options.block) {
-                const blocked = !~blockable$.getValue().indexOf(x.watchEvent.watcherUID);
-                debug(`BLOCKED - ${x.watchEvent.watcherUID} ${x.watchEvent.path} ${x.watchEvent.event}`);
+                const blocked = !~blockable$.getValue().indexOf(x.watcher.watcherUID);
+                if (x.watchEvent) {
+                    debug(`BLOCKED - ${x.watcher.watcherUID} ${x.watchEvent.path} ${x.watchEvent.event}`);
+                } else {
+                    x.watchEvents.forEach(watchEvent => {
+                        debug(`BLOCKED - ${x.watcher.watcherUID} ${watchEvent.path} ${watchEvent.event}`);
+                    })
+                }
                 return blocked;
             }
             return true;
         })
         .do((x: WatchEventWithContext) => {
             if (x.watcher.options.block) {
-                blockable$.onNext(blockable$.getValue().concat(x.watchEvent.watcherUID));
+                blockable$.onNext(blockable$.getValue().concat(x.watcher.watcherUID));
             }
         })
         .timestamp(trigger.config.scheduler)
@@ -91,11 +106,11 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
             return runTasks(incoming, i);
         });
 
-    function runTasks (incoming, i: number) {
+    function runTasks (incoming: {value: WatchEventGroupedWithContext|WatchEventWithContext, timestamp: number}, i: number) {
         /**
          * @type {WatchEvent}
          */
-        const {watchEvent, watcher} = incoming.value;
+        const {watchEvent, watcher, watchEvents = []} = incoming.value;
 
         return Rx.Observable.create<{type: WatchCommandEventTypes, data: WatchTaskReport|WatchRunnerComplete}>(function (obs) {
 
@@ -115,6 +130,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
              */
             watcher._runner.series(fromJS({
                 watchEvent,
+                watchEvents,
                 watcher: {
                     patterns: watcher.patterns,
                     tasks: watcher.tasks,
@@ -122,14 +138,18 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                     watcherUID: watcher.watcherUID
                 }
             }))
-                .do(taskReport => obs.onNext({
-                    type: WatchCommandEventTypes.WatchTaskReport,
-                    data: {
+                .do(taskReport => {
+                    const data: WatchTaskReport = {
                         taskReport,
                         watchEvent,
+                        watchEvents,
                         count: i
-                    } as WatchTaskReport
-                }))
+                    };
+                    obs.onNext({
+                        type: WatchCommandEventTypes.WatchTaskReport,
+                        data,
+                    });
+                })
                 .toArray()
                 .timestamp(trigger.config.scheduler)
                 .subscribe(function (x: {value: TaskReport[], timestamp; number}) {
@@ -138,15 +158,17 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                     const sequence = seq.decorateSequenceWithReports(watcher._sequence, reports);
                     const errors   = reports.filter(x => x.type === TaskReportType.error);
 
+                    const data: WatchRunnerComplete = {
+                        sequence,
+                        reports,
+                        errors,
+                        watchEvent,
+                        watchEvents,
+                        runtime: x.timestamp - incoming.timestamp
+                    }
                     obs.onNext({
                         type: WatchCommandEventTypes.WatchRunnerComplete,
-                        data: {
-                            sequence,
-                            reports,
-                            errors,
-                            watchEvent,
-                            runtime: x.timestamp - incoming.timestamp
-                        } as WatchRunnerComplete
+                        data,
                     });
 
                     if (errors.length > 0) {
@@ -159,7 +181,8 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
                                 config:   trigger.config,
                                 runtime:  x.timestamp - incoming.timestamp,
                                 watcher,
-                                watchEvent
+                                watchEvent,
+                                watchEvents,
                             }
                         });
                     } else {
@@ -186,7 +209,7 @@ export function createObservablesForWatchers(watchers: Watcher[], trigger: Comma
 /**
  * Create a file-system watcher that will emit <WatchEvent>
  */
-export function createObservableForWatcher(watcher: Watcher, trigger: CommandTrigger): Rx.Observable<WatchEvent> {
+export function createObservableForWatcher(watcher: Watcher, trigger: CommandTrigger): Rx.Observable<WatchEventWithContext|WatchEventGroupedWithContext> {
 
     const {reporter}  = trigger;
     const {scheduler} = trigger.config;
@@ -195,6 +218,17 @@ export function createObservableForWatcher(watcher: Watcher, trigger: CommandTri
      * First create a stream of file-watcher events for this Watcher
      */
     const output$ = trigger.config.fileChangeObserver || getFileChangeStream(watcher, reporter);
+
+    if (watcher.options.group > 0) {
+        return output$
+            .buffer(() => output$.debounce(watcher.options.group, scheduler))
+            .map(xs => {
+                return {
+                    watcher,
+                    watchEvents: xs,
+                }
+            }) as Rx.Observable<any>;
+    }
 
     /**
      * Specify a mapping from option name -> Rx.Observable operator name
@@ -213,8 +247,14 @@ export function createObservableForWatcher(watcher: Watcher, trigger: CommandTri
             fnName: "delay"
         }
     ];
-
-    return applyOperators(output$, additionalOperators, watcher.options, scheduler);
+    
+    return applyOperators(output$, additionalOperators, watcher.options, scheduler)
+        .map(x => {
+            return {
+                watcher,
+                watchEvent: x,
+            }
+        });
 }
 
 export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter): Rx.Observable<WatchEvent> {
@@ -256,7 +296,7 @@ export function getFileChangeStream(watcher: Watcher, reporter: CrossbowReporter
             debug(`- for ${watcher.patterns}`);
             chokidarWatcher.close();
         };
-    });
+    }).share();
 }
 
 /**

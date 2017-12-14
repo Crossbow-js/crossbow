@@ -13,12 +13,13 @@ import {TaskCollection} from "./task.resolve";
 const blacklist = ["options", "bs-config", "before", "id"];
 const _         = require("../lodash.custom");
 
-export const defaultWatchOptions = <CBWatchOptions>{
+export const defaultWatchOptions: CBWatchOptions = {
     ignoreInitial: true,
     block: false,
     throttle: 0,
     delay: 0,
-    debounce: 0
+    debounce: 0,
+    group: 0,
 };
 
 export interface CBWatchOptions extends WatchOptions {
@@ -26,6 +27,7 @@ export interface CBWatchOptions extends WatchOptions {
     debounce: number;
     delay: number;
     block: boolean;
+    group: number
 }
 
 export interface WatchTask {
@@ -41,7 +43,7 @@ export interface WatchTask {
 export interface Watcher {
     patterns: string[];
     tasks: TaskCollection;
-    options: any;
+    options: CBWatchOptions;
     watcherUID: string;
     _tasks?: Tasks;
     _sequence?: SequenceItem[];

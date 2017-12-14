@@ -358,7 +358,8 @@ describe('responding to file change events', function () {
                 block: false,
                 throttle: 0,
                 delay: 0,
-                debounce: 0
+                debounce: 0,
+                group: 0
             },
             watcherUID: 'default-0'
         };
@@ -381,5 +382,52 @@ describe('responding to file change events', function () {
 
         assert.deepEqual(watchEvent, expected);
         assert.deepEqual(watcher, expectedWatcher);
+    });
+    it('Passes information about the watcher & multiple watchEvents into the ctx when group: number', function () {
+
+        var watchEvents;
+
+        const expected = {
+            event: 'change',
+            path: 'style.css',
+            watcherUID: 'default-0'
+        };
+
+        const expectedWatcher = {
+            patterns: ['*.css'],
+            tasks: ['css'],
+            options: {
+                ignoreInitial: true,
+                block: false,
+                throttle: 0,
+                delay: 0,
+                debounce: 0,
+                group: 0
+            },
+            watcherUID: 'default-0'
+        };
+
+        utils.getFileWatcher(['default'], {
+            watch: {
+                options: {group: 500},
+                default: {
+                    "*.css": ["css"]
+                }
+            },
+            tasks: {
+                css: function (opts, ctx) {
+                    watchEvents = ctx.watchEvents;
+                }
+            },
+        }, [
+            onNext(100, expected),
+            onNext(101, expected),
+            onNext(102, expected),
+            onNext(103, expected),
+            onNext(104, expected),
+            onNext(105, expected),
+        ]);
+
+        assert.equal(watchEvents.length, 6);
     });
 });

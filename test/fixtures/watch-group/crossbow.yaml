@@ -1,0 +1,15 @@
+watch:
+  default:
+    options:
+      debounce: 1000
+    watchers:
+      - patterns: '*.*'
+        tasks:
+          - '@sh echo "changed"'
+  grouped:
+    options:
+      group: 1000
+    watchers:
+      - patterns: 'test/fixtures'
+        tasks:
+          - '@sh echo "changed"'
