@@ -9,7 +9,7 @@
     "lint": "tslint src/**/*.ts --fix",
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray,cloneDeep exports=node",
-    "prepublish": "npm test",
+    "prepublishOnly": "npm test",
     "types": "typings install"
   },
   "repository": "crossbow-js/crossbow",
@@ -39,7 +39,7 @@
   "dependencies": {
     "archy": "1.0.0",
     "chokidar": "1.4.3",
-    "debug": "2.2.0",
+    "debug": "^2",
     "eazy-logger": "^3.0.2",
     "hash-dir": "0.0.0",
     "immutable": "3.8.0",
