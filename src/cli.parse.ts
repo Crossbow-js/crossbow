@@ -24,7 +24,7 @@ export interface FlagOptions {
 }
 
 export interface Flags {
-    [flagname: string]: FlagWithValues;
+    [flagname: string]: FlagWithValues|boolean;
     help?: boolean;
     version?: boolean;
 }

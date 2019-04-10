@@ -4,13 +4,12 @@
   "description": "",
   "main": "dist/public/index.js",
   "scripts": {
-    "test": "npm run types && npm run lint && npm run ts && npm run unit",
+    "test": "npm run lint && npm run ts && npm run unit",
     "unit": "mocha test/specs --recursive",
     "lint": "tslint src/**/*.ts --fix",
     "ts": "tsc",
     "lodash": "lodash include=merge,mergeWith,get,set,assign,values,toArray,cloneDeep exports=node",
-    "prepublishOnly": "npm test",
-    "types": "typings install"
+    "prepublishOnly": "npm test"
   },
   "repository": "crossbow-js/crossbow",
   "files": [
@@ -37,6 +36,7 @@
     "match-sorter"
   ],
   "dependencies": {
+    "@types/node": "11.13.4",
     "archy": "1.0.0",
     "chokidar": "2.1.5",
     "debug": "^2",
@@ -82,7 +82,7 @@
     "strip-ansi": "3.0.1",
     "through2": "2.0.0",
     "tslint": "^4.3.1",
-    "typescript": "latest",
+    "typescript": "3.4",
     "typings": "latest",
     "vinyl-fs": "2.4.3",
     "watchify": "3.7.0",

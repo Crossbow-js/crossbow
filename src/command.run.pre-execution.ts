@@ -39,7 +39,7 @@ export function createHashes(tasks: Task[], trigger: CommandTrigger): Rx.Observa
             };
         })
         .take(1)
-        .catch(function (e) {
+        .catch(function (e): any {
 
             if (e.code === "ENOTDIR") e.type = HashDirErrorTypes.HashNotADirectory;
             if (e.code === "ENOENT")  e.type = HashDirErrorTypes.HashPathNotFound;

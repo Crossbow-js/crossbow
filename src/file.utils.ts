@@ -344,7 +344,7 @@ function hashFile(filepath: string, fn: Function) {
         .on("end", function () {
             fn(null, hash.digest("hex"));
         })
-        .on("error", fn);
+        .on("error", fn as any);
 }
 
 function hashFileOrDir(input: IHashInput) {

@@ -48,7 +48,7 @@ function runCommand(args: string[], options: CommandOptions) {
     const cooked = <CBEmitter>new EventEmitter();
 
     raw.on("error", function (er) {
-        er.file = [sh, args].join(" ");
+        (er as any).file = [sh, args].join(" ");
         cooked.emit("error", er);
     }).on("close", function (code, signal) {
         if (code === 127) {

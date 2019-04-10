@@ -321,7 +321,7 @@ function tasksWithSetup(prepared: PreparedInput, killSwitches$) {
 }
 function watchWithSetup(prepared: PreparedInput, killSwitches$) {
     handleIncoming<WatchCommmandComplete>(prepared)
-        .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<WatchTaskReport>}) => {
+        .flatMap((x: {setup: WatchCommandSetup, update$: Rx.Observable<any>}) => {
             if (x.setup.errors.length) {
                 killSwitches$.onNext(true);
                 return Rx.Observable.empty();

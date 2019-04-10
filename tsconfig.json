@@ -6,7 +6,8 @@
     "inlineSourceMap": true,
     "outDir": "dist",
     "declaration": true,
-    "pretty": true
+    "pretty": true,
+    "lib": ["dom","es2015"]
   },
   "include": [
     "typings/index.d.ts",
