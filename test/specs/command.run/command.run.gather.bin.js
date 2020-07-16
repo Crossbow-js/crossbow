@@ -4,7 +4,7 @@ const yaml = require("js-yaml");
 
 const TaskTypes = require('../../../dist/task.resolve').TaskTypes;
 
-describe('Gathering run tasks from bin directory', function () {
+describe.skip('Gathering run tasks from bin directory', function () {
     it('can gather tasks from a bin dir', function () {
         const runner = utils.getSetup(['js'], {
             tasks: {
