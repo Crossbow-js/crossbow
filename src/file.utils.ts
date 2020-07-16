@@ -335,7 +335,7 @@ export function hashItems(dirs: string[], cwd: string, existingHashes: IHashItem
         });
 }
 
-function hashFile(filepath: string, fn: Function) {
+function hashFile(filepath: string, fn: any) {
     const hash = createHash("sha256");
     createReadStream(filepath)
         .on("data", function (chunk) {
